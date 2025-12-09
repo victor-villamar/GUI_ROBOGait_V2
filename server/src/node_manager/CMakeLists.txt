@@ -1,34 +1,44 @@
 cmake_minimum_required(VERSION 3.8)
+
+# Compile options
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+# C++ standard
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Project name
 project(node_manager)
 
+# Find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(rclcpp_action REQUIRED)
-find_package(nav2_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(interface_srv REQUIRED)
 find_package(yaml-cpp REQUIRED)
-find_package(nlohmann_json 3.10.0 REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system)
-find_package(OpenCV REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 
-add_executable(node_manager
-    main.cpp
-    src/servidor.cpp
+# Add source files
+set(SOURCES
     src/NodeManager.cpp
-    src/utils.cpp
-    src/toJson.cpp
-    src/HandleMsg.cpp
     src/ProcessController.cpp
 )
 
-ament_target_dependencies(node_manager rclcpp geometry_msgs interface_srv nav2_msgs rclcpp_action sensor_msgs)
+add_executable(${PROJECT_NAME}
+    main.cpp
+    ${SOURCES}
+)
 
-target_link_libraries(node_manager yaml-cpp nlohmann_json::nlohmann_json Boost::system ${OpenCV_LIBS})
+ament_target_dependencies(${PROJECT_NAME} rclcpp)
 
-target_compile_features(node_manager PUBLIC cxx_std_17)
+target_link_libraries(node_manager yaml-cpp ${Boost_INCLUDE_DIRS})
 
-install(TARGETS node_manager DESTINATION lib/${PROJECT_NAME})
+target_compile_features(node_manager PUBLIC cxx_std_20)
+
+# Install executable
+install(TARGETS ${PROJECT_NAME}
+     DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_package()
