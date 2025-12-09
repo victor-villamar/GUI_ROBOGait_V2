@@ -43,7 +43,3 @@ node_manager/
 + **NodeManager.h NodeManager.cpp**: Se trata de las carpeta donde se hacen todas las sucripciones a nodos o servicios o topic del programa.
 
 + **ProcessController.h ProcessController.cpp**: En estos archivos se ejecutan todos lo programas en segundo plano con un `fork`.
-
-+ **toJson.h toJson.cpp**: La comunicacion entre servidor y cliente se hace a traves de json por tanto este archivo se encarga de transformar a json los mensajes que se quieran enviar.
-
-+ **HandleMsg.h HandleMsg.cpp**: En los mensages transmitidos por json algunos tienen un encabezado que incluye `MSG` eso significa que no se espera una respuesta por parte del servidor al cliente y estos archivos se encargan de manejar los mensajes y hacer la respectiva acción.
