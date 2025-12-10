@@ -105,4 +105,4 @@ template <typename... Ts> inline void Logs::errorThrottle(const float period, co
 }
 } // namespace logs
 } // namespace common
-} // namespace VMB
+} // namespace ROBOGait

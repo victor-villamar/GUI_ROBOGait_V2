@@ -16,13 +16,27 @@ project(node_manager)
 # Find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(logs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
 
+#Include directories
+include_directories(
+    include
+    include/common
+    include/process
+)
+
 # Add source files
 set(SOURCES
+    src/process/Process.cpp
     src/NodeManager.cpp
     src/ProcessController.cpp
+)
+
+set(DEPENDENCIES
+    rclcpp
+    logs
 )
 
 add_executable(${PROJECT_NAME}
@@ -30,14 +44,37 @@ add_executable(${PROJECT_NAME}
     ${SOURCES}
 )
 
-ament_target_dependencies(${PROJECT_NAME} rclcpp)
+ament_target_dependencies(${PROJECT_NAME}
+    ${DEPENDENCIES}
+)
 
-target_link_libraries(node_manager yaml-cpp ${Boost_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME}
+    yaml-cpp
+    ${Boost_LIBRARIES}
+)
 
-target_compile_features(node_manager PUBLIC cxx_std_20)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
+
+# Test executables
+add_executable(test_process
+    test/test_process.cpp
+    src/process/Process.cpp
+)
+
+target_link_libraries(test_process
+    ${Boost_LIBRARIES}
+)
+
+ament_target_dependencies(test_process
+    ${DEPENDENCIES}
+)
 
 # Install executable
 install(TARGETS ${PROJECT_NAME}
+     DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS test_process
      DESTINATION lib/${PROJECT_NAME}
 )
 

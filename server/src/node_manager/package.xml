@@ -12,11 +12,9 @@
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
   
   <depend>rclcpp</depend>
-  <depend>geometry_msgs</depend>
-  <depend>interface_srv</depend>
-  <depend>nav2_msgs</depend>
-  <depend>rclcpp_action</depend>
-  <depend>sensor_msgs</depend>
+  <depend>logs</depend>
+  <depend>yaml-cpp</depend>
+  <depend>boost</depend>
 
   <!-- Dependencias opcionales para pruebas -->
   <test_depend>ament_lint_auto</test_depend>
