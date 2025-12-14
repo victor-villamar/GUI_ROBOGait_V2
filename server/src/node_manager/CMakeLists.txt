@@ -89,11 +89,11 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 install(TARGETS test_process
-     DESTINATION lib/${PROJECT_NAME}
+     DESTINATION lib/${PROJECT_NAME}/test
 )
 
 install(TARGETS test_process_controller
-     DESTINATION lib/${PROJECT_NAME}
+     DESTINATION lib/${PROJECT_NAME}/test
 )
 
 ament_package()
