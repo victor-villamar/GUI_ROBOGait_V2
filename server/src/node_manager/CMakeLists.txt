@@ -30,6 +30,7 @@ include_directories(
 # Add source files
 set(SOURCES
     src/process/Process.cpp
+    src/utils/YamlLoader.cpp
     src/NodeManager.cpp
     src/ProcessController.cpp
 )
@@ -67,6 +68,11 @@ add_executable(test_process_controller
     src/process/Process.cpp
 )
 
+add_executable(test_yaml_loader
+    test/test_yaml_loader.cpp
+    src/utils/YamlLoader.cpp
+)
+
 target_link_libraries(test_process
     ${Boost_LIBRARIES}
 )
@@ -75,11 +81,19 @@ target_link_libraries(test_process_controller
     ${Boost_LIBRARIES}
 )
 
+target_link_libraries(test_yaml_loader
+    yaml-cpp
+)
+
 ament_target_dependencies(test_process
     ${DEPENDENCIES}
 )
 
 ament_target_dependencies(test_process_controller
+    ${DEPENDENCIES}
+)
+
+ament_target_dependencies(test_yaml_loader
     ${DEPENDENCIES}
 )
 
@@ -94,6 +108,14 @@ install(TARGETS test_process
 
 install(TARGETS test_process_controller
      DESTINATION lib/${PROJECT_NAME}/test
+)
+
+install(TARGETS test_yaml_loader
+     DESTINATION lib/${PROJECT_NAME}/test
+)
+
+install(DIRECTORY param
+     DESTINATION share/${PROJECT_NAME}
 )
 
 ament_package()
