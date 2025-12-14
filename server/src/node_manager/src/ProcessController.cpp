@@ -11,6 +11,8 @@ using namespace ROBOGait::common::logs;
 
 ProcessController::ProcessController() {}
 
+ProcessController::~ProcessController() { stopAllProcesses(); }
+
 bool ProcessController::isNodeRunning(const std::string& node_name)
 {
   auto node = rclcpp::Node::make_shared("node_checker");

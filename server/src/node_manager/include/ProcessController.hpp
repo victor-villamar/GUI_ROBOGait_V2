@@ -24,6 +24,11 @@ public:
   ProcessController();
 
   /**
+   * @brief Destructor for the ProcessController class.
+   */
+  ~ProcessController();
+
+  /**
    * @brief Checks if a ROS2 node is running.
    * @param node_name Name of the ROS2 node.
    * @return True if the node is running, false otherwise.
