@@ -50,3 +50,6 @@ log/
 
 # clang-format configuration file
 .clang-format
+
+# Combined compile commands file
+combined_compile_commands.json
