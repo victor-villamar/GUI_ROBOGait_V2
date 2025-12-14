@@ -1,5 +1,3 @@
-#include "../include/process/Process.hpp"
-#include "logs/Logs.hpp"
 #include <chrono>
 #include <csignal>
 #include <iostream>
@@ -7,6 +5,9 @@
 #include <sstream>
 #include <thread>
 #include <vector>
+
+#include "../include/process/Process.hpp"
+#include "logs/Logs.hpp"
 
 using namespace ROBOGait::process;
 using namespace ROBOGait::common;
@@ -81,8 +82,6 @@ void showProcessStatus(const std::unique_ptr<Process>& process)
 
 int main()
 {
-  // Initialize ROS 2 for logging
-  rclcpp::init(0, nullptr);
 
   // Set up the signal handler
   signal(SIGINT, signalHandler);
@@ -116,8 +115,8 @@ int main()
   // Process 5: Python script simulation
   auto process5 = std::make_unique<Process>(
       "python_test", "python3",
-      std::vector<std::string>{"-c",
-                               "'import time; [print(f\"Python process tick {i}\") or time.sleep(2) for i in range(5)]; input(\"Press Enter to close...\")'"});
+      std::vector<std::string>{
+          "-c", "\'import time; [print(f\\\"Python process tick {i}\\\") or time.sleep(2) for i in range(5)]; input(\\\"Press Enter to close...\\\")\'"});
   process5->setTerminalTitle("Python Test Process");
   process5->setWindowState(WindowState::MINIMIZED);
 
@@ -353,7 +352,6 @@ int main()
   cleanupAllProcesses();
 
   Logs::info("[main] ROBOGait Process Test finished");
-  rclcpp::shutdown();
 
   std::cout << "Test finished." << std::endl;
   return 0;

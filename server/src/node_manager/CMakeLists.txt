@@ -61,11 +61,25 @@ add_executable(test_process
     src/process/Process.cpp
 )
 
+add_executable(test_process_controller
+    test/test_process_controller.cpp
+    src/ProcessController.cpp
+    src/process/Process.cpp
+)
+
 target_link_libraries(test_process
     ${Boost_LIBRARIES}
 )
 
+target_link_libraries(test_process_controller
+    ${Boost_LIBRARIES}
+)
+
 ament_target_dependencies(test_process
+    ${DEPENDENCIES}
+)
+
+ament_target_dependencies(test_process_controller
     ${DEPENDENCIES}
 )
 
@@ -75,6 +89,10 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 install(TARGETS test_process
+     DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS test_process_controller
      DESTINATION lib/${PROJECT_NAME}
 )
 
