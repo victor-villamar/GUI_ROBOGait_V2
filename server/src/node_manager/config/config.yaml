@@ -1,11 +1,11 @@
 ROBOT_NAME: "RobogaitIndoor"
 TYPE: "V3"
 
-DATABASE: "server/db_robogait.db"
-PATH2DATABASE: "server/server_ddbb.py"
+DATABASE: "../../../../server/db_robogait.db"
+PATH2DATABASE: "../../../../server/server_ddbb.py"
 NAME_DATABASE: "database"
 
-PATH2MAP: "server/maps"
+PATH2MAP: "../../../../server/maps"
 
 PROCESSES:
   START_ROBOT:

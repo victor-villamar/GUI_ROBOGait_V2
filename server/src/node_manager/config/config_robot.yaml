@@ -1,0 +1,82 @@
+ROBOT_NAME: "RobogaitIndoor"
+TYPE: "V3"
+
+DATABASE: "../../../../server/db_robogait.db"
+PATH2DATABASE: "../../../../server/server_ddbb.py"
+NAME_DATABASE: "database"
+
+PATH2MAP: "../../../../server/maps"
+
+PROCESSES:
+  START_ROBOT:
+    name: "roverrobotics_driver"
+    executable: "ros2"
+    arguments:
+      - "launch"
+      - "roverrobotics_driver"
+      - "mini.launch.py"
+    window_state: "maximized"
+  TF_SERVICE:
+    name: "tf_service"
+    executable: "ros2"
+    arguments:
+      - "run"
+      - "tf_service"
+      - "tf_service_node"
+    window_state: "minimized"
+  CARTOGRAPHER:
+    name: "roverrobotics_driver_slam"
+    executable: "ros2"
+    arguments:
+      - "launch"
+      - "roverrobotics_driver"
+      - "slam_launch.py"
+    window_state: "maximized"
+  NAV2_BRINGUP:
+    name: "roverrobotics_driver_navigation"
+    executable: "ros2"
+    arguments:
+      - "launch"
+      - "roverrobotics_driver"
+      - "navigation_nuevo.launch.py"
+      - "map:="
+    window_state: "maximized"
+  DISTANCE_TRACKER:
+    name: "distance_tracker"
+    executable: "ros2"
+    arguments:
+      - "run"
+      - "distance_tracker"
+      - "distance"
+    window_state: "maximized"
+  CAMERA_CONTROLLER:
+    name: "camera_controller"
+    executable: "ros2"
+    arguments:
+      - "run"
+      - "navigation_pkg"
+      - "camera_controller"
+    window_state: "maximized"
+  DYNAMIXEL:
+    name: "dynamixel"
+    executable: "ros2"
+    arguments:
+      - "run"
+      - "navigation_pkg"
+      - "dynamixel"
+    window_state: "maximized"
+  PRUEBA:
+    name: "prueba"
+    executable: "ros2"
+    arguments:
+      - "run"
+      - "navigation_pkg"
+      - "prueba2"
+    window_state: "maximized"
+
+
+TF_TOPIC: "/tf"
+CMD_VEL_TOPIC: "/cmd_vel"
+INITIAL_POSE_TOPIC: "/initialpose"
+GOAL_POSE_TOPIC: "/goal_pose"
+WAYPOINT_FOLLOWER_ACTION: "/follow_waypoints"

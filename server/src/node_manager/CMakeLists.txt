@@ -35,26 +35,17 @@ set(SOURCES
     src/ProcessController.cpp
 )
 
+# Add dependencies
 set(DEPENDENCIES
     rclcpp
     logs
 )
 
+# Create executable
 add_executable(${PROJECT_NAME}
     main.cpp
     ${SOURCES}
 )
-
-ament_target_dependencies(${PROJECT_NAME}
-    ${DEPENDENCIES}
-)
-
-target_link_libraries(${PROJECT_NAME}
-    yaml-cpp
-    ${Boost_LIBRARIES}
-)
-
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
 # Test executables
 add_executable(test_process
@@ -73,6 +64,15 @@ add_executable(test_yaml_loader
     src/utils/YamlLoader.cpp
 )
 
+# Link libraries
+target_link_libraries(${PROJECT_NAME}
+    yaml-cpp
+    ${Boost_LIBRARIES}
+)
+
+# target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
+
+
 target_link_libraries(test_process
     ${Boost_LIBRARIES}
 )
@@ -83,6 +83,11 @@ target_link_libraries(test_process_controller
 
 target_link_libraries(test_yaml_loader
     yaml-cpp
+)
+
+# Link dependencies
+ament_target_dependencies(${PROJECT_NAME}
+    ${DEPENDENCIES}
 )
 
 ament_target_dependencies(test_process
@@ -102,6 +107,7 @@ install(TARGETS ${PROJECT_NAME}
      DESTINATION lib/${PROJECT_NAME}
 )
 
+# Install tests
 install(TARGETS test_process
      DESTINATION lib/${PROJECT_NAME}/test
 )
@@ -114,8 +120,34 @@ install(TARGETS test_yaml_loader
      DESTINATION lib/${PROJECT_NAME}/test
 )
 
-install(DIRECTORY param
-     DESTINATION share/${PROJECT_NAME}
-)
+# Install config file
+
+if(HOME)
+    message(STATUS "HOME Flag is defined. Installing config_casa.yaml as config.yaml")
+    install(FILES "${CMAKE_SOURCE_DIR}/config/config_casa.yaml"
+        DESTINATION share/${PROJECT_NAME}/config
+        RENAME config.yaml
+    )
+
+elseif(ROBOT)
+    message(STATUS "ROBOT Flag is defined. Installing config_robot.yaml as config.yaml")
+    install(FILES "${CMAKE_SOURCE_DIR}/config/config_robot.yaml"
+        DESTINATION share/${PROJECT_NAME}/config
+        RENAME config.yaml
+    )
+
+elseif(UNI)
+    message(STATUS "UNI Flag is defined. Installing config_uni.yaml as config.yaml")
+    install(FILES "${CMAKE_SOURCE_DIR}/config/config_uni.yaml"
+        DESTINATION share/${PROJECT_NAME}/config
+        RENAME config.yaml
+    )
+
+else()
+    message(STATUS "Installing default config.yaml")
+    install(FILES "${CMAKE_SOURCE_DIR}/config/config.yaml"
+        DESTINATION share/${PROJECT_NAME}/config/
+    )
+endif()
 
 ament_package()

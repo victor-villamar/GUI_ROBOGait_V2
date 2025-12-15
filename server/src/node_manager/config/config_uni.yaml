@@ -1,0 +1,51 @@
+ROBOT_NAME: "RobogaitIndoor"
+TYPE: "V3"
+
+DATABASE: "../../../../server/db_robogait.db"
+PATH2DATABASE: "../../../../server/server_ddbb.py"
+NAME_DATABASE: "database"
+  
+PATH2MAP: "../../../../../server/maps"
+
+PROCESSES:
+  START_ROBOT:
+    name: "turtlebot3_gazebo"
+    executable: "ros2"
+    arguments:
+      - "launch"
+      - "turtlebot3_gazebo"
+      - "turtlebot3_world.launch.py"
+    window_state: "maximized"
+  TF_SERVICE:
+    name: "tf_service"
+    executable: "ros2"
+    arguments:
+      - "run"
+      - "tf_service"
+      - "tf_service_node"
+    window_state: "minimized"
+  CARTOGRAPHER:
+    name: "turtlebot3_cartographer"
+    executable: "ros2"
+    arguments:
+      - "launch"
+      - "turtlebot3_cartographer"
+      - "cartographer_noRviz.launch.py"
+      - "use_sim_time:=True"
+    window_state: "maximized"
+  NAV2_BRINGUP:
+    name: "nav2_bringup"
+    executable: "ros2"
+    arguments:
+      - "launch"
+      - "nav2_bringup"
+      - "bringup_launch.py"
+      - "use_sim_time:=True"
+      - "map:="
+    window_state: "maximized"
+
+TF_TOPIC: "/tf"
+CMD_VEL_TOPIC: "/cmd_vel"
+INITIAL_POSE_TOPIC: "/initialpose"
+GOAL_POSE_TOPIC: "/goal_pose"
+WAYPOINT_FOLLOWER_ACTION: "/follow_waypoints"
