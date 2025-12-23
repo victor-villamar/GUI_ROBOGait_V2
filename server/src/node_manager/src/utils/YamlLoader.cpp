@@ -1,9 +1,9 @@
 #include <algorithm>
 #include <cctype>
 #include <iostream>
+#include <logs/Logs.hpp>
 
-#include "../../include/utils/YamlLoader.hpp"
-#include "logs/Logs.hpp"
+#include "utils/YamlLoader.hpp"
 
 using namespace ROBOGait::common;
 using namespace ROBOGait::loader;
@@ -74,14 +74,11 @@ bool YamlLoader::loadFromFile(const std::string& path)
   return true;
 }
 
-std::optional<ProcessConfig> YamlLoader::getProcess(const std::string& key, bool required) const
+std::optional<ProcessConfig> YamlLoader::getProcess(const std::string& key) const
 {
   if (!config_ || !config_["PROCESSES"] || !config_["PROCESSES"][key])
   {
-    if (required)
-    {
-      Logs::errorStream("[YamlLoader::getProcess] Process configuration for '" + key + "' not found in config.yaml");
-    }
+    Logs::errorStream("[YamlLoader::getProcess] Process configuration for '" + key + "' not found in config.yaml");
     return std::nullopt;
   }
 

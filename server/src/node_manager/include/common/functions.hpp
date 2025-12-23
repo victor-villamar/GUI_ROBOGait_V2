@@ -1,12 +1,6 @@
 #pragma once
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
-#include <filesystem>
 #include <string>
-
-#include "logs/Logs.hpp"
-
-using namespace ROBOGait::common::logs;
 
 namespace ROBOGait
 {
@@ -20,19 +14,21 @@ namespace functions
  * @param relative_path The relative path within the package
  * @return The full file path
  */
-inline std::string getFilePath(const std::string& package_name, const std::string& relative_path)
-{
-  const std::string share_path = ament_index_cpp::get_package_share_directory(package_name);
-  const std::string full_path = share_path + "/" + relative_path;
+std::string getFilePath(const std::string& package_name, const std::string& relative_path);
 
-  if (!std::filesystem::exists(full_path))
-  {
-    Logs::error("[YamlLoader::getFilePath] File does not exist: %s", full_path.c_str());
-    return "";
-  }
+/**
+ * @brief Replace spaces in a string with a special character
+ * @param name The input string
+ * @return The modified string with spaces replaced
+ */
+std::string replaceSpaces(const std::string& name);
 
-  return full_path;
-}
+/**
+ * @brief Delete map files (YAML and PGM) given the map path and name
+ * @param map_path The path to the maps directory
+ * @param map_name The name of the map
+ */
+void deleteMapFile(const std::string& map_path, const std::string& map_name);
 } // namespace functions
 } // namespace common
 } // namespace ROBOGait

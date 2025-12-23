@@ -1,14 +1,14 @@
 #include <chrono>
 #include <csignal>
 #include <iostream>
+#include <logs/Logs.hpp>
 #include <rclcpp/utilities.hpp>
 #include <sstream>
 #include <thread>
 
-#include "../include/ProcessController.hpp"
-#include "logs/Logs.hpp"
+#include "ProcessController.hpp"
 
-using namespace ROBOGait::controllers;
+using namespace ROBOGait::controller;
 using namespace ROBOGait::common;
 using namespace ROBOGait::common::logs;
 

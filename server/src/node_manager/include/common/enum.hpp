@@ -24,5 +24,18 @@ enum class WindowState
   MAXIMIZED = 1     /**< Window is maximized */
 };
 
+/**
+ * @brief Enum representing GUI requests for launching/stopping processes.
+ */
+enum class ProcessCommand
+{
+  START_MENU = 1,
+  REMOTE_CONTROLLED = 2,
+  DELETE_MAP = 3,
+  SAVE_MAP = 4,
+  INIT_BRINGUP = 5,
+  STOP_PROCESS = 6,
+  OPEN_DATABASE = 7,
+};
 } // namespace common
 } // namespace ROBOGait

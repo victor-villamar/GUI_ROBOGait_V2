@@ -1,15 +1,17 @@
 #include <chrono>
 #include <csignal>
 #include <iostream>
+#include <logs/Logs.hpp>
 #include <memory>
 #include <sstream>
 #include <thread>
 
-#include "../include/common/functions.hpp"
-#include "../include/utils/YamlLoader.hpp"
+#include "common/functions.hpp"
+#include "utils/YamlLoader.hpp"
 
 using namespace ROBOGait::loader;
 using namespace ROBOGait::common;
+using namespace ROBOGait::common::logs;
 
 // Global variables for cleanup
 std::unique_ptr<YamlLoader> g_yaml_loader;
@@ -53,7 +55,7 @@ void testLoadConfiguration()
 {
   std::cout << "\n--- Testing loadFromFile() ---" << std::endl;
 
-  const std::string config_path = functions::getFilePath("node_manager", "param/");
+  const std::string config_path = functions::getFilePath("node_manager", "config/");
 
   if (config_path.empty())
   {
@@ -225,7 +227,7 @@ void testInvalidProcess()
   std::cout << "\n--- Testing getProcess() with invalid key ---" << std::endl;
 
   const std::string invalid_key = "INVALID_PROCESS_KEY";
-  auto process_config = g_yaml_loader->getProcess(invalid_key, false);
+  auto process_config = g_yaml_loader->getProcess(invalid_key);
 
   if (!process_config)
   {
