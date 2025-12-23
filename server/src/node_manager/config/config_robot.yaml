@@ -16,6 +16,17 @@ PROCESSES:
       - "roverrobotics_driver"
       - "mini.launch.py"
     window_state: "maximized"
+  MAP_SAVER:
+    name: "map_saver"
+    executable: "ros2"
+    arguments:
+      - "run"
+      - "nav2_map_server"
+      - "map_saver_cli"
+      - "-t"
+      - "/map"
+      - "-f"
+    window_state: "maximized"
   TF_SERVICE:
     name: "tf_service"
     executable: "ros2"
