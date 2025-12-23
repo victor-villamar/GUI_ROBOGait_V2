@@ -1,25 +1,26 @@
-#include <boost/asio/signal_set.hpp>
 #include <filesystem>
-#include <rclcpp/rclcpp.hpp>
+#include <memory>
+#include <rclcpp/executors.hpp>
+#include <rclcpp/logging.hpp>
+#include <rclcpp/node.hpp>
 #include <thread>
+
+#include "include/NodeManager.hpp"
 
 int main(int argc, char* argv[])
 {
   rclcpp::init(argc, argv);
 
-  auto node = rclcpp::Node::make_shared("node_manager");
+  auto parent_node = rclcpp::Node::make_shared("node_manager");
 
-  boost::asio::io_context io_context;
+  ROBOGait::manager::NodeManager node_manager(parent_node.get());
+  if (!node_manager.init())
+  {
+    RCLCPP_ERROR(parent_node->get_logger(), "Failed to initialize NodeManager");
+    return 1;
+  }
 
-  // Al hacer control c que no de error y se cierre de forma segura
-  // When doing control c it does not give an error and closes safely
-  boost::asio::io_context io_context_signal_control;
-  boost::asio::signal_set signals(io_context_signal_control, SIGINT, SIGTERM);
-
-  // Ejecuta Boost.Asio en un hilo separado
-  std::thread boost_thread([&io_context_signal_control]() { io_context_signal_control.run(); });
-
-  rclcpp::spin(node);
+  rclcpp::spin(parent_node);
   rclcpp::shutdown();
   return 0;
 }

@@ -15,10 +15,12 @@ project(node_manager)
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(logs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
+find_package(interface_srv REQUIRED)
 
 #Include directories
 include_directories(
@@ -29,16 +31,20 @@ include_directories(
 
 # Add source files
 set(SOURCES
+    src/common/functions.cpp
     src/process/Process.cpp
     src/utils/YamlLoader.cpp
     src/NodeManager.cpp
     src/ProcessController.cpp
+    src/StateMachine.cpp
 )
 
 # Add dependencies
 set(DEPENDENCIES
+    ament_index_cpp
     rclcpp
     logs
+    interface_srv
 )
 
 # Create executable
@@ -62,6 +68,7 @@ add_executable(test_process_controller
 add_executable(test_yaml_loader
     test/test_yaml_loader.cpp
     src/utils/YamlLoader.cpp
+    src/common/functions.cpp
 )
 
 # Link libraries
