@@ -3,9 +3,9 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/process/args.hpp>
 #include <boost/process/search_path.hpp>
+#include <logs/Logs.hpp>
 
-#include "../../include/process/Process.hpp"
-#include "logs/Logs.hpp"
+#include "process/Process.hpp"
 
 using namespace ROBOGait::process;
 using namespace ROBOGait::common;

@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "../common/enum.hpp"
+#include "common/enum.hpp"
 
 namespace ROBOGait
 {

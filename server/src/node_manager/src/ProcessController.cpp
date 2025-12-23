@@ -1,17 +1,20 @@
 #include <iostream>
+#include <logs/Logs.hpp>
 #include <rclcpp/node.hpp>
 
-#include "../include/ProcessController.hpp"
+#include "ProcessController.hpp"
 
-#include "logs/Logs.hpp"
-
-using namespace ROBOGait::controllers;
+using namespace ROBOGait::controller;
 using namespace ROBOGait::common;
 using namespace ROBOGait::common::logs;
 
-ProcessController::ProcessController() {}
+ProcessController::ProcessController() { Logs::infoStream("[ProcessController::ProcessController] Creating ProcessController"); }
 
-ProcessController::~ProcessController() { stopAllProcesses(); }
+ProcessController::~ProcessController()
+{
+  Logs::infoStream("[ProcessController::~ProcessController] Destroying ProcessController");
+  stopAllProcesses();
+}
 
 bool ProcessController::isNodeRunning(const std::string& node_name)
 {

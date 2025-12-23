@@ -6,8 +6,8 @@
 #include <boost/process/child.hpp>
 #include <boost/process/group.hpp>
 
-#include "../common/enum.hpp"
 #include "ProcessInterface.hpp"
+#include "common/enum.hpp"
 namespace ROBOGait
 {
 namespace process

@@ -10,7 +10,7 @@
 
 namespace ROBOGait
 {
-namespace controllers
+namespace controller
 {
 /**
  * @brief Class for controlling multiple processes.
@@ -70,5 +70,5 @@ public:
 private:
   std::unordered_map<std::string, std::unique_ptr<ROBOGait::process::Process>> processMap; /**< Map of process names */
 };
-} // namespace controllers
+} // namespace controller
 } // namespace ROBOGait

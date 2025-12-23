@@ -1,13 +1,13 @@
 #include <chrono>
 #include <csignal>
 #include <iostream>
+#include <logs/Logs.hpp>
 #include <memory>
 #include <sstream>
 #include <thread>
 #include <vector>
 
-#include "../include/process/Process.hpp"
-#include "logs/Logs.hpp"
+#include "process/Process.hpp"
 
 using namespace ROBOGait::process;
 using namespace ROBOGait::common;
