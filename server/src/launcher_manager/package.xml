@@ -2,14 +2,12 @@
 <package format="3">
   <name>launcher_manager</name>
   <version>0.1.0</version>
-  <description>manega todas los nodos necesarios en el servidor para el gui de robogait</description>
+  <description>Manages the launch of the necessary nodes on the server for the robogait GUI</description>
 
-  <maintainer email="tu_email@example.com">Tu Nombre</maintainer>
+  <maintainer email="victorjosevillamar@gmail.com">Victor Jose Villamar</maintainer>
   <license>Apache-2.0</license>
 
-  <!-- Dependencias principales -->
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <buildtool_depend>rosidl_default_generators</buildtool_depend>
   
   <depend>rclcpp</depend>
   <depend>logs</depend>
@@ -17,11 +15,9 @@
   <depend>boost</depend>
   <depend>interface_srv</depend>
 
-  <!-- Dependencias opcionales para pruebas -->
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_test</test_depend>
 
-  <!-- Exportar información del paquete -->
   <export>
     <build_type>ament_cmake</build_type>
   </export>

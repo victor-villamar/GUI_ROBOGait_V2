@@ -49,7 +49,7 @@ set(DEPENDENCIES
 
 # Create executable
 add_executable(${PROJECT_NAME}
-    main.cpp
+    src/main.cpp
     ${SOURCES}
 )
 
