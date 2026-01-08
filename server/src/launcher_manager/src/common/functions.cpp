@@ -39,7 +39,7 @@ std::string replaceSpaces(const std::string& name)
   return modified_name;
 }
 
-void deleteMapFile(const std::string& map_path, const std::string& map_name)
+bool deleteMapFile(const std::string& map_path, const std::string& map_name)
 {
   const std::string encoded_name = replaceSpaces(map_name);
 
@@ -57,11 +57,13 @@ void deleteMapFile(const std::string& map_path, const std::string& map_name)
     else
     {
       Logs::error("[functions::deleteMapFile] Map file not found for deletion: %s", yaml.string().c_str());
+      return false;
     }
   }
   else
   {
     Logs::error("[functions::deleteMapFile] Error deleting map file: %s, error: %s", yaml.string().c_str(), ec.message().c_str());
+    return false;
   }
 
   bool pgm_removed = std::filesystem::remove(pgm, ec);
@@ -74,12 +76,16 @@ void deleteMapFile(const std::string& map_path, const std::string& map_name)
     else
     {
       Logs::error("[functions::deleteMapFile] Map file not found for deletion: %s", pgm.string().c_str());
+      return false;
     }
   }
   else
   {
     Logs::error("[functions::deleteMapFile] Error deleting map file: %s, error: %s", pgm.string().c_str(), ec.message().c_str());
+    return false;
   }
+
+  return true;
 }
 
 } // namespace functions

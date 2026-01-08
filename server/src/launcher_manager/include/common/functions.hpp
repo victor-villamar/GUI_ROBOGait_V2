@@ -27,8 +27,10 @@ std::string replaceSpaces(const std::string& name);
  * @brief Delete map files (YAML and PGM) given the map path and name
  * @param map_path The path to the maps directory
  * @param map_name The name of the map
+ *
+ * @return true if the map files were deleted successfully, false otherwise
  */
-void deleteMapFile(const std::string& map_path, const std::string& map_name);
+bool deleteMapFile(const std::string& map_path, const std::string& map_name);
 } // namespace functions
 } // namespace common
 } // namespace ROBOGait

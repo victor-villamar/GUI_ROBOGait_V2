@@ -260,15 +260,10 @@ bool StateMachine::handleRemoteControlledRequest(bool start)
     const std::string maps_path = yaml_loader_.getPathToMaps();
     if (!maps_path.empty())
     {
-      common::functions::deleteMapFile(maps_path, "temporal_map");
+      return common::functions::deleteMapFile(maps_path, "temporal_map");
     }
-
-    return true;
   }
 #endif
-
-  (void)start;
-  return true;
 }
 
 bool StateMachine::handleDeleteMapRequest(const std::string& map_name)
@@ -286,8 +281,7 @@ bool StateMachine::handleDeleteMapRequest(const std::string& map_name)
     return false;
   }
 
-  common::functions::deleteMapFile(maps_path, map_name);
-  return true;
+  return common::functions::deleteMapFile(maps_path, map_name);
 }
 
 bool StateMachine::handleSaveMapRequest(const std::string& map_name, bool start)
@@ -359,12 +353,8 @@ bool StateMachine::handleStopProcessesRequest(bool start)
   if (start)
   {
     reset();
-    return true;
   }
-  else
-  {
-    return false;
-  }
+  return true;
 }
 
 bool StateMachine::handleStartDatabaseRequest(bool start)
@@ -377,7 +367,7 @@ bool StateMachine::handleStartDatabaseRequest(bool start)
   else
   {
     closeServerDataBase();
-    return false;
+    return true;
   }
 }
 
