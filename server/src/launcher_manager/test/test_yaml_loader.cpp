@@ -55,7 +55,7 @@ void testLoadConfiguration()
 {
   std::cout << "\n--- Testing loadFromFile() ---" << std::endl;
 
-  const std::string config_path = functions::getFilePath("node_manager", "config/");
+  const std::string config_path = functions::getFilePath("launcher_manager", "config/");
 
   if (config_path.empty())
   {

@@ -40,6 +40,6 @@ node_manager/
 
 + **servidor.h servidor.cpp**: Donde se realiza la comunicacion con el cliente y el intercambio de mensajes.
 
-+ **NodeManager.h NodeManager.cpp**: Se trata de las carpeta donde se hacen todas las sucripciones a nodos o servicios o topic del programa.
++ **LauncherManager.hpp LauncherManager.cpp**: Se trata de las carpeta donde se hacen todas las sucripciones a nodos o servicios o topic del programa.
 
-+ **ProcessController.h ProcessController.cpp**: En estos archivos se ejecutan todos lo programas en segundo plano con un `fork`.
++ **ProcessController.hpp ProcessController.cpp**: En estos archivos se ejecutan todos lo programas en segundo plano con un `fork`.

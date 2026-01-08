@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>node_manager</name>
+  <name>launcher_manager</name>
   <version>0.1.0</version>
   <description>manega todas los nodos necesarios en el servidor para el gui de robogait</description>
 

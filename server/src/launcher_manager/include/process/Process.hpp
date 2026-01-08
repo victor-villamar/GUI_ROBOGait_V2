@@ -8,6 +8,7 @@
 
 #include "ProcessInterface.hpp"
 #include "common/enum.hpp"
+
 namespace ROBOGait
 {
 namespace process

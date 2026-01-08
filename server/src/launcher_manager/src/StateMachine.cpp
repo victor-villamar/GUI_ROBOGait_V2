@@ -92,7 +92,7 @@ void StateMachine::stopRobot()
   //   if (!tf_service_client_)
   //   {
   //     tf_service_client_.reset();
-  //     RCLCPP_INFO(node_manager->get_logger(), "Close Robot Pose Client destroy.");
+  //     RCLCPP_INFO(launcher_manager->get_logger(), "Close Robot Pose Client destroy.");
   //   }
 
   if (start_robot_launch_file)
