@@ -13,7 +13,7 @@ namespace manager
 /**
  * @brief Class for managing ROS2 nodes and related processes.
  */
-class NodeManager
+class LauncherManager
 {
 public:
   /**
@@ -21,22 +21,22 @@ public:
    *
    * @param parent_node Pointer to the parent ROS2 node
    */
-  NodeManager(rclcpp::Node* parent_node);
+  LauncherManager(rclcpp::Node* parent_node);
 
   /**
    * @brief Destroy the Node Manager object
    */
-  ~NodeManager();
+  ~LauncherManager();
 
   /**
    * @brief Deleted copy constructor to prevent copying
    */
-  NodeManager(const NodeManager&) = delete;
+  LauncherManager(const LauncherManager&) = delete;
 
   /**
    * @brief Deleted assignment operator to prevent copying
    */
-  NodeManager& operator=(const NodeManager&) = delete;
+  LauncherManager& operator=(const LauncherManager&) = delete;
 
   /**
    * @brief Initialize the Node Manager

@@ -6,7 +6,7 @@
 
 // clang-format off
 /** Node names */
-#define NODE_MANAGER_NODE_NAME                     "node_manager"
+#define LAUNCHER_MANAGER_NODE_NAME                     "launcher_manager"
 // clang-format on
 
 #define SERVICE_CALL_TIMEOUT std::chrono::seconds(2)

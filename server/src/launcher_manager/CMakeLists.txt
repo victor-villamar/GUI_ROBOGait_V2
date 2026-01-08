@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Project name
-project(node_manager)
+project(launcher_manager)
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
@@ -34,7 +34,7 @@ set(SOURCES
     src/common/functions.cpp
     src/process/Process.cpp
     src/utils/YamlLoader.cpp
-    src/NodeManager.cpp
+    src/LauncherManager.cpp
     src/ProcessController.cpp
     src/StateMachine.cpp
 )
@@ -49,7 +49,7 @@ set(DEPENDENCIES
 
 # Create executable
 add_executable(${PROJECT_NAME}
-    main.cpp
+    src/main.cpp
     ${SOURCES}
 )
 

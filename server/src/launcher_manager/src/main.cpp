@@ -5,18 +5,18 @@
 #include <rclcpp/node.hpp>
 #include <thread>
 
-#include "include/NodeManager.hpp"
+#include "LauncherManager.hpp"
 
 int main(int argc, char* argv[])
 {
   rclcpp::init(argc, argv);
 
-  auto parent_node = rclcpp::Node::make_shared("node_manager");
+  auto parent_node = rclcpp::Node::make_shared("launcher_manager");
 
-  ROBOGait::manager::NodeManager node_manager(parent_node.get());
-  if (!node_manager.init())
+  ROBOGait::manager::LauncherManager launcher_manager(parent_node.get());
+  if (!launcher_manager.init())
   {
-    RCLCPP_ERROR(parent_node->get_logger(), "Failed to initialize NodeManager");
+    RCLCPP_ERROR(parent_node->get_logger(), "Failed to initialize LauncherManager");
     return 1;
   }
 
