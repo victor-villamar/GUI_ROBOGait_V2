@@ -13,6 +13,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Project name
 project(launcher_manager)
 
+# Launch processes inside xfce4-terminal.
+# When OFF, processes are launched headless in the background.
+option(TERMINAL "Launch processes in xfce4-terminal" OFF)
+
 # Find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
@@ -71,14 +75,17 @@ add_executable(test_yaml_loader
     src/common/functions.cpp
 )
 
+if(TERMINAL)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE TERMINAL)
+  target_compile_definitions(test_process PRIVATE TERMINAL)
+  target_compile_definitions(test_process_controller PRIVATE TERMINAL)
+endif()
+
 # Link libraries
 target_link_libraries(${PROJECT_NAME}
     yaml-cpp
     ${Boost_LIBRARIES}
 )
-
-# target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
-
 
 target_link_libraries(test_process
     ${Boost_LIBRARIES}
