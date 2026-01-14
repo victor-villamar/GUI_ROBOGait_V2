@@ -50,3 +50,6 @@ log/
 
 # clang-format configuration file
 .clang-format
+
+# qtcreator
+.qtcreator/
