@@ -7,15 +7,15 @@ Rectangle {
     color: "#518bb7"
     property alias home: home
     property alias robot_connection: robot_connection
-    property alias register_page: register_page
-    property alias menu_app: menu_app
-    property alias select_patient: select_patient
-    property alias register_patient: register_patient
-    property alias select_map: select_map
-    property alias register_map: register_map
-    property alias create_map: create_map
-    property alias manualControl: manualControl
-    property alias map_path: map_path
+    // property alias register_page: register_page
+    // property alias menu_app: menu_app
+    // property alias select_patient: select_patient
+    // property alias register_patient: register_patient
+    // property alias select_map: select_map
+    // property alias register_map: register_map
+    // property alias create_map: create_map
+    // property alias manualControl: manualControl
+    // property alias map_path: map_path
 
     property string previousState: ""
     property alias mystackview: mystackview
@@ -89,64 +89,64 @@ Rectangle {
             visible: true
         }
     }
-    Component {
-        id: register_page
-        RegisterPage {
-            visible: true
-            // anchors.fill: parent
-        }
-    }
-    Component {
-        id: menu_app
-        MainMenu {
-            visible: true
-        }
-    }
-    Component {
-        id: manualControl
-        ManualControl {
-            // visible_value: applicationFlow.visible_image
-            // visible: true
-            // visible_save: applicationFlow.visible_save
-            // type_save: applicationFlow.type_save
-        }
-    }
-    Component {
-        id: select_patient
-        SelectPatient {
-            visible: true
-        }
-    }
-    Component {
-        id: register_patient
-        RegisterPatient {
-            visible: true
-        }
-    }
-    Component {
-        id: select_map
-        SelectMap {
-            visible: true
-        }
-    }
-    Component {
-        id: register_map
-        RegisterMap{
-            visible: true
-        }
-    }
-    Component {
-        id: create_map
-        CreateMap{
-            visible: true
-        }
-    }
-    Component {
-        id: map_path
-        MapPage {
-            visible: true
-        }
-    }
+    // Component {
+    //     id: register_page
+    //     RegisterPage {
+    //         visible: true
+    //         // anchors.fill: parent
+    //     }
+    // }
+    // Component {
+    //     id: menu_app
+    //     MainMenu {
+    //         visible: true
+    //     }
+    // }
+    // Component {
+    //     id: manualControl
+    //     ManualControl {
+    //         // visible_value: applicationFlow.visible_image
+    //         // visible: true
+    //         // visible_save: applicationFlow.visible_save
+    //         // type_save: applicationFlow.type_save
+    //     }
+    // }
+    // Component {
+    //     id: select_patient
+    //     SelectPatient {
+    //         visible: true
+    //     }
+    // }
+    // Component {
+    //     id: register_patient
+    //     RegisterPatient {
+    //         visible: true
+    //     }
+    // }
+    // Component {
+    //     id: select_map
+    //     SelectMap {
+    //         visible: true
+    //     }
+    // }
+    // Component {
+    //     id: register_map
+    //     RegisterMap{
+    //         visible: true
+    //     }
+    // }
+    // Component {
+    //     id: create_map
+    //     CreateMap{
+    //         visible: true
+    //     }
+    // }
+    // Component {
+    //     id: map_path
+    //     MapPage {
+    //         visible: true
+    //     }
+    // }
 }
 
 /*##^##
