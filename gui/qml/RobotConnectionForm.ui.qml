@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import RobotDiscovery 1.0
 import "extras"
 
 Item {
@@ -92,13 +93,94 @@ Item {
             }
         }
 
+        Item {
+            id: robotsPanel
+            width: scrollView.width
+            anchors.top: scrollView.bottom
+            anchors.topMargin: 12
+            anchors.bottom: buttonSearchRobot.top
+            anchors.bottomMargin: 12
+            anchors.horizontalCenter: parent.horizontalCenter
+            clip: true
+
+            Column {
+                anchors.fill: parent
+                spacing: 8
+                Text {
+                        text: qsTr("ROBOTS DETECTADOS")
+                        color: "#00C8FF"
+                        font.pixelSize: 18
+                        font.bold: true
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                }
+
+                Text {
+                    text:
+                        rosManager.robotDiscovery.state === RobotDiscovery.NO_NODE ? qsTr("ROS2: node not ready") :
+                        rosManager.robotDiscovery.state === RobotDiscovery.SCANNING ? qsTr("Searching...") :
+                        rosManager.robotDiscovery.state === RobotDiscovery.NO_ROBOTS ? qsTr("No robots found") :
+                        rosManager.robotDiscovery.state === RobotDiscovery.ROBOTS_FOUND ? qsTr("Robots found") :
+                        rosManager.robotDiscovery.state === RobotDiscovery.ERROR ? qsTr("Error") :
+                        ""
+                    color: "#ffffff"
+                    font.pixelSize: 14
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: Math.max(0, parent.height - 60)
+                    color: "transparent"
+                    border.color: "#ffffff"
+                    border.width: 1
+                    radius: 6
+                    clip: true
+
+                    Flickable {
+                        anchors.fill: parent
+                        contentWidth: width
+                        contentHeight: robotsColumn.implicitHeight
+                        clip: true
+
+                        Column {
+                            id: robotsColumn
+                            width: parent.width
+                            spacing: 6
+                            padding: 10
+
+                            Repeater {
+                                model: rosManager.robotDiscovery.robots
+                                delegate: Text {
+                                    text: modelData
+                                    color: "#ffffff"
+                                    font.pixelSize: 16
+                                    width: parent.width
+                                    elide: Text.ElideRight
+                                }
+                            }
+
+                            Text {
+                                text: qsTr("(sin robots)")
+                                color: "#ffffff"
+                                font.pixelSize: 16
+                                visible: rosManager.robotDiscovery.robots.length === 0
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         // Botón
         Button {
             id: buttonSearchRobot
             height: 52
-            anchors.top: scrollView.bottom
-            anchors.topMargin: parent.height < 600 ? 20 : 40
+            // anchors.top: scrollView.bottom
+            // anchors.topMargin: parent.height < 600 ? 20 : 40
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: parent.height < 600 ? 20 : 40
             anchors.horizontalCenter: parent.horizontalCenter
             width: contentItem.implicitWidth + 20
 

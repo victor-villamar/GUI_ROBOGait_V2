@@ -3,7 +3,7 @@ import "extras"
 
 RobotConnectionForm {
     buttonSearchRobot{
-        onClicked:  stringHandler.searchRobotIp()
+        onClicked:  rosManager.robotDiscovery.startScanning()
     }
 
     InformationRectangle {
@@ -11,6 +11,7 @@ RobotConnectionForm {
         anchors.centerIn: parent
         infoRectangleText.text: ""
     }
+    Component.onDestruction: rosManager.robotDiscovery.stopScanning()
     Connections {
         target: stringHandler
         function onStrFindRobotChanged() {
@@ -19,7 +20,7 @@ RobotConnectionForm {
             if (!infoPopup.__connectedToClick) {
                 infoPopup.__connectedToClick = true
                 infoPopup.infoRectangleMouseArea.clickedFromPopup.connect(function() {
-                    applicationFlow.register_page_push()
+                    // applicationFlow.register_page_push()
                 })
             }
         }
