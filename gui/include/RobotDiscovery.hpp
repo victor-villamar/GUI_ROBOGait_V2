@@ -4,6 +4,7 @@
 #include <QStringList>
 #include <QTimer>
 #include <rclcpp/node.hpp>
+#include <string>
 #include <vector>
 
 namespace ROBOTGait
@@ -72,7 +73,8 @@ private:
   void setIsScanning(bool is_scanning);
   void setState(State state);
   void updateFromGraph();
-  static QStringList computeRobotNamespaces(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces);
+  static QStringList computeRobotNamespaces(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
+                                            const std::string& self_node_name);
 
   rclcpp::Node* parent_node_;
   QStringList robots_;

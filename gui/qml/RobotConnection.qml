@@ -3,7 +3,9 @@ import "extras"
 
 RobotConnectionForm {
     buttonSearchRobot{
-        onClicked:  rosManager.robotDiscovery.startScanning()
+        onClicked: {
+            rosManager.robotDiscovery.startScanning()
+        }
     }
 
     InformationRectangle {
@@ -11,7 +13,9 @@ RobotConnectionForm {
         anchors.centerIn: parent
         infoRectangleText.text: ""
     }
+
     Component.onDestruction: rosManager.robotDiscovery.stopScanning()
+
     Connections {
         target: stringHandler
         function onStrFindRobotChanged() {
@@ -25,6 +29,5 @@ RobotConnectionForm {
             }
         }
     }
-
 }
 

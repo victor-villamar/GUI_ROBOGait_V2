@@ -41,6 +41,7 @@ void RobotDiscovery::setROSNode(rclcpp::Node* node)
     setState(State::NO_NODE);
     return;
   }
+
   parent_node_ = node;
 }
 
@@ -74,9 +75,19 @@ void RobotDiscovery::startScanning()
 
 void RobotDiscovery::stopScanning()
 {
+  if (!is_scanning_ && !poll_timer_.isActive())
+  {
+    qInfo() << "[RobotDiscovery::stopScanning] Scanning is already stopped";
+    return;
+  }
+
   poll_timer_.stop();
   setIsScanning(false);
-  setState(State::IDLE);
+
+  if (state_ == State::SCANNING || state_ == State::ROBOTS_FOUND)
+  {
+    setState(State::IDLE);
+  }
 }
 
 void RobotDiscovery::refreshOnce()
@@ -131,18 +142,22 @@ void RobotDiscovery::updateFromGraph()
   try
   {
     const auto nodes = parent_node_->get_node_graph_interface()->get_node_names_and_namespaces();
-    const QStringList robots = computeRobotNamespaces(nodes);
+    const auto node_name = parent_node_->get_name();
+    const QStringList robots = computeRobotNamespaces(nodes, node_name);
 
     setRobots(robots);
 
     if (robots.isEmpty())
     {
-      setState(State::NO_ROBOTS);
+      if (state_ == State::ROBOTS_FOUND)
+      {
+        setState(State::NO_ROBOTS);
+        stopScanning();
+      }
+      return;
     }
-    else
-    {
-      setState(State::ROBOTS_FOUND);
-    }
+
+    setState(State::ROBOTS_FOUND);
   }
   catch (const std::exception& e)
   {
@@ -152,7 +167,8 @@ void RobotDiscovery::updateFromGraph()
   }
 }
 
-QStringList RobotDiscovery::computeRobotNamespaces(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces)
+QStringList RobotDiscovery::computeRobotNamespaces(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
+                                                   const std::string& self_node_name)
 {
   QSet<QString> namespaces;
 
@@ -163,24 +179,33 @@ QStringList RobotDiscovery::computeRobotNamespaces(const std::vector<std::pair<s
       continue;
     }
 
+    if (name == self_node_name)
+    {
+      continue;
+    }
+
     QString ns_qstr = QString::fromStdString(ns).trimmed();
+
+    // Ignore empty namespaces
     if (ns_qstr.isEmpty() || ns_qstr == "/")
     {
       continue;
     }
 
+    // Ignore non-canonical namespaces
     if (!ns_qstr.startsWith('/'))
     {
       continue;
     }
 
     const QStringList parts = ns_qstr.split('/', Qt::SkipEmptyParts);
+
     if (parts.isEmpty())
     {
       continue;
     }
 
-    namespaces.insert("/" + parts.first());
+    namespaces.insert(parts.first());
   }
 
   QStringList out = namespaces.values();
