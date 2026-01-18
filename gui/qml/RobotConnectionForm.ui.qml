@@ -9,6 +9,11 @@ Item {
     property alias background: background
     property bool showDiscoveryPanel : rosManager.robotDiscovery.state === RobotDiscovery.SCANNING ||
                                        rosManager.robotDiscovery.state === RobotDiscovery.ROBOTS_FOUND
+    property int selectedRobotIndex: -1
+    property int pendingRobotIndex: -1
+    property string selectedRobotName: ""
+    property string selectedRobotNamespace: ""
+
 
     Rectangle {
         id: background
@@ -126,9 +131,9 @@ Item {
                     border.color: "#045671"
                     border.width: 2
 
-                    // Animación solo para el cambio de color
+                    // Animation only for color change
                     Behavior on color {
-                        ColorAnimation { duration: 100 }  // Duración muy corta para respuesta inmediata
+                        ColorAnimation { duration: 100 }  // Very short duration for immediate response
                     }
                 }
 
@@ -187,8 +192,10 @@ Item {
                     }
 
                     Rectangle {
-                        width: parent.width
-                        height: Math.max(0, parent.height - 60)
+                        id: robotsListBox
+                        width: Math.min(parent.width, 460)
+                        height: Math.min(robotsGrid.implicitHeight + 20, parent.height - 60)
+                        anchors.horizontalCenter: parent.horizontalCenter
                         color: "transparent"
                         border.color: "#ffffff"
                         border.width: 1
@@ -199,23 +206,86 @@ Item {
                         Flickable {
                             anchors.fill: parent
                             contentWidth: width
-                            contentHeight: robotsColumn.implicitHeight
+                            contentHeight: robotsGrid.implicitHeight
                             clip: true
 
-                            Column {
-                                id: robotsColumn
+                            ScrollBar.vertical: ScrollBar {
+                                policy: ScrollBar.AsNeeded
+                            }
+
+                            ScrollBar.horizontal: ScrollBar {
+                                policy: ScrollBar.AlwaysOff
+                            }
+
+                            Grid {
+                                id: robotsGrid
                                 width: parent.width
-                                spacing: 6
-                                padding: 10
+                                columns: 2
+                                columnSpacing: 12
+                                rowSpacing: 10
+                                padding: 4
 
                                 Repeater {
                                     model: rosManager.robotDiscovery.robots
-                                    delegate: Text {
-                                        text: modelData
-                                        color: "#ffffff"
-                                        font.pixelSize: 16
-                                        width: parent.width
-                                        elide: Text.ElideRight
+                                    delegate: Rectangle {
+                                        id: robotItem
+                                        height: 52
+                                        radius: 14
+
+                                        property bool selected: root.pendingRobotIndex === index
+  
+                                        color: selected ? "#ffffff" : "#a9cfe8"
+                                        border.color: selected ? "#00C8FF" : "#ffffff"
+                                        border.width: 2
+                                        width: Math.min(parent.width, Math.max(220,contentRow.implicitWidth + 30))
+
+                                        Row {
+                                            id: contentRow
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: 10
+                                            spacing: 45
+                                            
+                                            Rectangle {
+                                                id: robotIcon
+                                                width: 70
+                                                height: 42
+                                                radius: 10
+                                                clip: true
+                                                color: robotLabel.color
+                                                border.color: "#ffffff"
+                                                border.width: 1
+
+                                                Image {
+                                                    anchors.centerIn: parent
+                                                    width: 40
+                                                    height: 40
+                                                    source: "qrc:/gui/images/robot/robot.png"
+                                                    fillMode: Image.PreserveAspectFit
+                                                    smooth: true
+                                                }
+                                            }
+
+
+                                            Text {
+                                                id: robotLabel
+                                                text: modelData
+                                                color: "#4f86b4"
+                                                font.pixelSize: 16
+                                                font.bold: true
+                                                elide: Text.ElideRight
+                                                verticalAlignment: Text.AlignVCenter
+                                                anchors.verticalCenter: robotIcon.verticalCenter
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: {
+                                                root.pendingRobotIndex = index
+                                                confirmDialog.openForRobot(modelData)
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -223,6 +293,30 @@ Item {
                     }
                 }
             }
+        }
+    }
+
+    ConfirmationDialog {
+        id: confirmDialog
+        anchors.centerIn: parent
+
+        onAccepted: {
+            if(root.pendingRobotIndex < 0)
+            {
+                return
+            }
+
+            root.selectedRobotIndex = root.pendingRobotIndex
+            root.selectedRobotName = rosManager.robotDiscovery.robots[root.pendingRobotIndex]
+            root.selectedRobotNamespace = rosManager.robotDiscovery.namespaceForIndexSelected(root.pendingRobotIndex)
+            root.pendingRobotIndex = -1
+        }
+
+        onRejected: {
+            root.pendingRobotIndex = -1
+            root.selectedRobotIndex = -1
+            root.selectedRobotName = ""
+            root.selectedRobotNamespace = ""
         }
     }
 }

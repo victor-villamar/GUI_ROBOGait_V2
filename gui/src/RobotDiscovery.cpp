@@ -1,14 +1,20 @@
 #include <QDebug>
 #include <QSet>
-#include <algorithm>
 #include <rclcpp/node_interfaces/node_graph_interface.hpp>
+#include <utility>
 
 #include "RobotDiscovery.hpp"
 
 using namespace ROBOTGait::discovery;
 
 RobotDiscovery::RobotDiscovery() :
-    parent_node_(nullptr), robots_(QStringList()), is_scanning_(false), state_(State::IDLE), poll_interval_(1000), poll_timer_(this)
+    parent_node_(nullptr),
+    robots_(QStringList()),
+    robots_namespaces_(QStringList()),
+    is_scanning_(false),
+    state_(State::IDLE),
+    poll_interval_(1000),
+    poll_timer_(this)
 {
   poll_timer_.setInterval(poll_interval_);
   poll_timer_.setSingleShot(false);
@@ -37,7 +43,7 @@ void RobotDiscovery::setROSNode(rclcpp::Node* node)
   {
     qCritical() << "[RobotDiscovery::setROSNode] No valid ROS node provided";
     stopScanning();
-    setRobots(QStringList());
+    setRobots(QStringList(), QStringList());
     setState(State::NO_NODE);
     return;
   }
@@ -60,13 +66,13 @@ void RobotDiscovery::startScanning()
   if (parent_node_ == nullptr)
   {
     qCritical() << "[RobotDiscovery::startScanning] No valid ROS node available";
-    setRobots(QStringList{});
+    setRobots(QStringList{}, QStringList{});
     setIsScanning(false);
     setState(State::NO_NODE);
     return;
   }
 
-  setRobots(QStringList{});
+  setRobots(QStringList{}, QStringList{});
   setIsScanning(true);
   setState(State::SCANNING);
   updateFromGraph();
@@ -90,25 +96,14 @@ void RobotDiscovery::stopScanning()
   }
 }
 
-void RobotDiscovery::refreshOnce()
-{
-  if (parent_node_ == nullptr)
-  {
-    qCritical() << "[RobotDiscovery::refreshOnce] No valid ROS node available";
-    setRobots(QStringList{});
-    setIsScanning(false);
-    setState(State::NO_NODE);
-    return;
-  }
+QString RobotDiscovery::namespaceForIndexSelected(int index) const { return robots_namespaces_.value(index); }
 
-  updateFromGraph();
-}
-
-void RobotDiscovery::setRobots(const QStringList& robots)
+void RobotDiscovery::setRobots(const QStringList& robots, const QStringList& robot_namespaces)
 {
-  if (robots_ != robots)
+  if (robots_ != robots || robots_namespaces_ != robot_namespaces)
   {
     robots_ = robots;
+    robots_namespaces_ = robot_namespaces;
     emit robotsChanged();
   }
 }
@@ -143,9 +138,9 @@ void RobotDiscovery::updateFromGraph()
   {
     const auto nodes = parent_node_->get_node_graph_interface()->get_node_names_and_namespaces();
     const auto node_name = parent_node_->get_name();
-    const QStringList robots = computeRobotNamespaces(nodes, node_name);
+    const auto [robots, robot_namespaces] = computeRobotsListFromGraph(nodes, node_name);
 
-    setRobots(robots);
+    setRobots(robots, robot_namespaces);
 
     if (robots.isEmpty())
     {
@@ -162,13 +157,14 @@ void RobotDiscovery::updateFromGraph()
   catch (const std::exception& e)
   {
     qCritical() << "[RobotDiscovery::updateFromGraph] Exception occurred: " << e.what() << ", graph update aborted";
-    setRobots(QStringList{});
+    setRobots(QStringList{}, QStringList{});
     setState(State::ERROR);
   }
 }
 
-QStringList RobotDiscovery::computeRobotNamespaces(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
-                                                   const std::string& self_node_name)
+std::pair<QStringList, QStringList>
+RobotDiscovery::computeRobotsListFromGraph(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
+                                           const std::string& self_node_name)
 {
   QSet<QString> namespaces;
 
@@ -205,10 +201,46 @@ QStringList RobotDiscovery::computeRobotNamespaces(const std::vector<std::pair<s
       continue;
     }
 
-    namespaces.insert(parts.first());
+    const QString namespace_real = "/" + parts.first();
+
+    namespaces.insert(namespace_real);
   }
 
-  QStringList out = namespaces.values();
-  out.sort();
-  return out;
+  return buildRobotsListFromNamespaces(namespaces);
+}
+
+std::pair<QStringList, QStringList> RobotDiscovery::buildRobotsListFromNamespaces(const QSet<QString>& namespaces)
+{
+  std::vector<std::pair<QString, QString>> robots;
+
+  robots.reserve(namespaces.size());
+
+  for (const auto& ns : namespaces)
+  {
+    QString robot_display = ns;
+
+    if (robot_display.startsWith('/'))
+    {
+      robot_display.remove(0, 1);
+    }
+
+    robot_display.replace("_", " ");
+    robots.emplace_back(robot_display, ns);
+  }
+
+  std::sort(robots.begin(), robots.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
+
+  QStringList display_list;
+  QStringList namespace_list;
+
+  display_list.reserve(static_cast<int>(robots.size()));
+  namespace_list.reserve(static_cast<int>(robots.size()));
+
+  for (const auto& [display, ns] : robots)
+  {
+    display_list.append(display);
+    namespace_list.append(ns);
+  }
+
+  return {display_list, namespace_list};
 }

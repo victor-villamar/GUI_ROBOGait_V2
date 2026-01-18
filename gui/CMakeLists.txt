@@ -94,6 +94,7 @@ qt_add_qml_module(appgui
     # qml/extras/SignIn.qml
     # qml/extras/SignInForm.ui.qml
     qml/extras/InformationRectangle.qml
+    qml/extras/ConfirmationDialog.qml
     qml/extras/ConfigurationMenu.qml
     qml/extras/CustomBottomBar.qml
     qml/extras/CustomBottomBarForm.ui.qml

@@ -60,7 +60,7 @@ public:
 
   Q_INVOKABLE void startScanning();
   Q_INVOKABLE void stopScanning();
-  Q_INVOKABLE void refreshOnce();
+  Q_INVOKABLE QString namespaceForIndexSelected(int index) const;
 
 signals:
   void robotsChanged();
@@ -69,15 +69,17 @@ signals:
   void pollIntervalChanged();
 
 private:
-  void setRobots(const QStringList& robots);
+  void setRobots(const QStringList& displayRobots, const QStringList& robot_namespaces);
   void setIsScanning(bool is_scanning);
   void setState(State state);
   void updateFromGraph();
-  static QStringList computeRobotNamespaces(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
-                                            const std::string& self_node_name);
+  static std::pair<QStringList, QStringList> computeRobotsListFromGraph(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
+                                                                        const std::string& self_node_name);
+  static std::pair<QStringList, QStringList> buildRobotsListFromNamespaces(const QSet<QString>& namespaces);
 
   rclcpp::Node* parent_node_;
   QStringList robots_;
+  QStringList robots_namespaces_;
   bool is_scanning_;
   State state_;
   int poll_interval_;
