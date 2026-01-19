@@ -9,12 +9,14 @@ Dialog {
 
     width: parent ? Math.min(560, parent.width * 0.80) : 560
 
-    property string robotName: ""
     property string message: ""
+    property string acceptText: qsTr("Aceptar")
+    property bool holdToAccept: true
+    property int acceptHoldMs: 900
 
-    function openForRobot(name) {
-        robotName = name
-        message = ""
+    function openWithMessage(messageText) 
+    {
+        message = messageText
         open()
     }
 
@@ -47,10 +49,7 @@ Dialog {
                 color: "#4f86b4"
                 font.pixelSize: 16
                 font.bold: true
-                text: root.message !== ""
-                      ? root.message
-                      : (qsTr("Se ha seleccionado ") + root.robotName +
-                         qsTr(".\n¿Está seguro que quiere conectarse a este robot?"))
+                text: root.message
             }
         }
     }
@@ -83,22 +82,50 @@ Dialog {
                 verticalAlignment: Text.AlignVCenter
             }
 
-            onClicked: root.reject()
+            onClicked: {
+                holdAnimation.stop()
+                acceptButton.holdProgress = 0
+                root.reject()
+            }
         }
 
         Button {
             id: acceptButton
             width: (footerRow.width - footerRow.padding * 2 - footerRow.spacing) / 2
             height: 44
-            text: qsTr("Aceptar")
+            text: root.acceptText
+
+            property real holdProgress: 0
+
+            NumberAnimation {
+                id: holdAnimation
+                target: acceptButton
+                property: "holdProgress"
+                from: 0
+                to: 1
+                duration: root.acceptHoldMs
+                onFinished: root.accept()
+            }
 
             background: Rectangle {
-                color: acceptButton.down ? "#00C8FF" : "#ffffff"
+                id: acceptButtonBackground
+                color: "#ffffff"
                 radius: 8
                 border.color: "#045671"
                 border.width: 2
-                Behavior on color { ColorAnimation { duration: 100 } }
+                clip: true
+
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    color: "#00C8FF"
+                    width: parent.width * acceptButton.holdProgress
+                    radius: acceptButtonBackground.radius
+                    antialiasing: true
+                }
             }
+
             contentItem: Label {
                 text: acceptButton.text
                 color: "#045671"
@@ -108,7 +135,43 @@ Dialog {
                 verticalAlignment: Text.AlignVCenter
             }
 
-            onClicked: root.accept()
+            onPressed: {
+                if(!root.holdToAccept)
+                {
+                    return
+                }
+
+                holdAnimation.stop()
+                acceptButton.holdProgress = 0
+                holdAnimation.start()
+            }
+
+            onReleased: {
+                if(!root.holdToAccept)
+                {
+                    return
+                }
+
+                holdAnimation.stop()
+                acceptButton.holdProgress = 0
+            }
+
+            onCanceled: {
+                if(!root.holdToAccept)
+                {
+                    return
+                }
+
+                holdAnimation.stop()
+                acceptButton.holdProgress = 0
+            }
+
+            onClicked: {
+                if(!root.holdToAccept)
+                {
+                    root.accept()
+                }
+            }
         }
     }
 }
