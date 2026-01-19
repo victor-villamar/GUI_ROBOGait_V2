@@ -10,7 +10,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network)
+find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 qt_add_executable(appgui
     src/main.cpp
@@ -24,6 +26,7 @@ qt_add_executable(appgui
     src/NetworkDDBB.cpp
     src/RobotDiscovery.cpp
     src/RosNodeManager.cpp
+    src/RobotManager.cpp
 
 
     include/StringHandler.h
@@ -36,10 +39,14 @@ qt_add_executable(appgui
     include/NetworkDDBB.h
     include/RobotDiscovery.hpp
     include/RosNodeManager.hpp
+    include/TopicsName.hpp
+    include/RobotManager.hpp
+    include/Define.hpp
 )
 
 target_include_directories(appgui PRIVATE
     include
+    ${geometry_msgs_INCLUDE_DIRS}
 )
 
 qt_add_qml_module(appgui
@@ -54,6 +61,7 @@ qt_add_qml_module(appgui
     qml/HomeForm.ui.qml
     qml/RobotConnection.qml
     qml/RobotConnectionForm.ui.qml
+    qml/RobotCmdVel.qml
 
     # qml/MainMenuForm.ui.qml
     # qml/MainMenu.qml
@@ -172,8 +180,15 @@ target_link_libraries(appgui PRIVATE
     Qt6::Quick
     Qt6::Network
     rclcpp::rclcpp
+    ${geometry_msgs_LIBRARIES}
     ${OpenCV_LIBS}
 )
+
+# if(TARGET geometry_msgs::geometry_msgs__rosidl_generator_cpp)
+#   target_link_libraries(appgui PRIVATE
+#     geometry_msgs::geometry_msgs__rosidl_generator_cpp
+#   )
+# endif()
 
 # if (ANDROID)
 #     # Define las rutas de los íconos
@@ -194,3 +209,5 @@ install(TARGETS appgui
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(DIRECTORY qml DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+ament_package()
