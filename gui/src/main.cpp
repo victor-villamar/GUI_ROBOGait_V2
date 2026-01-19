@@ -1,8 +1,12 @@
 #include <QGuiApplication>
+#include <QMetaType>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
+#include <geometry_msgs/msg/twist.hpp>
+
 #include "RobotDiscovery.hpp"
+#include "RobotManager.hpp"
 #include "RosNodeManager.hpp"
 
 #include "../include/StringHandler.h"
@@ -29,10 +33,11 @@ int main(int argc, char* argv[])
   }
 
   // ROS manager
-  ROBOTGait::manager::RosNodeManager rosNodeManager;
+  ROBOGait::manager::RosNodeManager rosNodeManager;
   rosNodeManager.initialize(argc, argv);
 
-  qmlRegisterUncreatableType<ROBOTGait::discovery::RobotDiscovery>("RobotDiscovery", 1, 0, "RobotDiscovery", "Enums Only");
+  qmlRegisterUncreatableType<ROBOGait::discovery::RobotDiscovery>("RobotDiscovery", 1, 0, "RobotDiscovery", "Enums Only");
+  qRegisterMetaType<geometry_msgs::msg::Twist>("geometry_msgs::msg::Twist");
 
   Cliente cliente(45454);
   StringHandler stringHandler;

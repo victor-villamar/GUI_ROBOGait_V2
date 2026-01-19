@@ -2,13 +2,20 @@
 
 #include "RosNodeManager.hpp"
 
-using namespace ROBOTGait::manager;
+using namespace ROBOGait::manager;
 
 RosNodeManager::RosNodeManager() :
-    node_name_("ros_node_manager"), ros_node_(nullptr), executor_(nullptr), is_running_(false), robot_discovery_(nullptr), spin_thread_()
+    node_name_("ros_node_manager"),
+    ros_node_(nullptr),
+    executor_(nullptr),
+    spin_thread_(),
+    robot_discovery_(nullptr),
+    robot_manager_(nullptr),
+    is_running_(false)
 {
   qInfo() << "[RosNodeManager::RosNodeManager] Create RosNodeManager";
   robot_discovery_ = std::make_unique<RobotDiscovery>();
+  robot_manager_ = std::make_unique<RobotManager>();
 }
 
 RosNodeManager::~RosNodeManager()
@@ -39,6 +46,8 @@ void RosNodeManager::setNodeName(const QString& name)
 
 RobotDiscovery* RosNodeManager::getRobotDiscovery() const { return robot_discovery_.get(); }
 
+RobotManager* RosNodeManager::getRobotManager() const { return robot_manager_.get(); }
+
 void RosNodeManager::initialize(int argc, char** argv)
 {
   if (is_running_)
@@ -59,6 +68,7 @@ void RosNodeManager::initialize(int argc, char** argv)
   executor_->add_node(ros_node_);
 
   robot_discovery_->setROSNode(ros_node_.get());
+  robot_manager_->setROSNode(ros_node_.get());
 
   is_running_ = true;
 
@@ -79,6 +89,7 @@ void RosNodeManager::shutdown()
   }
 
   robot_discovery_->stopScanning();
+  robot_manager_->clearSelection();
 
   stopSpinThread();
 

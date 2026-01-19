@@ -8,12 +8,13 @@
 #include <thread>
 
 #include "RobotDiscovery.hpp"
+#include "RobotManager.hpp"
 
-namespace ROBOTGait
+namespace ROBOGait
 {
 namespace manager
 {
-using namespace ROBOTGait::discovery;
+using namespace ROBOGait::discovery;
 
 class RosNodeManager : public QObject
 {
@@ -36,12 +37,17 @@ public:
              READ getRobotDiscovery
              CONSTANT
   )
+  Q_PROPERTY(RobotManager* robotManager
+             READ getRobotManager
+             CONSTANT
+  )
   // clang-format on
 
   bool isRunning() const;
   QString getNodeName() const;
   void setNodeName(const QString& name);
   RobotDiscovery* getRobotDiscovery() const;
+  RobotManager* getRobotManager() const;
 
   void initialize(int argc, char** argv);
 
@@ -62,8 +68,9 @@ private:
   std::thread spin_thread_;
 
   std::unique_ptr<RobotDiscovery> robot_discovery_;
+  std::unique_ptr<RobotManager> robot_manager_;
 
   std::atomic<bool> is_running_;
 };
 } // namespace manager
-} // namespace ROBOTGait
+} // namespace ROBOGait
