@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace ROBOTGait
+namespace ROBOGait
 {
 namespace discovery
 {
@@ -86,4 +86,4 @@ private:
   QTimer poll_timer_;
 };
 } // namespace discovery
-} // namespace ROBOTGait
+} // namespace ROBOGait
