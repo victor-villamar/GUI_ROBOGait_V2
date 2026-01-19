@@ -147,6 +147,53 @@ Rectangle {
     //         visible: true
     //     }
     // }
+
+    ErrorRectangle {
+        id: lostConnectionPopup
+        anchors.centerIn: parent
+        errorRectangleTextError.text: ""
+    }
+
+    Connections {
+        target: rosManager.robotDiscovery
+
+        function onRobotsChanged() {
+            if (!rosManager || !rosManager.robotManager)
+            {
+                return
+            }
+
+            var nsFull = rosManager.robotManager.selectedRobotNamespace
+            if (!nsFull || nsFull.length === 0)
+            {
+                return
+            }
+
+            var ns = nsFull
+            if (ns.startsWith("/"))
+            {
+                ns = ns.slice(1)
+            }
+            var display = ns.replace(/_/g, " ")
+
+            var robots = rosManager.robotDiscovery.robots
+            var present = robots.indexOf(display) !== -1
+
+            if (!present) {
+                lostConnectionPopup.open()
+                lostConnectionPopup.errorRectangleTextError.text =
+                    qsTr("Se perdió conexión con %1 inesperadamente.").arg(display)
+
+                rosManager.robotManager.clearSelection()
+
+                while(mystackview.depth > 2) {
+                    mystackview.pop()
+                }
+
+                applicationFlow.state = "robot_connection"
+            }
+        }
+    }
 }
 
 /*##^##

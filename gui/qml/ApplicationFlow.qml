@@ -322,6 +322,31 @@ ApplicationFlowForm {
             }
         },
         State {
+            name: "robot_cmd_vel"
+            PropertyChanges { 
+                target: applicationFlow
+                previousState: "robot_connection"
+            }
+            PropertyChanges {
+                target: toolbar
+                backButton.opacity: 0
+                backButton.enabled: false
+                config.opacity: 0
+                config.enabled: false
+                username.opacity: 0
+                username.enabled: false
+            }
+            PropertyChanges { 
+                target: bottomBar
+                state: "nothing_cbb" 
+            }
+            PropertyChanges { 
+                target: mystackview
+                anchors.top: toolbar.bottom
+                anchors.bottom: parent.bottom
+            }
+        },
+        State {
             name: "register_page"
             StateChangeScript {
                 // script: stringHandler.menu_doctor(1)
