@@ -14,6 +14,18 @@ Item {
     property string selectedRobotName: ""
     property string selectedRobotNamespace: ""
 
+    function goToCmdVel() {
+        if(root.StackView.view)
+        {
+            root.StackView.view.push(robotCmdVelPage)
+            applicationFlow.state = "robot_cmd_vel"
+        }
+        else
+        {
+            console.warn("RobotConnectionForm: No StackView.view (¿ Is it inside a StackView?)")
+        }
+    }
+
 
     Rectangle {
         id: background
@@ -283,7 +295,9 @@ Item {
                                             anchors.fill: parent
                                             onClicked: {
                                                 root.pendingRobotIndex = index
-                                                confirmDialog.openForRobot(modelData)
+                                                confirmDialog.openWithMessage( 
+                                                                              qsTr("Se ha seleccionado %1.\n¿Está seguro que quiere conectarse a este robot?")
+                                                                              .arg(modelData))
                                             }
                                         }
                                     }
@@ -309,6 +323,8 @@ Item {
             root.selectedRobotIndex = root.pendingRobotIndex
             root.selectedRobotName = rosManager.robotDiscovery.robots[root.pendingRobotIndex]
             root.selectedRobotNamespace = rosManager.robotDiscovery.namespaceForIndexSelected(root.pendingRobotIndex)
+            rosManager.robotManager.selectRobot(root.selectedRobotNamespace)
+            root.goToCmdVel()
             root.pendingRobotIndex = -1
         }
 
@@ -318,6 +334,11 @@ Item {
             root.selectedRobotName = ""
             root.selectedRobotNamespace = ""
         }
+    }
+
+    Component {
+        id: robotCmdVelPage
+        RobotCmdVel {}
     }
 }
 
