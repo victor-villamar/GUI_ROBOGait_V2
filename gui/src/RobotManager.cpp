@@ -37,6 +37,16 @@ QString RobotManager::getSelectedRobotNamespace() const { return selected_robot_
 
 QString RobotManager::getCmdVelText() const { return cmd_vel_text_; }
 
+QString RobotManager::getSelectedRobotDisplayName() const
+{
+  QString ns = selected_robot_namespace_;
+  if (ns.startsWith('/'))
+  {
+    ns.remove(0, 1);
+  }
+  return ns.replace("_", " ");
+}
+
 void RobotManager::setROSNode(rclcpp::Node* parent_node)
 {
   if (parent_node == nullptr)
@@ -68,6 +78,7 @@ void RobotManager::selectRobot(const QString& robot_namespace)
   {
     selected_robot_namespace_ = normalized_namespace;
     emit selectedRobotNamespaceChanged();
+    emit selectedRobotDisplayNameChanged();
   }
 
   subscribeToCmdVel();
@@ -89,6 +100,7 @@ void RobotManager::clearSelection()
   {
     selected_robot_namespace_.clear();
     emit selectedRobotNamespaceChanged();
+    emit selectedRobotDisplayNameChanged();
   }
 }
 

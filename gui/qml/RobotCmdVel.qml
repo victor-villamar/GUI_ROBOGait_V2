@@ -6,15 +6,7 @@ Item {
     id: root
 
     property bool dropDownOpen: false
-    property string robotDisplayName: {
-        var ns = rosManager.robotManager.selectedRobotNamespace || ""
-        var name = rosManager.robotManager.selectedRobotName
-        if (ns.startsWith("/"))
-        {
-            ns = ns.slice(1)
-        }
-        return ns.replace(/_/g, " ")
-    }
+    property string robotDisplayName: rosManager.robotManager.selectedRobotDisplayName
     Component.onCompleted: {
         if(applicationFlow && applicationFlow.toolbar && applicationFlow.toolbar.backButton)
         {

@@ -37,6 +37,18 @@ RobotDiscovery::State RobotDiscovery::getState() const { return state_; }
 
 int RobotDiscovery::getPollInterval() const { return poll_interval_; }
 
+void RobotDiscovery::setPollInterval(int interval)
+{
+  if (poll_interval_ != interval)
+  {
+    poll_interval_ = interval;
+    poll_timer_.setInterval(poll_interval_);
+    emit pollIntervalChanged();
+  }
+}
+
+QStringList RobotDiscovery::getRobotsNamespaces() const { return robots_namespaces_; }
+
 void RobotDiscovery::setROSNode(rclcpp::Node* node)
 {
   if (node == nullptr)
@@ -49,16 +61,6 @@ void RobotDiscovery::setROSNode(rclcpp::Node* node)
   }
 
   parent_node_ = node;
-}
-
-void RobotDiscovery::setPollInterval(int interval)
-{
-  if (poll_interval_ != interval)
-  {
-    poll_interval_ = interval;
-    poll_timer_.setInterval(poll_interval_);
-    emit pollIntervalChanged();
-  }
 }
 
 void RobotDiscovery::startScanning()
@@ -96,15 +98,17 @@ void RobotDiscovery::stopScanning()
   }
 }
 
-QString RobotDiscovery::namespaceForIndexSelected(int index) const { return robots_namespaces_.value(index); }
-
 void RobotDiscovery::setRobots(const QStringList& robots, const QStringList& robot_namespaces)
 {
-  if (robots_ != robots || robots_namespaces_ != robot_namespaces)
+  if (robots_ != robots)
   {
     robots_ = robots;
-    robots_namespaces_ = robot_namespaces;
     emit robotsChanged();
+  }
+  if (robots_namespaces_ != robot_namespaces)
+  {
+    robots_namespaces_ = robot_namespaces;
+    emit robotsNamespacesChanged();
   }
 }
 

@@ -322,7 +322,7 @@ Item {
 
             root.selectedRobotIndex = root.pendingRobotIndex
             root.selectedRobotName = rosManager.robotDiscovery.robots[root.pendingRobotIndex]
-            root.selectedRobotNamespace = rosManager.robotDiscovery.namespaceForIndexSelected(root.pendingRobotIndex)
+            root.selectedRobotNamespace = rosManager.robotDiscovery.robotsNamespaces[root.pendingRobotIndex]
             rosManager.robotManager.selectRobot(root.selectedRobotNamespace)
             root.goToCmdVel()
             root.pendingRobotIndex = -1

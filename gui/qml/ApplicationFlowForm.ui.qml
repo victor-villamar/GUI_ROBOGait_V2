@@ -169,17 +169,11 @@ Rectangle {
                 return
             }
 
-            var ns = nsFull
-            if (ns.startsWith("/"))
-            {
-                ns = ns.slice(1)
-            }
-            var display = ns.replace(/_/g, " ")
-
-            var robots = rosManager.robotDiscovery.robots
-            var present = robots.indexOf(display) !== -1
+            var robotnamespaces = rosManager.robotDiscovery.robotsNamespaces
+            var present = robotnamespaces.indexOf(nsFull) !== -1
 
             if (!present) {
+                var display = rosManager.robotManager.selectedRobotDisplayName
                 lostConnectionPopup.open()
                 lostConnectionPopup.errorRectangleTextError.text =
                     qsTr("Se perdió conexión con %1 inesperadamente.").arg(display)
