@@ -28,29 +28,24 @@ Dialog {
     }
 
     contentItem: Item {
-        width: root.width
-        height: contentColumn.implicitHeight + 36
+        implicitWidth: root.width
+        implicitHeight: messageText.implicitHeight + 24
 
-        Column {
-            id: contentColumn
+        Text {
+            id: messageText
+            anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.leftMargin: 18
-            anchors.rightMargin: 18
-            anchors.topMargin: 18
-            spacing: 12
-
-            Text {
-                width: parent.width
-                wrapMode: Text.WordWrap
-                horizontalAlignment: Text.AlignHCenter
-                bottomPadding: 20
-                color: "#4f86b4"
-                font.pixelSize: 16
-                font.bold: true
-                text: root.message
-            }
+            anchors.topMargin: 16
+            anchors.leftMargin: 16
+            anchors.rightMargin: 16
+            width: parent.width
+            wrapMode: Text.WordWrap
+            horizontalAlignment: Text.AlignHCenter
+            color: "#4f86b4"
+            font.pixelSize: 16
+            font.bold: true
+            text: root.message
         }
     }
 
