@@ -10,6 +10,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 qt_add_executable(appgui
     src/main.cpp
@@ -21,6 +24,9 @@ qt_add_executable(appgui
     src/database.cpp
     src/utils_ddbb.cpp
     src/NetworkDDBB.cpp
+    src/RobotDiscovery.cpp
+    src/RosNodeManager.cpp
+    src/RobotManager.cpp
 
 
     include/StringHandler.h
@@ -31,6 +37,16 @@ qt_add_executable(appgui
     include/database.h
     include/utils_ddbb.h
     include/NetworkDDBB.h
+    include/RobotDiscovery.hpp
+    include/RosNodeManager.hpp
+    include/TopicsName.hpp
+    include/RobotManager.hpp
+    include/Define.hpp
+)
+
+target_include_directories(appgui PRIVATE
+    include
+    ${geometry_msgs_INCLUDE_DIRS}
 )
 
 qt_add_qml_module(appgui
@@ -45,54 +61,56 @@ qt_add_qml_module(appgui
     qml/HomeForm.ui.qml
     qml/RobotConnection.qml
     qml/RobotConnectionForm.ui.qml
+    qml/RobotCmdVel.qml
 
-    qml/MainMenuForm.ui.qml
-    qml/MainMenu.qml
-    qml/MapPage.qml
-    qml/MapPageForm.ui.qml
-    qml/SelectMap.qml
-    qml/SelectMapForm.ui.qml
+    # qml/MainMenuForm.ui.qml
+    # qml/MainMenu.qml
+    # qml/MapPage.qml
+    # qml/MapPageForm.ui.qml
+    # qml/SelectMap.qml
+    # qml/SelectMapForm.ui.qml
 
-    qml/SelectPatient.qml
-    qml/SelectPatientForm.ui.qml
-    qml/RegisterPage.qml
-    qml/RegisterPatient.qml
-    qml/RegisterPatientForm.ui.qml
+    # qml/SelectPatient.qml
+    # qml/SelectPatientForm.ui.qml
+    # qml/RegisterPage.qml
+    # qml/RegisterPatient.qml
+    # qml/RegisterPatientForm.ui.qml
 
-    qml/ManualControl.qml
-    qml/ManualControlForm.ui.qml
-    qml/CreateMap.qml
-    qml/CreateMapForm.ui.qml
-    qml/RegisterMap.qml
-    qml/RegisterMapForm.ui.qml
+    # qml/ManualControl.qml
+    # qml/ManualControlForm.ui.qml
+    # qml/CreateMap.qml
+    # qml/CreateMapForm.ui.qml
+    # qml/RegisterMap.qml
+    # qml/RegisterMapForm.ui.qml
 
     qml/extras/CustomToolBarForm.ui.qml
     qml/extras/CustomToolBar.qml
-    qml/extras/Joystick.qml
-    qml/extras/JoystickForm.ui.qml
-    qml/extras/Map.qml
-    qml/extras/SavePage.qml
-    qml/extras/SavePageForm.ui.qml
-    qml/extras/OrientationCircle.qml
-    qml/extras/OrientationCircleForm.ui.qml
+    # qml/extras/Joystick.qml
+    # qml/extras/JoystickForm.ui.qml
+    # qml/extras/Map.qml
+    # qml/extras/SavePage.qml
+    # qml/extras/SavePageForm.ui.qml
+    # qml/extras/OrientationCircle.qml
+    # qml/extras/OrientationCircleForm.ui.qml
     qml/extras/ErrorRectangle.qml
-    qml/extras/BoxImages.qml
-    qml/extras/BoxImagesForm.ui.qml
-    qml/extras/Guest.qml
-    qml/extras/GuestForm.ui.qml
-    qml/extras/Login.qml
-    qml/extras/LoginForm.ui.qml
-    qml/extras/SignIn.qml
-    qml/extras/SignInForm.ui.qml
+    # qml/extras/BoxImages.qml
+    # qml/extras/BoxImagesForm.ui.qml
+    # qml/extras/Guest.qml
+    # qml/extras/GuestForm.ui.qml
+    # qml/extras/Login.qml
+    # qml/extras/LoginForm.ui.qml
+    # qml/extras/SignIn.qml
+    # qml/extras/SignInForm.ui.qml
     qml/extras/InformationRectangle.qml
+    qml/extras/ConfirmationDialog.qml
     qml/extras/ConfigurationMenu.qml
     qml/extras/CustomBottomBar.qml
     qml/extras/CustomBottomBarForm.ui.qml
     qml/extras/Battery.qml
-    qml/extras/DescriptionPatientForm.ui.qml
-    qml/extras/DescriptionMapForm.ui.qml
-    qml/extras/ImageText.qml
-    qml/extras/PopUpInfoForm.ui.qml
+    # qml/extras/DescriptionPatientForm.ui.qml
+    # qml/extras/DescriptionMapForm.ui.qml
+    # qml/extras/ImageText.qml
+    # qml/extras/PopUpInfoForm.ui.qml
 
     RESOURCES
     # icon_app include .svg
@@ -155,14 +173,22 @@ set_target_properties(appgui PROPERTIES
     QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android"
 )
 
-target_link_libraries(appgui
-    PRIVATE     Qt6::Core
+target_link_libraries(appgui PRIVATE
+    Qt6::Core
     Qt6::Gui
     Qt6::Qml
     Qt6::Quick
     Qt6::Network
+    rclcpp::rclcpp
+    ${geometry_msgs_LIBRARIES}
     ${OpenCV_LIBS}
 )
+
+# if(TARGET geometry_msgs::geometry_msgs__rosidl_generator_cpp)
+#   target_link_libraries(appgui PRIVATE
+#     geometry_msgs::geometry_msgs__rosidl_generator_cpp
+#   )
+# endif()
 
 # if (ANDROID)
 #     # Define las rutas de los íconos
@@ -183,3 +209,5 @@ install(TARGETS appgui
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(DIRECTORY qml DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+ament_package()

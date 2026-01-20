@@ -182,81 +182,81 @@ ApplicationFlowForm {
         applicationFlow.state = "Insert"
     }
 
-    function menu_push() {
-        if (applicationFlow.state !== "menu_app") {
-            mystackview.push(menu_app)
-            applicationFlow.state = "menu_app"
-            stringHandler.requestBattery();
-        }
-    }
+    // function menu_push() {
+    //     if (applicationFlow.state !== "menu_app") {
+    //         mystackview.push(menu_app)
+    //         applicationFlow.state = "menu_app"
+    //         stringHandler.requestBattery();
+    //     }
+    // }
 
-    function register_patient_push() {
-        if (applicationFlow.state !== "register_patient") {
-            mystackview.push(register_patient)
-            applicationFlow.state = "register_patient"
-        }
-    }
+    // function register_patient_push() {
+    //     if (applicationFlow.state !== "register_patient") {
+    //         mystackview.push(register_patient)
+    //         applicationFlow.state = "register_patient"
+    //     }
+    // }
 
-    function select_patient_push() {
-        if (applicationFlow.state !== "select_patient") {
-            mystackview.push(select_patient)
-            applicationFlow.state = "select_patient"
-        }
-    }
+    // function select_patient_push() {
+    //     if (applicationFlow.state !== "select_patient") {
+    //         mystackview.push(select_patient)
+    //         applicationFlow.state = "select_patient"
+    //     }
+    // }
 
-    function register_map_push() {
-        if (applicationFlow.state !== "register_map") {
-            mystackview.push(register_map)
-            applicationFlow.state = "register_map"
-        }
-    }
+    // function register_map_push() {
+    //     if (applicationFlow.state !== "register_map") {
+    //         mystackview.push(register_map)
+    //         applicationFlow.state = "register_map"
+    //     }
+    // }
 
-    function register_page_push() {
-        if (applicationFlow.state !== "register_page") {
-            mystackview.push(register_page)
-            applicationFlow.state = "register_page"
-            // // harcodeado
-            // ddbb.role =("doctor")
-            // ddbb.username = "mariaRosa"
-            // // menu_push()
-            // mystackview.push(menu_app)
-            // console.log("roleChanged cambió a: -" + ddbb.role + "-");
-            // applicationFlow.state = "menu_app"
-        }
-    }
+    // function register_page_push() {
+    //     if (applicationFlow.state !== "register_page") {
+    //         mystackview.push(register_page)
+    //         applicationFlow.state = "register_page"
+    //         // // harcodeado
+    //         // ddbb.role =("doctor")
+    //         // ddbb.username = "mariaRosa"
+    //         // // menu_push()
+    //         // mystackview.push(menu_app)
+    //         // console.log("roleChanged cambió a: -" + ddbb.role + "-");
+    //         // applicationFlow.state = "menu_app"
+    //     }
+    // }
 
-    function manualControl_push() {
-        if (applicationFlow.state !== "manualControl") {
-            stringHandler.setSaveMap(0)
-            // visible_image = 1
-            // console.log("Imagen a visible 0")
-            mystackview.push(manualControl)
-            applicationFlow.state = "manualControl"
-        }
-    }
+    // function manualControl_push() {
+    //     if (applicationFlow.state !== "manualControl") {
+    //         stringHandler.setSaveMap(0)
+    //         // visible_image = 1
+    //         // console.log("Imagen a visible 0")
+    //         mystackview.push(manualControl)
+    //         applicationFlow.state = "manualControl"
+    //     }
+    // }
 
-    function select_map_push() {
-        if (applicationFlow.state !== "select_map") {
-            stringHandler.requestMapName()
-            mystackview.push(select_map)
-            applicationFlow.state = "select_map"
-        }
-    }
+    // function select_map_push() {
+    //     if (applicationFlow.state !== "select_map") {
+    //         stringHandler.requestMapName()
+    //         mystackview.push(select_map)
+    //         applicationFlow.state = "select_map"
+    //     }
+    // }
 
-    function create_map_push() {
-        if (applicationFlow.state !== "create_map") {
-            mystackview.push(create_map)
-            applicationFlow.state = "create_map"
-            stringHandler.startSLAM()
-        }
-    }
+    // function create_map_push() {
+    //     if (applicationFlow.state !== "create_map") {
+    //         mystackview.push(create_map)
+    //         applicationFlow.state = "create_map"
+    //         stringHandler.startSLAM()
+    //     }
+    // }
 
-    function map_path_push() {
-        if (applicationFlow.state !== "map_path") {
-            mystackview.push(map_path)
-            applicationFlow.state = "map_path"
-        }
-    }
+    // function map_path_push() {
+    //     if (applicationFlow.state !== "map_path") {
+    //         mystackview.push(map_path)
+    //         applicationFlow.state = "map_path"
+    //     }
+    // }
 
     // ! [State]
     states: [
@@ -302,8 +302,8 @@ ApplicationFlowForm {
             }
             PropertyChanges {
                 target: toolbar
-                backButton.opacity: 0
-                backButton.enabled: false
+                backButton.opacity: 1
+                backButton.enabled: true
                 config.opacity: 0
                 config.enabled: false
                 username.opacity: 0
@@ -319,6 +319,31 @@ ApplicationFlowForm {
                 // anchors.bottom: bottomBar.top
                 anchors.bottom: parent.bottom
                 // anchors.bottom: bottomBar.bottom
+            }
+        },
+        State {
+            name: "robot_cmd_vel"
+            PropertyChanges { 
+                target: applicationFlow
+                previousState: "robot_connection"
+            }
+            PropertyChanges {
+                target: toolbar
+                backButton.opacity: 0
+                backButton.enabled: false
+                config.opacity: 0
+                config.enabled: false
+                username.opacity: 0
+                username.enabled: false
+            }
+            PropertyChanges { 
+                target: bottomBar
+                state: "nothing_cbb" 
+            }
+            PropertyChanges { 
+                target: mystackview
+                anchors.top: toolbar.bottom
+                anchors.bottom: parent.bottom
             }
         },
         State {
@@ -597,13 +622,13 @@ ApplicationFlowForm {
         }
     ]
 
-    ErrorRectangle {
-        id: errorPopup
-        anchors.centerIn: parent
-        errorRectangleTextError.text: qsTr("Error: En la conexión")
-        visible: false
-        mode: "delayed"
-    }
+    // ErrorRectangle {
+    //     id: errorPopup
+    //     anchors.centerIn: parent
+    //     errorRectangleTextError.text: qsTr("Error: En la conexión")
+    //     visible: false
+    //     mode: "delayed"
+    // }
 
     Connections {
         target: stringHandler

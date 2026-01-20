@@ -1,0 +1,191 @@
+#pragma once
+
+#include <QObject>
+#include <QStringList>
+#include <QTimer>
+#include <rclcpp/node.hpp>
+#include <string>
+#include <vector>
+
+namespace ROBOGait
+{
+namespace discovery
+{
+/**
+ * @brief Class for discovering robots in the ROS network
+ */
+class RobotDiscovery : public QObject
+{
+  Q_OBJECT
+
+public:
+  /**
+   * @brief Enumeration for the different states of the discovery process
+   */
+  enum class State
+  {
+    IDLE,
+    NO_NODE,
+    SCANNING,
+    NO_ROBOTS,
+    ROBOTS_FOUND,
+    ERROR
+  };
+  Q_ENUM(State)
+
+  /**
+   * @brief Constructor of RobotDiscovery class
+   */
+  RobotDiscovery();
+
+  /**
+   * @brief Destructor of RobotDiscovery class
+   */
+  ~RobotDiscovery() override = default;
+
+  // clang-format off
+  Q_PROPERTY(QStringList robots
+             READ getRobots
+             NOTIFY robotsChanged
+  )
+  Q_PROPERTY(bool isScanning
+             READ isScanning
+             NOTIFY isScanningChanged
+  )
+  Q_PROPERTY(State state
+             READ getState
+             NOTIFY stateChanged
+  )
+  Q_PROPERTY(int pollInterval
+             READ getPollInterval
+             WRITE setPollInterval
+             NOTIFY pollIntervalChanged
+  )
+  Q_PROPERTY(QStringList robotsNamespaces
+             READ getRobotsNamespaces
+             NOTIFY robotsNamespacesChanged
+  )
+  // clang-format on
+
+  /**
+   * @brief Get the list of discovered robots
+   *
+   * @return List of discovered robots
+   */
+  QStringList getRobots() const;
+
+  /**
+   * @brief Check if the discovery process is currently scanning for robots
+   *
+   * @return True if scanning, false otherwise
+   */
+  bool isScanning() const;
+
+  /**
+   * @brief Get the current state of the discovery process
+   *
+   * @return Current state of the discovery process
+   */
+  State getState() const;
+
+  /**
+   * @brief Get the current polling interval
+   *
+   * @return Current polling interval in milliseconds
+   */
+  int getPollInterval() const;
+
+  /**
+   * @brief Set the polling interval
+   *
+   * @param interval New polling interval in milliseconds
+   */
+  void setPollInterval(int interval);
+
+  /**
+   * @brief Get the list of discovered robot namespaces
+   *
+   * @return List of discovered robot namespaces
+   */
+  QStringList getRobotsNamespaces() const;
+
+  /**
+   * @brief Set the ROS node for the discovery process
+   *
+   * @param node Pointer to the ROS node
+   */
+  void setROSNode(rclcpp::Node* node);
+
+  /**
+   * @brief Start the robot discovery process
+   */
+  Q_INVOKABLE void startScanning();
+
+  /**
+   * @brief Stop the robot discovery process
+   */
+  Q_INVOKABLE void stopScanning();
+
+signals:
+  void robotsChanged();
+  void isScanningChanged();
+  void stateChanged();
+  void pollIntervalChanged();
+  void robotsNamespacesChanged();
+
+private:
+  /**
+   * @brief Set the list of discovered robots
+   *
+   * @param displayRobots List of robot names to display
+   * @param robot_namespaces List of robot namespaces
+   */
+  void setRobots(const QStringList& displayRobots, const QStringList& robot_namespaces);
+
+  /**
+   * @brief Set the scanning state
+   *
+   * @param is_scanning True if scanning, false otherwise
+   */
+  void setIsScanning(bool is_scanning);
+
+  /**
+   * @brief Set the state of the discovery process
+   *
+   * @param state New state of the discovery process
+   */
+  void setState(State state);
+
+  /**
+   * @brief Update the discovery process from the ROS graph
+   */
+  void updateFromGraph();
+
+  /**
+   * @brief Compute the list of robots from the ROS graph
+   *
+   * @param nodes_names_and_namespaces List of node names and namespaces
+   * @param self_node_name Name of the self node
+   * @return Pair containing the robot display names and their corresponding namespaces
+   */
+  static std::pair<QStringList, QStringList> computeRobotsListFromGraph(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
+                                                                        const std::string& self_node_name);
+
+  /**
+   * @brief Build the list of robots from the given namespaces
+   *
+   * @param namespaces Set of robot namespaces
+   * @return Pair containing the robot display names and their corresponding namespaces
+   */
+  static std::pair<QStringList, QStringList> buildRobotsListFromNamespaces(const QSet<QString>& namespaces);
+
+  rclcpp::Node* parent_node_;     /**< Pointer to the ROS node */
+  QStringList robots_;            /**< List of discovered robot names */
+  QStringList robots_namespaces_; /**< List of discovered robot namespaces */
+  bool is_scanning_;              /**< Flag indicating if scanning is active */
+  State state_;                   /**< Current state of the discovery process */
+  int poll_interval_;             /**< Polling interval in milliseconds */
+  QTimer poll_timer_;             /**< Timer for polling */
+};
+} // namespace discovery
+} // namespace ROBOGait
