@@ -5,22 +5,13 @@ import "extras"
 Rectangle {
     id: root
     color: "#518bb7"
+
     property alias home: home
     property alias robot_connection: robot_connection
-    // property alias register_page: register_page
-    // property alias menu_app: menu_app
-    // property alias select_patient: select_patient
-    // property alias register_patient: register_patient
-    // property alias select_map: select_map
-    // property alias register_map: register_map
-    // property alias create_map: create_map
-    // property alias manualControl: manualControl
-    // property alias map_path: map_path
 
     property string previousState: ""
     property alias mystackview: mystackview
     property alias toolbar: toolbar
-    property alias bottomBar: bottomBar
 
     CustomToolBar {
         id: toolbar
@@ -30,22 +21,14 @@ Rectangle {
         anchors.top: parent.top
     }
 
-    CustomBottomBar {
-        id: bottomBar
-        width: parent.width
-        height: 20
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: parent.height / 120
-    }
-
     StackView {
         id: mystackview
         anchors.top: toolbar.bottom
-        anchors.bottom: bottomBar.top
-        anchors.bottomMargin: 0
-        anchors.topMargin: 20
         anchors.left: parent.left
         anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.topMargin: 20
+
         initialItem: Home {
             id: home
         }
@@ -57,7 +40,6 @@ Rectangle {
                 duration: 400
             }
         }
-        //! [mystackview view]
         pushExit: Transition {
             PropertyAnimation {
                 property: "x"
@@ -83,70 +65,13 @@ Rectangle {
             }
         }
     }
+
     Component {
         id: robot_connection
         RobotConnection {
             visible: true
         }
     }
-    // Component {
-    //     id: register_page
-    //     RegisterPage {
-    //         visible: true
-    //         // anchors.fill: parent
-    //     }
-    // }
-    // Component {
-    //     id: menu_app
-    //     MainMenu {
-    //         visible: true
-    //     }
-    // }
-    // Component {
-    //     id: manualControl
-    //     ManualControl {
-    //         // visible_value: applicationFlow.visible_image
-    //         // visible: true
-    //         // visible_save: applicationFlow.visible_save
-    //         // type_save: applicationFlow.type_save
-    //     }
-    // }
-    // Component {
-    //     id: select_patient
-    //     SelectPatient {
-    //         visible: true
-    //     }
-    // }
-    // Component {
-    //     id: register_patient
-    //     RegisterPatient {
-    //         visible: true
-    //     }
-    // }
-    // Component {
-    //     id: select_map
-    //     SelectMap {
-    //         visible: true
-    //     }
-    // }
-    // Component {
-    //     id: register_map
-    //     RegisterMap{
-    //         visible: true
-    //     }
-    // }
-    // Component {
-    //     id: create_map
-    //     CreateMap{
-    //         visible: true
-    //     }
-    // }
-    // Component {
-    //     id: map_path
-    //     MapPage {
-    //         visible: true
-    //     }
-    // }
 
     ErrorRectangle {
         id: lostConnectionPopup
@@ -164,6 +89,9 @@ Rectangle {
             }
 
             var nsFull = rosManager.robotManager.selectedRobotNamespace
+            console.log("[robotsChanged] selectedRobotNamespace:",
+                rosManager.robotManager.selectedRobotNamespace,
+                "robotsNamespaces:", rosManager.robotDiscovery.robotsNamespaces)
             if (!nsFull || nsFull.length === 0)
             {
                 return
@@ -171,6 +99,7 @@ Rectangle {
 
             var robotnamespaces = rosManager.robotDiscovery.robotsNamespaces
             var present = robotnamespaces.indexOf(nsFull) !== -1
+            console.log("[robotsChanged] present:", present)
 
             if (!present) {
                 var display = rosManager.robotManager.selectedRobotDisplayName
