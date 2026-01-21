@@ -164,6 +164,8 @@ QString RobotManager::normalizeNamespace(const QString& robot_namespace) const
     normalized.chop(1);
   }
 
+  normalized.replace(" ", "_");
+
   return normalized;
 }
 

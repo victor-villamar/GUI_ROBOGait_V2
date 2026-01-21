@@ -11,7 +11,6 @@ Item {
                                        rosManager.robotDiscovery.state === RobotDiscovery.ROBOTS_FOUND
     property int selectedRobotIndex: -1
     property int pendingRobotIndex: -1
-    property string selectedRobotName: ""
     property string selectedRobotNamespace: ""
 
     function goToCmdVel() {
@@ -238,7 +237,7 @@ Item {
                                 padding: 4
 
                                 Repeater {
-                                    model: rosManager.robotDiscovery.robots
+                                    model: rosManager.robotDiscovery.robotsNamespaces
                                     delegate: Rectangle {
                                         id: robotItem
                                         height: 52
@@ -321,7 +320,6 @@ Item {
             }
 
             root.selectedRobotIndex = root.pendingRobotIndex
-            root.selectedRobotName = rosManager.robotDiscovery.robots[root.pendingRobotIndex]
             root.selectedRobotNamespace = rosManager.robotDiscovery.robotsNamespaces[root.pendingRobotIndex]
             rosManager.robotManager.selectRobot(root.selectedRobotNamespace)
             root.goToCmdVel()
@@ -331,7 +329,6 @@ Item {
         onRejected: {
             root.pendingRobotIndex = -1
             root.selectedRobotIndex = -1
-            root.selectedRobotName = ""
             root.selectedRobotNamespace = ""
         }
     }

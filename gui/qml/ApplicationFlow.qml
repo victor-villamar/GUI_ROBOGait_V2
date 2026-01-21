@@ -10,11 +10,48 @@ ApplicationFlowForm {
         mystackview.push(robot_connection)
         applicationFlow.state = "robot_connection"
     }
+
     function backButton()
     {
         if (mystackview.depth > 1) {
             mystackview.pop()
             applicationFlow.state = applicationFlow.previousState
+        }
+    }
+
+    Connections {
+        target: rosManager.robotDiscovery
+
+        function onRobotsNamespacesChanged() {
+            if (!rosManager || !rosManager.robotManager)
+            {
+                return
+            }
+
+            var nsFull = rosManager.robotManager.selectedRobotNamespace
+
+            if (!nsFull || nsFull.length === 0)
+            {
+                return
+            }
+
+            var robotnamespaces = rosManager.robotDiscovery.robotsNamespaces
+            var present = robotnamespaces.indexOf(nsFull) !== -1
+
+            if (!present) {
+                var display = rosManager.robotManager.selectedRobotDisplayName
+                lostConnectionPopupItem.open()
+                lostConnectionPopupItem.errorRectangleTextError.text =
+                    qsTr("Se perdió conexión con %1 inesperadamente.").arg(display)
+
+                rosManager.robotManager.clearSelection()
+
+                while(mystackview.depth > 2) {
+                    mystackview.pop()
+                }
+
+                applicationFlow.state = "robot_connection"
+            }
         }
     }
 

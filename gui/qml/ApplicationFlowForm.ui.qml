@@ -8,6 +8,7 @@ Rectangle {
 
     property alias home: home
     property alias robot_connection: robot_connection
+    property alias lostConnectionPopupItem: lostConnectionPopup
 
     property string previousState: ""
     property alias mystackview: mystackview
@@ -78,45 +79,6 @@ Rectangle {
         anchors.centerIn: parent
         errorRectangleTextError.text: ""
     }
-
-    Connections {
-        target: rosManager.robotDiscovery
-
-        function onRobotsChanged() {
-            if (!rosManager || !rosManager.robotManager)
-            {
-                return
-            }
-
-            var nsFull = rosManager.robotManager.selectedRobotNamespace
-            console.log("[robotsChanged] selectedRobotNamespace:",
-                rosManager.robotManager.selectedRobotNamespace,
-                "robotsNamespaces:", rosManager.robotDiscovery.robotsNamespaces)
-            if (!nsFull || nsFull.length === 0)
-            {
-                return
-            }
-
-            var robotnamespaces = rosManager.robotDiscovery.robotsNamespaces
-            var present = robotnamespaces.indexOf(nsFull) !== -1
-            console.log("[robotsChanged] present:", present)
-
-            if (!present) {
-                var display = rosManager.robotManager.selectedRobotDisplayName
-                lostConnectionPopup.open()
-                lostConnectionPopup.errorRectangleTextError.text =
-                    qsTr("Se perdió conexión con %1 inesperadamente.").arg(display)
-
-                rosManager.robotManager.clearSelection()
-
-                while(mystackview.depth > 2) {
-                    mystackview.pop()
-                }
-
-                applicationFlow.state = "robot_connection"
-            }
-        }
-    }
 }
 
 /*##^##
@@ -125,4 +87,3 @@ Designer {
 D{i:15}D{i:17}D{i:19}D{i:21}D{i:23}D{i:25}D{i:27}D{i:29}
 }
 ##^##*/
-

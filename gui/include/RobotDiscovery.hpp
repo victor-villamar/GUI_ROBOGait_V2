@@ -44,9 +44,9 @@ public:
   ~RobotDiscovery() override = default;
 
   // clang-format off
-  Q_PROPERTY(QStringList robots
-             READ getRobots
-             NOTIFY robotsChanged
+  Q_PROPERTY(QStringList robotsNamespaces
+             READ getRobotsNamespaces
+             NOTIFY robotsNamespacesChanged
   )
   Q_PROPERTY(bool isScanning
              READ isScanning
@@ -61,18 +61,14 @@ public:
              WRITE setPollInterval
              NOTIFY pollIntervalChanged
   )
-  Q_PROPERTY(QStringList robotsNamespaces
-             READ getRobotsNamespaces
-             NOTIFY robotsNamespacesChanged
-  )
   // clang-format on
 
   /**
-   * @brief Get the list of discovered robots
+   * @brief Get the list of discovered robot namespaces
    *
-   * @return List of discovered robots
+   * @return List of discovered robot namespaces
    */
-  QStringList getRobots() const;
+  QStringList getRobotsNamespaces() const;
 
   /**
    * @brief Check if the discovery process is currently scanning for robots
@@ -103,13 +99,6 @@ public:
   void setPollInterval(int interval);
 
   /**
-   * @brief Get the list of discovered robot namespaces
-   *
-   * @return List of discovered robot namespaces
-   */
-  QStringList getRobotsNamespaces() const;
-
-  /**
    * @brief Set the ROS node for the discovery process
    *
    * @param node Pointer to the ROS node
@@ -127,7 +116,6 @@ public:
   Q_INVOKABLE void stopScanning();
 
 signals:
-  void robotsChanged();
   void isScanningChanged();
   void stateChanged();
   void pollIntervalChanged();
@@ -135,12 +123,12 @@ signals:
 
 private:
   /**
-   * @brief Set the list of discovered robots
+   * @brief Set the list of discovered robots namespaces
    *
    * @param displayRobots List of robot names to display
    * @param robot_namespaces List of robot namespaces
    */
-  void setRobots(const QStringList& displayRobots, const QStringList& robot_namespaces);
+  void setRobotsNamespaces(const QStringList& robot_namespaces);
 
   /**
    * @brief Set the scanning state
@@ -166,21 +154,20 @@ private:
    *
    * @param nodes_names_and_namespaces List of node names and namespaces
    * @param self_node_name Name of the self node
-   * @return Pair containing the robot display names and their corresponding namespaces
+   * @return List containing the robot display namespaces
    */
-  static std::pair<QStringList, QStringList> computeRobotsListFromGraph(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
-                                                                        const std::string& self_node_name);
+  static QStringList computeRobotsListFromGraph(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
+                                                const std::string& self_node_name);
 
   /**
-   * @brief Build the list of robots from the given namespaces
+   * @brief Build the list of robot namespaces from the given namespaces
    *
    * @param namespaces Set of robot namespaces
-   * @return Pair containing the robot display names and their corresponding namespaces
+   * @return List of robot display namespaces
    */
-  static std::pair<QStringList, QStringList> buildRobotsListFromNamespaces(const QSet<QString>& namespaces);
+  static QStringList buildRobotNamespacesFromNamespaces(const QSet<QString>& namespaces);
 
   rclcpp::Node* parent_node_;     /**< Pointer to the ROS node */
-  QStringList robots_;            /**< List of discovered robot names */
   QStringList robots_namespaces_; /**< List of discovered robot namespaces */
   bool is_scanning_;              /**< Flag indicating if scanning is active */
   State state_;                   /**< Current state of the discovery process */
