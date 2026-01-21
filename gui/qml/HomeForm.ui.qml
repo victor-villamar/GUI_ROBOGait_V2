@@ -14,13 +14,12 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
 
-        // anchors.horizontalCenter: parent.horizontalCenter
         Image {
             id: image
             width: parent.height < 500 ? 150 : 197
             height: width
             anchors.verticalCenter: parent.verticalCenter
-            source: "../images/logo.png"
+            source: "qrc:/gui/images/logo.png"
             anchors.horizontalCenterOffset: 0
             anchors.verticalCenterOffset: -110
             anchors.horizontalCenter: parent.horizontalCenter
@@ -35,23 +34,11 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             width: contentItem.implicitWidth + (parent.height < 500 ? 60 : 80)
 
-            // Definimos los colores
-            // property color normalColor: "#ffffff"
-            // property color pressedColor: "#00C8FF"  // Color cuando está presionado
-            // property color textColor: "#045671"
-            // property color borderColor: "#045671"
             background: Rectangle {
                 color: buttonStart.down ? "#e9e9e9" : "#aed2ea"
                 radius: 15
                 border.color: "#e9e9e9"
                 border.width: 2
-
-                // Animación solo para el cambio de color
-                //                Behavior on color {
-                //                    ColorAnimation {
-                //                        duration: 100
-                //                    } // Duración muy corta para respuesta inmediata
-                //                }
             }
 
             contentItem: Label {
@@ -75,7 +62,7 @@ Item {
             height: 190
             anchors.left: parent.left
             anchors.top: parent.top
-            source: "../images/sponsors/upm.png"
+            source: "qrc:/gui/images/sponsors/upm.png"
             anchors.topMargin: -80
             anchors.leftMargin: -40
             fillMode: Image.PreserveAspectFit
@@ -86,7 +73,7 @@ Item {
             height: 90
             anchors.left: upm.right
             anchors.top: parent.top
-            source: "../images/sponsors/car.png"
+            source: "qrc:/gui/images/sponsors/car.png"
             anchors.topMargin: -50
             anchors.leftMargin: -42
 
@@ -97,10 +84,8 @@ Item {
             width: 120
             height: 140
             anchors.right: parent.right
-            //            height: parent.height < 500 ? 80 : 130
-            //            width: parent.width < 500 ? 80 : 130
             anchors.top: parent.top
-            source: "../images/sponsors/etsidi.png"
+            source: "qrc:/gui/images/sponsors/etsidi.png"
             anchors.rightMargin: 20
             anchors.topMargin: -76
 
@@ -112,7 +97,7 @@ Item {
             height: 130
             anchors.left: parent.left
             anchors.bottom: parent.bottom
-            source: "../images/sponsors/ministerio.png"
+            source: "qrc:/gui/images/sponsors/ministerio.png"
             anchors.leftMargin: -20
             anchors.bottomMargin: -20
             fillMode: Image.PreserveAspectFit
