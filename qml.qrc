@@ -1,0 +1,22 @@
+<RCC>
+  <qresource prefix="/">
+    <file alias="main.qml">qml/main.qml</file>
+    <file alias="ApplicationFlow.qml">qml/ApplicationFlow.qml</file>
+    <file alias="ApplicationFlowForm.ui.qml">qml/ApplicationFlowForm.ui.qml</file>
+  </qresource>
+  <qresource prefix="/Common">
+    <file alias="CustomToolBar.qml">qml/Common/CustomToolBar.qml</file>
+    <file alias="CustomToolBarForm.ui.qml">qml/Common/CustomToolBarForm.ui.qml</file>
+  </qresource>
+  <qresource prefix="/Dialogs">
+    <file alias="ConfirmationDialog.qml">qml/Dialogs/ConfirmationDialog.qml</file>
+    <file alias="ErrorRectangle.qml">qml/Dialogs/ErrorRectangle.qml</file>
+  </qresource>
+  <qresource prefix="/Views">
+    <file alias="Home.qml">qml/Views/Home.qml</file>
+    <file alias="HomeForm.ui.qml">qml/Views/HomeForm.ui.qml</file>
+    <file alias="RobotConnection.qml">qml/Views/RobotConnection.qml</file>
+    <file alias="RobotConnectionForm.ui.qml">qml/Views/RobotConnectionForm.ui.qml</file>
+    <file alias="RobotCmdVel.qml">qml/Views/RobotCmdVel.qml</file>
+  </qresource>
+</RCC>
