@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 
   engine.rootContext()->setContextProperty("rosManager", &rosNodeManager);
 
-  const QUrl url(QStringLiteral("qrc:/gui/qml/main.qml"));
+  const QUrl url(QStringLiteral("qrc:/main.qml"));
   QObject::connect(
       &engine, &QQmlApplicationEngine::objectCreated, &app,
       [url](QObject* obj, const QUrl& objUrl)

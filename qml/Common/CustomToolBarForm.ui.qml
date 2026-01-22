@@ -16,7 +16,7 @@ Item {
             id: backButton
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            icon.source: "qrc:/gui/images/icon_app/keyboard_left.svg"
+            icon.source: "qrc:/qmlresources/icons/keyboard_left.svg"
             icon.color: "white"
             icon.width: 24
             icon.height: 24
@@ -39,7 +39,7 @@ Item {
 
             Image {
                 id: logo
-                source: "qrc:/gui/images/logo.png"
+                source: "qrc:/qmlresources/logos/robogait_logo.png"
                 sourceSize.height: 25
                 sourceSize.width: height * 1.4
             }

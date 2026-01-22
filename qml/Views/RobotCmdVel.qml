@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import "extras"
+
+import "qrc:/Dialogs"
 
 Item {
     id: root
@@ -67,7 +68,7 @@ Item {
                         anchors.centerIn: parent
                         width: 30
                         height: 30
-                        source: "qrc:/gui/images/robot/robot.png"
+                        source: "qrc:/qmlresources/robot/robot.png"
                         fillMode: Image.PreserveAspectFit
                         smooth: true
                     }

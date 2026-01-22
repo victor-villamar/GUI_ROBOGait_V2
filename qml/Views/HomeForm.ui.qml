@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import "extras"
 
 Item {
     id: home
@@ -19,7 +18,7 @@ Item {
             width: parent.height < 500 ? 150 : 197
             height: width
             anchors.verticalCenter: parent.verticalCenter
-            source: "qrc:/gui/images/logo.png"
+            source: "qrc:/qmlresources/logos/robogait_logo.png"
             anchors.horizontalCenterOffset: 0
             anchors.verticalCenterOffset: -110
             anchors.horizontalCenter: parent.horizontalCenter
@@ -62,7 +61,7 @@ Item {
             height: 190
             anchors.left: parent.left
             anchors.top: parent.top
-            source: "qrc:/gui/images/sponsors/upm.png"
+            source: "qrc:/qmlresources/logos/upm.png"
             anchors.topMargin: -80
             anchors.leftMargin: -40
             fillMode: Image.PreserveAspectFit
@@ -73,7 +72,7 @@ Item {
             height: 90
             anchors.left: upm.right
             anchors.top: parent.top
-            source: "qrc:/gui/images/sponsors/car.png"
+            source: "qrc:/qmlresources/logos/car.png"
             anchors.topMargin: -50
             anchors.leftMargin: -42
 
@@ -85,7 +84,7 @@ Item {
             height: 140
             anchors.right: parent.right
             anchors.top: parent.top
-            source: "qrc:/gui/images/sponsors/etsidi.png"
+            source: "qrc:/qmlresources/logos/etsidi.png"
             anchors.rightMargin: 20
             anchors.topMargin: -76
 
@@ -97,7 +96,7 @@ Item {
             height: 130
             anchors.left: parent.left
             anchors.bottom: parent.bottom
-            source: "qrc:/gui/images/sponsors/ministerio.png"
+            source: "qrc:/qmlresources/logos/ministerio.png"
             anchors.leftMargin: -20
             anchors.bottomMargin: -20
             fillMode: Image.PreserveAspectFit

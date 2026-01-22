@@ -1,5 +1,8 @@
 import QtQuick 2.15
-import "extras"
+
+import "qrc:/Views"
+import "qrc:/Common"
+import "qrc:/Dialogs"
 
 
 ApplicationFlowForm {
