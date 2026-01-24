@@ -7,6 +7,10 @@ Item {
     property alias backButton: backButton
     property alias logo: logo
     property alias title: title
+    property alias robotBadge: robotBadge
+    property alias userBadge: userBadge
+    property bool showRobotBadge: false
+    property bool showUserBadge: false
 
     Rectangle {
         anchors.fill: parent
@@ -52,6 +56,26 @@ Item {
                 font.bold: true
             }
         }
+
+        Row {
+            id: rightBadges
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.rightMargin: 10
+            spacing: 10
+
+            RobotBadge {
+                id: robotBadge
+                visible: root.showRobotBadge && robotConnected
+                enabled: visible
+            }
+
+            UserBadge {
+                id: userBadge
+                visible: root.showUserBadge && loggedIn
+                enabled: visible
+            }
+        }
     }
 }
 
@@ -61,4 +85,3 @@ Designer {
     D{i:0;autoSize:true;formeditorZoom:1.1;height:480;width:640}D{i:2}D{i:5}D{i:8}D{i:1}
 }
 ##^##*/
-
