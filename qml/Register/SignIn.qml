@@ -7,6 +7,12 @@ SignInForm {
     signal goToLogin()
     signal goToGuest()
 
+    onVisibleChanged: {
+        if (visible) {
+            authModeDropdown.currentMode = "sign_in"
+        }
+    }
+
     ErrorRectangle {
         id: errorPopup
         anchors.centerIn: parent
@@ -27,11 +33,14 @@ SignInForm {
         roleCombo.currentIndex = 0
     }
 
-    loginButton.onClicked: {
-        clear(); goToLogin()
-    }
-    guestButton.onClicked: {
-        clear(); goToGuest()
+    authModeDropdown.onModeSelected: function(mode) {
+        if (mode === "login") {
+            clear(); goToLogin()
+        } else if (mode === "guest") {
+            clear(); goToGuest()
+        } else {
+            authModeDropdown.currentMode = "sign_in"
+        }
     }
 
     signInButton.onClicked: {

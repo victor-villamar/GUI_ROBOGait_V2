@@ -8,6 +8,12 @@ GuestForm {
     signal goToRegister()
     signal authenticated()
 
+    onVisibleChanged: {
+        if (visible) {
+            authModeDropdown.currentMode = "guest"
+        }
+    }
+
     ErrorRectangle {
         id: errorPopup
         anchors.centerIn: parent
@@ -24,11 +30,14 @@ GuestForm {
         lastNameField.text = ""
     }
 
-    loginButton.onClicked: {
-        clear(); goToLogin()
-    }
-    registerButton.onClicked: {
-        clear(); goToRegister()
+    authModeDropdown.onModeSelected: function(mode) {
+        if (mode === "login") {
+            clear(); goToLogin()
+        } else if (mode === "sign_in") {
+            clear(); goToRegister()
+        } else {
+            authModeDropdown.currentMode = "guest"
+        }
     }
 
     guestButton.onClicked: {

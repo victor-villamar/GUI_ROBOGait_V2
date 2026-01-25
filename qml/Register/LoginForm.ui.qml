@@ -1,14 +1,15 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 
+import "qrc:/Common"
+
 Page {
     id: root
 
     property alias usernameField: usernameField
     property alias passwordField: passwordField
     property alias loginButton: loginButton
-    property alias registerButton: registerButton
-    property alias guestButton: guestButton
+    property alias authModeDropdown: authModeDropdown
 
     Rectangle {
         anchors.fill: parent
@@ -49,13 +50,11 @@ Page {
                         }
                     }
 
-                    Text {
-                        color: "#ffffff"
-                        font.pixelSize: 26
-                        font.bold: true
-                        text: qsTr("LOGIN")
-                        horizontalAlignment: Text.AlignHCenter
+                    AuthModeDropdown {
+                        id: authModeDropdown
                         width: formColumn.width
+                        currentMode: "login"
+                        anchors.horizontalCenter: parent.horizontalCenter
                     }
 
                     TextField {
@@ -101,39 +100,6 @@ Page {
                             radius: 10
                             color: "#aed2ea"
                             border.color: "#aed2ea"
-                        }
-                    }
-
-                    Row {
-                        width: formColumn.width
-                        spacing: 20
-
-                        Button {
-                            id: registerButton
-                            width: Math.max(0, (parent.width - parent.spacing) / 2)
-                            height: 50
-                            text: qsTr("Registrarse")
-                            font.capitalization: Font.AllUppercase
-                            font.pointSize: 18
-                            background: Rectangle {
-                                radius: 10
-                                color: "#c2d9e9"
-                                border.color: "#c2d9e9"
-                            }
-                        }
-
-                        Button {
-                            id: guestButton
-                            width: Math.max(0, (parent.width - parent.spacing) / 2)
-                            height: 50
-                            text: qsTr("Invitado")
-                            font.capitalization: Font.AllUppercase
-                            font.pointSize: 18
-                            background: Rectangle {
-                                radius: 10
-                                color: "#c2d9e9"
-                                border.color: "#c2d9e9"
-                            }
                         }
                     }
                 }

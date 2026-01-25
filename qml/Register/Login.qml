@@ -8,6 +8,12 @@ LoginForm {
     signal goToGuest()
     signal authenticated()
 
+    onVisibleChanged: {
+        if (visible) {
+            authModeDropdown.currentMode = "login"
+        }
+    }
+
     ErrorRectangle {
         id: errorPopup
         anchors.centerIn: parent
@@ -19,16 +25,18 @@ LoginForm {
         errorPopup.open()
     }
 
-    registerButton.onClicked: {
-        usernameField.text = ""
-        passwordField.text = ""
-        goToRegister()
-    }
-
-    guestButton.onClicked: {
-        usernameField.text = ""
-        passwordField.text = ""
-        goToGuest()
+    authModeDropdown.onModeSelected: function(mode) {
+        if (mode === "sign_in") {
+            usernameField.text = ""
+            passwordField.text = ""
+            goToRegister()
+        } else if (mode === "guest") {
+            usernameField.text = ""
+            passwordField.text = ""
+            goToGuest()
+        } else {
+            authModeDropdown.currentMode = "login"
+        }
     }
 
     loginButton.onClicked: {

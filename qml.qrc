@@ -7,18 +7,21 @@
   <qresource prefix="/Common">
     <file alias="CustomToolBar.qml">qml/Common/CustomToolBar.qml</file>
     <file alias="CustomToolBarForm.ui.qml">qml/Common/CustomToolBarForm.ui.qml</file>
+    <file alias="AuthModeDropdown.qml">qml/Common/AuthModeDropdown.qml</file>
     <file alias="RobotBadge.qml">qml/Common/RobotBadge.qml</file>
     <file alias="UserBadge.qml">qml/Common/UserBadge.qml</file>
   </qresource>
   <qresource prefix="/Dialogs">
     <file alias="ConfirmationDialog.qml">qml/Dialogs/ConfirmationDialog.qml</file>
     <file alias="ErrorRectangle.qml">qml/Dialogs/ErrorRectangle.qml</file>
+    <file alias="UserSwitchDialog.qml">qml/Dialogs/UserSwitchDialog.qml</file>
   </qresource>
   <qresource prefix="/Views">
     <file alias="Home.qml">qml/Views/Home.qml</file>
     <file alias="HomeForm.ui.qml">qml/Views/HomeForm.ui.qml</file>
     <file alias="RegisterPage.qml">qml/Views/RegisterPage.qml</file>
     <file alias="RegisterPageForm.ui.qml">qml/Views/RegisterPageForm.ui.qml</file>
+    <file alias="UserSwitchPage.qml">qml/Views/UserSwitchPage.qml</file>
     <file alias="RobotConnection.qml">qml/Views/RobotConnection.qml</file>
     <file alias="RobotConnectionForm.ui.qml">qml/Views/RobotConnectionForm.ui.qml</file>
     <file alias="RobotCmdVel.qml">qml/Views/RobotCmdVel.qml</file>
