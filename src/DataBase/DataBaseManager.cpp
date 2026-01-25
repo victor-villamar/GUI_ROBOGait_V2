@@ -53,7 +53,7 @@ bool DataBaseManager::login(const QString& username, const QString& password)
   if (!db_.isOpen())
   {
     qCritical() << "[DataBaseManager::login] Database is not open";
-    setLastError("Database is not open");
+    setLastError("La base de datos no esta abierta");
     setPassLogin(false);
     return false;
   }
@@ -74,7 +74,7 @@ bool DataBaseManager::login(const QString& username, const QString& password)
   if (!maybe_user)
   {
     qCritical() << "[DataBaseManager::login] Invalid credentials";
-    setLastError("Invalid credentials");
+    setLastError("Credenciales invalidas");
     setPassLogin(false);
     return false;
   }
@@ -93,7 +93,7 @@ bool DataBaseManager::checkUserNameAvailable(const QString& user_name)
   if (!db_.isOpen())
   {
     qCritical() << "[DataBaseManager::checkUserNameAvailable] Database is not open";
-    setLastError("Database is not open");
+    setLastError("La base de datos no esta abierta");
     setPassCheckUserName(false);
     return false;
   }
@@ -121,7 +121,7 @@ bool DataBaseManager::registerUser(const QString& name, const QString& last_name
   if (!db_.isOpen())
   {
     qCritical() << "[DataBaseManager::registerUser] Database is not open";
-    setLastError("Database is not open");
+    setLastError("La base de datos no esta abierta");
     return false;
   }
 
@@ -130,7 +130,7 @@ bool DataBaseManager::registerUser(const QString& name, const QString& last_name
   if (role_enum != UserRole::DOCTOR && role_enum != UserRole::MANAGER)
   {
     qCritical() << "[DataBaseManager::registerUser] Invalid role (must be doctor/manager):" << role;
-    setLastError("Invalid role (must be doctor/manager)");
+    setLastError("Rol invalido (debe ser doctor/gerente)");
     return false;
   }
 
@@ -147,7 +147,7 @@ bool DataBaseManager::registerUser(const QString& name, const QString& last_name
   if (std::get<bool>(exists_result))
   {
     qCritical() << "[DataBaseManager::registerUser] Username already exists:" << user_name;
-    setLastError("Username already exists");
+    setLastError("El nombre de usuario ya existe");
     return false;
   }
 
