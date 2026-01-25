@@ -55,41 +55,41 @@ Item {
             }
         }
 
-        Image {
-            id: upm
-            width: 190
-            height: 190
-            anchors.left: parent.left
-            anchors.top: parent.top
-            source: "qrc:/qmlresources/logos/upm.png"
-            anchors.topMargin: -80
-            anchors.leftMargin: -40
-            fillMode: Image.PreserveAspectFit
-        }
-        Image {
-            id: car
-            width: 110
-            height: 90
-            anchors.left: upm.right
-            anchors.top: parent.top
-            source: "qrc:/qmlresources/logos/car.png"
-            anchors.topMargin: -50
-            anchors.leftMargin: -42
+	        Image {
+	            id: upm
+	            width: 110
+	            height: 90
+	            anchors.left: parent.left
+	            anchors.top: parent.top
+	            source: "qrc:/qmlresources/logos/upm.png"
+	            anchors.topMargin: -50
+	            anchors.leftMargin: -10
+	            fillMode: Image.PreserveAspectFit
+	        }
+	        Image {
+	            id: car
+	            width: 110
+	            height: 90
+	            anchors.left: upm.right
+	            anchors.top: parent.top
+	            source: "qrc:/qmlresources/logos/car.png"
+	            anchors.topMargin: -50
+	            anchors.leftMargin: 0
 
-            fillMode: Image.PreserveAspectFit
-        }
-        Image {
-            id: etsidi
-            width: 120
-            height: 140
-            anchors.right: parent.right
-            anchors.top: parent.top
-            source: "qrc:/qmlresources/logos/etsidi.png"
-            anchors.rightMargin: 20
-            anchors.topMargin: -76
+	            fillMode: Image.PreserveAspectFit
+	        }
+	        Image {
+	            id: etsidi
+	            width: 110
+	            height: 90
+	            anchors.right: parent.right
+	            anchors.top: parent.top
+	            source: "qrc:/qmlresources/logos/etsidi.png"
+	            anchors.rightMargin: 20
+	            anchors.topMargin: -60
 
-            fillMode: Image.PreserveAspectFit
-        }
+	            fillMode: Image.PreserveAspectFit
+	        }
         Image {
             id: ministerio
             width: 360
@@ -110,4 +110,3 @@ Designer {
 D{i:8}D{i:9}D{i:1}
 }
 ##^##*/
-
