@@ -17,6 +17,7 @@ Rectangle {
     property string previousState: ""
     property alias mystackview: mystackview
     property alias toolbar: toolbar
+    property alias userSwitchDialog: userSwitchDialog
 
     CustomToolBar {
         id: toolbar
@@ -91,6 +92,10 @@ Rectangle {
         id: lostConnectionPopup
         anchors.centerIn: parent
         errorRectangleTextError.text: ""
+    }
+
+    UserSwitchDialog {
+        id: userSwitchDialog
     }
 }
 

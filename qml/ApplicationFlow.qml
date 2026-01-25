@@ -33,10 +33,10 @@ ApplicationFlowForm {
     }
 
     Connections {
-        target: toolbar.robotBadge
+        target: toolbar.userBadge
         ignoreUnknownSignals: true
 
-        function onDisconnectRequested() {
+        function onDisconnectRobotRequested() {
             if (rosManager && rosManager.robotManager) {
                 rosManager.robotManager.clearSelection()
             }
@@ -46,6 +46,12 @@ ApplicationFlowForm {
             }
 
             applicationFlow.state = "robot_connection"
+        }
+
+        function onChangeUserRequested() {
+            if (applicationFlow.userSwitchDialog) {
+                applicationFlow.userSwitchDialog.open()
+            }
         }
     }
 
@@ -134,9 +140,9 @@ ApplicationFlowForm {
             }
             PropertyChanges {
                 target: toolbar
-                backButton.opacity: 1
-                backButton.enabled: true
-                backButton.visible: true
+                backButton.opacity: 0
+                backButton.enabled: false
+                backButton.visible: false
                 showRobotBadge: false
                 showUserBadge: false
             }

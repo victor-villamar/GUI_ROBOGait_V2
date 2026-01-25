@@ -3,12 +3,18 @@ import QtQuick.Controls 2.15
 
 Popup {
     id: root
-    width: parent.width * 0.8
+    width: parent ? Math.min(560, parent.width * 0.80) : 560
     height: 100
     modal: true
     focus: true
+    parent: Overlay.overlay
     anchors.centerIn: parent
     background: null
+
+    Overlay.modal: Rectangle {
+        anchors.fill: parent
+        color: "#A0505050"
+    }
 
     // Permite controlar el comportamiento del cierre
     property string mode: "instant" // "instant" o "delayed"

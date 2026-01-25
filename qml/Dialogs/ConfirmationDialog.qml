@@ -9,6 +9,11 @@ Dialog {
 
     parent: Overlay.overlay
 
+    Overlay.modal: Rectangle {
+        anchors.fill: parent
+        color: "#A0505050"
+    }
+
     width: parent ? Math.min(560, parent.width * 0.80) : 560
     x: parent ? Math.round((parent.width - width) / 2) : 0
     y: parent ? Math.round((parent.height - height) / 2) : 0
