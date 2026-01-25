@@ -6,24 +6,126 @@ RegisterPageForm {
 
     signal authenticated()
 
-    function updateBackButtonVisibility()
+    function restartIdleTimer()
     {
-        if (!applicationFlow || !applicationFlow.toolbar || !applicationFlow.toolbar.backButton)
-        {
-            return
+        idleTimer.stop()
+        if (registerPage.visible && registerPage.enabled) {
+            idleTimer.start()
         }
-
-        applicationFlow.toolbar.backButton.visible = (registerPage.state === "register_page_login")
     }
 
-    function loginPush()  { state = "register_page_login" }
-    function signInPush() { state = "register_page_sign_in" }
-    function guestPush()  { state = "register_page_guest" }
+    function loginPush()  {
+         state = "register_page_login"
+    }
+    function signInPush() {
+         state = "register_page_sign_in"
+    }
+    function guestPush()  {
+         state = "register_page_guest"
+    }
 
-    onStateChanged: updateBackButtonVisibility()
-    Component.onCompleted: updateBackButtonVisibility()
+    Timer {
+        id: idleTimer
+        interval: 10000
+        repeat: false
+        onTriggered: {
+            if (!applicationFlow || !applicationFlow.mystackview) {
+                return
+            }
+
+            while (applicationFlow.mystackview.depth > 1) {
+                applicationFlow.mystackview.pop()
+            }
+
+            applicationFlow.state = "Home"
+        }
+    }
+
+    onVisibleChanged: restartIdleTimer()
+    onEnabledChanged: restartIdleTimer()
+    onStateChanged: restartIdleTimer()
+    Component.onCompleted: restartIdleTimer()
+
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.AllButtons
+        hoverEnabled: true
+        propagateComposedEvents: true
+        onPressed: function(mouse) {
+            registerPage.restartIdleTimer()
+            mouse.accepted = false
+        }
+        onWheel: function(wheel) {
+            registerPage.restartIdleTimer()
+            wheel.accepted = false
+        }
+    }
+
+    Connections {
+         target: loginPage.usernameField
+
+         function onTextChanged() {
+            registerPage.restartIdleTimer()
+         }
+    }
+    Connections {
+        target: loginPage.passwordField
+
+         function onTextChanged() {
+            registerPage.restartIdleTimer()
+         }
+    }
+    Connections {
+        target: signInPage.nameField
+        function onTextChanged() {
+            registerPage.restartIdleTimer()
+        }
+    }
+    Connections {
+        target: signInPage.lastNameField
+        function onTextChanged() {
+            registerPage.restartIdleTimer()
+        }
+    }
+    Connections {
+        target: signInPage.userNameField
+        function onTextChanged() {
+            registerPage.restartIdleTimer()
+        }
+    }
+    Connections {
+        target: signInPage.passwordField
+        function onTextChanged() {
+            registerPage.restartIdleTimer()
+        }
+    }
+    Connections {
+        target: signInPage.repeatPasswordField
+        function onTextChanged() {
+            registerPage.restartIdleTimer()
+        }
+    }
+    Connections {
+        target: signInPage.roleCombo
+        function onCurrentIndexChanged() {
+            registerPage.restartIdleTimer()
+        }
+    }
+    Connections {
+        target: guestPage.nameField
+        function onTextChanged() {
+            registerPage.restartIdleTimer()
+        }
+    }
+    Connections {
+        target: guestPage.lastNameField
+        function onTextChanged() {
+            registerPage.restartIdleTimer()
+        }
+    }
 
     // Connections for loginPage
+
     Connections {
         target: loginPage
 
@@ -45,6 +147,7 @@ RegisterPageForm {
     }
 
     // Connections for signInPage
+
     Connections {
         target: signInPage
         function onGoToLogin() {
@@ -59,6 +162,7 @@ RegisterPageForm {
     }
 
     // Connections for guestPage
+
     Connections {
         target: guestPage
         function onGoToLogin() {
@@ -79,6 +183,7 @@ RegisterPageForm {
     }
 
     // States
+
     states: [
         State {
             name: "register_page_login"

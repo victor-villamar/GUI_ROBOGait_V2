@@ -7,19 +7,50 @@ import "qrc:/Dialogs"
 Item {
     id: root
 
+    signal disconnectRobotRequested()
+    signal changeUserRequested()
+
     property bool dropDownOpen: false
     property bool loggedIn: dbManager ? dbManager.passLogin : false
+    property bool robotConnected: (rosManager && rosManager.robotManager) ? (rosManager.robotManager.selectedRobotNamespace !== "") : false
+    property string robotDisplayName: (rosManager && rosManager.robotManager) ? rosManager.robotManager.selectedRobotDisplayName : ""
+
     property string userLabel: (dbManager && dbManager.displayName && dbManager.displayName.length)
                          ? dbManager.displayName
                          : ((dbManager && dbManager.userRole === "guest") ? qsTr("Invitado")
                                                                        : (dbManager ? dbManager.userName : ""))
 
-    property int badgeWidth: Math.max(userRow.implicitWidth + 20, logoutText.implicitWidth + 40)
+    property int badgeWidth: Math.max(userRow.implicitWidth + 20, 140)
+    property int segmentHeight: 44
+    property int segmentPadding: 16
+    property int dividerSize: 2
+    property int segmentWidth: Math.max(
+                                 120,
+                                 disconnectText.implicitWidth + root.segmentPadding * 2,
+                                 changeUserText.implicitWidth + root.segmentPadding * 2,
+                                 logoutText.implicitWidth + root.segmentPadding * 2
+                               )
+    property int menuWidth: Math.max(root.badgeWidth, root.segmentWidth)
 
     implicitHeight: 56
     implicitWidth: badgeWidth
 
     visible: loggedIn
+
+    Timer {
+        id: autoCloseTimer
+        interval: 3000
+        repeat: false
+        onTriggered: root.dropDownOpen = false
+    }
+
+    function restartAutoCloseTimer()
+    {
+        autoCloseTimer.stop()
+        if (root.dropDownOpen) {
+            autoCloseTimer.start()
+        }
+    }
 
     MouseArea {
         anchors.fill: parent
@@ -92,15 +123,20 @@ Item {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: root.dropDownOpen = !root.dropDownOpen
+            onClicked: {
+                root.dropDownOpen = !root.dropDownOpen
+                root.restartAutoCloseTimer()
+            }
         }
     }
 
     Rectangle {
         id: dropDown
         z: 3
-        width: root.badgeWidth
-        height: root.dropDownOpen ? 48 : 0
+        width: root.menuWidth
+        height: root.dropDownOpen
+              ? (root.segmentHeight * (root.robotConnected ? 3 : 2) + root.dividerSize * (root.robotConnected ? 2 : 1))
+              : 0
         opacity: root.dropDownOpen ? 1 : 0
         radius: 14
         color: "#ffffff"
@@ -123,25 +159,120 @@ Item {
             NumberAnimation { duration: 120 }
         }
 
-        Text {
-            id: logoutText
-            anchors.centerIn: parent
-            text: qsTr("Cerrar sesión")
-            color: "#045671"
-            font.pixelSize: 16
-            font.bold: true
-        }
-
-        MouseArea {
+        Column {
+            id: segmentedColumn
             anchors.fill: parent
-            onPressed: dropDown.color = "#00C8FF"
-            onReleased: dropDown.color = "#ffffff"
-            onCanceled: dropDown.color = "#ffffff"
-            onClicked: {
-                root.dropDownOpen = false
-                logoutDialog.openWithMessage(qsTr("¿Cerrar sesión?"))
+            spacing: 0
+
+            Rectangle {
+                id: disconnectSegment
+                width: parent.width
+                height: root.segmentHeight
+                color: disconnectArea.pressed ? "#00C8FF" : "transparent"
+                visible: root.robotConnected
+
+                Text {
+                    id: disconnectText
+                    anchors.centerIn: parent
+                    text: qsTr("Desconectar")
+                    color: root.robotConnected ? "#045671" : "#8a8a8a"
+                    font.pixelSize: 12
+                    font.bold: true
+                }
+
+                MouseArea {
+                    id: disconnectArea
+                    anchors.fill: parent
+                    enabled: root.robotConnected
+                    onPressed: root.restartAutoCloseTimer()
+                    onClicked: {
+                        root.dropDownOpen = false
+                        disconnectRobotDialog.openWithMessage(
+                            qsTr("¿Cerrar conexión con %1?").arg(root.robotDisplayName)
+                        )
+                    }
+                }
+            }
+
+            Rectangle {
+                id: dividerAfterDisconnect
+                width: parent.width
+                height: root.dividerSize
+                color: "#045671"
+                opacity: 0.35
+                visible: root.robotConnected
+            }
+
+            Rectangle {
+                id: changeUserSegment
+                width: parent.width
+                height: root.segmentHeight
+                color: changeUserArea.pressed ? "#00C8FF" : "transparent"
+
+                Text {
+                    id: changeUserText
+                    anchors.centerIn: parent
+                    text: qsTr("Cambiar usuario")
+                    color: "#045671"
+                    font.pixelSize: 12
+                    font.bold: true
+                }
+
+                MouseArea {
+                    id: changeUserArea
+                    anchors.fill: parent
+                    onPressed: root.restartAutoCloseTimer()
+                    onClicked: {
+                        root.dropDownOpen = false
+                        root.changeUserRequested()
+                    }
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: root.dividerSize
+                color: "#045671"
+                opacity: 0.35
+            }
+
+            Rectangle {
+                id: logoutSegment
+                width: parent.width
+                height: root.segmentHeight
+                color: logoutArea.pressed ? "#00C8FF" : "transparent"
+
+                Text {
+                    id: logoutText
+                    anchors.centerIn: parent
+                    text: qsTr("Cerrar sesión")
+                    color: "#045671"
+                    font.pixelSize: 12
+                    font.bold: true
+                }
+
+                MouseArea {
+                    id: logoutArea
+                    anchors.fill: parent
+                    onPressed: root.restartAutoCloseTimer()
+                    onClicked: {
+                        root.dropDownOpen = false
+                        var msg = qsTr("¿Cerrar sesión?")
+                        if (root.robotConnected && root.robotDisplayName && root.robotDisplayName.length) {
+                            msg += "\n\n" + qsTr("Se cerrará la conexión con %1.").arg(root.robotDisplayName)
+                        }
+                        logoutDialog.openWithMessage(msg)
+                    }
+                }
             }
         }
+    }
+
+    ConfirmationDialog {
+        id: disconnectRobotDialog
+        acceptText: qsTr("Desconectar")
+
+        onAccepted: root.disconnectRobotRequested()
     }
 
     ConfirmationDialog {
@@ -150,6 +281,9 @@ Item {
         acceptText: qsTr("Cerrar sesión")
 
         onAccepted: {
+            if (root.robotConnected && rosManager && rosManager.robotManager) {
+                rosManager.robotManager.clearSelection()
+            }
             if (dbManager) {
                 dbManager.logout()
             }
