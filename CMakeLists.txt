@@ -7,10 +7,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find packages
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network)
+find_package(Qt6 REQUIRED COMPONENTS
+    Core
+    Gui
+    Qml
+    Quick
+    Network
+    Sql)
 
 # Enable Qt's automatic MOC, UIC and RCC
 set(CMAKE_AUTOUIC ON)
@@ -19,6 +26,15 @@ set(CMAKE_AUTORCC ON)
 
 # Set include directories
 set(HEADERS
+    include/DataBase/Common/DbErrors.hpp
+    include/DataBase/Common/DbTypes.hpp
+    include/DataBase/Repository/ExperimentRepository.hpp
+    include/DataBase/Repository/MapRepository.hpp
+    include/DataBase/Repository/PatientRepository.hpp
+    include/DataBase/Repository/Repository.hpp
+    include/DataBase/Repository/UserRepository.hpp
+    include/DataBase/DataBaseManager.hpp
+    include/DataBase/RoboGaitDb.hpp
     include/Define.hpp
     include/RobotDiscovery.hpp
     include/RobotManager.hpp
@@ -28,6 +44,15 @@ set(HEADERS
 
 # Set source files
 set(SOURCES
+    src/DataBase/Common/DbErrors.cpp
+    src/DataBase/Common/DbTypes.cpp
+    src/DataBase/Repository/ExperimentRepository.cpp
+    src/DataBase/Repository/MapRepository.cpp
+    src/DataBase/Repository/PatientRepository.cpp
+    src/DataBase/Repository/Repository.cpp
+    src/DataBase/Repository/UserRepository.cpp
+    src/DataBase/DataBaseManager.cpp
+    src/DataBase/RoboGaitDb.cpp
     src/main.cpp
     src/RobotDiscovery.cpp
     src/RosNodeManager.cpp
@@ -43,6 +68,7 @@ set(RESOURCES
 # Set library dependencies
 set(LIBS
     rclcpp::rclcpp
+    ament_index_cpp::ament_index_cpp
     ${geometry_msgs_LIBRARIES}
     ${OpenCV_LIBS}
 )
@@ -54,6 +80,7 @@ set(QT_LIBS
     Qt6::Qml
     Qt6::Quick
     Qt6::Network
+    Qt6::Sql
 )
 
 # Add Qt resources
@@ -64,6 +91,9 @@ qt_add_resources(SOURCES
 # Include directories
 include_directories(
     include
+    include/DataBase
+    include/DataBase/Common
+    include/DataBase/Repository
 
     ${rclcpp_INCLUDE_DIRS}
     ${geometry_msgs_INCLUDE_DIRS}
@@ -73,6 +103,7 @@ include_directories(
     ${Qt6Qml_INCLUDE_DIRS}
     ${Qt6Quick_INCLUDE_DIRS}
     ${Qt6Network_INCLUDE_DIRS}
+    ${Qt6Sql_INCLUDE_DIRS}
 )
 
 # Add executable
@@ -84,6 +115,7 @@ add_executable(${PROJECT_NAME}
 # Add dependencies
 ament_target_dependencies(${PROJECT_NAME}
     rclcpp
+    ament_index_cpp
     geometry_msgs
 )
 
@@ -96,6 +128,10 @@ target_link_libraries(${PROJECT_NAME}
 # Install
 install(TARGETS ${PROJECT_NAME}
     DESTINATION ${PROJECT_NAME}/bin
+)
+
+install(FILES db_robogait.db
+    DESTINATION share/${PROJECT_NAME}/database
 )
 
 ament_package()

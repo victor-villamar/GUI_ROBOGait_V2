@@ -10,6 +10,11 @@ ApplicationWindow {
 
     title:   qsTr("Robogait")
 
+    Overlay.modal: Rectangle {
+        anchors.fill: parent
+        color: "#A0505050"
+    }
+
     ApplicationFlow {
         width: parent.width
         height: parent.height

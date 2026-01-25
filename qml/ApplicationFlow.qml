@@ -10,8 +10,8 @@ ApplicationFlowForm {
     state: "Home"
 
     home.buttonStart.onClicked: {
-        mystackview.push(robot_connection)
-        applicationFlow.state = "robot_connection"
+        mystackview.push(register_page)
+        applicationFlow.state = "register_page"
     }
 
     function backButton()
@@ -19,6 +19,39 @@ ApplicationFlowForm {
         if (mystackview.depth > 1) {
             mystackview.pop()
             applicationFlow.state = applicationFlow.previousState
+        }
+    }
+
+    Connections {
+        target: mystackview.currentItem
+        ignoreUnknownSignals: true
+
+        function onAuthenticated() {
+            mystackview.replace(robot_connection)
+            applicationFlow.state = "robot_connection"
+        }
+    }
+
+    Connections {
+        target: toolbar.userBadge
+        ignoreUnknownSignals: true
+
+        function onDisconnectRobotRequested() {
+            if (rosManager && rosManager.robotManager) {
+                rosManager.robotManager.clearSelection()
+            }
+
+            while (mystackview.depth > 2) {
+                mystackview.pop()
+            }
+
+            applicationFlow.state = "robot_connection"
+        }
+
+        function onChangeUserRequested() {
+            if (applicationFlow.userSwitchDialog) {
+                applicationFlow.userSwitchDialog.open()
+            }
         }
     }
 
@@ -58,6 +91,25 @@ ApplicationFlowForm {
         }
     }
 
+    Connections {
+        target: dbManager
+
+        function onPassLoginChanged() {
+            if (!dbManager.passLogin) {
+                if (rosManager && rosManager.robotManager) {
+                    rosManager.robotManager.clearSelection()
+                }
+
+                while (mystackview.depth > 1) {
+                    mystackview.pop()
+                }
+
+                mystackview.push(register_page)
+                applicationFlow.state = "register_page"
+            }
+        }
+    }
+
     states: [
         State{
             name: "Home"
@@ -66,10 +118,33 @@ ApplicationFlowForm {
                 target: toolbar
                 backButton.opacity: 0
                 backButton.enabled: false
+                backButton.visible: false
                 logo.opacity: 0
                 logo.enabled: false
                 title.opacity: 0
                 title.enabled: false
+                showRobotBadge: false
+                showUserBadge: false
+            }
+            PropertyChanges {
+                target: mystackview
+                anchors.top: toolbar.bottom
+                anchors.bottom: parent.bottom
+            }
+        },
+        State {
+            name: "register_page"
+            PropertyChanges {
+                target: applicationFlow
+                previousState: "Home"
+            }
+            PropertyChanges {
+                target: toolbar
+                backButton.opacity: 0
+                backButton.enabled: false
+                backButton.visible: false
+                showRobotBadge: false
+                showUserBadge: false
             }
             PropertyChanges {
                 target: mystackview
@@ -85,8 +160,11 @@ ApplicationFlowForm {
             }
             PropertyChanges {
                 target: toolbar
-                backButton.opacity: 1
-                backButton.enabled: true
+                backButton.opacity: 0
+                backButton.enabled: false
+                backButton.visible: false
+                showRobotBadge: true
+                showUserBadge: true
             }
             PropertyChanges {
                 target: mystackview
@@ -104,6 +182,9 @@ ApplicationFlowForm {
                 target: toolbar
                 backButton.opacity: 0
                 backButton.enabled: false
+                backButton.visible: false
+                showRobotBadge: true
+                showUserBadge: true
             }
             PropertyChanges { 
                 target: mystackview

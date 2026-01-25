@@ -7,18 +7,43 @@ Dialog {
     focus: true
     closePolicy: Popup.NoAutoClose
 
+    parent: Overlay.overlay
+
+    Overlay.modal: Rectangle {
+        anchors.fill: parent
+        color: "#A0505050"
+    }
+
     width: parent ? Math.min(560, parent.width * 0.80) : 560
+    x: parent ? Math.round((parent.width - width) / 2) : 0
+    y: parent ? Math.round((parent.height - height) / 2) : 0
 
     property string message: ""
     property string acceptText: qsTr("Aceptar")
     property bool holdToAccept: true
     property int acceptHoldMs: 900
 
+    function reposition()
+    {
+        if (!parent) {
+            return
+        }
+
+        x = Math.round((parent.width - width) / 2)
+        y = Math.round((parent.height - height) / 2)
+    }
+
     function openWithMessage(messageText) 
     {
         message = messageText
+        reposition()
         open()
     }
+
+    onOpened: reposition()
+    onWidthChanged: reposition()
+    onHeightChanged: reposition()
+    onParentChanged: reposition()
 
     background: Rectangle {
         color: "#a9cfe8"

@@ -1,0 +1,53 @@
+#pragma once
+
+#include <optional>
+
+#include "DataBase/Common/DbTypes.hpp"
+#include "DataBase/Repository/Repository.hpp"
+
+namespace ROBOGait
+{
+namespace db
+{
+/**
+ * @brief Repository for experiment-related database operations
+ */
+class ExperimentRepository : public Repository
+{
+public:
+  /**
+   * @brief Constructor of ExperimentRepository class
+   *
+   * @param db Reference to the RoboGait database
+   */
+  ExperimentRepository(RoboGaitDb& db);
+
+  /**
+   * @brief Destructor of ExperimentRepository class
+   */
+  ~ExperimentRepository() override;
+
+  /**
+   * @brief Insert a new experiment into the database
+   *
+   * @param patient_name The name of the patient
+   * @param patient_last_name The last name of the patient
+   * @param map_name The name of the map
+   * @param user_name The name of the user
+   *
+   * @return The ID of the inserted experiment
+   */
+  DbResult<int> insertExperiment(const QString& patient_name, const QString& patient_last_name, const QString& map_name, const QString& user_name);
+
+  /**
+   * @brief Insert a new result into the database
+   *
+   * @param experiment_id The ID of the experiment
+   * @param comment An optional comment for the result
+   *
+   * @return The ID of the inserted result
+   */
+  DbResult<int> insertResult(int experiment_id, const std::optional<QString>& comment);
+};
+} // namespace db
+} // namespace ROBOGait
