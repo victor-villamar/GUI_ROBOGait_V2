@@ -19,12 +19,13 @@
   <qresource prefix="/Views">
     <file alias="Home.qml">qml/Views/Home.qml</file>
     <file alias="HomeForm.ui.qml">qml/Views/HomeForm.ui.qml</file>
+    <file alias="MainMenu.qml">qml/Views/MainMenu.qml</file>
+    <file alias="MainMenuForm.ui.qml">qml/Views/MainMenuForm.ui.qml</file>
     <file alias="RegisterPage.qml">qml/Views/RegisterPage.qml</file>
     <file alias="RegisterPageForm.ui.qml">qml/Views/RegisterPageForm.ui.qml</file>
-    <file alias="UserSwitchPage.qml">qml/Views/UserSwitchPage.qml</file>
     <file alias="RobotConnection.qml">qml/Views/RobotConnection.qml</file>
     <file alias="RobotConnectionForm.ui.qml">qml/Views/RobotConnectionForm.ui.qml</file>
-    <file alias="RobotCmdVel.qml">qml/Views/RobotCmdVel.qml</file>
+    <file alias="UserSwitchPage.qml">qml/Views/UserSwitchPage.qml</file>
   </qresource>
   <qresource prefix="/Register">
     <file alias="Login.qml">qml/Register/Login.qml</file>

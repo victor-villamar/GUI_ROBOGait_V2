@@ -173,7 +173,7 @@ ApplicationFlowForm {
             }
         },
         State {
-            name: "robot_cmd_vel"
+            name: "main_menu"
             PropertyChanges { 
                 target: applicationFlow
                 previousState: "robot_connection"
