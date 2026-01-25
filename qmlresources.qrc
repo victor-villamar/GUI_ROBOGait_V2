@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="/qmlresources/icons">
+    <file alias="arrow_down.svg">resources/Icons/arrow_down.svg</file>
+    <file alias="arrow_up.svg">resources/Icons/arrow_up.svg</file>
     <file alias="check_solid.svg">resources/Icons/check_solid.svg</file>
     <file alias="circle_info_solid.svg">resources/Icons/circle_info_solid.svg</file>
     <file alias="circle_question.svg">resources/Icons/circle_question.svg</file>
