@@ -20,12 +20,12 @@
 	  <file alias="UserSwitchDialog.qml">qml/Dialogs/UserSwitchDialog.qml</file>
 	</qresource>
   <qresource prefix="/Register">
+    <file alias="Guest.qml">qml/Register/Guest.qml</file>
+    <file alias="GuestForm.ui.qml">qml/Register/GuestForm.ui.qml</file>
     <file alias="Login.qml">qml/Register/Login.qml</file>
     <file alias="LoginForm.ui.qml">qml/Register/LoginForm.ui.qml</file>
     <file alias="SignIn.qml">qml/Register/SignIn.qml</file>
     <file alias="SignInForm.ui.qml">qml/Register/SignInForm.ui.qml</file>
-    <file alias="Guest.qml">qml/Register/Guest.qml</file>
-    <file alias="GuestForm.ui.qml">qml/Register/GuestForm.ui.qml</file>
   </qresource>
 	<qresource prefix="/Views">
 	  <file alias="Home.qml">qml/Views/Home.qml</file>

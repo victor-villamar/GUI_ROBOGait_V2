@@ -232,29 +232,60 @@ Item {
             onClicked: infoDialog.openWithMessage(infoDialog.message)
         }
 
-        Text {
-            id: bottomStatus
-            color: "#cc0000"
-            font.pixelSize: 14
-            font.bold: true
-            text: qsTr("NO HAY MAPA ACTIVO  –  NO HAY PACIENTE ACTIVO")
+        Row {
+            id: bottomStatusRow
+            spacing: 6
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 12
+
+            readonly property string mapStatusRichText:
+                "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY MAPA ACTIVO</span>"
+
+            Text {
+                id: bottomStatusMap
+                font.pixelSize: 14
+                font.bold: true
+                textFormat: Text.RichText
+                text: bottomStatusRow.mapStatusRichText
+            }
+
+            Text {
+                id: bottomStatusDash
+                color: "#ffffff"
+                font.pixelSize: 14
+                font.bold: true
+                text: qsTr(" – ")
+            }
+
+            Text {
+                id: bottomStatusPatient
+                font.pixelSize: 14
+                font.bold: true
+                textFormat: Text.RichText
+                text: patient ? patient.statusRichText : "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY PACIENTE ACTIVO</span>"
+            }
         }
 
-        ConfirmationDialog {
+        InformationDialog {
             id: infoDialog
-            holdToAccept: false
-            acceptText: qsTr("Cerrar")
-            message: qsTr("Objetivo de la aplicación:\n"
-                        + "Controlar el robot ROBOGait y realizar pruebas de la marcha.\n\n"
-                        + "Cómo empezar:\n"
-                        + "- Seleccionar mapa\n"
-                        + "- Seleccionar paciente\n"
-                        + "- Control manual\n"
-                        + "- Prueba\n\n"
-                        + "La selección del mapa y el paciente es obligatoria antes de iniciar una prueba.")
+            message: qsTr(
+                "<h2>Objetivo de la aplicación</h2>"
+                + "<p>Esta aplicación permite controlar el robot <b>ROBOGait</b> y realizar pruebas de la marcha humana para la evaluación de la movilidad.<br>"
+                + "Su uso facilita la detección de posibles alteraciones en la marcha y contribuye al diagnóstico clínico.</p>"
+                + "<h2>Cómo empezar</h2>"
+                + "<ol>"
+                + "<li><b>Seleccionar mapa</b> – Defina el entorno en el que se realizará la evaluación del paciente.</li>"
+                + "<li><b>Seleccionar paciente</b> – Asigne un paciente para registrar y analizar su patrón de marcha.</li>"
+                + "<li><b>Control manual</b> – Permite un manejo directo del robot para ajustes o pruebas preliminares.</li>"
+                + "<li><b>Prueba</b> – Inicia el análisis de la marcha del paciente con el robot.</li>"
+                + "</ol>"
+                + "<p>La selección del mapa y el paciente es obligatoria antes de iniciar una prueba.<br>"
+                + "Los nombres seleccionados aparecerán en la parte inferior de la pantalla.</p>"
+                + "<h2>¿Necesita ayuda?</h2>"
+                + "<p>Para asistencia técnica, contacte con la ETSIDI en: "
+                + "<a href='mailto:correo.soporte@upm.es'>correo.soporte@upm.es</a></p>"
+            )
         }
     }
 }

@@ -1,6 +1,8 @@
 import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 import "qrc:/Dialogs"
+import "qrc:/Views"
 
 MainMenuForm {
     id: root
@@ -17,18 +19,25 @@ MainMenuForm {
     }
 
     manualControlArea.onClicked: {
-        showNotImplemented(qsTr("Control manual: no implementado todavía."))
+        showNotImplemented(qsTr("Control manual: en desarrollo."))
     }
 
     selectMapArea.onClicked: {
-        showNotImplemented(qsTr("Seleccionar mapa: no implementado todavía."))
+        showNotImplemented(qsTr("Seleccionar mapa: en desarrollo."))
     }
 
     selectPatientArea.onClicked: {
-        showNotImplemented(qsTr("Seleccionar paciente: no implementado todavía."))
+        if (StackView.view) {
+            StackView.view.push(selectPatientPage)
+        }
     }
 
     testArea.onClicked: {
-        showNotImplemented(qsTr("Prueba: no implementado todavía."))
+        showNotImplemented(qsTr("Prueba: en desarrollo."))
+    }
+
+    Component {
+        id: selectPatientPage
+        SelectPatient { }
     }
 }

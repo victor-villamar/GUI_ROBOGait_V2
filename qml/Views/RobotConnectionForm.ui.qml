@@ -15,9 +15,9 @@ Item {
     property string selectedRobotNamespace: ""
 
     function goToMainMenu() {
-        if(root.StackView.view)
+        if(StackView.view)
         {
-            root.StackView.view.push(mainMenuPage)
+            StackView.view.push(mainMenuPage)
             applicationFlow.state = "main_menu"
         }
         else
