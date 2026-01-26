@@ -14,11 +14,11 @@ Item {
     property int pendingRobotIndex: -1
     property string selectedRobotNamespace: ""
 
-    function goToCmdVel() {
-        if(root.StackView.view)
+    function goToMainMenu() {
+        if(StackView.view)
         {
-            root.StackView.view.push(robotCmdVelPage)
-            applicationFlow.state = "robot_cmd_vel"
+            StackView.view.push(mainMenuPage)
+            applicationFlow.state = "main_menu"
         }
         else
         {
@@ -323,7 +323,7 @@ Item {
             root.selectedRobotIndex = root.pendingRobotIndex
             root.selectedRobotNamespace = rosManager.robotDiscovery.robotsNamespaces[root.pendingRobotIndex]
             rosManager.robotManager.selectRobot(root.selectedRobotNamespace)
-            root.goToCmdVel()
+            root.goToMainMenu()
             root.pendingRobotIndex = -1
         }
 
@@ -335,8 +335,8 @@ Item {
     }
 
     Component {
-        id: robotCmdVelPage
-        RobotCmdVel {}
+        id: mainMenuPage
+        MainMenu {}
     }
 }
 
@@ -345,4 +345,3 @@ Designer {
     D{i:0;autoSize:true;height:480;width:640}D{i:2}D{i:4}D{i:3}D{i:5}D{i:1}
 }
 ##^##*/
-

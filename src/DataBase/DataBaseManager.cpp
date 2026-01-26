@@ -189,6 +189,186 @@ void DataBaseManager::logout()
   qInfo() << "[DataBaseManager::logout] User logged out";
 }
 
+QVariantList DataBaseManager::listPatients()
+{
+  QVariantList patients_list;
+
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::listPatients] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return patients_list;
+  }
+
+  if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::listPatients] Action not allowed for guest users";
+    setLastError("Accion no permitida para usuario invitado");
+    return patients_list;
+  }
+
+  const auto result = patient_repository_.listPatientsForUserName(user_name_);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return patients_list;
+  }
+
+  const auto patients = std::get<QVector<PatientRow>>(result);
+
+  for (const auto& patient : patients)
+  {
+    QVariantMap patient_map;
+    patient_map["id"] = patient.id;
+    patient_map["name"] = patient.name;
+    patient_map["last_name"] = patient.last_name;
+    patient_map["display"] = (patient.last_name + ", " + patient.name).trimmed();
+    patients_list.append(patient_map);
+  }
+
+  setLastError("");
+  qInfo() << "[DataBaseManager::listPatients] Listed" << patients.size() << "patients for user:" << user_name_;
+  return patients_list;
+}
+
+QVariantMap DataBaseManager::getPatientDetails(int patient_id)
+{
+  QVariantMap patient_map;
+
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::getPatientDetails] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return patient_map;
+  }
+
+  if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::getPatientDetails] Action not allowed for guest users";
+    setLastError("Accion no permitida para usuario invitado");
+    return patient_map;
+  }
+
+  if (patient_id <= 0)
+  {
+    qWarning() << "[DataBaseManager::getPatientDetails] Invalid patient ID";
+    setLastError("ID de paciente invalido");
+    return patient_map;
+  }
+
+  const auto result = patient_repository_.getPatientDetailsByIdForUserName(patient_id, user_name_);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return patient_map;
+  }
+
+  const auto patient_details = std::get<PatientDetails>(result);
+
+  setLastError("");
+  qInfo() << "[DataBaseManager::getPatientDetails] Retrieved details for patient ID:" << patient_id;
+  return toVariantMap(std::get<PatientDetails>(result));
+}
+
+bool DataBaseManager::registerPatient(const QString& name, const QString& last_name, int age, double weight, double height, const QString& description)
+{
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::registerPatient] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return false;
+  }
+
+  if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::registerPatient] Action not allowed for guest users";
+    setLastError("Accion no permitida para usuario invitado");
+    return false;
+  }
+
+  if (name.isEmpty() || last_name.isEmpty())
+  {
+    qWarning() << "[DataBaseManager::registerPatient] Name or last name is empty";
+    setLastError("Nombres y apellidos son obligatorios");
+    return false;
+  }
+
+  if (age <= 0 || age > 120)
+  {
+    qWarning() << "[DataBaseManager::registerPatient] Invalid age";
+    setLastError("Edad invalida, debe estar entre 0 y 120 años");
+    return false;
+  }
+
+  if (weight <= 0 || weight > 200)
+  {
+    qWarning() << "[DataBaseManager::registerPatient] Invalid weight";
+    setLastError("Peso invalido, debe estar entre 0 y 200 kg");
+    return false;
+  }
+
+  if (height <= 0 || height > 250)
+  {
+    qWarning() << "[DataBaseManager::registerPatient] Invalid height";
+    setLastError("Altura invalida, debe estar entre 0 y 250 cm");
+    return false;
+  }
+
+  const auto result = patient_repository_.insertPatientForUserName(name, last_name, age, weight, height, user_name_, description);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return false;
+  }
+
+  setLastError("");
+  qInfo() << "[DataBaseManager::registerPatient] Patient registered successfully for user:" << user_name_;
+  return true;
+}
+
+bool DataBaseManager::deletePatient(int patient_id)
+{
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::deletePatient] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return false;
+  }
+
+  if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::deletePatient] Action not allowed for guest users";
+    setLastError("Accion no permitida para usuario invitado");
+    return false;
+  }
+
+  if (patient_id <= 0)
+  {
+    qWarning() << "[DataBaseManager::deletePatient] Invalid patient ID";
+    setLastError("ID de paciente invalido");
+    return false;
+  }
+
+  const auto result = patient_repository_.deletePatientByIdForUserName(patient_id, user_name_);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return false;
+  }
+
+  setLastError("");
+  qInfo() << "[DataBaseManager::deletePatient] Patient deleted successfully for user:" << user_name_;
+  return true;
+}
+
 QString DataBaseManager::hashPasswordSha256Hex(const QString& password) const
 {
   const QByteArray hash = QCryptographicHash::hash(password.toUtf8(), QCryptographicHash::Sha256);

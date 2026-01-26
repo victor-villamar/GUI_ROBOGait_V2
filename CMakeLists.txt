@@ -36,6 +36,7 @@ set(HEADERS
     include/DataBase/DataBaseManager.hpp
     include/DataBase/RoboGaitDb.hpp
     include/Define.hpp
+    include/Patient.hpp
     include/RobotDiscovery.hpp
     include/RobotManager.hpp
     include/RosNodeManager.hpp
@@ -54,6 +55,7 @@ set(SOURCES
     src/DataBase/DataBaseManager.cpp
     src/DataBase/RoboGaitDb.cpp
     src/main.cpp
+    src/Patient.cpp
     src/RobotDiscovery.cpp
     src/RosNodeManager.cpp
     src/RobotManager.cpp

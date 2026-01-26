@@ -37,15 +37,48 @@ DbResultVoid PatientRepository::insertPatientForUserName(const QString& name, co
   return executeQuery(query);
 }
 
+DbResultVoid PatientRepository::deletePatientByIdForUserName(int patient_id, const QString& user_name)
+{
+  QSqlQuery query(getDataBase());
+
+  // clang-format off
+    const QString sql =
+        "DELETE FROM patient "
+        "WHERE id = :patient_id "
+        "  AND id_user = (SELECT id FROM \"user\" WHERE username = :username);";
+  // clang-format on
+
+  if (auto result = prepareQuery(query, sql); !statusOk(result))
+  {
+    return result;
+  }
+
+  query.bindValue(":patient_id", patient_id);
+  query.bindValue(":username", user_name);
+
+  if (auto result = executeQuery(query); !statusOk(result))
+  {
+    return result;
+  }
+
+  if (query.numRowsAffected() == 0)
+  {
+    return makeFailure(DbErrorCode::NOT_FOUND, "Patient not found or does not belong to the user");
+  }
+
+  return makeSuccess();
+}
+
 DbResult<QVector<PatientRow>> PatientRepository::listPatientsForUserName(const QString& user_name)
 {
   QSqlQuery query(getDataBase());
 
   // clang-format off
     const QString sql =
-        "SELECT name, lastname "
+        "SELECT id, name, lastname "
         "FROM patient "
-        "WHERE id_user = (SELECT id FROM \"user\" WHERE username = :username);";
+        "WHERE id_user = (SELECT id FROM \"user\" WHERE username = :username) "
+        "ORDER BY lastname, name;";
   // clang-format on
 
   if (auto result = prepareQuery(query, sql); !statusOk(result))
@@ -67,8 +100,9 @@ DbResult<QVector<PatientRow>> PatientRepository::listPatientsForUserName(const Q
   while (query.next())
   {
     PatientRow patient;
-    patient.name = query.value(0).toString();
-    patient.last_name = query.value(1).toString();
+    patient.id = query.value(0).toInt();
+    patient.name = query.value(1).toString();
+    patient.last_name = query.value(2).toString();
 
     patients_output.append(patient);
   }
@@ -76,7 +110,7 @@ DbResult<QVector<PatientRow>> PatientRepository::listPatientsForUserName(const Q
   return patients_output;
 }
 
-DbResult<PatientDetails> PatientRepository::getPatientDetailsByNameLastName(const QString& name, const QString& last_name)
+DbResult<PatientDetails> PatientRepository::getPatientDetailsByIdForUserName(int patient_id, const QString& user_name)
 {
   QSqlQuery query(getDataBase());
 
@@ -86,7 +120,8 @@ DbResult<PatientDetails> PatientRepository::getPatientDetailsByNameLastName(cons
         "       u.name, u.lastname "
         "FROM patient p "
         "JOIN \"user\" u ON p.id_user = u.id "
-        "WHERE p.name = :name AND p.lastname = :lastname;";
+        "WHERE p.id = :patient_id "
+        "  AND p.id_user = (SELECT id FROM \"user\" WHERE username = :username);";
   // clang-format on
 
   if (auto result = prepareQuery(query, sql); !statusOk(result))
@@ -95,8 +130,8 @@ DbResult<PatientDetails> PatientRepository::getPatientDetailsByNameLastName(cons
     return makeFailureT<PatientDetails>(error.code, error.message, error.sql, error.driver_text, error.database_text);
   }
 
-  query.bindValue(":name", name);
-  query.bindValue(":lastname", last_name);
+  query.bindValue(":patient_id", patient_id);
+  query.bindValue(":username", user_name);
 
   if (auto result = executeQuery(query); !statusOk(result))
   {

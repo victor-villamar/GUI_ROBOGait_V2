@@ -16,6 +16,12 @@ ApplicationFlowForm {
 
     function backButton()
     {
+        if (mystackview.depth > 3) {
+            mystackview.pop()
+            applicationFlow.state = "main_menu"
+            return
+        }
+
         if (mystackview.depth > 1) {
             mystackview.pop()
             applicationFlow.state = applicationFlow.previousState
@@ -100,12 +106,34 @@ ApplicationFlowForm {
                     rosManager.robotManager.clearSelection()
                 }
 
+                if (patient) {
+                    patient.clear()
+                }
+
                 while (mystackview.depth > 1) {
                     mystackview.pop()
                 }
 
                 mystackview.push(register_page)
                 applicationFlow.state = "register_page"
+            }
+        }
+
+        function onUserNameChanged() {
+            if (patient) {
+                patient.clear()
+            }
+        }
+
+        function onUserRoleChanged() {
+            if (patient) {
+                patient.clear()
+            }
+
+            if (dbManager.userRole === "guest") {
+                while (mystackview.depth > 3) {
+                    mystackview.pop()
+                }
             }
         }
     }
@@ -116,9 +144,6 @@ ApplicationFlowForm {
 
             PropertyChanges {
                 target: toolbar
-                backButton.opacity: 0
-                backButton.enabled: false
-                backButton.visible: false
                 logo.opacity: 0
                 logo.enabled: false
                 title.opacity: 0
@@ -140,9 +165,6 @@ ApplicationFlowForm {
             }
             PropertyChanges {
                 target: toolbar
-                backButton.opacity: 0
-                backButton.enabled: false
-                backButton.visible: false
                 showRobotBadge: false
                 showUserBadge: false
             }
@@ -160,9 +182,6 @@ ApplicationFlowForm {
             }
             PropertyChanges {
                 target: toolbar
-                backButton.opacity: 0
-                backButton.enabled: false
-                backButton.visible: false
                 showRobotBadge: true
                 showUserBadge: true
             }
@@ -173,16 +192,13 @@ ApplicationFlowForm {
             }
         },
         State {
-            name: "robot_cmd_vel"
+            name: "main_menu"
             PropertyChanges { 
                 target: applicationFlow
                 previousState: "robot_connection"
             }
             PropertyChanges {
                 target: toolbar
-                backButton.opacity: 0
-                backButton.enabled: false
-                backButton.visible: false
                 showRobotBadge: true
                 showUserBadge: true
             }
