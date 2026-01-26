@@ -149,6 +149,42 @@ public:
    */
   Q_INVOKABLE void logout();
 
+  /**
+   * @brief List all patients for the current user
+   *
+   * @return A list of patients
+   */
+  Q_INVOKABLE QVariantList listPatients();
+
+  /**
+   * @brief Get detailed information about a specific patient
+   *
+   * @param patient_id The ID of the patient
+   * @return A map containing patient details
+   */
+  Q_INVOKABLE QVariantMap getPatientDetails(int patient_id);
+
+  /**
+   * @brief Register a new patient
+   *
+   * @param name The name of the patient
+   * @param last_name The last name of the patient
+   * @param age The age of the patient
+   * @param weight The weight of the patient
+   * @param height The height of the patient
+   * @param description A description of the patient's condition
+   * @return True if the registration was successful, false otherwise
+   */
+  Q_INVOKABLE bool registerPatient(const QString& name, const QString& last_name, int age, double weight, double height, const QString& description);
+
+  /**
+   * @brief Delete a patient record
+   *
+   * @param patient_id The ID of the patient to delete
+   * @return True if the deletion was successful, false otherwise
+   */
+  Q_INVOKABLE bool deletePatient(int patient_id);
+
 signals:
   void passLoginChanged();
   void passCheckUserNameChanged();

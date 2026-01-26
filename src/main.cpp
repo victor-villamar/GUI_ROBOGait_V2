@@ -11,6 +11,7 @@
 #include <geometry_msgs/msg/twist.hpp>
 
 #include "DataBase/DataBaseManager.hpp"
+#include "Patient.hpp"
 #include "RobotDiscovery.hpp"
 #include "RobotManager.hpp"
 #include "RosNodeManager.hpp"
@@ -73,6 +74,8 @@ int main(int argc, char* argv[])
 
   engine.rootContext()->setContextProperty("rosManager", &rosNodeManager);
   engine.rootContext()->setContextProperty("dbManager", &database);
+  ROBOGait::user::Patient patient;
+  engine.rootContext()->setContextProperty("patient", &patient);
 
   const QUrl url(QStringLiteral("qrc:/main.qml"));
   QObject::connect(

@@ -43,6 +43,15 @@ public:
                                         const QString& description);
 
   /**
+   * @brief Delete a patient record by ID
+   *
+   * @param patient_id The ID of the patient to delete
+   * @param user_name The username of the user associated with the patient
+   * @return Result of the delete operation
+   */
+  DbResultVoid deletePatientByIdForUserName(int patient_id, const QString& user_name);
+
+  /**
    * @brief List all patients for a specific user
    *
    * @param user_name The username of the user associated with the patients
@@ -57,7 +66,7 @@ public:
    * @param last_name The last name of the patient
    * @return Result containing patient details if found, or error otherwise
    */
-  DbResult<PatientDetails> getPatientDetailsByNameLastName(const QString& name, const QString& last_name);
+  DbResult<PatientDetails> getPatientDetailsByIdForUserName(int patient_id, const QString& user_name);
 };
 } // namespace db
 } // namespace ROBOGait
