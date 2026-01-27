@@ -86,11 +86,11 @@ Para poder ejecutar este proyecto hay que seguir los siguientes pasos
 
 3. **Plugin de ROS**
 
-   Para la instalacion del plugin de ROS para Qt Creator hay que seguir los siguientes pasos:
+   Para la instalación del plugin de ROS para Qt Creator hay que seguir los siguientes pasos:
 
-   1. *Obtener nuestra version de Qt Creator*
+   1. *Obtener nuestra versión de Qt Creator*
 
-      Para obtener la version de Qt debemos dirigirnos desde la aplicaicon a *Help* &rarr; *About Qt Creator*
+      Para obtener la versión de Qt debemos dirigirnos desde la aplicación a *Help* &rarr; *About Qt Creator*
       
       ![qt_version](/images/qt_version.png)
 
@@ -102,13 +102,13 @@ Para poder ejecutar este proyecto hay que seguir los siguientes pasos
 
    3. *Descargar el plugin*
 
-      Debemos descargarnoslo desde el repositorio oficial &rarr; [ros_qtc_plugin](https://github.com/ros-industrial/ros_qtc_plugin)
+      Debemos descargarlo desde el repositorio oficial &rarr; [ros_qtc_plugin](https://github.com/ros-industrial/ros_qtc_plugin)
 
-      Con la versión obtenido en el paso anterior nos dirigimos a *Tags* &rarr; *18.0*, y nos descargamos el siguiente asset
+      Con la versión obtenida en el paso anterior nos dirigimos a *Tags* &rarr; *18.0*, y nos descargamos el siguiente *asset*
 
       ![plugin_asset](/images/plugin_asset.png)
 
-      En el directorio donde hayamos descargado el asset realizamos
+      En el directorio donde hayamos descargado el *asset* realizamos
 
       ```terminal
       zip_file="qtcreator-plugin-ros-18.0-Linux-x86_64.zip"
@@ -116,7 +116,7 @@ Para poder ejecutar este proyecto hay que seguir los siguientes pasos
       cd qtcreator-plugin-ros-18.0-Linux-x86_64
       ```
 
-      Dentro visualizaremos dos carpetas lib y share. Debemos copiar el contenido de lib a nuestro lib de Qt Creator
+      Dentro visualizaremos dos carpetas *lib* y *share*. Debemos copiar el contenido de *lib* a nuestro *lib* de Qt Creator
 
       ```terminal
       cp -r ~/Downloads/qtcreator-plugin-ros-18.0-Linux-x86_64/lib/qtcreator/plugins/* ~/Qt/Tools/QtCreator/lib/qtcreator/plugins
@@ -135,17 +135,17 @@ Para poder ejecutar este proyecto hay que seguir los siguientes pasos
 
       ![create_project_1](/images/create_project_1.png)
 
-      En el siguiente paso establecemos el *Build System* &rarr; *Colcon* y el *Wokspace Path* que seria donde se encuentra nuestro workspace 
+      En el siguiente paso establecemos el *Build System* &rarr; *Colcon* y el *Wokspace Path* que sería donde se encuentra nuestro workspace 
 
    2. *Configuracion de build y run*
 
       - ***Build***
 
-         En el aparatado *Projects* &rarr; *Build Settings* configuramos el *ROS Manager*
+         En el apartado *Projects* &rarr; *Build Settings* configuramos el *ROS Manager*
 
          ![ros_manager_configuration](/images/ros_manager_configuration.png)
 
-         En el apartado *System Enviroment* agregamos la siguiente linea
+         En el apartado *System Enviroment* agregamos la siguiente línea
 
          ```terminal
          QT6_DIR=/home/user/Qt/6.10.1/gcc_64/lib/cmake/Qt6
