@@ -129,11 +129,11 @@ target_link_libraries(${PROJECT_NAME}
 
 # Install
 install(TARGETS ${PROJECT_NAME}
-    DESTINATION bin/
+    DESTINATION lib/${PROJECT_NAME}
 )
 
 install(FILES db_robogait.db
-    DESTINATION share/database
+    DESTINATION share/${PROJECT_NAME}/database
 )
 
 ament_package()
