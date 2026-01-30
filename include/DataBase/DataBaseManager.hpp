@@ -16,6 +16,7 @@ namespace db
 /**
  * @brief Database manager for user authentication and repository access
  *
+ * Singleton pattern ensures only one database connection throughout the application
  */
 class DataBaseManager : public QObject
 {
@@ -23,14 +24,32 @@ class DataBaseManager : public QObject
 
 public:
   /**
-   * @brief Constructor for the DataBaseManager class
+   * @brief Get the singleton instance of DataBaseManager
+   *
+   * @return Reference to the singleton instance
    */
-  DataBaseManager();
+  static DataBaseManager& getInstance();
+
+  // Delete copy constructor and assignment operator
+  DataBaseManager(const DataBaseManager&) = delete;
+  DataBaseManager& operator=(const DataBaseManager&) = delete;
+  DataBaseManager(DataBaseManager&&) = delete;
+  DataBaseManager& operator=(DataBaseManager&&) = delete;
 
   /**
-   * @brief Destructor for the DataBaseManager class
+   * @brief Initialize the database with the given path
+   *
+   * @param db_path Path to the database file
+   * @return True if initialization successful, false otherwise
    */
-  ~DataBaseManager();
+  bool initialize(const QString& db_path);
+
+  /**
+   * @brief Check if the database has been initialized
+   *
+   * @return True if initialized, false otherwise
+   */
+  bool isInitialized() const;
 
   // clang-format off
   Q_PROPERTY(bool passLogin
@@ -78,6 +97,13 @@ public:
    * @return The user name
    */
   QString getUserName() const;
+
+  /**
+   * @brief Get the user ID
+   *
+   * @return The user ID, -1 if not authenticated
+   */
+  int getUserId() const;
 
   /**
    * @brief Get the display name
@@ -192,6 +218,7 @@ signals:
   void displayNameChanged();
   void userRoleChanged();
   void lastErrorChanged();
+  void userLoggedOut();  // Signal for explicit logout events
 
 private:
   /**
@@ -244,6 +271,19 @@ private:
    */
   void setLastError(const QString& last_error);
 
+private:
+  /**
+   * @brief Private constructor for Singleton pattern
+   */
+  DataBaseManager();
+
+  /**
+   * @brief Destructor for the DataBaseManager class
+   */
+  ~DataBaseManager();
+
+  bool is_initialized_; /**< Initialization status */
+
   RoboGaitDb db_;                              /**< Database connection */
   UserRepository user_repository_;             /**< User repository */
   PatientRepository patient_repository_;       /**< Patient repository */
@@ -252,6 +292,7 @@ private:
 
   bool pass_login_;           /**< Login status */
   bool pass_check_user_name_; /**< User name availability status */
+  int user_id_;               /**< Current user ID, -1 if not authenticated */
   QString user_name_;         /**< User name */
   QString display_name_;      /**< Display name */
   QString user_role_;         /**< User role */
