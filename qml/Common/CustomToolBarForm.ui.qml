@@ -72,7 +72,7 @@ Item {
 
             UserBadge {
                 id: userBadge
-                visible: root.showUserBadge && loggedIn
+                visible: root.showUserBadge
                 enabled: visible
             }
         }

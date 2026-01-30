@@ -322,7 +322,7 @@ Item {
 
             root.selectedRobotIndex = root.pendingRobotIndex
             root.selectedRobotNamespace = rosManager.robotDiscovery.robotsNamespaces[root.pendingRobotIndex]
-            rosManager.robotManager.selectRobot(root.selectedRobotNamespace)
+            userSession.assignRobot(root.selectedRobotNamespace)
             root.goToMainMenu()
             root.pendingRobotIndex = -1
         }

@@ -263,7 +263,7 @@ Item {
                 font.pixelSize: 14
                 font.bold: true
                 textFormat: Text.RichText
-                text: patient ? patient.statusRichText : "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY PACIENTE ACTIVO</span>"
+                text: (userSession && userSession.currentPatient) ? userSession.currentPatient.statusRichText : "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY PACIENTE ACTIVO</span>"
             }
         }
 

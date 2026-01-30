@@ -11,14 +11,14 @@ Item {
     signal changeUserRequested()
 
     property bool dropDownOpen: false
-    property bool loggedIn: dbManager ? dbManager.passLogin : false
-    property bool robotConnected: (rosManager && rosManager.robotManager) ? (rosManager.robotManager.selectedRobotNamespace !== "") : false
-    property string robotDisplayName: (rosManager && rosManager.robotManager) ? rosManager.robotManager.selectedRobotDisplayName : ""
+    property bool loggedIn: userSession ? userSession.isAuthenticated : false
+    property bool robotConnected: userSession ? userSession.hasRobotAssigned : false
+    property string robotDisplayName: userSession ? userSession.robotDisplayName : ""
 
-    property string userLabel: (dbManager && dbManager.displayName && dbManager.displayName.length)
-                         ? dbManager.displayName
-                         : ((dbManager && dbManager.userRole === "guest") ? qsTr("Invitado")
-                                                                       : (dbManager ? dbManager.userName : ""))
+    property string userLabel: (userSession && userSession.displayName && userSession.displayName.length)
+                               ? userSession.displayName
+                               : ((userSession && userSession.role === "guest") ? qsTr("Invitado")
+                                                                                : (dbManager ? dbManager.userName : ""))
 
     property int badgeWidth: Math.max(userRow.implicitWidth + 20, 140)
     property int segmentHeight: 44
@@ -281,11 +281,8 @@ Item {
         acceptText: qsTr("Cerrar sesión")
 
         onAccepted: {
-            if (root.robotConnected && rosManager && rosManager.robotManager) {
-                rosManager.robotManager.clearSelection()
-            }
-            if (dbManager) {
-                dbManager.logout()
+            if (userSession) {
+                userSession.logout()
             }
         }
     }
