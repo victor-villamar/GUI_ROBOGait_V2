@@ -25,14 +25,17 @@ LoginForm {
         errorPopup.open()
     }
 
+    function clearFields() {
+        usernameField.text = ""
+        passwordField.text = ""
+    }
+
     authModeDropdown.onModeSelected: function(mode) {
         if (mode === "sign_in") {
-            usernameField.text = ""
-            passwordField.text = ""
+            clearFields()
             goToRegister()
         } else if (mode === "guest") {
-            usernameField.text = ""
-            passwordField.text = ""
+            clearFields()
             goToGuest()
         } else {
             authModeDropdown.currentMode = "login"
@@ -48,15 +51,16 @@ LoginForm {
             return
         }
 
-        var ok = dbManager.login(userName, password)
+        var ok = userSession.loginUser(userName, password)
         if (ok) {
-            usernameField.text = ""
-            passwordField.text = ""
+            clearFields()
             authenticated()
         } 
         else {
-            showError(dbManager.lastError && dbManager.lastError.length ? dbManager.lastError
-                                                                     : qsTr("Nombre de usuario o contraseña incorrectos."))
+            var errorMsg = dbManager.lastError && dbManager.lastError.length ? 
+                          dbManager.lastError : 
+                          qsTr("Nombre de usuario o contraseña incorrectos.")
+            showError(errorMsg)
         }
     }
 }

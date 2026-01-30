@@ -159,3 +159,43 @@ DbResult<PatientDetails> PatientRepository::getPatientDetailsByIdForUserName(int
 
   return details;
 }
+
+DbResult<PatientRow> PatientRepository::getPatientBasicInfoByIdForUserName(int patient_id, const QString& user_name)
+{
+  QSqlQuery query(getDataBase());
+
+  // clang-format off
+  const QString sql =
+      "SELECT p.id, p.name, p.lastname "
+      "FROM patient p "
+      "WHERE p.id = :patient_id "
+      "  AND p.id_user = (SELECT id FROM \"user\" WHERE username = :username);";
+  // clang-format on
+
+  if (auto result = prepareQuery(query, sql); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<PatientRow>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  query.bindValue(":patient_id", patient_id);
+  query.bindValue(":username", user_name);
+
+  if (auto result = executeQuery(query); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<PatientRow>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  if (!query.next())
+  {
+    return makeFailureT<PatientRow>(DbErrorCode::NOT_FOUND, "Patient not found");
+  }
+
+  PatientRow patient_row;
+  patient_row.id = query.value(0).toInt();
+  patient_row.name = query.value(1).toString();
+  patient_row.last_name = query.value(2).toString();
+
+  return patient_row;
+}

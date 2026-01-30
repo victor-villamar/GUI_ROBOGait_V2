@@ -6,12 +6,47 @@
 
 using namespace ROBOGait::db;
 
-DataBaseManager::DataBaseManager() : db_(), user_repository_(db_), patient_repository_(db_), map_repository_(db_), experiment_repository_(db_)
+DataBaseManager& DataBaseManager::getInstance()
+{
+  static DataBaseManager instance;
+  return instance;
+}
+
+bool DataBaseManager::initialize(const QString& db_path)
+{
+  if (is_initialized_)
+  {
+    qWarning() << "[DataBaseManager::initialize] Already initialized";
+    return true;
+  }
+
+  qInfo() << "[DataBaseManager::initialize] Initializing database with path:" << db_path;
+
+  bool result = openDatabase(db_path);
+
+  if (result)
+  {
+    is_initialized_ = true;
+    qInfo() << "[DataBaseManager::initialize] Database initialized successfully";
+  }
+  else
+  {
+    qCritical() << "[DataBaseManager::initialize] Failed to initialize database";
+  }
+
+  return result;
+}
+
+bool DataBaseManager::isInitialized() const { return is_initialized_; }
+
+DataBaseManager::DataBaseManager() :
+    is_initialized_(false), db_(), user_repository_(db_), patient_repository_(db_), map_repository_(db_), experiment_repository_(db_)
 {
   qInfo() << "[DataBaseManager::DataBaseManager] DataBaseManager created";
 
   pass_login_ = false;
   pass_check_user_name_ = false;
+  user_id_ = -1;
   user_name_ = "";
   display_name_ = "";
   user_role_ = "";
@@ -25,6 +60,8 @@ bool DataBaseManager::getPassLogin() const { return pass_login_; }
 bool DataBaseManager::getPassCheckUserName() const { return pass_check_user_name_; }
 
 QString DataBaseManager::getUserName() const { return user_name_; }
+
+int DataBaseManager::getUserId() const { return user_id_; }
 
 QString DataBaseManager::getDisplayName() const { return display_name_; }
 
@@ -54,7 +91,6 @@ bool DataBaseManager::login(const QString& username, const QString& password)
   {
     qCritical() << "[DataBaseManager::login] Database is not open";
     setLastError("La base de datos no esta abierta");
-    setPassLogin(false);
     return false;
   }
   const auto password_hash = hashPasswordSha256Hex(password);
@@ -65,7 +101,6 @@ bool DataBaseManager::login(const QString& username, const QString& password)
     const auto error = std::get<DbError>(result);
     qCritical() << "[DataBaseManager::login] Failed to login:" << error.message;
     setLastError(error.message);
-    setPassLogin(false);
     return false;
   }
 
@@ -75,16 +110,16 @@ bool DataBaseManager::login(const QString& username, const QString& password)
   {
     qCritical() << "[DataBaseManager::login] Invalid credentials";
     setLastError("Credenciales invalidas");
-    setPassLogin(false);
     return false;
   }
 
+  user_id_ = maybe_user->id;
   setUserName(maybe_user->user_name);
   setDisplayName(maybe_user->name);
   setUserRole(userRoleToDbString(maybe_user->role));
   setLastError("");
   setPassLogin(true);
-  qInfo() << "[DataBaseManager::login] Login successful for user:" << maybe_user->user_name;
+  qInfo() << "[DataBaseManager::login] Login successful for user:" << maybe_user->user_name << "ID:" << maybe_user->id;
   return true;
 }
 
@@ -180,6 +215,7 @@ void DataBaseManager::loginGuest(const QString& name)
 
 void DataBaseManager::logout()
 {
+  user_id_ = -1;
   setUserName("");
   setDisplayName("");
   setUserRole("");
@@ -272,6 +308,52 @@ QVariantMap DataBaseManager::getPatientDetails(int patient_id)
   setLastError("");
   qInfo() << "[DataBaseManager::getPatientDetails] Retrieved details for patient ID:" << patient_id;
   return toVariantMap(std::get<PatientDetails>(result));
+}
+
+QVariantMap DataBaseManager::getPatientBasicInfo(int patient_id)
+{
+  QVariantMap patient_map;
+
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::getPatientBasicInfo] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return patient_map;
+  }
+
+  if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::getPatientBasicInfo] Action not allowed for guest users";
+    setLastError("Accion no permitida para usuario invitado");
+    return patient_map;
+  }
+
+  if (patient_id <= 0)
+  {
+    qWarning() << "[DataBaseManager::getPatientBasicInfo] Invalid patient ID";
+    setLastError("ID de paciente invalido");
+    return patient_map;
+  }
+
+  const auto result = patient_repository_.getPatientBasicInfoByIdForUserName(patient_id, user_name_);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return patient_map;
+  }
+
+  const auto patient_row = std::get<PatientRow>(result);
+
+  patient_map["id"] = patient_row.id;
+  patient_map["name"] = patient_row.name;
+  patient_map["last_name"] = patient_row.last_name;
+  patient_map["display"] = (patient_row.last_name + ", " + patient_row.name).trimmed();
+
+  setLastError("");
+  qInfo() << "[DataBaseManager::getPatientBasicInfo] Retrieved basic info for patient ID:" << patient_id;
+  return patient_map;
 }
 
 bool DataBaseManager::registerPatient(const QString& name, const QString& last_name, int age, double weight, double height, const QString& description)

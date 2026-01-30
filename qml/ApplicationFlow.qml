@@ -29,7 +29,7 @@ ApplicationFlowForm {
     }
 
     Connections {
-        target: mystackview.currentItem
+        target: applicationFlow.state === "register_page" ? mystackview.currentItem : null
         ignoreUnknownSignals: true
 
         function onAuthenticated() {
@@ -43,8 +43,8 @@ ApplicationFlowForm {
         ignoreUnknownSignals: true
 
         function onDisconnectRobotRequested() {
-            if (rosManager && rosManager.robotManager) {
-                rosManager.robotManager.clearSelection()
+            if (userSession) {
+                userSession.clearRobot()
             }
 
             while (mystackview.depth > 2) {
@@ -86,7 +86,9 @@ ApplicationFlowForm {
                 lostConnectionPopupItem.errorRectangleTextError.text =
                     qsTr("Se perdió conexión con %1 inesperadamente.").arg(display)
 
-                rosManager.robotManager.clearSelection()
+                if (userSession) {
+                    userSession.clearRobot()
+                }
 
                 while(mystackview.depth > 2) {
                     mystackview.pop()
@@ -100,34 +102,24 @@ ApplicationFlowForm {
     Connections {
         target: dbManager
 
-        function onPassLoginChanged() {
-            if (!dbManager.passLogin) {
-                if (rosManager && rosManager.robotManager) {
-                    rosManager.robotManager.clearSelection()
-                }
-
-                if (patient) {
-                    patient.clear()
-                }
-
-                while (mystackview.depth > 1) {
-                    mystackview.pop()
-                }
-
-                mystackview.push(register_page)
-                applicationFlow.state = "register_page"
+        function onUserLoggedOut() {
+            while (mystackview.depth > 1) {
+                mystackview.pop()
             }
+
+            mystackview.push(register_page)
+            applicationFlow.state = "register_page"
         }
 
         function onUserNameChanged() {
-            if (patient) {
-                patient.clear()
+            if (userSession) {
+                userSession.clearPatient()
             }
         }
 
         function onUserRoleChanged() {
-            if (patient) {
-                patient.clear()
+            if (userSession) {
+                userSession.clearPatient()
             }
 
             if (dbManager.userRole === "guest") {

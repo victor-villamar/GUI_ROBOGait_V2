@@ -62,11 +62,20 @@ public:
   /**
    * @brief Get detailed information about a specific patient
    *
-   * @param name The name of the patient
-   * @param last_name The last name of the patient
+   * @param patient_id The ID of the patient
+   * @param user_name The username of the user associated with the patient
    * @return Result containing patient details if found, or error otherwise
    */
   DbResult<PatientDetails> getPatientDetailsByIdForUserName(int patient_id, const QString& user_name);
+
+  /**
+   * @brief Get basic information about a specific patient (id, name, last_name)
+   *
+   * @param patient_id The ID of the patient
+   * @param user_name The username of the user associated with the patient
+   * @return Result containing basic patient info if found, or error otherwise
+   */
+  DbResult<PatientRow> getPatientBasicInfoByIdForUserName(int patient_id, const QString& user_name);
 };
 } // namespace db
 } // namespace ROBOGait

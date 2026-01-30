@@ -70,12 +70,12 @@ public:
    *
    * @param robot_namespace The namespace of the robot to select
    */
-  Q_INVOKABLE void selectRobot(const QString& robot_namespace);
+  void selectRobot(const QString& robot_namespace);
 
   /**
    * @brief Clear the selected robot
    */
-  Q_INVOKABLE void clearSelection();
+  void clearSelection();
 
 signals:
   void selectedRobotNamespaceChanged();

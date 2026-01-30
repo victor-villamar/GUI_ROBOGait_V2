@@ -9,21 +9,11 @@ SelectPatientForm {
     ListModel { id: patientsModel }
 
     patientsListView.model: patientsModel
-    selectedPatientId: (patient && patient.isActive) ? patient.id : -1
+    selectedPatientId: (userSession && userSession.currentPatient && userSession.currentPatient.isActive) ? userSession.currentPatient.id : -1
 
     property int pendingDeletePatientId: -1
     property string pendingDeletePatientDisplay: ""
 
-    function getRowForPatientId(patientId)
-    {
-        for (var i = 0; i < patientsModel.count; ++i) {
-            var row = patientsModel.get(i)
-            if (row.patient_id === patientId) {
-                return row
-            }
-        }
-        return null
-    }
 
     function refreshPatients()
     {
@@ -48,8 +38,6 @@ SelectPatientForm {
             })
         }
     }
-
-    Component.onCompleted: refreshPatients()
 
     StackView.onActivated: refreshPatients()
 
@@ -92,12 +80,12 @@ SelectPatientForm {
         id: patientDetailsDialog
 
         onAcceptedSelection: function(patientId, display) {
-            if (patient) {
-                var row = root.getRowForPatientId(patientId)
-                patient.selectPatient(patientId,
-                                      row ? row.name : "",
-                                      row ? row.last_name : "",
-                                      display)
+            if (userSession) {
+                var basicInfo = dbManager ? dbManager.getPatientBasicInfo(patientId) : null
+                userSession.assignPatient(patientId,
+                                          basicInfo ? basicInfo.name : "",
+                                          basicInfo ? basicInfo.last_name : "",
+                                          display)
             }
 
             if (root.StackView.view) {

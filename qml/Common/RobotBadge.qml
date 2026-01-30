@@ -6,8 +6,8 @@ import "qrc:/Dialogs"
 Item {
     id: root
 
-    property string robotDisplayName: (rosManager && rosManager.robotManager) ? rosManager.robotManager.selectedRobotDisplayName : ""
-    property bool robotConnected: (rosManager && rosManager.robotManager) ? (rosManager.robotManager.selectedRobotNamespace !== "") : false
+    property string robotDisplayName: userSession ? userSession.robotDisplayName : ""
+    property bool robotConnected: userSession ? userSession.hasRobotAssigned : false
 
     implicitHeight: 56
     implicitWidth: Math.max(robotLabelRow.implicitWidth + 20, 120)

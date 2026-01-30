@@ -41,6 +41,7 @@ set(HEADERS
     include/RobotManager.hpp
     include/RosNodeManager.hpp
     include/TopicsName.hpp
+    include/UserSession.hpp
 )
 
 # Set source files
@@ -59,6 +60,7 @@ set(SOURCES
     src/RobotDiscovery.cpp
     src/RosNodeManager.cpp
     src/RobotManager.cpp
+    src/UserSession.cpp
 )
 
 # Set resource files
