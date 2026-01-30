@@ -310,6 +310,52 @@ QVariantMap DataBaseManager::getPatientDetails(int patient_id)
   return toVariantMap(std::get<PatientDetails>(result));
 }
 
+QVariantMap DataBaseManager::getPatientBasicInfo(int patient_id)
+{
+  QVariantMap patient_map;
+
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::getPatientBasicInfo] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return patient_map;
+  }
+
+  if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::getPatientBasicInfo] Action not allowed for guest users";
+    setLastError("Accion no permitida para usuario invitado");
+    return patient_map;
+  }
+
+  if (patient_id <= 0)
+  {
+    qWarning() << "[DataBaseManager::getPatientBasicInfo] Invalid patient ID";
+    setLastError("ID de paciente invalido");
+    return patient_map;
+  }
+
+  const auto result = patient_repository_.getPatientBasicInfoByIdForUserName(patient_id, user_name_);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return patient_map;
+  }
+
+  const auto patient_row = std::get<PatientRow>(result);
+
+  patient_map["id"] = patient_row.id;
+  patient_map["name"] = patient_row.name;
+  patient_map["last_name"] = patient_row.last_name;
+  patient_map["display"] = (patient_row.last_name + ", " + patient_row.name).trimmed();
+
+  setLastError("");
+  qInfo() << "[DataBaseManager::getPatientBasicInfo] Retrieved basic info for patient ID:" << patient_id;
+  return patient_map;
+}
+
 bool DataBaseManager::registerPatient(const QString& name, const QString& last_name, int age, double weight, double height, const QString& description)
 {
   if (!db_.isOpen())

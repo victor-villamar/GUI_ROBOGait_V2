@@ -191,6 +191,15 @@ public:
   Q_INVOKABLE QVariantMap getPatientDetails(int patient_id);
 
   /**
+   * @brief Get basic patient information by ID
+   *
+   * @param patient_id The ID of the patient
+   *
+   * @return A map containing basic patient info (id, name, last_name, display) or empty if not found
+   */
+  Q_INVOKABLE QVariantMap getPatientBasicInfo(int patient_id);
+
+  /**
    * @brief Register a new patient
    *
    * @param name The name of the patient
@@ -218,7 +227,7 @@ signals:
   void displayNameChanged();
   void userRoleChanged();
   void lastErrorChanged();
-  void userLoggedOut();  // Signal for explicit logout events
+  void userLoggedOut(); // Signal for explicit logout events
 
 private:
   /**
