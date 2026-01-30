@@ -95,8 +95,12 @@ public:
    * @param lastName The patient last name.
    * @param displayName The patient display name.
    */
-  Q_INVOKABLE void selectPatient(int id, const QString& name, const QString& lastName, const QString& displayName);
-  Q_INVOKABLE void clear();
+  void selectPatient(int id, const QString& name, const QString& lastName, const QString& displayName);
+
+  /**
+   * @brief Clear the patient selection.
+   */
+  void clear();
 
 signals:
   void patientChanged();

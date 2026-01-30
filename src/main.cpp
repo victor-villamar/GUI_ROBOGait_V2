@@ -15,6 +15,7 @@
 #include "RobotDiscovery.hpp"
 #include "RobotManager.hpp"
 #include "RosNodeManager.hpp"
+#include "UserSession.hpp"
 
 #include <QLocale>
 #include <QTranslator>
@@ -40,7 +41,7 @@ int main(int argc, char* argv[])
   rosNodeManager.initialize(argc, argv);
 
   // Database
-  ROBOGait::db::DataBaseManager database;
+  auto& database = ROBOGait::db::DataBaseManager::getInstance();
   const QString db_path_template = QString::fromStdString(ament_index_cpp::get_package_share_directory("robogait_gui")) + "/database/db_robogait.db";
 
   const QString app_dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -65,17 +66,19 @@ int main(int argc, char* argv[])
     }
   }
 
-  database.openDatabase(db_runtime);
+  database.initialize(db_runtime);
+
+  ROBOGait::session::UserSession userSession(&rosNodeManager);
 
   qmlRegisterUncreatableType<ROBOGait::discovery::RobotDiscovery>("RobotDiscovery", 1, 0, "RobotDiscovery", "Enums Only");
   qRegisterMetaType<geometry_msgs::msg::Twist>("geometry_msgs::msg::Twist");
 
   QQmlApplicationEngine engine;
 
+  engine.rootContext()->setContextProperty("userSession", &userSession);
+
   engine.rootContext()->setContextProperty("rosManager", &rosNodeManager);
   engine.rootContext()->setContextProperty("dbManager", &database);
-  ROBOGait::user::Patient patient;
-  engine.rootContext()->setContextProperty("patient", &patient);
 
   const QUrl url(QStringLiteral("qrc:/main.qml"));
   QObject::connect(
