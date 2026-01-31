@@ -9,6 +9,7 @@ Item {
     property alias title: title
     property alias robotBadge: robotBadge
     property alias userBadge: userBadge
+    property alias settingsBadge: settingsBadge
     property bool showRobotBadge: false
     property bool showUserBadge: false
 
@@ -63,6 +64,10 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             anchors.rightMargin: 10
             spacing: 10
+
+            SettingsBadge {
+                id: settingsBadge
+            }
 
             RobotBadge {
                 id: robotBadge
