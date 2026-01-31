@@ -11,11 +11,16 @@ RosNodeManager::RosNodeManager() :
     spin_thread_(),
     robot_discovery_(nullptr),
     robot_manager_(nullptr),
-    is_running_(false)
+    is_running_(false),
+    use_namespace_discovery_(true)
 {
   qInfo() << "[RosNodeManager::RosNodeManager] Create RosNodeManager";
   robot_discovery_ = std::make_unique<RobotDiscovery>();
   robot_manager_ = std::make_unique<RobotManager>();
+
+  // Synchronize initial namespace discovery state
+  robot_discovery_->setUseNamespaceDiscovery(use_namespace_discovery_);
+  robot_manager_->setUseNamespaceDiscovery(use_namespace_discovery_);
 }
 
 RosNodeManager::~RosNodeManager()
@@ -41,6 +46,28 @@ void RosNodeManager::setNodeName(const QString& name)
   {
     node_name_ = trimmed_name;
     emit nodeNameChanged();
+  }
+}
+
+bool RosNodeManager::getUseNamespaceDiscovery() const { return use_namespace_discovery_; }
+
+void RosNodeManager::setUseNamespaceDiscovery(bool use_namespace_discovery)
+{
+  if (use_namespace_discovery_ != use_namespace_discovery)
+  {
+    use_namespace_discovery_ = use_namespace_discovery;
+
+    if (robot_discovery_)
+    {
+      robot_discovery_->setUseNamespaceDiscovery(use_namespace_discovery);
+    }
+
+    if (robot_manager_)
+    {
+      robot_manager_->setUseNamespaceDiscovery(use_namespace_discovery);
+    }
+
+    emit useNamespaceDiscoveryChanged();
   }
 }
 

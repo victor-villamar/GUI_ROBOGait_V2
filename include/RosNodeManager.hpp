@@ -43,6 +43,11 @@ public:
              WRITE setNodeName
              NOTIFY nodeNameChanged
   )
+  Q_PROPERTY(bool useNamespaceDiscovery
+             READ getUseNamespaceDiscovery
+             WRITE setUseNamespaceDiscovery
+             NOTIFY useNamespaceDiscoveryChanged
+  )
   Q_PROPERTY(RobotDiscovery* robotDiscovery
              READ getRobotDiscovery
              CONSTANT
@@ -72,6 +77,18 @@ public:
   void setNodeName(const QString& name);
 
   /**
+   * @brief Establish if namespace discovery is enabled
+   * @return True if namespace discovery is enabled, false otherwise
+   */
+  bool getUseNamespaceDiscovery() const;
+
+  /**
+   * @brief Sets the namespace discovery flag
+   * @param use_namespace_discovery True to enable namespace discovery, false to disable
+   */
+  void setUseNamespaceDiscovery(bool use_namespace_discovery);
+
+  /**
    * @brief Gets the RobotDiscovery instance
    * @return A pointer to the RobotDiscovery instance
    */
@@ -98,6 +115,7 @@ public:
 signals:
   void isRunningChanged();
   void nodeNameChanged();
+  void useNamespaceDiscoveryChanged();
   void rosNodeConnected(rclcpp::Node* node);
 
 private:
@@ -120,6 +138,7 @@ private:
   std::unique_ptr<RobotManager> robot_manager_;     /**< The RobotManager instance */
 
   std::atomic<bool> is_running_; /**< Indicates if the ROS node is running */
+  bool use_namespace_discovery_; /**< Indicates if namespace discovery is enabled */
 };
 } // namespace manager
 } // namespace ROBOGait

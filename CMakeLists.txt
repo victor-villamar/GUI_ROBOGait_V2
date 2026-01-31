@@ -35,6 +35,7 @@ set(HEADERS
     include/DataBase/Repository/UserRepository.hpp
     include/DataBase/DataBaseManager.hpp
     include/DataBase/RoboGaitDb.hpp
+    include/Settings/DeveloperSettings.hpp
     include/Define.hpp
     include/Patient.hpp
     include/RobotDiscovery.hpp
@@ -55,6 +56,7 @@ set(SOURCES
     src/DataBase/Repository/UserRepository.cpp
     src/DataBase/DataBaseManager.cpp
     src/DataBase/RoboGaitDb.cpp
+    src/Settings/DeveloperSettings.cpp
     src/main.cpp
     src/Patient.cpp
     src/RobotDiscovery.cpp

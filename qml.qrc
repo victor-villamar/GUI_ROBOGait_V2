@@ -9,14 +9,18 @@
     <file alias="CustomToolBar.qml">qml/Common/CustomToolBar.qml</file>
     <file alias="CustomToolBarForm.ui.qml">qml/Common/CustomToolBarForm.ui.qml</file>
     <file alias="RobotBadge.qml">qml/Common/RobotBadge.qml</file>
+    <file alias="SettingsBadge.qml">qml/Common/SettingsBadge.qml</file>
+    <file alias="SettingsBadgeForm.ui.qml">qml/Common/SettingsBadgeForm.ui.qml</file>
     <file alias="UserBadge.qml">qml/Common/UserBadge.qml</file>
   </qresource>
 	<qresource prefix="/Dialogs">
 	  <file alias="ConfirmationDialog.qml">qml/Dialogs/ConfirmationDialog.qml</file>
+	  <file alias="DeveloperSettingsDialog.qml">qml/Dialogs/DeveloperSettingsDialog.qml</file>
 	  <file alias="ErrorRectangle.qml">qml/Dialogs/ErrorRectangle.qml</file>
 	  <file alias="InformationDialog.qml">qml/Dialogs/InformationDialog.qml</file>
 	  <file alias="PatientDetailsDialog.qml">qml/Dialogs/PatientDetailsDialog.qml</file>
 	  <file alias="PatientRegisterDialog.qml">qml/Dialogs/PatientRegisterDialog.qml</file>
+	  <file alias="RosSettingsTab.qml">qml/Dialogs/RosSettingsTab.qml</file>
 	  <file alias="UserSwitchDialog.qml">qml/Dialogs/UserSwitchDialog.qml</file>
 	</qresource>
   <qresource prefix="/Register">

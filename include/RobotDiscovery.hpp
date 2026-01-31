@@ -115,6 +115,13 @@ public:
    */
   Q_INVOKABLE void stopScanning();
 
+  /**
+   * @brief Set whether to use namespace-based discovery
+   *
+   * @param use_namespace_discovery True to discover by namespace, false to discover by node names
+   */
+  void setUseNamespaceDiscovery(bool use_namespace_discovery);
+
 signals:
   void isScanningChanged();
   void stateChanged();
@@ -167,12 +174,23 @@ private:
    */
   static QStringList buildRobotNamespacesFromNamespaces(const QSet<QString>& namespaces);
 
+  /**
+   * @brief Build the list of robot node names when not using namespace discovery
+   *
+   * @param nodes_names_and_namespaces List of node names and namespaces
+   * @param self_node_name Name of the self node to exclude
+   * @return List of robot node names
+   */
+  static QStringList buildRobotNodeNamesFromGraph(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
+                                                  const std::string& self_node_name);
+
   rclcpp::Node* parent_node_;     /**< Pointer to the ROS node */
-  QStringList robots_namespaces_; /**< List of discovered robot namespaces */
+  QStringList robots_namespaces_; /**< List of discovered robot namespaces or node names */
   bool is_scanning_;              /**< Flag indicating if scanning is active */
   State state_;                   /**< Current state of the discovery process */
   int poll_interval_;             /**< Polling interval in milliseconds */
   QTimer poll_timer_;             /**< Timer for polling */
+  bool use_namespace_discovery_;  /**< True to discover by namespace, false to discover by node names */
 };
 } // namespace discovery
 } // namespace ROBOGait

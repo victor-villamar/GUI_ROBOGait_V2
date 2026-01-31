@@ -8,7 +8,13 @@
 using namespace ROBOGait::discovery;
 
 RobotDiscovery::RobotDiscovery() :
-    parent_node_(nullptr), robots_namespaces_(QStringList()), is_scanning_(false), state_(State::IDLE), poll_interval_(1000), poll_timer_(this)
+    parent_node_(nullptr),
+    robots_namespaces_(QStringList()),
+    is_scanning_(false),
+    state_(State::IDLE),
+    poll_interval_(1000),
+    poll_timer_(this),
+    use_namespace_discovery_(true)
 {
   poll_timer_.setInterval(poll_interval_);
   poll_timer_.setSingleShot(false);
@@ -108,6 +114,19 @@ void RobotDiscovery::setIsScanning(bool is_scanning)
   }
 }
 
+void RobotDiscovery::setUseNamespaceDiscovery(bool use_namespace_discovery)
+{
+  if (use_namespace_discovery_ != use_namespace_discovery)
+  {
+    use_namespace_discovery_ = use_namespace_discovery;
+
+    if (is_scanning_)
+    {
+      updateFromGraph();
+    }
+  }
+}
+
 void RobotDiscovery::setState(State state)
 {
   if (state_ != state)
@@ -129,11 +148,20 @@ void RobotDiscovery::updateFromGraph()
   {
     const auto nodes = parent_node_->get_node_graph_interface()->get_node_names_and_namespaces();
     const auto node_name = parent_node_->get_name();
-    const auto robot_namespaces = computeRobotsListFromGraph(nodes, node_name);
 
-    setRobotsNamespaces(robot_namespaces);
+    QStringList robot_list;
+    if (use_namespace_discovery_)
+    {
+      robot_list = computeRobotsListFromGraph(nodes, node_name);
+    }
+    else
+    {
+      robot_list = buildRobotNodeNamesFromGraph(nodes, node_name);
+    }
 
-    if (robot_namespaces.isEmpty())
+    setRobotsNamespaces(robot_list);
+
+    if (robot_list.isEmpty())
     {
       if (state_ == State::ROBOTS_FOUND)
       {
@@ -214,6 +242,52 @@ QStringList RobotDiscovery::buildRobotNamespacesFromNamespaces(const QSet<QStrin
       robot_display.remove(0, 1);
     }
 
+    robot_display.replace("_", " ");
+    list.append(robot_display);
+  }
+
+  std::sort(list.begin(), list.end());
+
+  return list;
+}
+
+QStringList RobotDiscovery::buildRobotNodeNamesFromGraph(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
+                                                         const std::string& self_node_name)
+{
+  QSet<QString> node_names;
+
+  for (const auto& [name, ns] : nodes_names_and_namespaces)
+  {
+    if (name == "rosout")
+    {
+      continue;
+    }
+
+    if (name == self_node_name)
+    {
+      continue;
+    }
+
+    QString name_qstr = QString::fromStdString(name).trimmed();
+
+    if (name_qstr.isEmpty())
+    {
+      continue;
+    }
+
+    // Look for potential robot nodes
+    if (name_qstr.contains("robot") || name_qstr.contains("turtlebot"))
+    {
+      node_names.insert(name_qstr);
+    }
+  }
+
+  QStringList list;
+  list.reserve(node_names.size());
+
+  for (const auto& node_name : node_names)
+  {
+    QString robot_display = node_name;
     robot_display.replace("_", " ");
     list.append(robot_display);
   }

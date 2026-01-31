@@ -14,18 +14,6 @@ Item {
     property int pendingRobotIndex: -1
     property string selectedRobotNamespace: ""
 
-    function goToMainMenu() {
-        if(StackView.view)
-        {
-            StackView.view.push(mainMenuPage)
-            applicationFlow.state = "main_menu"
-        }
-        else
-        {
-            console.warn("RobotConnectionForm: No StackView.view (¿ Is it inside a StackView?)")
-        }
-    }
-
 
     Rectangle {
         id: background
@@ -131,12 +119,6 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: !root.showDiscoveryPanel
 
-                // Definimos los colores
-                // property color normalColor: "#ffffff"
-                // property color pressedColor: "#00C8FF"  // Color cuando está presionado
-                // property color textColor: "#045671"
-                // property color borderColor: "#045671"
-
                 background: Rectangle {
                     color: buttonSearchRobot.down ? "#00C8FF" : "#ffffff"
                     radius: 8
@@ -205,7 +187,7 @@ Item {
 
                     Rectangle {
                         id: robotsListBox
-                        width: Math.min(parent.width, 460)
+                        width: Math.min(parent.width, Math.max(460, robotsGrid.implicitWidth + 16))
                         height: Math.min(robotsGrid.implicitHeight + 20, parent.height - 60)
                         anchors.horizontalCenter: parent.horizontalCenter
                         color: "transparent"
@@ -217,7 +199,7 @@ Item {
 
                         Flickable {
                             anchors.fill: parent
-                            contentWidth: width
+                            contentWidth: robotsGrid.implicitWidth
                             contentHeight: robotsGrid.implicitHeight
                             clip: true
 
@@ -226,19 +208,33 @@ Item {
                             }
 
                             ScrollBar.horizontal: ScrollBar {
-                                policy: ScrollBar.AlwaysOff
+                                policy: ScrollBar.AsNeeded
                             }
 
                             Grid {
                                 id: robotsGrid
-                                width: parent.width
                                 columns: 2
                                 columnSpacing: 12
                                 rowSpacing: 10
                                 padding: 4
+                                property int maxItemWidth: 220
+
+                                function recalcMaxWidth() {
+                                    var maxWidth = 220
+                                    for (var i = 0; i < robotsRepeater.count; ++i) {
+                                        var item = robotsRepeater.itemAt(i)
+                                        if (item && item.implicitWidth > maxWidth) {
+                                            maxWidth = item.implicitWidth
+                                        }
+                                    }
+                                    maxItemWidth = maxWidth
+                                }
 
                                 Repeater {
+                                    id: robotsRepeater
                                     model: rosManager.robotDiscovery.robotsNamespaces
+                                    onItemAdded: robotsGrid.recalcMaxWidth()
+                                    onItemRemoved: robotsGrid.recalcMaxWidth()
                                     delegate: Rectangle {
                                         id: robotItem
                                         height: 52
@@ -249,14 +245,18 @@ Item {
                                         color: selected ? "#ffffff" : "#a9cfe8"
                                         border.color: selected ? "#00C8FF" : "#ffffff"
                                         border.width: 2
-                                        width: Math.min(parent.width, Math.max(220,contentRow.implicitWidth + 30))
+                                        implicitWidth: Math.max(220, contentRow.implicitWidth + 30)
+                                        width: Math.min(parent.width, robotsGrid.maxItemWidth)
+
+                                        Component.onCompleted: robotsGrid.recalcMaxWidth()
+                                        onImplicitWidthChanged: robotsGrid.recalcMaxWidth()
 
                                         Row {
                                             id: contentRow
                                             anchors.verticalCenter: parent.verticalCenter
                                             anchors.left: parent.left
                                             anchors.leftMargin: 10
-                                            spacing: 45
+                                            spacing: 25
                                             
                                             Rectangle {
                                                 id: robotIcon
@@ -332,11 +332,6 @@ Item {
             root.selectedRobotIndex = -1
             root.selectedRobotNamespace = ""
         }
-    }
-
-    Component {
-        id: mainMenuPage
-        MainMenu {}
     }
 }
 

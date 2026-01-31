@@ -16,6 +16,7 @@
 #include "RobotManager.hpp"
 #include "RosNodeManager.hpp"
 #include "UserSession.hpp"
+#include "Settings/DeveloperSettings.hpp"
 
 #include <QLocale>
 #include <QTranslator>
@@ -79,6 +80,11 @@ int main(int argc, char* argv[])
 
   engine.rootContext()->setContextProperty("rosManager", &rosNodeManager);
   engine.rootContext()->setContextProperty("dbManager", &database);
+  
+  // Register DeveloperSettings singleton
+  auto& developerSettings = ROBOGait::settings::DeveloperSettings::getInstance();
+  developerSettings.initializeDefaults();
+  engine.rootContext()->setContextProperty("developerSettings", &developerSettings);
 
   const QUrl url(QStringLiteral("qrc:/main.qml"));
   QObject::connect(

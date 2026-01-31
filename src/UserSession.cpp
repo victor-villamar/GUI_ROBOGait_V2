@@ -191,7 +191,7 @@ void UserSession::assignRobot(const QString& robot_namespace)
 
     if (ros_manager_ && ros_manager_->getRobotManager())
     {
-      ros_manager_->getRobotManager()->selectRobot(robot_namespace);
+      ros_manager_->getRobotManager()->selectRobot(robot_namespace, ros_manager_->getUseNamespaceDiscovery());
     }
 
     updateSessionState();

@@ -7,7 +7,7 @@
 
 using namespace ROBOGait::manager;
 
-RobotManager::RobotManager() : parent_node_(nullptr), selected_robot_namespace_(""), cmd_vel_text_(""), sub_cmd_vel_(nullptr)
+RobotManager::RobotManager() : parent_node_(nullptr), selected_robot_namespace_(""), cmd_vel_text_(""), use_namespace_discovery_(true), sub_cmd_vel_(nullptr)
 {
   qInfo() << "[RobotManager::RobotManager] RobotManager created";
   // clang-format off
@@ -57,7 +57,7 @@ void RobotManager::setROSNode(rclcpp::Node* parent_node)
   parent_node_ = parent_node;
 }
 
-void RobotManager::selectRobot(const QString& robot_namespace)
+void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespace)
 {
   if (parent_node_ == nullptr)
   {
@@ -65,20 +65,46 @@ void RobotManager::selectRobot(const QString& robot_namespace)
     return;
   }
 
-  const QString normalized_namespace = normalizeNamespace(robot_namespace);
+  QString normalized_identifier;
 
-  if (normalized_namespace.isEmpty())
+  if (is_namespace)
   {
-    qCritical() << "[RobotManager::selectRobot] Invalid robot namespace.";
+    normalized_identifier = normalizeNamespace(robot_identifier);
+  }
+  else
+  {
+    normalized_identifier = robot_identifier.trimmed();
+    if (normalized_identifier.isEmpty())
+    {
+      qCritical() << "[RobotManager::selectRobot] Invalid robot node name.";
+      clearSelection();
+      return;
+    }
+  }
+
+  if (normalized_identifier.isEmpty())
+  {
+    qCritical() << "[RobotManager::selectRobot] Invalid robot identifier.";
     clearSelection();
     return;
   }
 
-  if (selected_robot_namespace_ != normalized_namespace)
+  // Update state
+  const bool identifier_changed = (selected_robot_namespace_ != normalized_identifier);
+  const bool type_changed = (use_namespace_discovery_ != is_namespace);
+
+  if (identifier_changed || type_changed)
   {
-    selected_robot_namespace_ = normalized_namespace;
-    emit selectedRobotNamespaceChanged();
-    emit selectedRobotDisplayNameChanged();
+    selected_robot_namespace_ = normalized_identifier;
+    use_namespace_discovery_ = is_namespace;
+
+    if (identifier_changed)
+    {
+      emit selectedRobotNamespaceChanged();
+      emit selectedRobotDisplayNameChanged();
+    }
+
+    qInfo() << "[RobotManager::selectRobot] Selected robot:" << normalized_identifier << "Type:" << (is_namespace ? "namespace" : "node name");
   }
 
   subscribeToCmdVel();
@@ -86,7 +112,7 @@ void RobotManager::selectRobot(const QString& robot_namespace)
 
 void RobotManager::clearSelection()
 {
-  const QString topic_name = selected_robot_namespace_ + QString::fromUtf8(T_TB3_CMD_VEL);
+  const QString topic_name = buildTopicName(QString::fromUtf8(T_TB3_CMD_VEL));
 
   if (sub_cmd_vel_)
   {
@@ -99,8 +125,22 @@ void RobotManager::clearSelection()
   if (!selected_robot_namespace_.isEmpty())
   {
     selected_robot_namespace_.clear();
+    use_namespace_discovery_ = true;
     emit selectedRobotNamespaceChanged();
     emit selectedRobotDisplayNameChanged();
+  }
+}
+
+void RobotManager::setUseNamespaceDiscovery(bool use_namespace_discovery)
+{
+  if (use_namespace_discovery_ != use_namespace_discovery)
+  {
+    use_namespace_discovery_ = use_namespace_discovery;
+
+    if (!selected_robot_namespace_.isEmpty() && sub_cmd_vel_)
+    {
+      subscribeToCmdVel();
+    }
   }
 }
 
@@ -178,13 +218,26 @@ void RobotManager::subscribeToCmdVel()
 
   resetCmdVelState(true);
 
-  const QString topic_name = selected_robot_namespace_ + QString::fromUtf8(T_TB3_CMD_VEL);
+  const QString topic_name = buildTopicName(QString::fromUtf8(T_TB3_CMD_VEL));
 
   // Create subscription
   sub_cmd_vel_ = parent_node_->create_subscription<geometry_msgs::msg::Twist>(topic_name.toStdString(), QOS_RELIABLE,
                                                                               std::bind(&RobotManager::callbackCmdVel, this, std::placeholders::_1));
 
   qInfo() << "[RobotManager::subscribeToCmdVel] Subscribed to topic:" << topic_name;
+}
+
+QString RobotManager::buildTopicName(const QString& topic_suffix) const
+{
+  if (use_namespace_discovery_)
+  {
+    return selected_robot_namespace_ + topic_suffix;
+  }
+
+  else
+  {
+    return topic_suffix;
+  }
 }
 
 void RobotManager::callbackCmdVel(const geometry_msgs::msg::Twist& cmd_vel) { emit cmdVelReceived(cmd_vel); }

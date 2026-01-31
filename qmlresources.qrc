@@ -7,6 +7,7 @@
     <file alias="circle_question.svg">resources/Icons/circle_question.svg</file>
     <file alias="circle_user_regular.svg">resources/Icons/circle_user_regular.svg</file>
     <file alias="draw_pencil.png">resources/Icons/draw_pencil.png</file>
+    <file alias="config.svg">resources/Icons/config.svg</file>
     <file alias="eraser_solid.svg">resources/Icons/eraser_solid.svg</file>
     <file alias="file_arrow_down_solid.svg">resources/Icons/file_arrow_down_solid.svg</file>
     <file alias="goal.png">resources/Icons/goal.png</file>
