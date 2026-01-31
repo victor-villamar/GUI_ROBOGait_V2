@@ -66,16 +66,24 @@ public:
   void setROSNode(rclcpp::Node* parent_node);
 
   /**
-   * @brief Select a robot by its namespace
+   * @brief Select a robot by its identifier (namespace or node name)
    *
-   * @param robot_namespace The namespace of the robot to select
+   * @param robot_identifier The namespace or node name of the robot to select
+   * @param is_namespace True if identifier is a namespace, false if it's a node name
    */
-  void selectRobot(const QString& robot_namespace);
+  void selectRobot(const QString& robot_identifier, bool is_namespace);
 
   /**
    * @brief Clear the selected robot
    */
   void clearSelection();
+
+  /**
+   * @brief Set whether to use namespace-based topic construction
+   *
+   * @param use_namespace_discovery True to use namespace, false to use node name
+   */
+  void setUseNamespaceDiscovery(bool use_namespace_discovery);
 
 signals:
   void selectedRobotNamespaceChanged();
@@ -115,11 +123,21 @@ private:
    */
   void resetCmdVelState(bool clear_text);
 
+  /**
+   * @brief Build topic name based on selected robot type
+   *
+   * @param topic_suffix The topic suffix (e.g., "/cmd_vel")
+   *
+   * @return The complete topic name
+   */
+  QString buildTopicName(const QString& topic_suffix) const;
+
   rclcpp::Node* parent_node_;                                              /**< Pointer to the parent ROS node */
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr sub_cmd_vel_; /**< Subscriber to the command velocity topic */
 
   QString selected_robot_namespace_; /**< The namespace of the selected robot */
   QString cmd_vel_text_;             /**< The command velocity text */
+  bool use_namespace_discovery_;     /**< True if selected robot is identified by namespace, false if by node name */
   double last_linear_x_;             /**< The last linear x velocity */
   double last_linear_y_;             /**< The last linear y velocity */
   double last_linear_z_;             /**< The last linear z velocity */
