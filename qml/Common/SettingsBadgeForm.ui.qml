@@ -39,7 +39,7 @@ Item {
         }
         
         ToolTip.visible: hovered
-        ToolTip.text: qsTr("Developer Settings")
-        ToolTip.delay: 1000
+        ToolTip.text: qsTr("Ajustes de desarrollador")
+        ToolTip.delay: 500
     }
 }

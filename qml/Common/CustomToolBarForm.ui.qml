@@ -8,6 +8,7 @@ Item {
     property alias logo: logo
     property alias title: title
     property alias robotBadge: robotBadge
+    property alias patientBadge: patientBadge
     property alias userBadge: userBadge
     property alias settingsBadge: settingsBadge
     property bool showRobotBadge: false
@@ -72,6 +73,12 @@ Item {
             RobotBadge {
                 id: robotBadge
                 visible: root.showRobotBadge && robotConnected
+                enabled: visible
+            }
+
+            PatientBadge {
+                id: patientBadge
+                visible: userSession ? userSession.hasPatientAssigned : false
                 enabled: visible
             }
 

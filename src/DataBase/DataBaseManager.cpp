@@ -356,6 +356,58 @@ QVariantMap DataBaseManager::getPatientBasicInfo(int patient_id)
   return patient_map;
 }
 
+QVariantList DataBaseManager::getPatientDoctorDiagnostics(int patient_id)
+{
+  QVariantList diagnostics_list;
+
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::getPatientDoctorDiagnostics] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return diagnostics_list;
+  }
+
+  if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::getPatientDoctorDiagnostics] Action not allowed for guest users";
+    setLastError("Accion no permitida para usuario invitado");
+    return diagnostics_list;
+  }
+
+  if (patient_id <= 0)
+  {
+    qWarning() << "[DataBaseManager::getPatientDoctorDiagnostics] Invalid patient ID";
+    setLastError("ID de paciente invalido");
+    return diagnostics_list;
+  }
+
+  const auto result = patient_repository_.listPatientDoctorsByPatientIdForUserName(patient_id, user_name_);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return diagnostics_list;
+  }
+
+  const auto doctors = std::get<QVector<PatientDoctorInfo>>(result);
+  for (const auto& doctor : doctors)
+  {
+    QVariantMap map;
+    map["doctor_id"] = doctor.doctor_id;
+    map["doctor_name"] = doctor.doctor_name;
+    map["doctor_last_name"] = doctor.doctor_last_name;
+    map["display"] = (doctor.doctor_last_name + ", " + doctor.doctor_name).trimmed();
+    map["create_day"] = doctor.create_day;
+    map["description"] = doctor.description;
+    diagnostics_list.append(map);
+  }
+
+  setLastError("");
+  qInfo() << "[DataBaseManager::getPatientDoctorDiagnostics] Retrieved" << doctors.size() << "doctors for patient ID:" << patient_id;
+  return diagnostics_list;
+}
+
 bool DataBaseManager::registerPatient(const QString& name, const QString& last_name, int age, double weight, double height, const QString& description)
 {
   if (!db_.isOpen())

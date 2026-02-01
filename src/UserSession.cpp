@@ -214,6 +214,11 @@ void UserSession::assignPatient(int patient_id, const QString& name, const QStri
   if (current_patient_)
   {
     current_patient_->selectPatient(patient_id, name, last_name, display_name);
+
+    if (db_manager_)
+    {
+      current_patient_->setDoctorDiagnostics(db_manager_->getPatientDoctorDiagnostics(patient_id));
+    }
   }
 
   updateSessionState();
