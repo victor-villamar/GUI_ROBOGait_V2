@@ -8,8 +8,8 @@ Item {
     id: root
     property alias buttonSearchRobot: buttonSearchRobot
     property alias background: background
-    property bool showDiscoveryPanel : rosManager.robotDiscovery.state === RobotDiscovery.SCANNING ||
-                                       rosManager.robotDiscovery.state === RobotDiscovery.ROBOTS_FOUND
+    property bool showDiscoveryPanel : userSession.rosManager.robotDiscovery.state === RobotDiscovery.SCANNING ||
+                                       userSession.rosManager.robotDiscovery.state === RobotDiscovery.ROBOTS_FOUND
     property int selectedRobotIndex: -1
     property int pendingRobotIndex: -1
     property string selectedRobotNamespace: ""
@@ -163,7 +163,7 @@ Item {
                             font.bold: true
                             width: parent.width
                             horizontalAlignment: Text.AlignHCenter
-                            visible: rosManager.robotDiscovery.state === RobotDiscovery.ROBOTS_FOUND
+                            visible: userSession.rosManager.robotDiscovery.state === RobotDiscovery.ROBOTS_FOUND
                     }
 
                     BusyIndicator {
@@ -173,7 +173,7 @@ Item {
                         height: 180
                         running: true
                         topPadding: 20
-                        visible: rosManager.robotDiscovery.state === RobotDiscovery.SCANNING
+                        visible: userSession.rosManager.robotDiscovery.state === RobotDiscovery.SCANNING
                     }
 
                     Text {
@@ -195,7 +195,7 @@ Item {
                         border.width: 1
                         radius: 6
                         clip: true
-                        visible: rosManager.robotDiscovery.state === RobotDiscovery.ROBOTS_FOUND
+                        visible: userSession.rosManager.robotDiscovery.state === RobotDiscovery.ROBOTS_FOUND
 
                         Flickable {
                             anchors.fill: parent
@@ -232,7 +232,7 @@ Item {
 
                                 Repeater {
                                     id: robotsRepeater
-                                    model: rosManager.robotDiscovery.robotsNamespaces
+                                    model: userSession.rosManager.robotDiscovery.robotsNamespaces
                                     onItemAdded: robotsGrid.recalcMaxWidth()
                                     onItemRemoved: robotsGrid.recalcMaxWidth()
                                     delegate: Rectangle {
@@ -321,7 +321,7 @@ Item {
             }
 
             root.selectedRobotIndex = root.pendingRobotIndex
-            root.selectedRobotNamespace = rosManager.robotDiscovery.robotsNamespaces[root.pendingRobotIndex]
+            root.selectedRobotNamespace = userSession.rosManager.robotDiscovery.robotsNamespaces[root.pendingRobotIndex]
             userSession.assignRobot(root.selectedRobotNamespace)
             root.goToMainMenu()
             root.pendingRobotIndex = -1

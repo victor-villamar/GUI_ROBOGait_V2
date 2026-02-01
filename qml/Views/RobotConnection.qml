@@ -17,11 +17,11 @@ RobotConnectionForm {
 
     buttonSearchRobot{
         onClicked: {
-            rosManager.robotDiscovery.startScanning()
+            userSession.rosManager.robotDiscovery.startScanning()
         }
     }
 
-    Component.onDestruction: rosManager.robotDiscovery.stopScanning()
+    Component.onDestruction: userSession.rosManager.robotDiscovery.stopScanning()
 
     Component {
         id: mainMenuPage
