@@ -128,6 +128,24 @@ struct PatientDetails
 };
 
 /**
+ * @brief Structure representing a doctor associated with a patient
+ *
+ * @param doctor_id The unique identifier for the doctor
+ * @param doctor_name The first name of the doctor
+ * @param doctor_last_name The last name of the doctor
+ * @param create_day The date when the relation was created
+ * @param description The diagnosis/description for the patient by this doctor
+ */
+struct PatientDoctorInfo
+{
+  int doctor_id = -1;
+  QString doctor_name;
+  QString doctor_last_name;
+  QString create_day;
+  QString description;
+};
+
+/**
  * @brief Structure representing a map details, including user information
  *
  * @param map The map information
