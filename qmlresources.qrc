@@ -13,6 +13,7 @@
     <file alias="goal.png">resources/Icons/goal.png</file>
     <file alias="home.svg">resources/Icons/home.svg</file>
     <file alias="keyboard_left.svg">resources/Icons/keyboard_left.svg</file>
+    <file alias="lock.svg">resources/Icons/lock.svg</file>
     <file alias="manual_control.png">resources/Icons/manual_control.png</file>
     <file alias="pen_to_square_regular.svg">resources/Icons/pen_to_square_regular.svg</file>
     <file alias="pencil_solid.svg">resources/Icons/pencil_solid.svg</file>
@@ -21,6 +22,7 @@
     <file alias="stop_light.png">resources/Icons/stop_light.png</file>
     <file alias="stop.png">resources/Icons/stop.png</file>
     <file alias="trash_solid.svg">resources/Icons/trash_solid.svg</file>
+    <file alias="unlock.svg">resources/Icons/unlock.svg</file>
     <file alias="xmark_solid.svg">resources/Icons/xmark_solid.svg</file>
   </qresource>
   <qresource prefix="/qmlresources/logos">
