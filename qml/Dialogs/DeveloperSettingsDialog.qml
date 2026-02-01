@@ -192,9 +192,8 @@ Dialog {
                     Layout.fillWidth: true
                 }
 
-                Item {
+                RosDomainIdTab {
                     id: rosDomainIdTab
-                    implicitHeight: 0
                     Layout.fillWidth: true
                 }
             }
