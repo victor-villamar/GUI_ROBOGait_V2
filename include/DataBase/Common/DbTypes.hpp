@@ -57,7 +57,6 @@ struct UserRow
  * @param age The age of the patient
  * @param weight The weight of the patient
  * @param height The height of the patient
- * @param id_user The unique identifier for the user associated with the patient
  * @param description A description of the patient's condition
  * @param create_day The creation date of the patient record
  */
@@ -69,7 +68,6 @@ struct PatientRow
   int age = 0;
   double weight = 0.0;
   double height = 0.0;
-  int id_user = -1;
   QString description;
   QString create_day;
 };
@@ -117,14 +115,16 @@ struct ExperimentRow
  * @brief Structure representing patient details, including user information
  *
  * @param patient The patient information
- * @param user_name The username of the user associated with the patient
- * @param user_last_name The last name of the user associated with the patient
+ * @param user_name The username of the requesting user associated with the patient
+ * @param user_last_name The last name of the requesting user associated with the patient
+ * @param doctor_names Comma-separated list of doctors assigned to the patient
  */
 struct PatientDetails
 {
   PatientRow patient;
   QString user_name;
   QString user_last_name;
+  QString doctor_names;
 };
 
 /**
