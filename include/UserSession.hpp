@@ -6,7 +6,7 @@
 
 #include "DataBase/DataBaseManager.hpp"
 #include "Patient.hpp"
-#include "RobotManager.hpp"
+#include "Robot/RobotManager.hpp"
 #include "RosNodeManager.hpp"
 
 namespace ROBOGait

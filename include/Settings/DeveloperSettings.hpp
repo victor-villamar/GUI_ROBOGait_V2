@@ -17,17 +17,6 @@ class DeveloperSettings : public QObject
 {
   Q_OBJECT
 
-  // clang-format off
-  Q_PROPERTY(bool useNamespaceDiscovery
-             READ getUseNamespaceDiscovery
-             WRITE setUseNamespaceDiscovery
-             NOTIFY useNamespaceDiscoveryChanged)
-
-  Q_PROPERTY(bool hasPendingChanges
-             READ getHasPendingChanges
-             NOTIFY hasPendingChangesChanged)
-  // clang-format on
-
 public:
   /**
    * @brief Get the singleton instance
@@ -41,6 +30,17 @@ public:
    */
   DeveloperSettings(const DeveloperSettings&) = delete;
   DeveloperSettings& operator=(const DeveloperSettings&) = delete;
+
+  // clang-format off
+  Q_PROPERTY(bool useNamespaceDiscovery
+             READ getUseNamespaceDiscovery
+             WRITE setUseNamespaceDiscovery
+             NOTIFY useNamespaceDiscoveryChanged)
+
+  Q_PROPERTY(bool hasPendingChanges
+             READ getHasPendingChanges
+             NOTIFY hasPendingChangesChanged)
+  // clang-format on
 
   /**
    * @brief Get current pending value for namespace discovery

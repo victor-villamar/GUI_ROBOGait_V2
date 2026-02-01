@@ -62,26 +62,26 @@ ApplicationFlowForm {
     }
 
     Connections {
-        target: rosManager.robotDiscovery
+        target: userSession.rosManager.robotDiscovery
 
         function onRobotsNamespacesChanged() {
-            if (!rosManager || !rosManager.robotManager)
+            if (!userSession.rosManager || !userSession.rosManager.robotManager)
             {
                 return
             }
 
-            var nsFull = rosManager.robotManager.selectedRobotNamespace
+            var nsFull = userSession.rosManager.robotManager.selectedRobotNamespace
 
             if (!nsFull || nsFull.length === 0)
             {
                 return
             }
 
-            var robotnamespaces = rosManager.robotDiscovery.robotsNamespaces
+            var robotnamespaces = userSession.rosManager.robotDiscovery.robotsNamespaces
             var present = robotnamespaces.indexOf(nsFull) !== -1
 
             if (!present) {
-                var display = rosManager.robotManager.selectedRobotDisplayName
+                var display = userSession.rosManager.robotManager.selectedRobotDisplayName
                 lostConnectionPopupItem.open()
                 lostConnectionPopupItem.errorRectangleTextError.text =
                     qsTr("Se perdió conexión con %1 inesperadamente.").arg(display)

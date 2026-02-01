@@ -38,8 +38,9 @@ set(HEADERS
     include/Settings/DeveloperSettings.hpp
     include/Define.hpp
     include/Patient.hpp
-    include/RobotDiscovery.hpp
-    include/RobotManager.hpp
+    include/Robot/ManualControl.hpp
+    include/Robot/RobotDiscovery.hpp
+    include/Robot/RobotManager.hpp
     include/RosNodeManager.hpp
     include/TopicsName.hpp
     include/UserSession.hpp
@@ -59,9 +60,10 @@ set(SOURCES
     src/Settings/DeveloperSettings.cpp
     src/main.cpp
     src/Patient.cpp
-    src/RobotDiscovery.cpp
+    src/Robot/ManualControl.cpp
+    src/Robot/RobotDiscovery.cpp
+    src/Robot/RobotManager.cpp
     src/RosNodeManager.cpp
-    src/RobotManager.cpp
     src/UserSession.cpp
 )
 

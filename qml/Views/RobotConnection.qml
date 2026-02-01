@@ -9,19 +9,15 @@ RobotConnectionForm {
             StackView.view.push(mainMenuPage)
             applicationFlow.state = "main_menu"
         }
-        else
-        {
-            console.warn("RobotConnectionForm: No StackView.view (¿ Is it inside a StackView?)")
-        }
     }
 
     buttonSearchRobot{
         onClicked: {
-            rosManager.robotDiscovery.startScanning()
+            userSession.rosManager.robotDiscovery.startScanning()
         }
     }
 
-    Component.onDestruction: rosManager.robotDiscovery.stopScanning()
+    Component.onDestruction: userSession.rosManager.robotDiscovery.stopScanning()
 
     Component {
         id: mainMenuPage
