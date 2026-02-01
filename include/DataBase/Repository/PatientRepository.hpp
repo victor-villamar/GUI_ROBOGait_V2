@@ -28,7 +28,7 @@ public:
   ~PatientRepository() override;
 
   /**
-   * @brief Insert a patient record for a specific user
+   * @brief Insert a patient record and associate it with a specific user
    *
    * @param name The name of the patient
    * @param last_name The last name of the patient
@@ -43,7 +43,7 @@ public:
                                         const QString& description);
 
   /**
-   * @brief Delete a patient record by ID
+   * @brief Remove a patient association for a user (and delete the patient if orphaned)
    *
    * @param patient_id The ID of the patient to delete
    * @param user_name The username of the user associated with the patient
