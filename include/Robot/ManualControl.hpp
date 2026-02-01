@@ -23,17 +23,6 @@ class ManualControl : public QObject
 {
   Q_OBJECT
 
-  // clang-format off
-  Q_PROPERTY(double linearVelocity
-             READ getLinearVelocity
-             NOTIFY velocityChanged
-  )
-  Q_PROPERTY(double angularVelocity
-             READ getAngularVelocity
-             NOTIFY velocityChanged
-  )
-  // clang-format on
-
 public:
   /**
    * @brief Constructor of ManualControl class
@@ -44,6 +33,17 @@ public:
    * @brief Destructor of ManualControl class
    */
   ~ManualControl();
+
+  // clang-format off
+  Q_PROPERTY(double linearVelocity
+             READ getLinearVelocity
+             NOTIFY velocityChanged
+  )
+  Q_PROPERTY(double angularVelocity
+             READ getAngularVelocity
+             NOTIFY velocityChanged
+  )
+  // clang-format on
 
   /**
    * @brief Sets the ROS node for manual control
