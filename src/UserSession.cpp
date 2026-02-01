@@ -475,9 +475,9 @@ bool UserSession::selectPatientById(int patient_id)
     return false;
   }
 
-  QString name = patient_details.value("name").toString();
-  QString last_name = patient_details.value("lastName").toString();
-  QString display_name = patient_details.value("displayName").toString();
+  QString name = patient_details.value("first_name").toString();
+  QString last_name = patient_details.value("last_name").toString();
+  QString display_name = patient_details.value("display_name").toString();
 
   if (display_name.isEmpty())
   {

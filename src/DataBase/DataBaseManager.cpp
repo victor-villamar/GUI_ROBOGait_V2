@@ -410,7 +410,7 @@ bool DataBaseManager::registerPatient(const QString& name, const QString& last_n
   }
 
   setLastError("");
-  qInfo() << "[DataBaseManager::registerPatient] Patient registered successfully for user:" << user_name_;
+  qInfo() << "[DataBaseManager::registerPatient] Patient registered and linked successfully for user:" << user_name_;
   return true;
 }
 
@@ -447,7 +447,7 @@ bool DataBaseManager::deletePatient(int patient_id)
   }
 
   setLastError("");
-  qInfo() << "[DataBaseManager::deletePatient] Patient deleted successfully for user:" << user_name_;
+  qInfo() << "[DataBaseManager::deletePatient] Patient unlinked successfully for user:" << user_name_;
   return true;
 }
 

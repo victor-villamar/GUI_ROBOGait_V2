@@ -213,7 +213,7 @@ public:
   Q_INVOKABLE bool registerPatient(const QString& name, const QString& last_name, int age, double weight, double height, const QString& description);
 
   /**
-   * @brief Delete a patient record
+   * @brief Remove the current user's association with a patient (and delete if orphaned)
    *
    * @param patient_id The ID of the patient to delete
    * @return True if the deletion was successful, false otherwise
