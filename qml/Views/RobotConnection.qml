@@ -9,10 +9,6 @@ RobotConnectionForm {
             StackView.view.push(mainMenuPage)
             applicationFlow.state = "main_menu"
         }
-        else
-        {
-            console.warn("RobotConnectionForm: No StackView.view (¿ Is it inside a StackView?)")
-        }
     }
 
     buttonSearchRobot{

@@ -19,7 +19,9 @@ MainMenuForm {
     }
 
     manualControlArea.onClicked: {
-        showNotImplemented(qsTr("Control manual: en desarrollo."))
+        if (StackView.view) {
+            StackView.view.push(manualControlPage)
+        }
     }
 
     selectMapArea.onClicked: {
@@ -39,5 +41,10 @@ MainMenuForm {
     Component {
         id: selectPatientPage
         SelectPatient { }
+    }
+
+    Component {
+        id: manualControlPage
+        ManualControl { }
     }
 }
