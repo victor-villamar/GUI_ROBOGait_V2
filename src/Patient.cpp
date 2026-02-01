@@ -2,7 +2,7 @@
 
 using namespace ROBOGait::user;
 
-Patient::Patient() : id_(-1), name_(""), last_name_(""), display_name_("") {}
+Patient::Patient() : id_(-1), name_(""), last_name_(""), display_name_(""), doctor_diagnostics_() {}
 
 int Patient::getId() const { return id_; }
 
@@ -24,13 +24,25 @@ QString Patient::getStatusRichText() const
   return "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY PACIENTE ACTIVO</span>";
 }
 
+QVariantList Patient::getDoctorDiagnostics() const { return doctor_diagnostics_; }
+
 void Patient::selectPatient(int id, const QString& name, const QString& lastName, const QString& displayName)
 {
   id_ = id;
   name_ = name;
   last_name_ = lastName;
   display_name_ = displayName;
+  doctor_diagnostics_.clear();
   emit patientChanged();
+}
+
+void Patient::setDoctorDiagnostics(const QVariantList& doctor_diagnostics)
+{
+  if (doctor_diagnostics != doctor_diagnostics_)
+  {
+    doctor_diagnostics_ = doctor_diagnostics;
+    emit patientChanged();
+  }
 }
 
 void Patient::clear()
@@ -39,5 +51,6 @@ void Patient::clear()
   name_.clear();
   last_name_.clear();
   display_name_.clear();
+  doctor_diagnostics_.clear();
   emit patientChanged();
 }

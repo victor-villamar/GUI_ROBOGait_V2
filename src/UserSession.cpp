@@ -214,6 +214,11 @@ void UserSession::assignPatient(int patient_id, const QString& name, const QStri
   if (current_patient_)
   {
     current_patient_->selectPatient(patient_id, name, last_name, display_name);
+
+    if (db_manager_)
+    {
+      current_patient_->setDoctorDiagnostics(db_manager_->getPatientDoctorDiagnostics(patient_id));
+    }
   }
 
   updateSessionState();
@@ -475,9 +480,9 @@ bool UserSession::selectPatientById(int patient_id)
     return false;
   }
 
-  QString name = patient_details.value("name").toString();
-  QString last_name = patient_details.value("lastName").toString();
-  QString display_name = patient_details.value("displayName").toString();
+  QString name = patient_details.value("first_name").toString();
+  QString last_name = patient_details.value("last_name").toString();
+  QString display_name = patient_details.value("display_name").toString();
 
   if (display_name.isEmpty())
   {

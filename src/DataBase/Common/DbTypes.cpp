@@ -58,9 +58,10 @@ QVariantMap toVariantMap(const PatientDetails& patient_details)
   map["height"] = patient_details.patient.height;
   map["description"] = patient_details.patient.description;
   map["create_day"] = patient_details.patient.create_day;
-  map["id_user"] = patient_details.patient.id_user;
   map["user_name"] = patient_details.user_name;
   map["user_last_name"] = patient_details.user_last_name;
+  map["doctor_names"] = patient_details.doctor_names;
+  map["display_name"] = (patient_details.patient.last_name + ", " + patient_details.patient.name).trimmed();
   return map;
 }
 

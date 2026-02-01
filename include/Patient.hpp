@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QVariantList>
 
 namespace ROBOGait
 {
@@ -41,6 +42,11 @@ public:
 
   Q_PROPERTY(QString statusRichText
              READ getStatusRichText
+             NOTIFY patientChanged
+  )
+
+  Q_PROPERTY(QVariantList doctorDiagnostics
+             READ getDoctorDiagnostics
              NOTIFY patientChanged
   )
 
@@ -89,6 +95,13 @@ public:
   QString getStatusRichText() const;
 
   /**
+   * @brief Get diagnostics for doctors associated with the patient
+   *
+   * @return List of doctor diagnostics
+   */
+  QVariantList getDoctorDiagnostics() const;
+
+  /**
    * @brief Select a patient.
    * @param id The patient ID.
    * @param name The patient name.
@@ -96,6 +109,13 @@ public:
    * @param displayName The patient display name.
    */
   void selectPatient(int id, const QString& name, const QString& lastName, const QString& displayName);
+
+  /**
+   * @brief Set doctor diagnostics list for the patient
+   *
+   * @param doctor_diagnostics The diagnostics list
+   */
+  void setDoctorDiagnostics(const QVariantList& doctor_diagnostics);
 
   /**
    * @brief Clear the patient selection.
@@ -106,10 +126,11 @@ signals:
   void patientChanged();
 
 private:
-  int id_;               /**< The patient ID */
-  QString name_;         /**< The patient name */
-  QString last_name_;    /**< The patient last name */
-  QString display_name_; /**< The patient display name */
+  int id_;                          /**< The patient ID */
+  QString name_;                    /**< The patient name */
+  QString last_name_;               /**< The patient last name */
+  QString display_name_;            /**< The patient display name */
+  QVariantList doctor_diagnostics_; /**< The patient doctors diagnostics */
 };
 } // namespace user
 } // namespace ROBOGait

@@ -121,6 +121,10 @@ Item {
             }
         }
 
+        HoverHandler {
+            id: userHover
+        }
+
         MouseArea {
             anchors.fill: parent
             onClicked: {
@@ -128,6 +132,10 @@ Item {
                 root.restartAutoCloseTimer()
             }
         }
+
+        ToolTip.visible: userHover.hovered
+        ToolTip.text: qsTr("Usuario")
+        ToolTip.delay: 500
     }
 
     Rectangle {

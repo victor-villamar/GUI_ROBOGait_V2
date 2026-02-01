@@ -8,6 +8,7 @@
     <file alias="AuthModeDropdown.qml">qml/Common/AuthModeDropdown.qml</file>
     <file alias="CustomToolBar.qml">qml/Common/CustomToolBar.qml</file>
     <file alias="CustomToolBarForm.ui.qml">qml/Common/CustomToolBarForm.ui.qml</file>
+    <file alias="PatientBadge.qml">qml/Common/PatientBadge.qml</file>
     <file alias="RobotBadge.qml">qml/Common/RobotBadge.qml</file>
     <file alias="SettingsBadge.qml">qml/Common/SettingsBadge.qml</file>
     <file alias="SettingsBadgeForm.ui.qml">qml/Common/SettingsBadgeForm.ui.qml</file>
@@ -20,6 +21,7 @@
 	<qresource prefix="/Dialogs">
 	  <file alias="ConfirmationDialog.qml">qml/Dialogs/ConfirmationDialog.qml</file>
 	  <file alias="DeveloperSettingsDialog.qml">qml/Dialogs/DeveloperSettingsDialog.qml</file>
+    <file alias="DiagnosticDialog.qml">qml/Dialogs/DiagnosticDialog.qml</file>
 	  <file alias="ErrorRectangle.qml">qml/Dialogs/ErrorRectangle.qml</file>
 	  <file alias="InformationDialog.qml">qml/Dialogs/InformationDialog.qml</file>
 	  <file alias="PatientDetailsDialog.qml">qml/Dialogs/PatientDetailsDialog.qml</file>

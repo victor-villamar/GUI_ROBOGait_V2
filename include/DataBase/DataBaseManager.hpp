@@ -200,6 +200,14 @@ public:
   Q_INVOKABLE QVariantMap getPatientBasicInfo(int patient_id);
 
   /**
+   * @brief Get doctor diagnostics for a patient (requires current user to be linked)
+   *
+   * @param patient_id The ID of the patient
+   * @return A list of doctor diagnostics (doctor_id, doctor_name, doctor_last_name, display, create_day, description)
+   */
+  Q_INVOKABLE QVariantList getPatientDoctorDiagnostics(int patient_id);
+
+  /**
    * @brief Register a new patient
    *
    * @param name The name of the patient
@@ -213,7 +221,7 @@ public:
   Q_INVOKABLE bool registerPatient(const QString& name, const QString& last_name, int age, double weight, double height, const QString& description);
 
   /**
-   * @brief Delete a patient record
+   * @brief Remove the current user's association with a patient (and delete if orphaned)
    *
    * @param patient_id The ID of the patient to delete
    * @return True if the deletion was successful, false otherwise

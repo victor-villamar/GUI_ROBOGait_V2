@@ -15,6 +15,7 @@
     <file alias="keyboard_left.svg">resources/Icons/keyboard_left.svg</file>
     <file alias="lock.svg">resources/Icons/lock.svg</file>
     <file alias="manual_control.png">resources/Icons/manual_control.png</file>
+    <file alias="patient.svg">resources/Icons/patient.svg</file>
     <file alias="pen_to_square_regular.svg">resources/Icons/pen_to_square_regular.svg</file>
     <file alias="pencil_solid.svg">resources/Icons/pencil_solid.svg</file>
     <file alias="plus_solid.svg">resources/Icons/plus_solid.svg</file>
