@@ -99,7 +99,7 @@ Dialog {
                 spacing: 10
 
                 Text {
-                    text: qsTr("Doctor: %1 %2").arg(details.user_name || "").arg(details.user_last_name || "")
+                    text: qsTr("Doctores: %1").arg(details.doctor_names || ((details.user_name || "") + " " + (details.user_last_name || "")).trim())
                     font.pixelSize: 16
                     width: parent.width
                     elide: Text.ElideRight
