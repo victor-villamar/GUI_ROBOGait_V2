@@ -3,7 +3,7 @@
 #include <rclcpp/node_interfaces/node_graph_interface.hpp>
 #include <utility>
 
-#include "RobotDiscovery.hpp"
+#include "Robot/RobotDiscovery.hpp"
 
 using namespace ROBOGait::discovery;
 
@@ -18,6 +18,7 @@ RobotDiscovery::RobotDiscovery() :
 {
   poll_timer_.setInterval(poll_interval_);
   poll_timer_.setSingleShot(false);
+
   // clang-format off
   connect(&poll_timer_,
           &QTimer::timeout,

@@ -7,8 +7,8 @@
 #include <rclcpp/node.hpp>
 #include <thread>
 
-#include "RobotDiscovery.hpp"
-#include "RobotManager.hpp"
+#include "Robot/RobotDiscovery.hpp"
+#include "Robot/RobotManager.hpp"
 
 namespace ROBOGait
 {

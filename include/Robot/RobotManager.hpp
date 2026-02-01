@@ -1,13 +1,10 @@
 #pragma once
 
-#include <QMetaType>
 #include <QObject>
 #include <QString>
-#include <geometry_msgs/msg/twist.hpp>
 #include <rclcpp/node.hpp>
-#include <rclcpp/subscription.hpp>
 
-Q_DECLARE_METATYPE(geometry_msgs::msg::Twist)
+#include "Robot/ManualControl.hpp"
 
 namespace ROBOGait
 {
@@ -33,13 +30,13 @@ public:
              READ getSelectedRobotNamespace
              NOTIFY selectedRobotNamespaceChanged
   )
-  Q_PROPERTY(QString cmdVelText
-             READ getCmdVelText
-             NOTIFY cmdVelTextChanged
-  )
   Q_PROPERTY(QString selectedRobotDisplayName
              READ getSelectedRobotDisplayName
              NOTIFY selectedRobotDisplayNameChanged
+  )
+  Q_PROPERTY(ROBOGait::control::ManualControl* manualControl
+             READ getManualControl
+             CONSTANT
   )
   // clang-format on
 
@@ -49,14 +46,14 @@ public:
   QString getSelectedRobotNamespace() const;
 
   /**
-   * @brief Get the command velocity text
-   */
-  QString getCmdVelText() const;
-
-  /**
    * @brief Get the display name of the selected robot
    */
   QString getSelectedRobotDisplayName() const;
+
+  /**
+   * @brief Get the manual control instance
+   */
+  ROBOGait::control::ManualControl* getManualControl() const;
 
   /**
    * @brief Set the ROS node for the RobotManager
@@ -85,15 +82,19 @@ public:
    */
   void setUseNamespaceDiscovery(bool use_namespace_discovery);
 
+  /**
+   * @brief Enables manual control mode for the selected robot
+   */
+  Q_INVOKABLE void enableManualControl();
+
+  /**
+   * @brief Disables manual control mode
+   */
+  Q_INVOKABLE void disableManualControl();
+
 signals:
   void selectedRobotNamespaceChanged();
-  void cmdVelTextChanged();
   void selectedRobotDisplayNameChanged();
-
-  void cmdVelReceived(const geometry_msgs::msg::Twist& cmd_vel);
-
-private slots:
-  void onCmdVelReceived(const geometry_msgs::msg::Twist& cmd_vel);
 
 private:
   /**
@@ -105,25 +106,6 @@ private:
   QString normalizeNamespace(const QString& robot_namespace) const;
 
   /**
-   * @brief Subscribe to the command velocity topic
-   */
-  void subscribeToCmdVel();
-
-  /**
-   * @brief Callback for received command velocity messages
-   *
-   * @param cmd_vel The command velocity message
-   */
-  void callbackCmdVel(const geometry_msgs::msg::Twist& cmd_vel);
-
-  /**
-   * @brief Reset the command velocity state
-   *
-   * @param clear_text Whether to clear the command velocity text
-   */
-  void resetCmdVelState(bool clear_text);
-
-  /**
    * @brief Build topic name based on selected robot type
    *
    * @param topic_suffix The topic suffix (e.g., "/cmd_vel")
@@ -132,19 +114,13 @@ private:
    */
   QString buildTopicName(const QString& topic_suffix) const;
 
-  rclcpp::Node* parent_node_;                                              /**< Pointer to the parent ROS node */
-  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr sub_cmd_vel_; /**< Subscriber to the command velocity topic */
+  rclcpp::Node* parent_node_; /**< Pointer to the parent ROS node */
+
+  std::unique_ptr<ROBOGait::control::ManualControl> manual_control_; /**< Manual control instance */
 
   QString selected_robot_namespace_; /**< The namespace of the selected robot */
   QString cmd_vel_text_;             /**< The command velocity text */
   bool use_namespace_discovery_;     /**< True if selected robot is identified by namespace, false if by node name */
-  double last_linear_x_;             /**< The last linear x velocity */
-  double last_linear_y_;             /**< The last linear y velocity */
-  double last_linear_z_;             /**< The last linear z velocity */
-  double last_angular_x_;            /**< The last angular x velocity */
-  double last_angular_y_;            /**< The last angular y velocity */
-  double last_angular_z_;            /**< The last angular z velocity */
-  bool has_cmd_vel_;
 };
 } // namespace manager
 } // namespace ROBOGait
