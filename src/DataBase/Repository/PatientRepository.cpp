@@ -60,7 +60,7 @@ DbResultVoid PatientRepository::insertPatientForUserName(const QString& name, co
     // clang-format off
     const QString patient_sql =
         "INSERT INTO patient (name, lastname, age, weight, height, description, create_day) "
-        "VALUES (:name, :lastname, :age, :weight, :height, :description, CURRENT_TIMESTAMP);";
+        "VALUES (:name, :lastname, :age, :weight, :height, '', CURRENT_TIMESTAMP);";
     // clang-format on
 
     if (auto result = prepareQuery(insert_patient_query, patient_sql); !statusOk(result))
@@ -74,7 +74,6 @@ DbResultVoid PatientRepository::insertPatientForUserName(const QString& name, co
     insert_patient_query.bindValue(":age", age);
     insert_patient_query.bindValue(":weight", weight);
     insert_patient_query.bindValue(":height", height);
-    insert_patient_query.bindValue(":description", description);
 
     if (auto result = executeQuery(insert_patient_query); !statusOk(result))
     {
@@ -98,9 +97,10 @@ DbResultVoid PatientRepository::insertPatientForUserName(const QString& name, co
 
   // clang-format off
   const QString relation_sql =
-      "INSERT OR IGNORE INTO patient_doctor (id_patient, id_doctor, create_day) "
-      "SELECT :patient_id, id, CURRENT_TIMESTAMP "
-      "FROM \"user\" WHERE username = :username;";
+      "INSERT INTO patient_doctor (id_patient, id_doctor, create_day, description) "
+      "SELECT :patient_id, id, CURRENT_TIMESTAMP, :description "
+      "FROM \"user\" WHERE username = :username "
+      "ON CONFLICT(id_patient, id_doctor) DO UPDATE SET description = excluded.description;";
   // clang-format on
 
   if (auto result = prepareQuery(relation_query, relation_sql); !statusOk(result))
@@ -110,6 +110,7 @@ DbResultVoid PatientRepository::insertPatientForUserName(const QString& name, co
   }
 
   relation_query.bindValue(":patient_id", patient_id);
+  relation_query.bindValue(":description", description);
   relation_query.bindValue(":username", user_name);
 
   if (auto result = executeQuery(relation_query); !statusOk(result))
@@ -274,7 +275,7 @@ DbResult<PatientDetails> PatientRepository::getPatientDetailsByIdForUserName(int
 
   // clang-format off
     const QString sql =
-        "SELECT p.id, p.name, p.lastname, p.age, p.weight, p.height, p.description, p.create_day, "
+        "SELECT p.id, p.name, p.lastname, p.age, p.weight, p.height, pd_auth.description, pd_auth.create_day, "
         "       u_auth.name, u_auth.lastname, "
         "       GROUP_CONCAT(u_all.name || ' ' || u_all.lastname, ', ') AS doctor_names "
         "FROM patient p "
@@ -363,4 +364,55 @@ DbResult<PatientRow> PatientRepository::getPatientBasicInfoByIdForUserName(int p
   patient_row.last_name = query.value(2).toString();
 
   return patient_row;
+}
+
+DbResult<QVector<PatientDoctorInfo>> PatientRepository::listPatientDoctorsByPatientIdForUserName(int patient_id, const QString& user_name)
+{
+  QSqlQuery query(getDataBase());
+
+  // clang-format off
+  const QString sql =
+      "SELECT u.id, u.name, u.lastname, pd.create_day, pd.description "
+      "FROM patient_doctor pd "
+      "JOIN \"user\" u ON pd.id_doctor = u.id "
+      "WHERE pd.id_patient = :patient_id "
+      "  AND EXISTS ("
+      "    SELECT 1 "
+      "    FROM patient_doctor pd2 "
+      "    JOIN \"user\" u2 ON pd2.id_doctor = u2.id "
+      "    WHERE pd2.id_patient = :patient_id "
+      "      AND u2.username = :username"
+      "  ) "
+      "ORDER BY u.lastname, u.name;";
+  // clang-format on
+
+  if (auto result = prepareQuery(query, sql); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<QVector<PatientDoctorInfo>>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  query.bindValue(":patient_id", patient_id);
+  query.bindValue(":username", user_name);
+
+  if (auto result = executeQuery(query); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<QVector<PatientDoctorInfo>>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  QVector<PatientDoctorInfo> doctors_output;
+
+  while (query.next())
+  {
+    PatientDoctorInfo info;
+    info.doctor_id = query.value(0).toInt();
+    info.doctor_name = query.value(1).toString();
+    info.doctor_last_name = query.value(2).toString();
+    info.create_day = query.value(3).toString();
+    info.description = query.value(4).toString();
+    doctors_output.append(info);
+  }
+
+  return doctors_output;
 }

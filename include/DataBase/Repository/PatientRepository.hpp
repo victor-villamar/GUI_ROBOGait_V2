@@ -76,6 +76,15 @@ public:
    * @return Result containing basic patient info if found, or error otherwise
    */
   DbResult<PatientRow> getPatientBasicInfoByIdForUserName(int patient_id, const QString& user_name);
+
+  /**
+   * @brief List doctors associated with a patient (requires the user to be linked)
+   *
+   * @param patient_id The ID of the patient
+   * @param user_name The username of the requesting user
+   * @return Result containing doctor info list if found, or error otherwise
+   */
+  DbResult<QVector<PatientDoctorInfo>> listPatientDoctorsByPatientIdForUserName(int patient_id, const QString& user_name);
 };
 } // namespace db
 } // namespace ROBOGait
