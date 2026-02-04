@@ -26,6 +26,7 @@
 	  <file alias="InformationDialog.qml">qml/Dialogs/InformationDialog.qml</file>
 	  <file alias="PatientDetailsDialog.qml">qml/Dialogs/PatientDetailsDialog.qml</file>
 	  <file alias="PatientRegisterDialog.qml">qml/Dialogs/PatientRegisterDialog.qml</file>
+	  <file alias="RosDomainIdTab.qml">qml/Dialogs/RosDomainIdTab.qml</file>
 	  <file alias="RosSettingsTab.qml">qml/Dialogs/RosSettingsTab.qml</file>
 	  <file alias="UserSwitchDialog.qml">qml/Dialogs/UserSwitchDialog.qml</file>
 	</qresource>

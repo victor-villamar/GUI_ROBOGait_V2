@@ -140,6 +140,6 @@ Item {
                     property bool checked: namespaceCheckbox.checked
                 }
             }
-        }  
+        }
     }
 }
