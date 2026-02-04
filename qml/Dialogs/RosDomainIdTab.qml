@@ -72,7 +72,6 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                         readOnly: !domainSpinBox.editable
                         validator: IntValidator { bottom: domainSpinBox.from; top: domainSpinBox.to }
-                        inputMethodHints: Qt.ImhDigitsOnly
                         anchors.fill: parent
                         anchors.rightMargin: 24
                     }

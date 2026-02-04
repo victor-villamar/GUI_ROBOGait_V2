@@ -8,6 +8,14 @@ import "qrc:/Dialogs"
 ApplicationFlowForm {
     id: applicationFlow
     state: "Home"
+    property bool keyboardVisible: false
+    property real keyboardHeight: 0
+    property real keyboardSafeArea: currentKeyboardSafeArea
+    property real currentKeyboardSafeArea: {
+        var item = mystackview.currentItem
+        return item && item.keyboardSafeArea !== undefined ? item.keyboardSafeArea : 0
+    }
+    keyboardInset: keyboardVisible ? Math.max(0, keyboardHeight - keyboardSafeArea) : 0
 
     home.buttonStart.onClicked: {
         mystackview.push(register_page)
