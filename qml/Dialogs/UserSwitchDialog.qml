@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 import "qrc:/Views"
+import "qrc:/Common"
 
 Dialog {
     id: root
@@ -16,25 +17,18 @@ Dialog {
     }
 
     width: parent ? Math.min(700, parent.width * 0.90) : 700
-    height: parent ? Math.min(760, parent.height * 0.90) : 760
+    height: keyboardHelper.computedHeight
 
     x: parent ? Math.round((parent.width - width) / 2) : 0
-    y: parent ? Math.round((parent.height - height) / 2) : 0
+    y: parent ? keyboardHelper.computedY : 0
 
-    function reposition()
-    {
-        if (!parent) {
-            return
-        }
-
-        x = Math.round((parent.width - width) / 2)
-        y = Math.round((parent.height - height) / 2)
+    KeyboardAwareHelper {
+        id: keyboardHelper
+        target: root
+        maxDialogHeight: parent ? Math.min(760, parent.height * 0.90) : 760
     }
 
-    onOpened: reposition()
-    onWidthChanged: reposition()
-    onHeightChanged: reposition()
-    onParentChanged: reposition()
+    onOpened: forceActiveFocus()
 
     background: Rectangle {
         color: "#a9cfe8"

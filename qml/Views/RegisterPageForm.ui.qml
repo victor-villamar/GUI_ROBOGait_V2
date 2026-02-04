@@ -8,10 +8,12 @@ Item {
     property alias loginPage: loginPage
     property alias signInPage: signInPage
     property alias guestPage: guestPage
+    property int contentCenterOffset: 0
 
     Login {
         id: loginPage
         anchors.fill: parent
+        contentCenterOffset: root.contentCenterOffset
     }
 
     SignIn {
@@ -19,6 +21,7 @@ Item {
         anchors.fill: parent
         visible: false
         enabled: false
+        contentCenterOffset: root.contentCenterOffset
     }
 
     Guest {
@@ -26,5 +29,6 @@ Item {
         anchors.fill: parent
         visible: false
         enabled: false
+        contentCenterOffset: root.contentCenterOffset
     }
 }

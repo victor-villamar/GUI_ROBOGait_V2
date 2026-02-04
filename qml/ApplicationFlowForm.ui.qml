@@ -15,6 +15,7 @@ Rectangle {
     property alias lostConnectionPopupItem: lostConnectionPopup
 
     property string previousState: ""
+    property real keyboardInset: 0
     property alias mystackview: mystackview
     property alias toolbar: toolbar
     property alias userSwitchDialog: userSwitchDialog
@@ -35,6 +36,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.keyboardInset
         anchors.topMargin: 0
 
         initialItem: Home {
@@ -98,10 +100,3 @@ Rectangle {
         id: userSwitchDialog
     }
 }
-
-/*##^##
-Designer {
-    D{i:0;autoSize:true;formeditorZoom:0.5;height:700;width:1300}D{i:1}D{i:2}D{i:3}D{i:13}
-D{i:15}D{i:17}D{i:19}D{i:21}D{i:23}D{i:25}D{i:27}D{i:29}
-}
-##^##*/

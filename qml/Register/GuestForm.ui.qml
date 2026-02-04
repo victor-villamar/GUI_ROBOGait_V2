@@ -11,6 +11,9 @@ Page {
 
     property alias guestButton: guestButton
     property alias authModeDropdown: authModeDropdown
+    property real keyboardSafeArea: 0
+    property int contentCenterOffset: 0
+    property real formContentHeight: formColumn.implicitHeight
 
     Rectangle {
         anchors.fill: parent
@@ -26,16 +29,15 @@ Page {
             Item {
                 id: content
                 width: scroll.width
-                property int topPadding: 40
-                height: Math.max(formColumn.implicitHeight + (topPadding * 2), scroll.height)
+                height: Math.max(formColumn.implicitHeight, scroll.height)
 
                 Column {
                     id: formColumn
                     width: Math.min(400, Math.max(0, content.width - 40))
                     spacing: 20
-                    anchors.top: parent.top
-                    anchors.topMargin: content.topPadding
                     anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: root.contentCenterOffset
 
                     Item {
                         width: formColumn.width

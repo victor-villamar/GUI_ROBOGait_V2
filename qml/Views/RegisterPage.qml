@@ -1,8 +1,38 @@
 import QtQuick 2.15
+import "qrc:/Common"
 
 RegisterPageForm {
     id: registerPage
     state: "register_page_login"
+    property real keyboardSafeArea: {
+        var win = Qt.application.activeWindow
+        return win && win.keyboardVisible ? win.keyboardHeight : 0
+    }
+    property int baseCenterOffset: -80
+    property int topPadding: 20
+    property int keyboardPadding: 12
+    property real currentContentHeight: {
+        if (loginPage.visible) {
+            return loginPage.formContentHeight
+        }
+        if (signInPage.visible) {
+            return signInPage.formContentHeight
+        }
+        if (guestPage.visible) {
+            return guestPage.formContentHeight
+        }
+        return 0
+    }
+    contentCenterOffset: keyboardHelper.contentCenterOffset
+
+    KeyboardAwareHelper {
+        id: keyboardHelper
+        target: registerPage
+        contentHeight: currentContentHeight
+        baseCenterOffset: registerPage.baseCenterOffset
+        topPadding: registerPage.topPadding
+        keyboardPadding: registerPage.keyboardPadding
+    }
 
     signal authenticated()
 

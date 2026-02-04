@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 import "qrc:/Dialogs"
+import "qrc:/Common"
 
 Dialog {
     id: root
@@ -17,10 +18,16 @@ Dialog {
     }
 
     width: parent ? Math.min(580, parent.width * 0.90) : 580
-    height: parent ? Math.min(610, parent.height * 0.90) : 610
+    height: keyboardHelper.computedHeight
 
-    x: parent ? (parent.width - width) / 2 : 0
-    y: parent ? (parent.height - height) / 2 : 0
+    x: parent ? Math.round((parent.width - width) / 2) : 0
+    y: parent ? keyboardHelper.computedY : 0
+
+    KeyboardAwareHelper {
+        id: keyboardHelper
+        target: root
+        maxDialogHeight: parent ? Math.min(610, parent.height * 0.90) : 610
+    }
 
     signal patientRegistered()
 
@@ -48,6 +55,7 @@ Dialog {
 
         Button {
             id: closeButton
+            z: 2
             width: 28
             height: 28
             anchors.top: parent.top
@@ -73,12 +81,17 @@ Dialog {
             onClicked: root.close()
         }
 
-        Column {
+        ScrollView {
+            id: scroll
+            z: 1
+            anchors.fill: parent
+            anchors.margins: 16
+            clip: true
+
+            Column {
             id: formColumn
-            width: Math.min(450, parent.width - 64)
+            width: Math.min(450, scroll.width - 32)
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: 40
             spacing: 15
             padding: 20
 
@@ -136,7 +149,6 @@ Dialog {
                 verticalAlignment: TextInput.AlignVCenter
                 leftPadding: 10
                 rightPadding: 10
-                inputMethodHints: Qt.ImhDigitsOnly
                 placeholderText: qsTr("Edad (años)")
 
                 background: Rectangle {
@@ -155,7 +167,6 @@ Dialog {
                 verticalAlignment: TextInput.AlignVCenter
                 leftPadding: 10
                 rightPadding: 10
-                inputMethodHints: Qt.ImhFormattedNumbersOnly
                 placeholderText: qsTr("Peso (Kg)")
 
                 background: Rectangle {
@@ -174,7 +185,6 @@ Dialog {
                 verticalAlignment: TextInput.AlignVCenter
                 leftPadding: 10
                 rightPadding: 10
-                inputMethodHints: Qt.ImhFormattedNumbersOnly
                 placeholderText: qsTr("Altura (cm)")
 
                 background: Rectangle {
@@ -260,10 +270,12 @@ Dialog {
                     root.patientRegistered()
                 }
             }
+            }
         }
 
         ErrorRectangle {
             id: errorPopup
+            z: 3
             anchors.centerIn: parent
             errorRectangleTextError.text: ""
         }
