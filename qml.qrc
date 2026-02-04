@@ -3,11 +3,13 @@
     <file alias="main.qml">qml/main.qml</file>
     <file alias="ApplicationFlow.qml">qml/ApplicationFlow.qml</file>
     <file alias="ApplicationFlowForm.ui.qml">qml/ApplicationFlowForm.ui.qml</file>
+    <file alias="VirtualKeyboardPanel.qml">qml/VirtualKeyboardPanel.qml</file>
   </qresource>
   <qresource prefix="/Common">
     <file alias="AuthModeDropdown.qml">qml/Common/AuthModeDropdown.qml</file>
     <file alias="CustomToolBar.qml">qml/Common/CustomToolBar.qml</file>
     <file alias="CustomToolBarForm.ui.qml">qml/Common/CustomToolBarForm.ui.qml</file>
+    <file alias="KeyboardAwareHelper.qml">qml/Common/KeyboardAwareHelper.qml</file>
     <file alias="PatientBadge.qml">qml/Common/PatientBadge.qml</file>
     <file alias="RobotBadge.qml">qml/Common/RobotBadge.qml</file>
     <file alias="SettingsBadge.qml">qml/Common/SettingsBadge.qml</file>

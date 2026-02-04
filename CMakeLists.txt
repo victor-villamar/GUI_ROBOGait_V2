@@ -16,6 +16,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     Gui
     Qml
     Quick
+    VirtualKeyboard
     Network
     Sql)
 
@@ -89,6 +90,7 @@ set(QT_LIBS
     Qt6::Quick
     Qt6::Network
     Qt6::Sql
+    Qt6::VirtualKeyboard
 )
 
 # Add Qt resources
@@ -112,6 +114,7 @@ include_directories(
     ${Qt6Quick_INCLUDE_DIRS}
     ${Qt6Network_INCLUDE_DIRS}
     ${Qt6Sql_INCLUDE_DIRS}
+    ${Qt6VirtualKeyboard_INCLUDE_DIRS}
 )
 
 # Add executable

@@ -24,6 +24,9 @@
 
 int main(int argc, char* argv[])
 {
+  // Virtual keyboard support
+  qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
+
   QGuiApplication app(argc, argv);
 
   QTranslator translator;
