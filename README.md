@@ -75,9 +75,11 @@ Para poder ejecutar este proyecto hay que seguir los siguientes pasos
    ![Qt_installation](/images/Qt_installation.png)
 
    2.1. Instalar Virtual Keyboard de *Additional Libraries*
+
       ![Qt_installation_virtual_keyboard](/images/Qt_installation_virtual_keyboard.png)
 
    2.2. Instalar *Plugin Development* en la sección Qt Creator
+
       ![Qt_Creator_installation](/images/Qt_Creator_installation.png)
 
 <!-- INSTALACION DE DEPENDENCIAS -->
@@ -117,6 +119,7 @@ Para poder ejecutar este proyecto hay que seguir los siguientes pasos
       Debemos descargarlo desde el repositorio oficial &rarr; [ros_qtc_plugin](https://github.com/ros-industrial/ros_qtc_plugin)
 
       Con la versión obtenida en el paso anterior nos dirigimos a *Tags* &rarr; *18.0*
+
       ![Tag](/images/Tag.png)
       ![Tag_2](/images/Tags_2.png)
 
@@ -152,32 +155,41 @@ Para poder ejecutar este proyecto hay que seguir los siguientes pasos
    1. *Creación del proyecto*
 
       - En la Qt Creator nos dirigimos a *File* &rarr; *New Project*.
+
          ![new_project](/images/new_project.png)
 
       - Establecemos en *Project* &rarr; *Other Project* y elejimos *ROS Wokspace*
+
          ![create_project_1](/images/create_project_1.png)
 
-      - En el siguiente paso establecemos *Name* &rarr; el nombre que queramos, en *Build System* &rarr; *Colcon* y en *Wokspace Path* el path donde se encuentra nuestro workspace
+      - En el siguiente paso establecemos *Name* &rarr; el nombre que queramos, en *Build System* &rarr; *Colcon* y en *Wokspace Path* el path donde se encuentra nuestro workspace.
+
          ![project_name_and_location](/images/project_name_and_location.png)
 
    2. *Configuracion de build y run*
 
       Nos dirigimos al apartado *Project* de la barra lateral.
+
       ![Projects](/images/Projects.png)
 
       En el apartado ***Build & Run*** seleccionamos el kit que hemos instalado.
+
       ![Build&Run](/images/Build&Run.png)
 
       - ***Configuración del Build***
+
          ![build_configuration](/images/build_configuration.png)
 
          - En el apartado *ROS Manager* establecemos la siguiente configuración
+
             ![ros_manager_configuration](/images/ros_manager_configuration.png)
 
          - En el apartado *Build Steps* establecemos la siguiente configuracion
+
             ![build_steps](/images/build_steps.png)
 
          - En el apartado *System Enviroment* agregamos la siguiente línea
+
             ![system_enviroment](/images/system_enviroment.png)
 
             ```terminal
@@ -187,6 +199,7 @@ Para poder ejecutar este proyecto hay que seguir los siguientes pasos
       - ***Configuración del Run***
 
          Una vez compilado el proyecto nos dirigimos a la sección *Run Settings*
+
          ![run_configuration](/images/run_configuration.png)
 
          - En *executable* buscamos el ejecutable generado en la compilación (/install/robogait_gui/bin) con el Browser
@@ -194,6 +207,7 @@ Para poder ejecutar este proyecto hay que seguir los siguientes pasos
          - En el apartado *Enviroment*
 
             ![enviroment](/images/enviroment.png)
+
             Agregamos al final de *LD_LIBRARY_PATH*
 
             ```terminal
