@@ -1,10 +1,10 @@
 #include <QDebug>
 
-#include "UserSession.hpp"
+#include "User/UserSession.hpp"
 
 using namespace ROBOGait::session;
 
-UserSession::UserSession(ROBOGait::manager::RosNodeManager* ros_manager) :
+UserSession::UserSession(ROBOGait::ros::manager::RosNodeManager* ros_manager) :
     db_manager_(&ROBOGait::db::DataBaseManager::getInstance()),
     ros_manager_(ros_manager),
     is_authenticated_(false),
@@ -35,7 +35,7 @@ UserSession::UserSession(ROBOGait::manager::RosNodeManager* ros_manager) :
   {
     // clang-format off
     connect(ros_manager_->getRobotManager(),
-            &ROBOGait::manager::RobotManager::selectedRobotNamespaceChanged,
+            &ROBOGait::robot::manager::RobotManager::selectedRobotNamespaceChanged,
             this,
             &UserSession::onRobotManagerChanged
     );
@@ -150,7 +150,7 @@ QString UserSession::getSessionSummary() const
 
 ROBOGait::db::DataBaseManager* UserSession::getDatabase() const { return db_manager_; }
 
-ROBOGait::manager::RosNodeManager* UserSession::getRosManager() const { return ros_manager_; }
+ROBOGait::ros::manager::RosNodeManager* UserSession::getRosManager() const { return ros_manager_; }
 
 void UserSession::authenticateUser(int user_id, const QString& username, const QString& display_name, const QString& role)
 {

@@ -12,9 +12,10 @@
 
 namespace ROBOGait
 {
+namespace ros
+{
 namespace manager
 {
-using namespace ROBOGait::discovery;
 
 /**
  * @brief Class for managing the ROS node
@@ -48,11 +49,11 @@ public:
              WRITE setUseNamespaceDiscovery
              NOTIFY useNamespaceDiscoveryChanged
   )
-  Q_PROPERTY(RobotDiscovery* robotDiscovery
+  Q_PROPERTY(ROBOGait::robot::discovery::RobotDiscovery* robotDiscovery
              READ getRobotDiscovery
              CONSTANT
   )
-  Q_PROPERTY(RobotManager* robotManager
+  Q_PROPERTY(ROBOGait::robot::manager::RobotManager* robotManager
              READ getRobotManager
              CONSTANT
   )
@@ -92,13 +93,13 @@ public:
    * @brief Gets the RobotDiscovery instance
    * @return A pointer to the RobotDiscovery instance
    */
-  RobotDiscovery* getRobotDiscovery() const;
+  ROBOGait::robot::discovery::RobotDiscovery* getRobotDiscovery() const;
 
   /**
    * @brief Gets the RobotManager instance
    * @return A pointer to the RobotManager instance
    */
-  RobotManager* getRobotManager() const;
+  ROBOGait::robot::manager::RobotManager* getRobotManager() const;
 
   /**
    * @brief Initializes the ROS node manager
@@ -134,11 +135,12 @@ private:
   std::unique_ptr<rclcpp::executors::MultiThreadedExecutor> executor_; /**< The executor for the ROS node */
   std::thread spin_thread_;                                            /**< The thread for spinning the ROS node */
 
-  std::unique_ptr<RobotDiscovery> robot_discovery_; /**< The RobotDiscovery instance */
-  std::unique_ptr<RobotManager> robot_manager_;     /**< The RobotManager instance */
+  std::unique_ptr<ROBOGait::robot::discovery::RobotDiscovery> robot_discovery_; /**< The RobotDiscovery instance */
+  std::unique_ptr<ROBOGait::robot::manager::RobotManager> robot_manager_;       /**< The RobotManager instance */
 
   std::atomic<bool> is_running_; /**< Indicates if the ROS node is running */
   bool use_namespace_discovery_; /**< Indicates if namespace discovery is enabled */
 };
 } // namespace manager
+} // namespace ros
 } // namespace ROBOGait

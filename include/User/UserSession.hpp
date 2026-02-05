@@ -5,9 +5,8 @@
 #include <memory>
 
 #include "DataBase/DataBaseManager.hpp"
-#include "Patient.hpp"
-#include "Robot/RobotManager.hpp"
-#include "RosNodeManager.hpp"
+#include "Ros/RosNodeManager.hpp"
+#include "User/Patient.hpp"
 
 namespace ROBOGait
 {
@@ -31,7 +30,7 @@ public:
    *
    * @param ros_manager ROS node manager instance
    */
-  UserSession(ROBOGait::manager::RosNodeManager* ros_manager);
+  UserSession(ROBOGait::ros::manager::RosNodeManager* ros_manager);
 
   /**
    * @brief Destructor of UserSession class
@@ -100,8 +99,8 @@ public:
   Q_PROPERTY(ROBOGait::db::DataBaseManager* database
              READ getDatabase
              CONSTANT)
-             
-  Q_PROPERTY(ROBOGait::manager::RosNodeManager* rosManager
+
+  Q_PROPERTY(ROBOGait::ros::manager::RosNodeManager* rosManager
              READ getRosManager
              CONSTANT)
   // clang-format on
@@ -209,7 +208,7 @@ public:
    *
    * @return Pointer to ROS manager
    */
-  ROBOGait::manager::RosNodeManager* getRosManager() const;
+  ROBOGait::ros::manager::RosNodeManager* getRosManager() const;
 
 public slots:
   /**
@@ -339,8 +338,8 @@ private:
   void updateSessionState();
 
   // Managers
-  ROBOGait::db::DataBaseManager* db_manager_;      /**< Database manager */
-  ROBOGait::manager::RosNodeManager* ros_manager_; /**< ROS node manager */
+  ROBOGait::db::DataBaseManager* db_manager_;           /**< Database manager */
+  ROBOGait::ros::manager::RosNodeManager* ros_manager_; /**< ROS node manager */
 
   // User state
   bool is_authenticated_; /**< User authentication status */

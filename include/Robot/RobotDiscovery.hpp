@@ -9,6 +9,8 @@
 
 namespace ROBOGait
 {
+namespace robot
+{
 namespace discovery
 {
 /**
@@ -193,4 +195,5 @@ private:
   bool use_namespace_discovery_;  /**< True to discover by namespace, false to discover by node names */
 };
 } // namespace discovery
+} // namespace robot
 } // namespace ROBOGait

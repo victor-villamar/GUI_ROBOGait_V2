@@ -1,8 +1,8 @@
 #include <QDebug>
 
-#include "RosNodeManager.hpp"
+#include "Ros/RosNodeManager.hpp"
 
-using namespace ROBOGait::manager;
+using namespace ROBOGait::ros::manager;
 
 RosNodeManager::RosNodeManager() :
     node_name_("ros_node_manager"),
@@ -15,8 +15,8 @@ RosNodeManager::RosNodeManager() :
     use_namespace_discovery_(true)
 {
   qInfo() << "[RosNodeManager::RosNodeManager] Create RosNodeManager";
-  robot_discovery_ = std::make_unique<RobotDiscovery>();
-  robot_manager_ = std::make_unique<RobotManager>();
+  robot_discovery_ = std::make_unique<ROBOGait::robot::discovery::RobotDiscovery>();
+  robot_manager_ = std::make_unique<ROBOGait::robot::manager::RobotManager>();
 
   // Synchronize initial namespace discovery state
   robot_discovery_->setUseNamespaceDiscovery(use_namespace_discovery_);
@@ -71,9 +71,9 @@ void RosNodeManager::setUseNamespaceDiscovery(bool use_namespace_discovery)
   }
 }
 
-RobotDiscovery* RosNodeManager::getRobotDiscovery() const { return robot_discovery_.get(); }
+ROBOGait::robot::discovery::RobotDiscovery* RosNodeManager::getRobotDiscovery() const { return robot_discovery_.get(); }
 
-RobotManager* RosNodeManager::getRobotManager() const { return robot_manager_.get(); }
+ROBOGait::robot::manager::RobotManager* RosNodeManager::getRobotManager() const { return robot_manager_.get(); }
 
 void RosNodeManager::initialize(int argc, char** argv)
 {

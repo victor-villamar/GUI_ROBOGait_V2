@@ -5,7 +5,7 @@
 
 #include "Robot/RobotDiscovery.hpp"
 
-using namespace ROBOGait::discovery;
+using namespace ROBOGait::robot::discovery;
 
 RobotDiscovery::RobotDiscovery() :
     parent_node_(nullptr),

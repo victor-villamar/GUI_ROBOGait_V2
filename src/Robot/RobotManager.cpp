@@ -1,17 +1,17 @@
 #include <QDebug>
 #include <cmath>
 
-#include "Define.hpp"
 #include "Robot/RobotManager.hpp"
-#include "TopicsName.hpp"
+#include "Ros/Define.hpp"
+#include "Ros/TopicsName.hpp"
 
-using namespace ROBOGait::manager;
+using namespace ROBOGait::robot::manager;
 
 RobotManager::RobotManager() : parent_node_(nullptr), selected_robot_namespace_(""), use_namespace_discovery_(true)
 {
   qInfo() << "[RobotManager::RobotManager] RobotManager created";
 
-  manual_control_ = std::make_unique<ROBOGait::control::ManualControl>();
+  manual_control_ = std::make_unique<ROBOGait::robot::control::ManualControl>();
 }
 
 RobotManager::~RobotManager()
@@ -152,7 +152,7 @@ QString RobotManager::buildTopicName(const QString& topic_suffix) const
   }
 }
 
-ROBOGait::control::ManualControl* RobotManager::getManualControl() const { return manual_control_.get(); }
+ROBOGait::robot::control::ManualControl* RobotManager::getManualControl() const { return manual_control_.get(); }
 
 void RobotManager::enableManualControl()
 {

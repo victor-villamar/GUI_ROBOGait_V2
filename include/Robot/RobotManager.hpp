@@ -8,6 +8,8 @@
 
 namespace ROBOGait
 {
+namespace robot
+{
 namespace manager
 {
 class RobotManager : public QObject
@@ -34,7 +36,7 @@ public:
              READ getSelectedRobotDisplayName
              NOTIFY selectedRobotDisplayNameChanged
   )
-  Q_PROPERTY(ROBOGait::control::ManualControl* manualControl
+  Q_PROPERTY(ROBOGait::robot::control::ManualControl* manualControl
              READ getManualControl
              CONSTANT
   )
@@ -53,7 +55,7 @@ public:
   /**
    * @brief Get the manual control instance
    */
-  ROBOGait::control::ManualControl* getManualControl() const;
+  ROBOGait::robot::control::ManualControl* getManualControl() const;
 
   /**
    * @brief Set the ROS node for the RobotManager
@@ -116,11 +118,12 @@ private:
 
   rclcpp::Node* parent_node_; /**< Pointer to the parent ROS node */
 
-  std::unique_ptr<ROBOGait::control::ManualControl> manual_control_; /**< Manual control instance */
+  std::unique_ptr<ROBOGait::robot::control::ManualControl> manual_control_; /**< Manual control instance */
 
   QString selected_robot_namespace_; /**< The namespace of the selected robot */
   QString cmd_vel_text_;             /**< The command velocity text */
   bool use_namespace_discovery_;     /**< True if selected robot is identified by namespace, false if by node name */
 };
 } // namespace manager
+} // namespace robot
 } // namespace ROBOGait

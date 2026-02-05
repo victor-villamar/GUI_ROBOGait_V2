@@ -10,6 +10,8 @@
 
 namespace ROBOGait
 {
+namespace robot
+{
 namespace control
 {
 
@@ -117,6 +119,6 @@ private:
   static constexpr double MAX_LINEAR_VELOCITY = 0.22;  /**< Maximum linear velocity */
   static constexpr double MAX_ANGULAR_VELOCITY = 2.84; /**< Maximum angular velocity */
 };
-
 } // namespace control
+} // namespace robot
 } // namespace ROBOGait

@@ -37,14 +37,14 @@ set(HEADERS
     include/DataBase/DataBaseManager.hpp
     include/DataBase/RoboGaitDb.hpp
     include/Settings/DeveloperSettings.hpp
-    include/Define.hpp
-    include/Patient.hpp
     include/Robot/ManualControl.hpp
     include/Robot/RobotDiscovery.hpp
     include/Robot/RobotManager.hpp
-    include/RosNodeManager.hpp
-    include/TopicsName.hpp
-    include/UserSession.hpp
+    include/Ros/Define.hpp
+    include/Ros/RosNodeManager.hpp
+    include/Ros/TopicsName.hpp
+    include/User/Patient.hpp
+    include/User/UserSession.hpp
 )
 
 # Set source files
@@ -60,12 +60,12 @@ set(SOURCES
     src/DataBase/RoboGaitDb.cpp
     src/Settings/DeveloperSettings.cpp
     src/main.cpp
-    src/Patient.cpp
     src/Robot/ManualControl.cpp
     src/Robot/RobotDiscovery.cpp
     src/Robot/RobotManager.cpp
-    src/RosNodeManager.cpp
-    src/UserSession.cpp
+    src/Ros/RosNodeManager.cpp
+    src/User/Patient.cpp
+    src/User/UserSession.cpp
 )
 
 # Set resource files

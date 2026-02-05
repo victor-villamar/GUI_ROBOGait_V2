@@ -11,13 +11,13 @@
 #include <geometry_msgs/msg/twist.hpp>
 
 #include "DataBase/DataBaseManager.hpp"
-#include "Patient.hpp"
 #include "Robot/ManualControl.hpp"
 #include "Robot/RobotDiscovery.hpp"
 #include "Robot/RobotManager.hpp"
-#include "RosNodeManager.hpp"
+#include "Ros/RosNodeManager.hpp"
 #include "Settings/DeveloperSettings.hpp"
-#include "UserSession.hpp"
+#include "User/Patient.hpp"
+#include "User/UserSession.hpp"
 
 #include <QLocale>
 #include <QTranslator>
@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
   }
 
   // ROS manager
-  ROBOGait::manager::RosNodeManager rosNodeManager;
+  ROBOGait::ros::manager::RosNodeManager rosNodeManager;
   rosNodeManager.initialize(argc, argv);
 
   // Database
@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
   auto& developerSettings = ROBOGait::settings::DeveloperSettings::getInstance();
   developerSettings.initializeDefaults();
 
-  qmlRegisterUncreatableType<ROBOGait::discovery::RobotDiscovery>("RobotDiscovery", 1, 0, "RobotDiscovery", "Enums Only");
+  qmlRegisterUncreatableType<ROBOGait::robot::discovery::RobotDiscovery>("RobotDiscovery", 1, 0, "RobotDiscovery", "Enums Only");
   qRegisterMetaType<geometry_msgs::msg::Twist>("geometry_msgs::msg::Twist");
 
   QQmlApplicationEngine engine;

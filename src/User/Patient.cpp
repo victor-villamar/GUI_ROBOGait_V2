@@ -1,4 +1,4 @@
-#include "Patient.hpp"
+#include "User/Patient.hpp"
 
 using namespace ROBOGait::user;
 

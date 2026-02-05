@@ -1,10 +1,10 @@
 #include <QDebug>
 
-#include "Define.hpp"
 #include "Robot/ManualControl.hpp"
-#include "TopicsName.hpp"
+#include "Ros/Define.hpp"
+#include "Ros/TopicsName.hpp"
 
-using namespace ROBOGait::control;
+using namespace ROBOGait::robot::control;
 
 ManualControl::ManualControl() : parent_node_(nullptr), pub_cmd_vel_(nullptr), topic_name_(""), linear_velocity_(0.0), angular_velocity_(0.0)
 {
