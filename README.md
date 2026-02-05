@@ -57,11 +57,11 @@ Para poder ejecutar este proyecto hay que seguir los siguientes pasos
    git clone https://github.com/victor-villamar/GUI_ROBOGait_V2.git
    ```
 
-3. Nos cambiamos a la rama de desarrollo (actualmente refactor_gui)
+3. Nos cambiamos a la rama de desarrollo (actualmente develop)
 
    ```terminal
    cd GUI_ROBOGait_v2
-   git checkout refactor_gui
+   git checkout develop
    ```
 
 <!-- PASOS PARA INSTALAR QT CREATOR -->
