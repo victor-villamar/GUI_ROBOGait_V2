@@ -1,0 +1,49 @@
+<RCC>
+  <qresource prefix="/qmlresources/icons">
+    <file alias="arrow_down.svg">resources/Icons/arrow_down.svg</file>
+    <file alias="arrow_up.svg">resources/Icons/arrow_up.svg</file>
+    <file alias="check_solid.svg">resources/Icons/check_solid.svg</file>
+    <file alias="circle_info_solid.svg">resources/Icons/circle_info_solid.svg</file>
+    <file alias="circle_question.svg">resources/Icons/circle_question.svg</file>
+    <file alias="circle_user_regular.svg">resources/Icons/circle_user_regular.svg</file>
+    <file alias="draw_pencil.png">resources/Icons/draw_pencil.png</file>
+    <file alias="config.svg">resources/Icons/config.svg</file>
+    <file alias="eraser_solid.svg">resources/Icons/eraser_solid.svg</file>
+    <file alias="file_arrow_down_solid.svg">resources/Icons/file_arrow_down_solid.svg</file>
+    <file alias="goal.png">resources/Icons/goal.png</file>
+    <file alias="home.svg">resources/Icons/home.svg</file>
+    <file alias="keyboard_left.svg">resources/Icons/keyboard_left.svg</file>
+    <file alias="lock.svg">resources/Icons/lock.svg</file>
+    <file alias="manual_control.png">resources/Icons/manual_control.png</file>
+    <file alias="patient.svg">resources/Icons/patient.svg</file>
+    <file alias="pen_to_square_regular.svg">resources/Icons/pen_to_square_regular.svg</file>
+    <file alias="pencil_solid.svg">resources/Icons/pencil_solid.svg</file>
+    <file alias="plus_solid.svg">resources/Icons/plus_solid.svg</file>
+    <file alias="save_button.png">resources/Icons/save_button.png</file>
+    <file alias="stop_light.png">resources/Icons/stop_light.png</file>
+    <file alias="stop.png">resources/Icons/stop.png</file>
+    <file alias="trash_solid.svg">resources/Icons/trash_solid.svg</file>
+    <file alias="unlock.svg">resources/Icons/unlock.svg</file>
+    <file alias="xmark_solid.svg">resources/Icons/xmark_solid.svg</file>
+  </qresource>
+  <qresource prefix="/qmlresources/logos">
+    <file alias="car.png">resources/Logos/car.png</file>
+    <file alias="etsidi.png">resources/Logos/etsidi.png</file>
+    <file alias="ministerio.png">resources/Logos/ministerio.png</file>
+    <file alias="robogait_logo.png">resources/Logos/robogait_logo.png</file>
+    <file alias="robogait.png">resources/Logos/robogait.png</file>
+    <file alias="upm.png">resources/Logos/upm.png</file>
+  </qresource>
+  <qresource prefix="/qmlresources/menu">
+    <file alias="image_test.png">resources/Menu/image_test.png</file>
+    <file alias="manual_control.png">resources/Menu/manual_control.png</file>
+    <file alias="select_map.png">resources/Menu/select_map.png</file>
+    <file alias="select_patient.png">resources/Menu/select_patient.png</file>
+  </qresource>
+  <qresource prefix="/qmlresources/robot">
+    <file alias="robot_goal.png">resources/Robot/robot_goal.png</file>
+    <file alias="robot_with_arrow_goal.png">resources/Robot/robot_with_arrow_goal.png</file>
+    <file alias="robot_with_arrow.png">resources/Robot/robot_with_arrow.png</file>
+    <file alias="robot.png">resources/Robot/robot.png</file>
+  </qresource>
+</RCC>

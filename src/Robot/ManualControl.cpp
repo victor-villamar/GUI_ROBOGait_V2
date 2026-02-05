@@ -1,0 +1,136 @@
+#include <QDebug>
+
+#include "Robot/ManualControl.hpp"
+#include "Ros/Define.hpp"
+#include "Ros/TopicsName.hpp"
+
+using namespace ROBOGait::robot::control;
+
+ManualControl::ManualControl() : parent_node_(nullptr), pub_cmd_vel_(nullptr), topic_name_(""), linear_velocity_(0.0), angular_velocity_(0.0)
+{
+  qInfo() << "[ManualControl::ManualControl] Manual control created";
+}
+
+ManualControl::~ManualControl() { qInfo() << "[ManualControl::~ManualControl] Manual control destroyed"; }
+
+void ManualControl::setROSNode(rclcpp::Node* node)
+{
+  if (node == nullptr)
+  {
+    qCritical() << "[ManualControl::setROSNode] Invalid ROS node provided";
+    return;
+  }
+
+  parent_node_ = node;
+}
+
+void ManualControl::setTopicName(const QString& topic_name)
+{
+  if (topic_name.isEmpty())
+  {
+    qCritical() << "[ManualControl::setTopicName] Empty topic name provided";
+    return;
+  }
+
+  if (topic_name_ != topic_name && pub_cmd_vel_)
+  {
+    qInfo() << "[ManualControl::setTopicName] Topic changed, destroying old publisher";
+    destroyPublisher();
+  }
+
+  topic_name_ = topic_name;
+}
+
+void ManualControl::destroyPublisher()
+{
+  if (pub_cmd_vel_)
+  {
+    qInfo() << "[ManualControl::destroyPublisher] Destroying publisher";
+    pub_cmd_vel_.reset();
+  }
+}
+
+void ManualControl::updateVelocity(double linear, double angular)
+{
+  // Clamp values to allowed ranges
+  linear = std::max(-MAX_LINEAR_VELOCITY, std::min(MAX_LINEAR_VELOCITY, linear));
+  angular = std::max(-MAX_ANGULAR_VELOCITY, std::min(MAX_ANGULAR_VELOCITY, angular));
+
+  // Update internal values
+  bool changed = false;
+  if (linear_velocity_ != linear)
+  {
+    linear_velocity_ = linear;
+    changed = true;
+  }
+
+  if (angular_velocity_ != angular)
+  {
+    angular_velocity_ = angular;
+    changed = true;
+  }
+
+  publishVelocity(linear, angular);
+
+  if (changed)
+  {
+    emit velocityChanged();
+  }
+}
+
+void ManualControl::stopRobot()
+{
+  qInfo() << "[ManualControl::stopRobot] Stopping robot";
+  updateVelocity(0.0, 0.0);
+}
+
+double ManualControl::getLinearVelocity() const { return linear_velocity_; }
+
+double ManualControl::getAngularVelocity() const { return angular_velocity_; }
+
+void ManualControl::ensurePublisherCreated()
+{
+
+  if (parent_node_ == nullptr)
+  {
+    qCritical() << "[ManualControl::ensurePublisherCreated] Cannot create publisher, parent_node_ is null";
+    return;
+  }
+
+  if (topic_name_.isEmpty())
+  {
+    qCritical() << "[ManualControl::ensurePublisherCreated] Cannot create publisher, topic_name_ is empty";
+    return;
+  }
+
+  if (pub_cmd_vel_)
+  {
+    return;
+  }
+
+  qInfo() << "[ManualControl::ensurePublisherCreated] Creating publisher for topic:" << topic_name_;
+  pub_cmd_vel_ = parent_node_->create_publisher<geometry_msgs::msg::Twist>(topic_name_.toStdString(), QOS_RELIABLE);
+}
+
+void ManualControl::publishVelocity(double linear, double angular)
+{
+  ensurePublisherCreated();
+
+  if (!pub_cmd_vel_)
+  {
+    qWarning() << "[ManualControl::publishVelocity] Publisher could not be created";
+    return;
+  }
+
+  // Create Twist message
+  auto twist_msg = geometry_msgs::msg::Twist();
+  twist_msg.linear.x = linear;
+  twist_msg.linear.y = 0.0;
+  twist_msg.linear.z = 0.0;
+  twist_msg.angular.x = 0.0;
+  twist_msg.angular.y = 0.0;
+  twist_msg.angular.z = angular;
+
+  // Publish message
+  pub_cmd_vel_->publish(twist_msg);
+}

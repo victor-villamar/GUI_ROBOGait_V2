@@ -1,167 +1,215 @@
 
-# Proyecto ROBOGait – Cliente (GUI) y Servidor ROS2
+# Proyecto ROBOGait – GUI
 
-Este proyecto contiene:
+<!-- TABLA DE CONTENIDOS -->
+<details>
+    <summary><h2>Tabla de contenidos</h2></summary>
+    <ol>
+        <li>
+            <a href="#instalación">Instalación</a>
+               <ul>
+                  <li><a href="#requisitos-previos">Requisitos previos</a></li>
+               </ul>
+               <ul>
+                  <li><a href="#pasos-para-instalar-qt-creator">Pasos para instalar Qt Creator</a></li>
+               </ul>
+               <ul>
+                  <li><a href="#clonación-del-repositorio">Clonación del repositorio</a></li>
+               </ul>
+               <ul>
+                  <li><a href="#instalación-de-dependencias">Instalación de dependencias</a></li>
+               </ul>
+               <ul>
+                  <li><a href="#configuración-del-proyecto-en-qt-creator">Configuración del proyecto en Qt Creator</a></li>
+               </ul>
+        </li>
+    </ol>
+</details>
 
-- Una **interfaz gráfica de usuario (GUI)** desarrollada con Qt para Android y escritorio.
-- Un **servidor ROS 2 + Flask** que gestiona la lógica y comunicación con el robot ROBOGait.
+<!-- INSTALACION -->
+## Instalación
 
----
+Para poder ejecutar este proyecto hay que seguir los siguientes pasos
 
-## Requisitos previos
+<!-- REQUISITOS PREVIOS -->
+### Requisitos previos
 
 - Ubuntu 22.04
 - Conexión a Internet
 - Cuenta UPM para licencia educativa de Qt
-- Ordenador con capacidad para ejecutar Android Studio
-- Tablet con sistema operativo Android
 
----
+<!-- CLONACION DEL REPOSITORIO -->
+## Clonación del repositorio
 
-## Interfaz gráfica (GUI)
+1. Creamos un workspace para el proyecto
 
-El directorio `gui/` contiene todo lo necesario para compilar el proyecto en Qt Creator.
+   ```terminal
+   cd
+   mkdir /home/$USER/gui_ws
+   cd gui_ws
+   mkdir src
+   cd src
+   ```
 
+2. Clonamos el repositorio &rarr; [GUI_ROBOGait_V2](https://github.com/victor-villamar/GUI_ROBOGait_V2#)
+
+   ```terminal
+   git clone https://github.com/victor-villamar/GUI_ROBOGait_V2.git
+   ```
+
+3. Nos cambiamos a la rama de desarrollo (actualmente refactor_gui)
+
+   ```terminal
+   cd GUI_ROBOGait_v2
+   git checkout refactor_gui
+   ```
+
+<!-- PASOS PARA INSTALAR QT CREATOR -->
 ### Pasos para instalar Qt Creator
 
 1. Descarga Qt Creator con licencia educativa desde este enlace:  
    👉 [Solicitar licencia educativa de Qt](https://www.qt.io/qt-educational-license#application)
 
-2. Si deseas compilar para Android, sigue estos pasos oficiales:  
-   👉 [Guía oficial: Android con Qt](https://doc.qt.io/qt-6/android-getting-started.html)
+2. En la instalación instalar la versión de Qt **6.10.2**
 
-   También puedes apoyarte en este video para configurar correctamente el **NDK**, **SDK** y **JDK**:  
-   🎥 [Video de configuración Android](https://www.youtube.com/watch?v=7U6Q7xG8N70)
+   ![Qt_installation](/images/Qt_installation.png)
 
-3. **Importante:** Activa el modo desarrollador en tu tablet/móvil Android.  
-   🎥 [Cómo activar el modo desarrollador](https://youtu.be/f91wxQdP8Ak?si=0kSbNOwmc2m3rqNe)
+   2.1. Instalar Virtual Keyboard de *Additional Libraries*
 
----
+      ![Qt_installation_virtual_keyboard](/images/Qt_installation_virtual_keyboard.png)
 
-## Servidor ROS2 + Flask
+   2.2. Instalar *Plugin Development* en la sección Qt Creator
 
-El directorio `server/` contiene el servidor encargado de comunicarse con el cliente y controlar el robot. Este proyecto se complementa con **ROBOGait Indoor v3** (versión 06/07/2025).
+      ![Qt_Creator_installation](/images/Qt_Creator_installation.png)
 
+<!-- INSTALACION DE DEPENDENCIAS -->
 ### Instalación de dependencias
+
+>[!WARNING]
+>
+>La instalación de las dependencias se realiza dando por sentado que se ha realizado la instalacion de Qt con la versión **6.10.2** anteriormente mencionada. No se asegura compatibilidad de las dependencias con versiones anteriores.
 
 1. **Instalar ROS 2 Humble**  
    👉 [Guía oficial](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
 
-2. **Instalar dependencias del sistema:**
+2. **Instalar dependencias para la base de datos SQlite**
 
-   ```bash
-   sudo apt update
-   sudo apt install build-essential cmake libboost-system-dev libyaml-cpp-dev \
-       nlohmann-json3-dev libopencv-dev
-   ```
+      ```terminal
+      sudo apt install sqlite3 sqlitebrowser
+      ```
 
-3. **Instalar dependencias de Python:**
+3. **Plugin de ROS**
 
-   ```bash
-   sudo apt install python3 python3-pip
-   pip install Flask
-   ```
+   Para la instalación del plugin de ROS para Qt Creator hay que seguir los siguientes pasos:
 
-4. **Instalar herramientas para la base de datos SQLite:**
+   1. *Obtener nuestra versión de Qt Creator*
 
-   ```bash
-   sudo apt install sqlite3 sqlitebrowser
-   ```
+      Para obtener la versión de Qt debemos dirigirnos desde la aplicación a *Help* &rarr; *About Qt Creator*
 
----
+      ![qt_version](/images/qt_version.png)
 
-## Configuración de puertos
+   2. *Instalación de dependencias*
 
-Este proyecto utiliza un único puerto para comunicación:
+      ```terminal
+      sudo apt install libgl1-mesa-dev ninja-build libutf8proc-dev libcups2-dev
+      ```
 
-```bash
-sudo ufw enable
-sudo ufw allow 45454
-```
+   3. *Descargar el plugin*
 
-| Puerto | Protocolo | Uso                             |
-|--------|-----------|----------------------------------|
-| 45454  | UDP       | Descubrimiento y ACKs           |
-| 45454  | TCP       | Comunicación de datos cliente-servidor |
+      Debemos descargarlo desde el repositorio oficial &rarr; [ros_qtc_plugin](https://github.com/ros-industrial/ros_qtc_plugin)
 
----
+      Con la versión obtenida en el paso anterior nos dirigimos a *Tags* &rarr; *18.0*
 
-## Instrucciones de uso
+      ![Tag](/images/Tag.png)
+      ![Tag_2](/images/Tags_2.png)
 
-### Cliente (GUI)
+      Y nos descargamos el siguiente *asset*
 
-1. **Clonar el repositorio:**
+      ![plugin_asset](/images/plugin_asset.png)
 
-   ```bash
-   git clone <URL_DEL_REPOSITORIO>
-   cd GUI_ROBOGAIT/gui
-   ```
+      En el directorio donde hayamos descargado el *asset* realizamos
 
-2. **Abrir el proyecto con Qt Creator:**
+      ```terminal
+      zip_file="qtcreator-plugin-ros-18.0-Linux-x86_64.zip"
+      unzip "$zip_file" -d "${zip_file%.zip}"
+      cd qtcreator-plugin-ros-18.0-Linux-x86_64
+      ```
 
-   - Selecciona `Open Project`
-   - Elige el archivo `CMakeLists.txt`
+      Dentro visualizaremos dos carpetas *lib* y *share*. Debemos copiar el contenido de *lib* a nuestro *lib* de Qt Creator
 
-3. **Configurar Kit:**
+      ```terminal
+      cp -r $HOME/Downloads/qtcreator-plugin-ros-18.0-Linux-x86_64/lib/qtcreator/plugins/* $HOME/Qt/Tools/QtCreator/lib/qtcreator/plugins
+      ```
 
-   - En la sección `Kit Selection`, selecciona tanto `Desktop` como `Android`
-   - Para Android, puedes usar `Clang armeabi-v7a` (u otro compatible)
+      Para confirmar que se ha instalado correctamente en la aplicación nos dirigimos a *Help* &rarr; *About Plugins*
 
-4. **Compilar y ejecutar:**
+      ![about_plugins](/images/about_plugins.png)
 
-   - Selecciona el modo de ejecución en la esquina inferior izquierda (Desktop o Android)
-   - Pulsa el botón **Play**
+      Y buscamos ***ROS Project Manager***
 
----
+      ![plugin_verification](/images/plugin_verfication.png)
 
-### Servidor
+<!-- CONFIGURACION DEL PROYECTO EN QT CREATOR -->
+## Configuración del proyecto en Qt Creator
 
-1. **Clonar el repositorio:**
+   1. *Creación del proyecto*
 
-   ```bash
-   git clone <URL_DEL_REPOSITORIO>
-   cd GUI_ROBOGAIT/server
-   ```
+      - En la Qt Creator nos dirigimos a *File* &rarr; *New Project*.
 
-2. **Configurar ruta del proyecto:**
+         ![new_project](/images/new_project.png)
 
-   En el archivo `node_manager/include/header.h`, modifica la siguiente línea con el path real del proyecto:
+      - Establecemos en *Project* &rarr; *Other Project* y elejimos *ROS Wokspace*
 
-   ```cpp
-   #define PATH "/home/tu_usuario/GUI_ROBOGait/"
-   ```
+         ![create_project_1](/images/create_project_1.png)
 
-3. **Compilar el proyecto con colcon:**
+      - En el siguiente paso establecemos *Name* &rarr; el nombre que queramos, en *Build System* &rarr; *Colcon* y en *Wokspace Path* el path donde se encuentra nuestro workspace.
 
-   ```bash
-   colcon build
-   source install/setup.bash
-   ```
+         ![project_name_and_location](/images/project_name_and_location.png)
 
-4. **Ejecutar el nodo principal:**
+   2. *Configuracion de build y run*
 
-   ```bash
-   ros2 run node_manager node_manager
-   ```
+      Nos dirigimos al apartado *Project* de la barra lateral.
 
----
+      ![Projects](/images/Projects.png)
 
-## Solución a errores comunes
+      En el apartado ***Build & Run*** seleccionamos el kit que hemos instalado.
 
-- **Error con módulos QtQuick:**
+      ![Build&Run](/images/Build&Run.png)
 
-   ```bash
-   sudo apt install qml-module-qtquick-layouts
-   ```
+      - ***Configuración del Build***
 
-- **Error al iniciar Gazebo:**
+         ![build_configuration](/images/build_configuration.png)
 
-   ```bash
-   source /usr/share/gazebo/setup.sh
-   ```
+         - En el apartado *ROS Manager* establecemos la siguiente configuración
 
-- **Ejecutar Rviz2 con navegación Turtlebot3:**
+            ![ros_manager_configuration](/images/ros_manager_configuration.png)
 
-   ```bash
-   ros2 run rviz2 rviz2 -d $(ros2 pkg prefix nav2_bringup)/share/nav2_bringup/rviz/nav2_default_view.rviz
-   ```
+         - En el apartado *Build Steps* establecemos la siguiente configuracion
+
+            ![build_steps](/images/build_steps.png)
+
+         - En el apartado *System Enviroment* agregamos la siguiente línea
+
+            ![system_enviroment](/images/system_enviroment.png)
+
+            ```terminal
+            QT6_DIR=/home/$USER/Qt/6.10.2/gcc_64/lib/cmake/Qt6
+            ```
+
+      - ***Configuración del Run***
+
+         Una vez compilado el proyecto nos dirigimos a la sección *Run Settings*
+
+         ![run_configuration](/images/run_configuration.png)
+
+         - En *executable* buscamos el ejecutable generado en la compilación (/install/robogait_gui/bin) con el Browser
+
+         - En el apartado *Enviroment*
+
+            ![enviroment](/images/enviroment.png)
+
+            Agregamos al final de *LD_LIBRARY_PATH*
+
+            ```terminal
+            :/home/$USER/Qt/6.10.2/gcc_64/lib
+            ```

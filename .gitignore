@@ -50,3 +50,12 @@ log/
 
 # clang-format configuration file
 .clang-format
+
+# qtcreator
+.qtcreator/
+
+# Combined compile commands
+combined_compile_commands.json
+
+# Ignore ROS 2 workspace files
+COLCON_IGNORE
