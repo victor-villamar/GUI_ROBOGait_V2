@@ -27,6 +27,7 @@ set(CMAKE_AUTORCC ON)
 
 # Set include directories
 set(HEADERS
+    include/Core/RoboGaitApplication.hpp
     include/DataBase/Common/DbErrors.hpp
     include/DataBase/Common/DbTypes.hpp
     include/DataBase/Repository/ExperimentRepository.hpp
@@ -49,6 +50,7 @@ set(HEADERS
 
 # Set source files
 set(SOURCES
+    src/Core/RoboGaitApplication.cpp
     src/DataBase/Common/DbErrors.cpp
     src/DataBase/Common/DbTypes.cpp
     src/DataBase/Repository/ExperimentRepository.cpp
