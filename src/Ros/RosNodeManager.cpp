@@ -1,4 +1,7 @@
 #include <QDebug>
+#include <rclcpp/executor_options.hpp>
+#include <rclcpp/init_options.hpp>
+#include <rclcpp/node_options.hpp>
 
 #include "Ros/RosNodeManager.hpp"
 
@@ -6,13 +9,15 @@ using namespace ROBOGait::ros::manager;
 
 RosNodeManager::RosNodeManager() :
     node_name_("ros_node_manager"),
+    context_(nullptr),
     ros_node_(nullptr),
     executor_(nullptr),
     spin_thread_(),
     robot_discovery_(nullptr),
     robot_manager_(nullptr),
     is_running_(false),
-    use_namespace_discovery_(true)
+    use_namespace_discovery_(true),
+    current_domain_id_(0)
 {
   qInfo() << "[RosNodeManager::RosNodeManager] Create RosNodeManager";
   robot_discovery_ = std::make_unique<ROBOGait::robot::discovery::RobotDiscovery>();
@@ -75,7 +80,7 @@ ROBOGait::robot::discovery::RobotDiscovery* RosNodeManager::getRobotDiscovery() 
 
 ROBOGait::robot::manager::RobotManager* RosNodeManager::getRobotManager() const { return robot_manager_.get(); }
 
-void RosNodeManager::initialize(int argc, char** argv)
+void RosNodeManager::initialize(int argc, char** argv, int domain_id)
 {
   if (is_running_)
   {
@@ -83,14 +88,28 @@ void RosNodeManager::initialize(int argc, char** argv)
     return;
   }
 
-  if (!rclcpp::ok())
+  current_domain_id_ = domain_id;
+
+  rclcpp::InitOptions init_options;
+  init_options.set_domain_id(static_cast<size_t>(domain_id));
+
+  context_ = std::make_shared<rclcpp::Context>();
+  context_->init(argc, argv, init_options);
+
+  if (!context_->is_valid())
   {
-    qInfo() << "[RosNodeManager::initialize] Initializing ROS";
-    rclcpp::init(argc, argv);
+    qCritical() << "[RosNodeManager::initialize] Failed to create valid ROS context";
+    return;
   }
 
-  ros_node_ = std::make_shared<rclcpp::Node>(node_name_.toStdString(), "RoboGait_GUI");
-  executor_ = std::make_unique<rclcpp::executors::MultiThreadedExecutor>();
+  rclcpp::NodeOptions node_options;
+  node_options.context(context_);
+
+  ros_node_ = std::make_shared<rclcpp::Node>(node_name_.toStdString(), "RoboGait_GUI", node_options);
+
+  rclcpp::ExecutorOptions executor_options;
+  executor_options.context = context_;
+  executor_ = std::make_unique<rclcpp::executors::MultiThreadedExecutor>(executor_options);
 
   executor_->add_node(ros_node_);
 
@@ -104,7 +123,7 @@ void RosNodeManager::initialize(int argc, char** argv)
 
   startSpinThread();
 
-  qInfo() << "[RosNodeManager::initialize] ROS Node" << node_name_ << "initialized and running";
+  qCritical() << "[RosNodeManager::initialize] ROS Node" << node_name_ << "initialized and running on domain" << domain_id;
 }
 
 void RosNodeManager::shutdown()
@@ -128,10 +147,25 @@ void RosNodeManager::shutdown()
   ros_node_.reset();
   executor_.reset();
 
-  if (rclcpp::ok())
+  if (context_ && context_->is_valid())
   {
-    rclcpp::shutdown();
+    qInfo() << "[RosNodeManager::shutdown] Shutting down ROS context from domain" << current_domain_id_;
+
+    if (context_->shutdown("Application requested shutdown"))
+    {
+      qInfo() << "[RosNodeManager::shutdown] Context shutdown successful";
+    }
+    else
+    {
+      qWarning() << "[RosNodeManager::shutdown] Context was already shut down";
+    }
   }
+  else
+  {
+    qInfo() << "[RosNodeManager::shutdown] Context is null or invalid, skipping shutdown";
+  }
+
+  context_.reset();
 
   is_running_ = false;
 
