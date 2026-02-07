@@ -98,6 +98,15 @@ public:
    */
   static RoboGaitApplication* instance();
 
+private slots:
+  /**
+   * @brief Handle developer settings changes
+   *
+   * This slot is called when DeveloperSettings::settingsApplied() is emitted.
+   * It checks if ROS domain ID changed and restarts the ROS node if needed.
+   */
+  void onDeveloperSettingsApplied();
+
 private:
   /**
    * @brief Setup application translator for internationalization
@@ -114,11 +123,19 @@ private:
    */
   void setupQmlContext();
 
+  /**
+   * @brief Connect application signals and slots
+   */
+  void connectSignals();
+
   std::unique_ptr<ROBOGait::ros::manager::RosNodeManager> ros_node_manager_; /**< ROS node manager instance */
   std::unique_ptr<ROBOGait::session::UserSession> user_session_;             /**< User session instance */
 
   QQmlApplicationEngine* qml_app_engine_; /**< QML application engine */
   QTranslator translator_;                /**< Application translator for i18n */
+
+  int argc_;    /**< Argument count (stored for ROS restart) */
+  char** argv_; /**< Argument values (stored for ROS restart) */
 
   static RoboGaitApplication* app_instance_; /**< Singleton instance */
 };

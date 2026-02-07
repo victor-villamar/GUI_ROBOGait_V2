@@ -3,6 +3,7 @@
 #include <QObject>
 #include <atomic>
 #include <memory>
+#include <rclcpp/context.hpp>
 #include <rclcpp/executors.hpp>
 #include <rclcpp/node.hpp>
 #include <thread>
@@ -105,8 +106,18 @@ public:
    * @brief Initializes the ROS node manager
    * @param argc The argument count
    * @param argv The argument vector
+   * @param domain_id ROS domain ID to use for the node (0-232)
    */
-  void initialize(int argc, char** argv);
+  void initialize(int argc, char** argv, uint32_t domain_id = 0);
+
+  /**
+   * @brief Restarts ROS node with a new domain ID
+   * @param new_domain_id New ROS domain ID (0-232)
+   * @param argc The argument count
+   * @param argv The argument vector
+   * @return True if restart was successful, false otherwise
+   */
+  bool restartWithDomain(uint32_t new_domain_id, int argc, char** argv);
 
   /**
    * @brief Shuts down the ROS node manager
@@ -131,6 +142,7 @@ private:
   void stopSpinThread();
 
   QString node_name_;                                                  /**< The name of the ROS node */
+  std::shared_ptr<rclcpp::Context> context_;                           /**< ROS context with domain ID configuration */
   std::shared_ptr<rclcpp::Node> ros_node_;                             /**< The ROS node instance */
   std::unique_ptr<rclcpp::executors::MultiThreadedExecutor> executor_; /**< The executor for the ROS node */
   std::thread spin_thread_;                                            /**< The thread for spinning the ROS node */
@@ -140,6 +152,7 @@ private:
 
   std::atomic<bool> is_running_; /**< Indicates if the ROS node is running */
   bool use_namespace_discovery_; /**< Indicates if namespace discovery is enabled */
+  uint32_t current_domain_id_;   /**< Current ROS domain ID */
 };
 } // namespace manager
 } // namespace ros

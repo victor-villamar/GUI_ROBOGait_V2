@@ -21,7 +21,7 @@ using namespace ROBOGait::core;
 RoboGaitApplication* RoboGaitApplication::app_instance_ = nullptr;
 
 RoboGaitApplication::RoboGaitApplication(int& argc, char* argv[]) :
-    QGuiApplication(argc, argv), ros_node_manager_(nullptr), user_session_(nullptr), qml_app_engine_(nullptr), translator_()
+    QGuiApplication(argc, argv), ros_node_manager_(nullptr), user_session_(nullptr), qml_app_engine_(nullptr), translator_(), argc_(argc), argv_(argv)
 {
   qInfo() << "************************ ROBOGait GUI ******************************";
 
@@ -86,6 +86,8 @@ void RoboGaitApplication::initialize()
   // Initialize DeveloperSettings singleton
   auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
   developer_settings.initializeDefaults();
+
+  connectSignals();
 
   qInfo() << "[RoboGaitApplication::initialize] Application subsystems initialized";
 }
@@ -202,6 +204,43 @@ void RoboGaitApplication::setupQmlContext()
   qml_app_engine_->rootContext()->setContextProperty("developerSettings", developerSettings());
 
   qInfo() << "[RoboGaitApplication::setupQmlContext] QML context properties set";
+}
+
+void RoboGaitApplication::connectSignals()
+{
+  auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
+
+  // clang-format off
+  // Connect DeveloperSettings signals for ROS domain ID changes
+  connect(&developer_settings,
+          &ROBOGait::settings::DeveloperSettings::settingsApplied,
+          this,
+          &RoboGaitApplication::onDeveloperSettingsApplied
+  );
+  // clang-format on
+}
+
+void RoboGaitApplication::onDeveloperSettingsApplied()
+{
+
+  auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
+  const uint32_t new_domain_id = developer_settings.getRosDomainId();
+
+  if (ros_node_manager_ == nullptr)
+  {
+    qCritical() << "[RoboGaitApplication::onDeveloperSettingsApplied] RosNodeManager is null, cannot restart";
+    return;
+  }
+
+  const bool restart_success = ros_node_manager_->restartWithDomain(new_domain_id, argc_, argv_);
+
+  if (!restart_success)
+  {
+    qCritical() << "[RoboGaitApplication::onDeveloperSettingsApplied] Failed to restart ROS with domain ID:" << new_domain_id;
+    return;
+  }
+
+  qInfo() << "[RoboGaitApplication::onDeveloperSettingsApplied] ROS restarted successfully with domain ID:" << new_domain_id;
 }
 
 ROBOGait::core::RoboGaitApplication* roboGaitApp() { return ROBOGait::core::RoboGaitApplication::instance(); }

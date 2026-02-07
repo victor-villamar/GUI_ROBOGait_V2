@@ -37,6 +37,11 @@ public:
              WRITE setUseNamespaceDiscovery
              NOTIFY useNamespaceDiscoveryChanged)
 
+  Q_PROPERTY(uint32_t rosDomainId
+             READ getRosDomainId
+             WRITE setRosDomainId
+             NOTIFY rosDomainIdChanged)
+
   Q_PROPERTY(bool hasPendingChanges
              READ getHasPendingChanges
              NOTIFY hasPendingChangesChanged)
@@ -48,6 +53,13 @@ public:
    * @return True if namespace discovery should be enabled
    */
   bool getUseNamespaceDiscovery() const;
+
+  /**
+   * @brief Get current pending value for ROS domain ID
+   *
+   * @return ROS domain ID (0-232)
+   */
+  uint32_t getRosDomainId() const;
 
   /**
    * @brief Check if there are pending changes to apply
@@ -62,6 +74,13 @@ public:
    * @param value New pending value
    */
   void setUseNamespaceDiscovery(bool value);
+
+  /**
+   * @brief Set pending value for ROS domain ID
+   *
+   * @param domain_id New pending domain ID (0-232)
+   */
+  void setRosDomainId(uint32_t domain_id);
 
 public slots:
   /**
@@ -83,6 +102,7 @@ public slots:
 
 signals:
   void useNamespaceDiscoveryChanged();
+  void rosDomainIdChanged();
   void hasPendingChangesChanged();
   void settingsApplied();
   void settingsReset();
@@ -105,6 +125,8 @@ private:
 
   bool current_use_namespace_discovery_; /**< Current namespace discovery setting */
   bool pending_use_namespace_discovery_; /**< Pending namespace discovery setting */
+  uint32_t current_ros_domain_id_;       /**< Current ROS domain ID */
+  uint32_t pending_ros_domain_id_;       /**< Pending ROS domain ID */
 };
 
 } // namespace settings

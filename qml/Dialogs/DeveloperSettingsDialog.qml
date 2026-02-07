@@ -219,7 +219,7 @@ Dialog {
                     to: 1
                     duration: applyButton.applyHoldMs
                     onFinished: {
-                        if (rosSettingsTab.applyChanges()) {
+                        if (rosSettingsTab.applyChanges() && rosDomainIdTab.applyChanges()) {
                             root.close();
                         } 
                         else {
@@ -286,7 +286,7 @@ Dialog {
 
                 onClicked: {
                     if(!holdToApply) {
-                        if (rosSettingsTab.applyChanges()) {
+                        if (rosSettingsTab.applyChanges() && rosDomainIdTab.applyChanges()) {
                             root.close();
                         }
                     }
