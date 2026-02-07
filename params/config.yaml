@@ -1,0 +1,5 @@
+# ROBOGait Configuration File
+
+# Database Configuration
+database:
+  path: "/opt/robogait/db_robogait.db"

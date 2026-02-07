@@ -1,5 +1,3 @@
-#include "Core/RoboGaitApplication.hpp"
-
 #include <QDebug>
 #include <QDir>
 #include <QFile>
@@ -7,10 +5,13 @@
 #include <QMetaType>
 #include <QQmlContext>
 #include <QStandardPaths>
+#include <string>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 
+#include "Core/RoboGaitApplication.hpp"
+#include "Loader/YamlLoader.hpp"
 #include "Robot/ManualControl.hpp"
 #include "Robot/RobotDiscovery.hpp"
 #include "Robot/RobotManager.hpp"
@@ -55,10 +56,35 @@ void RoboGaitApplication::initCommon()
   qInfo() << "[RoboGaitApplication::initCommon] QML types and metatypes registered";
 }
 
-void RoboGaitApplication::initialize()
+bool RoboGaitApplication::initialize()
 {
+  // Load YAML configuration
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+  const std::string config_path = ament_index_cpp::get_package_share_directory("robogait_gui") + "/params/config.yaml";
+
+  if (!yaml_loader.loadConfig(config_path))
+  {
+    qCritical() << "[RoboGaitApplication::initialize] CRITICAL: Failed to load configuration from:" << QString::fromStdString(config_path);
+    return false;
+  }
+
+  const std::string configured_path = yaml_loader.getValue<std::string>("database.path", "");
+
+  if (configured_path.empty())
+  {
+    qCritical() << "[RoboGaitApplication::initialize] Database path not configured in YAML";
+    return false;
+  }
+
+  // Setup application translator
   setupTranslator();
-  setupDatabase();
+
+  // Setup database
+  if (!setupDatabase(QString::fromStdString(configured_path)))
+  {
+    qCritical() << "[RoboGaitApplication::initialize] Failed to setup database";
+    return false;
+  }
 
   // Create ROS node manager
   ros_node_manager_ = std::make_unique<ROBOGait::ros::manager::RosNodeManager>();
@@ -90,6 +116,7 @@ void RoboGaitApplication::initialize()
   connectSignals();
 
   qInfo() << "[RoboGaitApplication::initialize] Application subsystems initialized";
+  return true;
 }
 
 bool RoboGaitApplication::initForNormalAppBoot()
@@ -153,46 +180,20 @@ void RoboGaitApplication::setupTranslator()
   qInfo() << "[RoboGaitApplication::setupTranslator] Translator set up";
 }
 
-void RoboGaitApplication::setupDatabase()
+bool RoboGaitApplication::setupDatabase(const QString& db_path)
 {
   auto& database = ROBOGait::db::DataBaseManager::getInstance();
 
-  // Get database template path from ROS package
-  const QString db_path_template = QString::fromStdString(ament_index_cpp::get_package_share_directory("robogait_gui")) + "/database/db_robogait.db";
+  qInfo() << "[RoboGaitApplication::setupDatabase] Using database path from config:" << db_path;
 
-  // Get application data directory
-  const QString app_dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-  QDir().mkpath(app_dir);
-
-  // Runtime database path
-  const QString db_runtime = app_dir + "/db_robogait.db";
-
-  // Check if we need to copy the template
-  const bool needs_copy = !QFile::exists(db_runtime) || QFileInfo(db_runtime).size() == 0;
-
-  if (needs_copy)
+  if (!database.initialize(db_path))
   {
-    if (!QFile::exists(db_path_template))
-    {
-      qCritical() << "[RoboGaitApplication::setupDatabase] DB template not found at:" << db_path_template;
-    }
-    else
-    {
-      QFile::remove(db_runtime);
-
-      if (!QFile::copy(db_path_template, db_runtime))
-      {
-        qCritical() << "[RoboGaitApplication::setupDatabase] Failed to copy DB template from" << db_path_template << "to" << db_runtime;
-      }
-      else
-      {
-        qInfo() << "[RoboGaitApplication::setupDatabase] Database template copied to:" << db_runtime;
-      }
-    }
+    qCritical() << "[RoboGaitApplication::setupDatabase] Failed to initialize database at:" << db_path;
+    return false;
   }
 
-  // Initialize database
-  database.initialize(db_runtime);
+  qInfo() << "[RoboGaitApplication::setupDatabase] Database setup completed successfully";
+  return true;
 }
 
 void RoboGaitApplication::setupQmlContext()
