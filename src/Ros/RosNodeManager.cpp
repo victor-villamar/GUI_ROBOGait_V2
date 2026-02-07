@@ -80,11 +80,17 @@ ROBOGait::robot::discovery::RobotDiscovery* RosNodeManager::getRobotDiscovery() 
 
 ROBOGait::robot::manager::RobotManager* RosNodeManager::getRobotManager() const { return robot_manager_.get(); }
 
-void RosNodeManager::initialize(int argc, char** argv, int domain_id)
+void RosNodeManager::initialize(int argc, char** argv, uint32_t domain_id)
 {
   if (is_running_)
   {
     qWarning() << "[RosNodeManager::initialize] Node is already running";
+    return;
+  }
+
+  if (domain_id > 232)
+  {
+    qCritical() << "[RosNodeManager::initialize] Invalid domain ID:" << domain_id << "(must be 0-232)";
     return;
   }
 
@@ -124,6 +130,40 @@ void RosNodeManager::initialize(int argc, char** argv, int domain_id)
   startSpinThread();
 
   qCritical() << "[RosNodeManager::initialize] ROS Node" << node_name_ << "initialized and running on domain" << domain_id;
+}
+
+bool RosNodeManager::restartWithDomain(uint32_t new_domain_id, int argc, char** argv)
+{
+  qInfo() << "[RosNodeManager::restartWithDomain] Restarting ROS node with new domain ID:" << new_domain_id;
+
+  if (new_domain_id > 232)
+  {
+    qCritical() << "[RosNodeManager::restartWithDomain] Invalid domain ID:" << new_domain_id << "(must be 0-232)";
+    return false;
+  }
+
+  if (current_domain_id_ == new_domain_id && is_running_)
+  {
+    qInfo() << "[RosNodeManager::restartWithDomain] Already running on domain" << new_domain_id;
+    return true;
+  }
+
+  if (is_running_)
+  {
+    shutdown();
+  }
+
+  // Initialize with new domain ID
+  initialize(argc, argv, new_domain_id);
+
+  if (!is_running_)
+  {
+    qCritical() << "[RosNodeManager::restartWithDomain] Failed to restart with domain" << new_domain_id;
+    return false;
+  }
+
+  qInfo() << "[RosNodeManager::restartWithDomain] Successfully restarted on domain" << new_domain_id;
+  return true;
 }
 
 void RosNodeManager::shutdown()

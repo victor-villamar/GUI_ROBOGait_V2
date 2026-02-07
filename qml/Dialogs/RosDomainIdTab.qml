@@ -10,6 +10,23 @@ Item {
     implicitWidth: contentLayout.childrenRect.width + 40
     implicitHeight: contentLayout.childrenRect.height + 40
 
+    function applyChanges() {
+        if (!userSession || !userSession.isAuthenticated) {
+            return false
+        }
+
+        if (userSession.role === "manager") {
+            return developerSettings.applyChanges()
+        }
+        else {
+            return false
+        }
+    }
+
+    function resetChanges() {
+        developerSettings.resetChanges()
+    }
+
     Column {
         id: contentLayout
         x: 20
@@ -58,11 +75,21 @@ Item {
                 SpinBox {
                     id: domainSpinBox
                     from: 0
-                    to: 50
-                    value: 0
+                    to: 232
+                    value: developerSettings ? developerSettings.rosDomainId : 0
                     editable: true
                     enabled: root.enabled
                     width: 130
+
+                    onValueChanged: {
+                        if (!userSession || !userSession.isAuthenticated) {
+                            return
+                        }
+
+                        if (userSession.role === "manager" && developerSettings) {
+                            developerSettings.rosDomainId = value
+                        }
+                    }
 
                     contentItem: TextInput {
                         text: domainSpinBox.textFromValue(domainSpinBox.value, domainSpinBox.locale)
