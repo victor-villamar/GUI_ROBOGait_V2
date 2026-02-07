@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(yaml-cpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 find_package(Qt6 REQUIRED COMPONENTS
@@ -37,6 +38,7 @@ set(HEADERS
     include/DataBase/Repository/UserRepository.hpp
     include/DataBase/DataBaseManager.hpp
     include/DataBase/RoboGaitDb.hpp
+    include/Loader/YamlLoader.hpp
     include/Settings/DeveloperSettings.hpp
     include/Robot/ManualControl.hpp
     include/Robot/RobotDiscovery.hpp
@@ -60,6 +62,7 @@ set(SOURCES
     src/DataBase/Repository/UserRepository.cpp
     src/DataBase/DataBaseManager.cpp
     src/DataBase/RoboGaitDb.cpp
+    src/Loader/YamlLoader.cpp
     src/Settings/DeveloperSettings.cpp
     src/main.cpp
     src/Robot/ManualControl.cpp
@@ -80,6 +83,7 @@ set(RESOURCES
 set(LIBS
     rclcpp::rclcpp
     ament_index_cpp::ament_index_cpp
+    yaml-cpp
     ${geometry_msgs_LIBRARIES}
     ${OpenCV_LIBS}
 )
@@ -103,9 +107,15 @@ qt_add_resources(SOURCES
 # Include directories
 include_directories(
     include
+    include/Core
     include/DataBase
     include/DataBase/Common
     include/DataBase/Repository
+    include/Loader
+    include/Robot
+    include/Ros
+    include/Settings
+    include/User
 
     ${rclcpp_INCLUDE_DIRS}
     ${geometry_msgs_INCLUDE_DIRS}
@@ -130,6 +140,7 @@ ament_target_dependencies(${PROJECT_NAME}
     rclcpp
     ament_index_cpp
     geometry_msgs
+    yaml-cpp
 )
 
 # Link libraries
@@ -143,8 +154,8 @@ install(TARGETS ${PROJECT_NAME}
     DESTINATION lib/${PROJECT_NAME}
 )
 
-install(FILES db_robogait.db
-    DESTINATION share/${PROJECT_NAME}/database
+install(DIRECTORY params
+    DESTINATION share/${PROJECT_NAME}
 )
 
 ament_package()
