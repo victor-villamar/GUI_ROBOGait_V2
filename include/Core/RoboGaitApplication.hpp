@@ -3,6 +3,7 @@
 #include <QGuiApplication>
 #include <QLocale>
 #include <QQmlApplicationEngine>
+#include <QString>
 #include <QTranslator>
 #include <memory>
 
@@ -50,8 +51,9 @@ public:
   /**
    * @brief Initialize all managers and subsystems
    *
+   * @return true if initialization succeeded, false otherwise
    */
-  void initialize();
+  bool initialize();
 
   /**
    * @brief Initialize for normal application boot
@@ -115,8 +117,11 @@ private:
 
   /**
    * @brief Setup database (copy template if needed and initialize)
+   *
+   * @param db_path Path to the database file from configuration
+   * @return true if setup succeeded, false otherwise
    */
-  void setupDatabase();
+  bool setupDatabase(const QString& db_path);
 
   /**
    * @brief Setup QML context properties
