@@ -59,10 +59,11 @@ SignInForm {
             showError(qsTr("Error: Nombre y apellidos solo letras y espacios"))
             return
         }
-        if (password.length < 8) {
-            showError(qsTr("Error: La contraseña debe tener al menos 8 caracteres"))
-            return
-        }
+        // TODO: Restore the password length limit once the develivery is completed
+        // if (password.length < 8) {
+        //     showError(qsTr("Error: La contraseña debe tener al menos 8 caracteres"))
+        //     return
+        // }
         if (password !== repeatPassword) {
             showError(qsTr("Error: Las contraseñas no coinciden"))
             return
