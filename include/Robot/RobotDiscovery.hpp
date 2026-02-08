@@ -165,8 +165,7 @@ private:
    * @param self_node_name Name of the self node
    * @return List containing the robot display namespaces
    */
-  static QStringList computeRobotsListFromGraph(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
-                                                const std::string& self_node_name);
+  QStringList computeRobotsListFromGraph(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces, const std::string& self_node_name);
 
   /**
    * @brief Build the list of robot namespaces from the given namespaces
@@ -185,6 +184,14 @@ private:
    */
   static QStringList buildRobotNodeNamesFromGraph(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
                                                   const std::string& self_node_name);
+
+  /**
+   * @brief Check if a namespace has the robot_status topic
+   *
+   * @param robot_namespace Namespace of the robot to verify
+   * @return true if the topic exists, false otherwise
+   */
+  bool hasRobotStatusTopic(const std::string& robot_namespace) const;
 
   rclcpp::Node* parent_node_;     /**< Pointer to the ROS node */
   QStringList robots_namespaces_; /**< List of discovered robot namespaces or node names */

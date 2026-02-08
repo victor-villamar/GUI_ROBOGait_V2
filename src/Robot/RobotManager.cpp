@@ -1,4 +1,5 @@
 #include <QDebug>
+#include <chrono>
 #include <cmath>
 
 #include "Robot/RobotManager.hpp"
@@ -7,7 +8,14 @@
 
 using namespace ROBOGait::robot::manager;
 
-RobotManager::RobotManager() : parent_node_(nullptr), selected_robot_namespace_(""), use_namespace_discovery_(true)
+RobotManager::RobotManager() :
+    parent_node_(nullptr),
+    selected_robot_namespace_(""),
+    use_namespace_discovery_(true),
+    sub_robot_status_(nullptr),
+    watchdog_timer_(nullptr),
+    cb_group_(nullptr),
+    is_monitoring_(false)
 {
   qInfo() << "[RobotManager::RobotManager] RobotManager created";
 
@@ -42,6 +50,14 @@ void RobotManager::setROSNode(rclcpp::Node* parent_node)
   parent_node_ = parent_node;
 
   manual_control_->setROSNode(parent_node);
+
+  cb_group_ = parent_node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+  watchdog_timer_ = parent_node_->create_wall_timer(std::chrono::milliseconds(500), std::bind(&RobotManager::checkRobotTimeout, this),
+                                                    cb_group_); // one-shot=false, auto-start=false
+  watchdog_timer_->cancel();                                    // Disable auto-start
+
+  qInfo() << "[RobotManager::setROSNode] ROS node set successfully";
 }
 
 void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespace)
@@ -82,6 +98,8 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
 
   if (identifier_changed || type_changed)
   {
+    stopMonitoring();
+
     selected_robot_namespace_ = normalized_identifier;
     use_namespace_discovery_ = is_namespace;
 
@@ -92,12 +110,16 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
     }
 
     qInfo() << "[RobotManager::selectRobot] Selected robot:" << normalized_identifier << "Type:" << (is_namespace ? "namespace" : "node name");
+
+    startMonitoring();
   }
 }
 
 void RobotManager::clearSelection()
 {
   const QString topic_name = buildTopicName(QString::fromUtf8(T_CMD_VEL));
+
+  stopMonitoring();
 
   if (!selected_robot_namespace_.isEmpty())
   {
@@ -187,4 +209,111 @@ void RobotManager::disableManualControl()
   manual_control_->destroyPublisher();
 
   qInfo() << "[RobotManager::disableManualControl] Manual control disabled";
+}
+
+void RobotManager::startMonitoring()
+{
+  if (parent_node_ == nullptr)
+  {
+    qCritical() << "[RobotManager::startMonitoring] Cannot start monitoring: null parent node";
+    return;
+  }
+
+  if (selected_robot_namespace_.isEmpty())
+  {
+    qCritical() << "[RobotManager::startMonitoring] Cannot start monitoring: No robot selected";
+    return;
+  }
+
+  std::string full_topic;
+  if (use_namespace_discovery_)
+  {
+    full_topic = selected_robot_namespace_.toStdString() + T_ROBOT_STATUS;
+  }
+  else
+  {
+    full_topic = T_ROBOT_STATUS;
+  }
+
+  qInfo() << "[RobotManager::startMonitoring] Starting monitoring for:" << full_topic.c_str()
+          << "(mode:" << (use_namespace_discovery_ ? "namespace" : "node name") << ")";
+
+  sub_robot_status_ = parent_node_->create_subscription<std_msgs::msg::String>(full_topic, QOS_BEST_EFFORT,
+                                                                               std::bind(&RobotManager::callbackRobotStatus, this, std::placeholders::_1));
+
+  last_robot_message_time_ = parent_node_->now();
+
+  is_monitoring_ = true;
+  watchdog_timer_->reset();
+
+  qInfo() << "[RobotManager::startMonitoring] Monitoring started successfully";
+}
+
+void RobotManager::stopMonitoring()
+{
+  if (!is_monitoring_)
+  {
+    qInfo() << "[RobotManager::stopMonitoring] Monitoring is not active, nothing to stop";
+    return;
+  }
+
+  qInfo() << "[RobotManager::stopMonitoring] Stopping monitoring";
+
+  // Disable watchdog timer
+  if (watchdog_timer_)
+  {
+    watchdog_timer_->cancel();
+  }
+
+  // Destroy subscription
+  sub_robot_status_.reset();
+
+  is_monitoring_ = false;
+
+  qInfo() << "[RobotManager::stopMonitoring] Monitoring stopped";
+}
+
+void RobotManager::callbackRobotStatus(const std_msgs::msg::String::SharedPtr msg)
+{
+  if (parent_node_ == nullptr)
+  {
+    qCritical() << "[RobotManager::callbackRobotStatus] Received message but parent node is null, ignoring";
+    return;
+  }
+
+  if (!is_monitoring_)
+  {
+    qCritical() << "[RobotManager::callbackRobotStatus] Received message while monitoring is inactive, ignoring";
+    return;
+  }
+
+  last_robot_message_time_ = parent_node_->now();
+}
+
+void RobotManager::checkRobotTimeout()
+{
+  if (parent_node_ == nullptr)
+  {
+    qCritical() << "[RobotManager::checkRobotTimeout] Cannot check timeout: null parent node";
+    return;
+  }
+
+  if (!is_monitoring_)
+  {
+    qCritical() << "[RobotManager::checkRobotTimeout] Cannot check timeout: monitoring is inactive";
+    return;
+  }
+
+  const auto now = parent_node_->now();
+  const auto elapsed = (now - last_robot_message_time_).seconds();
+
+  if (elapsed > TIMEOUT_SECONDS)
+  {
+    qWarning() << "[RobotManager::checkRobotTimeout] Robot timeout detected!"
+               << "Robot:" << selected_robot_namespace_ << "has disconnected after" << elapsed << "seconds";
+
+    stopMonitoring();
+
+    emit robotDisconnected();
+  }
 }

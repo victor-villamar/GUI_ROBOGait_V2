@@ -189,11 +189,9 @@ void RosNodeManager::shutdown()
 
   if (context_ && context_->is_valid())
   {
-    qInfo() << "[RosNodeManager::shutdown] Shutting down ROS context from domain" << current_domain_id_;
-
     if (context_->shutdown("Application requested shutdown"))
     {
-      qInfo() << "[RosNodeManager::shutdown] Context shutdown successful";
+      qInfo() << "[RosNodeManager::shutdown] Context from domain" << current_domain_id_ << "shutdown successful";
     }
     else
     {

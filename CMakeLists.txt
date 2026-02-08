@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
@@ -119,6 +120,7 @@ include_directories(
 
     ${rclcpp_INCLUDE_DIRS}
     ${geometry_msgs_INCLUDE_DIRS}
+    ${std_msgs_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     ${Qt6Core_INCLUDE_DIRS}
     ${Qt6Gui_INCLUDE_DIRS}
@@ -139,6 +141,7 @@ add_executable(${PROJECT_NAME}
 ament_target_dependencies(${PROJECT_NAME}
     rclcpp
     ament_index_cpp
+    std_msgs
     geometry_msgs
     yaml-cpp
 )
