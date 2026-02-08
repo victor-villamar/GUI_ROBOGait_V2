@@ -70,33 +70,13 @@ ApplicationFlowForm {
     }
 
     Connections {
-        target: userSession.rosManager.robotDiscovery
+        target: userSession
 
-        function onRobotsNamespacesChanged() {
-            if (!userSession.rosManager || !userSession.rosManager.robotManager)
-            {
-                return
-            }
-
-            var nsFull = userSession.rosManager.robotManager.selectedRobotNamespace
-
-            if (!nsFull || nsFull.length === 0)
-            {
-                return
-            }
-
-            var robotnamespaces = userSession.rosManager.robotDiscovery.robotsNamespaces
-            var present = robotnamespaces.indexOf(nsFull) !== -1
-
-            if (!present) {
-                var display = userSession.rosManager.robotManager.selectedRobotDisplayName
+        function onRobotDisconnectedWithName(robotDisplayName) {
+            if (applicationFlow.state !== "register_page" && applicationFlow.state !== "robot_connection") {
                 lostConnectionPopupItem.open()
                 lostConnectionPopupItem.errorRectangleTextError.text =
-                    qsTr("Se perdió conexión con %1 inesperadamente.").arg(display)
-
-                if (userSession) {
-                    userSession.clearRobot()
-                }
+                    qsTr("Se perdió conexión con %1. Tiempo de espera agotado.").arg(robotDisplayName)
 
                 while(mystackview.depth > 2) {
                     mystackview.pop()
