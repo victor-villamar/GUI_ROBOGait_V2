@@ -20,7 +20,7 @@ Item {
                 userSession.rosManager.useNamespaceDiscovery = developerSettings.useNamespaceDiscovery
             }
 
-            return developerSettings.applyChanges()
+            return true
         }
         else {
             return false

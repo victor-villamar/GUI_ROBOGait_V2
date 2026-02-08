@@ -2,7 +2,12 @@
 
 #include <QObject>
 #include <QString>
+#include <rclcpp/callback_group.hpp>
 #include <rclcpp/node.hpp>
+#include <rclcpp/subscription.hpp>
+#include <rclcpp/time.hpp>
+#include <rclcpp/timer.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include "Robot/ManualControl.hpp"
 
@@ -95,8 +100,9 @@ public:
   Q_INVOKABLE void disableManualControl();
 
 signals:
-  void selectedRobotNamespaceChanged();
-  void selectedRobotDisplayNameChanged();
+  void selectedRobotNamespaceChanged();   /**< Emitted when the selected robot namespace changes */
+  void selectedRobotDisplayNameChanged(); /**< Emitted when the selected robot display name changes */
+  void robotDisconnected();               /**< Emitted when robot is disconnected due to timeout */
 
 private:
   /**
@@ -116,13 +122,42 @@ private:
    */
   QString buildTopicName(const QString& topic_suffix) const;
 
+  /**
+   * @brief Callback for receiving robot_status messages
+   *
+   * @param msg Message received from robot
+   */
+  void callbackRobotStatus(const std_msgs::msg::String::SharedPtr msg);
+
+  /**
+   * @brief Check robot timeout and emit signal if disconnected
+   */
+  void checkRobotTimeout();
+
+  /**
+   * @brief Start monitoring the selected robot
+   */
+  void startMonitoring();
+
+  /**
+   * @brief Stop monitoring the robot
+   */
+  void stopMonitoring();
+
   rclcpp::Node* parent_node_; /**< Pointer to the parent ROS node */
 
   std::unique_ptr<ROBOGait::robot::control::ManualControl> manual_control_; /**< Manual control instance */
 
   QString selected_robot_namespace_; /**< The namespace of the selected robot */
-  QString cmd_vel_text_;             /**< The command velocity text */
   bool use_namespace_discovery_;     /**< True if selected robot is identified by namespace, false if by node name */
+
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr sub_robot_status_; /**< Subscriber to robot_status topic */
+  rclcpp::TimerBase::SharedPtr watchdog_timer_;                             /**< Timer for watchdog */
+  rclcpp::CallbackGroup::SharedPtr cb_group_;                               /**< Callback group for subscriptions */
+  rclcpp::Time last_robot_message_time_;                                    /**< Timestamp of last robot message */
+  bool is_monitoring_;                                                      /**< Flag indicating if monitoring is active */
+
+  static constexpr double TIMEOUT_SECONDS = 3.0; /**< Timeout in seconds for robot disconnection */
 };
 } // namespace manager
 } // namespace robot

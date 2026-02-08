@@ -318,6 +318,7 @@ signals:
   void authenticationChanged();
   void userChanged();
   void robotChanged();
+  void robotDisconnectedWithName(QString robotDisplayName);
   void patientChanged();
   void mapChanged();
   void sessionStateChanged();
@@ -325,6 +326,7 @@ signals:
 private slots:
   void onDatabaseAuthChanged();
   void onRobotManagerChanged();
+  void onRobotDisconnected();
 
 private:
   /**

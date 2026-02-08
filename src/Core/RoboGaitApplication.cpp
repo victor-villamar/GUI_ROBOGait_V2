@@ -240,8 +240,6 @@ void RoboGaitApplication::onDeveloperSettingsApplied()
     qCritical() << "[RoboGaitApplication::onDeveloperSettingsApplied] Failed to restart ROS with domain ID:" << new_domain_id;
     return;
   }
-
-  qInfo() << "[RoboGaitApplication::onDeveloperSettingsApplied] ROS restarted successfully with domain ID:" << new_domain_id;
 }
 
 ROBOGait::core::RoboGaitApplication* roboGaitApp() { return ROBOGait::core::RoboGaitApplication::instance(); }

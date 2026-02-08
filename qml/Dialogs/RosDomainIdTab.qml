@@ -16,7 +16,7 @@ Item {
         }
 
         if (userSession.role === "manager") {
-            return developerSettings.applyChanges()
+            return true
         }
         else {
             return false

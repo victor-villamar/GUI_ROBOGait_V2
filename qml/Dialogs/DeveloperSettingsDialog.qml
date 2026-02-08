@@ -220,8 +220,10 @@ Dialog {
                     duration: applyButton.applyHoldMs
                     onFinished: {
                         if (rosSettingsTab.applyChanges() && rosDomainIdTab.applyChanges()) {
-                            root.close();
-                        } 
+                            if(developerSettings && developerSettings.applyChanges()){
+                                root.close();
+                            }
+                        }
                         else {
                             applyButton.holdProgress = 0
                         }
@@ -287,7 +289,9 @@ Dialog {
                 onClicked: {
                     if(!holdToApply) {
                         if (rosSettingsTab.applyChanges() && rosDomainIdTab.applyChanges()) {
-                            root.close();
+                            if(developerSettings && developerSettings.applyChanges()){
+                                root.close();
+                            }
                         }
                     }
                 }

@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "Robot/RobotDiscovery.hpp"
+#include "Ros/TopicsName.hpp"
 
 using namespace ROBOGait::robot::discovery;
 
@@ -222,7 +223,10 @@ QStringList RobotDiscovery::computeRobotsListFromGraph(const std::vector<std::pa
 
     const QString namespace_real = "/" + parts.first();
 
-    namespaces.insert(namespace_real);
+    if (hasRobotStatusTopic(namespace_real.toStdString()))
+    {
+      namespaces.insert(namespace_real);
+    }
   }
 
   return buildRobotNamespacesFromNamespaces(namespaces);
@@ -296,4 +300,19 @@ QStringList RobotDiscovery::buildRobotNodeNamesFromGraph(const std::vector<std::
   std::sort(list.begin(), list.end());
 
   return list;
+}
+
+bool RobotDiscovery::hasRobotStatusTopic(const std::string& robot_namespace) const
+{
+  if (parent_node_ == nullptr)
+  {
+    qCritical() << "[RobotDiscovery::hasRobotStatusTopic] No valid ROS node available, cannot check for topic existence";
+    return false;
+  }
+
+  const std::string full_topic = robot_namespace + T_ROBOT_STATUS;
+
+  const auto topics = parent_node_->get_topic_names_and_types();
+
+  return topics.find(full_topic) != topics.end();
 }

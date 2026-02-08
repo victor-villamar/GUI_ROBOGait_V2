@@ -39,6 +39,12 @@ UserSession::UserSession(ROBOGait::ros::manager::RosNodeManager* ros_manager) :
             this,
             &UserSession::onRobotManagerChanged
     );
+
+    connect(ros_manager_->getRobotManager(),
+            &ROBOGait::robot::manager::RobotManager::robotDisconnected,
+            this,
+            &UserSession::onRobotDisconnected
+    );
     // clang-format on
   }
 
@@ -387,6 +393,28 @@ void UserSession::onRobotManagerChanged()
     updateSessionState();
     emit robotChanged();
   }
+}
+
+void UserSession::onRobotDisconnected()
+{
+  qInfo() << "[UserSession::onRobotDisconnected] Robot disconnected, clearing robot assignment";
+
+  QString disconnected_robot_name = getRobotDisplayName();
+
+  if (!disconnected_robot_name.isEmpty())
+  {
+    emit robotDisconnectedWithName(disconnected_robot_name);
+  }
+
+  robot_namespace_.clear();
+
+  if (ros_manager_ && ros_manager_->getRobotManager())
+  {
+    ros_manager_->getRobotManager()->clearSelection();
+  }
+
+  updateSessionState();
+  emit robotChanged();
 }
 
 void UserSession::clearUserState()
