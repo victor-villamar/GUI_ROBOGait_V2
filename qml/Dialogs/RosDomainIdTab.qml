@@ -66,7 +66,7 @@ Item {
 
                 Text {
                     text: qsTr("Selecciona el dominio de ROS")
-                    font.pixelSize: 10
+                    font.pixelSize: 12
                     color: "#666666"
                     width: parent.width
                     wrapMode: Text.WordWrap
@@ -79,7 +79,8 @@ Item {
                     value: developerSettings ? developerSettings.rosDomainId : 0
                     editable: true
                     enabled: root.enabled
-                    width: 130
+                    width: 160
+                    height: 70
 
                     onValueChanged: {
                         if (!userSession || !userSession.isAuthenticated) {
@@ -100,50 +101,50 @@ Item {
                         readOnly: !domainSpinBox.editable
                         validator: IntValidator { bottom: domainSpinBox.from; top: domainSpinBox.to }
                         anchors.fill: parent
-                        anchors.rightMargin: 24
+                        anchors.rightMargin: 28
                     }
 
                     up.indicator: Rectangle {
-                        implicitWidth: 16
-                        implicitHeight: 14
+                        implicitWidth: 20
+                        implicitHeight: 20
                         color: "#a9cfe8"
                         border.color: "#045671"
                         border.width: 1
                         radius: 3
                         anchors.right: parent.right
-                        anchors.rightMargin: 3
+                        anchors.rightMargin: 4
                         anchors.top: parent.top
-                        anchors.topMargin: 3
+                        anchors.topMargin: 4
                         Text {
                             anchors.centerIn: parent
                             text: "▲"
                             color: "#045671"
-                            font.pixelSize: 10
+                            font.pixelSize: 12
                         }
                     }
 
                     down.indicator: Rectangle {
-                        implicitWidth: 16
-                        implicitHeight: 14
+                        implicitWidth: 20
+                        implicitHeight: 20
                         color: "#a9cfe8"
                         border.color: "#045671"
                         border.width: 1
                         radius: 3
                         anchors.right: parent.right
-                        anchors.rightMargin: 3
+                        anchors.rightMargin: 4
                         anchors.bottom: parent.bottom
-                        anchors.bottomMargin: 3
+                        anchors.bottomMargin: 4
                         Text {
                             anchors.centerIn: parent
                             text: "▼"
                             color: "#045671"
-                            font.pixelSize: 10
+                            font.pixelSize: 12
                         }
                     }
 
                     background: Rectangle {
-                        implicitWidth: 130
-                        implicitHeight: 36
+                        implicitWidth: 160
+                        implicitHeight: 48
                         radius: 6
                         color: "#ffffff"
                         border.color: "#045671"

@@ -42,6 +42,11 @@ public:
              WRITE setRosDomainId
              NOTIFY rosDomainIdChanged)
 
+  Q_PROPERTY(bool useTopicFilter
+             READ getUseTopicFilter
+             WRITE setUseTopicFilter
+             NOTIFY useTopicFilterChanged)
+
   Q_PROPERTY(bool hasPendingChanges
              READ getHasPendingChanges
              NOTIFY hasPendingChangesChanged)
@@ -60,6 +65,13 @@ public:
    * @return ROS domain ID (0-232)
    */
   uint32_t getRosDomainId() const;
+
+  /**
+   * @brief Get current pending value for topic filter
+   *
+   * @return True if topic filter should be enabled
+   */
+  bool getUseTopicFilter() const;
 
   /**
    * @brief Check if there are pending changes to apply
@@ -82,6 +94,13 @@ public:
    */
   void setRosDomainId(uint32_t domain_id);
 
+  /**
+   * @brief Set pending value for topic filter
+   *
+   * @param value New pending value
+   */
+  void setUseTopicFilter(bool value);
+
 public slots:
   /**
    * @brief Mark pending changes as applied (update current values)
@@ -103,6 +122,7 @@ public slots:
 signals:
   void useNamespaceDiscoveryChanged();
   void rosDomainIdChanged();
+  void useTopicFilterChanged();
   void hasPendingChangesChanged();
   void settingsApplied();
   void settingsReset();
@@ -127,6 +147,8 @@ private:
   bool pending_use_namespace_discovery_; /**< Pending namespace discovery setting */
   uint32_t current_ros_domain_id_;       /**< Current ROS domain ID */
   uint32_t pending_ros_domain_id_;       /**< Pending ROS domain ID */
+  bool current_use_topic_filter_;        /**< Current topic filter setting */
+  bool pending_use_topic_filter_;        /**< Pending topic filter setting */
 };
 
 } // namespace settings

@@ -91,6 +91,12 @@ public:
   void setUseNamespaceDiscovery(bool use_namespace_discovery);
 
   /**
+   * @brief Sets the topic filter flag for robot discovery and monitoring
+   * @param use_topic_filter True to enable topic filtering, false to disable
+   */
+  void setUseTopicFilter(bool use_topic_filter);
+
+  /**
    * @brief Gets the RobotDiscovery instance
    * @return A pointer to the RobotDiscovery instance
    */

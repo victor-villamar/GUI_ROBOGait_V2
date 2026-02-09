@@ -124,6 +124,13 @@ public:
    */
   void setUseNamespaceDiscovery(bool use_namespace_discovery);
 
+  /**
+   * @brief Set whether to use topic filter for discovery
+   *
+   * @param use_topic_filter True to use topic filter, false to use node name pattern
+   */
+  void setUseTopicFilter(bool use_topic_filter);
+
 signals:
   void isScanningChanged();
   void stateChanged();
@@ -200,6 +207,7 @@ private:
   int poll_interval_;             /**< Polling interval in milliseconds */
   QTimer poll_timer_;             /**< Timer for polling */
   bool use_namespace_discovery_;  /**< True to discover by namespace, false to discover by node names */
+  bool use_topic_filter_;         /**< True to use topic filter, false to use node name pattern */
 };
 } // namespace discovery
 } // namespace robot

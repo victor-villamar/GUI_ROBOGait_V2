@@ -15,7 +15,8 @@ RobotDiscovery::RobotDiscovery() :
     state_(State::IDLE),
     poll_interval_(1000),
     poll_timer_(this),
-    use_namespace_discovery_(true)
+    use_namespace_discovery_(true),
+    use_topic_filter_(true)
 {
   poll_timer_.setInterval(poll_interval_);
   poll_timer_.setSingleShot(false);
@@ -129,6 +130,19 @@ void RobotDiscovery::setUseNamespaceDiscovery(bool use_namespace_discovery)
   }
 }
 
+void RobotDiscovery::setUseTopicFilter(bool use_topic_filter)
+{
+  if (use_topic_filter_ != use_topic_filter)
+  {
+    use_topic_filter_ = use_topic_filter;
+
+    if (is_scanning_)
+    {
+      updateFromGraph();
+    }
+  }
+}
+
 void RobotDiscovery::setState(State state)
 {
   if (state_ != state)
@@ -146,41 +160,40 @@ void RobotDiscovery::updateFromGraph()
     return;
   }
 
-  try
-  {
-    const auto nodes = parent_node_->get_node_graph_interface()->get_node_names_and_namespaces();
-    const auto node_name = parent_node_->get_name();
+  const auto nodes = parent_node_->get_node_graph_interface()->get_node_names_and_namespaces();
+  const auto node_name = parent_node_->get_name();
 
-    QStringList robot_list;
-    if (use_namespace_discovery_)
+  QStringList robot_list;
+
+  if (use_namespace_discovery_)
+  {
+    robot_list = computeRobotsListFromGraph(nodes, node_name);
+  }
+  else
+  {
+    if (use_topic_filter_ && !hasRobotStatusTopic(""))
     {
-      robot_list = computeRobotsListFromGraph(nodes, node_name);
+      robot_list = QStringList{};
     }
     else
     {
       robot_list = buildRobotNodeNamesFromGraph(nodes, node_name);
     }
-
-    setRobotsNamespaces(robot_list);
-
-    if (robot_list.isEmpty())
-    {
-      if (state_ == State::ROBOTS_FOUND)
-      {
-        setState(State::NO_ROBOTS);
-        stopScanning();
-      }
-      return;
-    }
-
-    setState(State::ROBOTS_FOUND);
   }
-  catch (const std::exception& e)
+
+  setRobotsNamespaces(robot_list);
+
+  if (robot_list.isEmpty())
   {
-    qCritical() << "[RobotDiscovery::updateFromGraph] Exception occurred: " << e.what() << ", graph update aborted";
-    setRobotsNamespaces(QStringList{});
-    setState(State::ERROR);
+    if (state_ == State::ROBOTS_FOUND)
+    {
+      setState(State::NO_ROBOTS);
+      stopScanning();
+    }
+    return;
   }
+
+  setState(State::ROBOTS_FOUND);
 }
 
 QStringList RobotDiscovery::computeRobotsListFromGraph(const std::vector<std::pair<std::string, std::string>>& nodes_names_and_namespaces,
@@ -223,7 +236,14 @@ QStringList RobotDiscovery::computeRobotsListFromGraph(const std::vector<std::pa
 
     const QString namespace_real = "/" + parts.first();
 
-    if (hasRobotStatusTopic(namespace_real.toStdString()))
+    if (use_topic_filter_)
+    {
+      if (hasRobotStatusTopic(namespace_real.toStdString()))
+      {
+        namespaces.insert(namespace_real);
+      }
+    }
+    else
     {
       namespaces.insert(namespace_real);
     }
@@ -280,7 +300,7 @@ QStringList RobotDiscovery::buildRobotNodeNamesFromGraph(const std::vector<std::
       continue;
     }
 
-    // Look for potential robot nodes
+    // Look for potential robot nodes by name
     if (name_qstr.contains("robot") || name_qstr.contains("turtlebot"))
     {
       node_names.insert(name_qstr);

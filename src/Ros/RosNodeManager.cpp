@@ -26,6 +26,15 @@ RosNodeManager::RosNodeManager() :
   // Synchronize initial namespace discovery state
   robot_discovery_->setUseNamespaceDiscovery(use_namespace_discovery_);
   robot_manager_->setUseNamespaceDiscovery(use_namespace_discovery_);
+
+  QObject::connect(robot_discovery_.get(), &ROBOGait::robot::discovery::RobotDiscovery::robotsNamespacesChanged,
+                   [this]()
+                   {
+                     if (robot_manager_ && robot_discovery_)
+                     {
+                       robot_manager_->checkRobotAvailability(robot_discovery_->getRobotsNamespaces());
+                     }
+                   });
 }
 
 RosNodeManager::~RosNodeManager()
@@ -74,6 +83,24 @@ void RosNodeManager::setUseNamespaceDiscovery(bool use_namespace_discovery)
 
     emit useNamespaceDiscoveryChanged();
   }
+}
+
+void RosNodeManager::setUseTopicFilter(bool use_topic_filter)
+{
+  if (robot_discovery_ == nullptr)
+  {
+    qCritical() << "[RosNodeManager::setUseTopicFilter] RobotDiscovery is not initialized";
+    return;
+  }
+
+  if (robot_manager_ == nullptr)
+  {
+    qCritical() << "[RosNodeManager::setUseTopicFilter] RobotManager is not initialized";
+    return;
+  }
+
+  robot_manager_->setUseTopicFilter(use_topic_filter);
+  robot_discovery_->setUseTopicFilter(use_topic_filter);
 }
 
 ROBOGait::robot::discovery::RobotDiscovery* RosNodeManager::getRobotDiscovery() const { return robot_discovery_.get(); }

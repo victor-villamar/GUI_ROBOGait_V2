@@ -12,6 +12,7 @@ RobotManager::RobotManager() :
     parent_node_(nullptr),
     selected_robot_namespace_(""),
     use_namespace_discovery_(true),
+    use_topic_filter_(true),
     sub_robot_status_(nullptr),
     watchdog_timer_(nullptr),
     cb_group_(nullptr),
@@ -98,7 +99,10 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
 
   if (identifier_changed || type_changed)
   {
-    stopMonitoring();
+    if (use_topic_filter_)
+    {
+      stopMonitoring();
+    }
 
     selected_robot_namespace_ = normalized_identifier;
     use_namespace_discovery_ = is_namespace;
@@ -111,7 +115,10 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
 
     qInfo() << "[RobotManager::selectRobot] Selected robot:" << normalized_identifier << "Type:" << (is_namespace ? "namespace" : "node name");
 
-    startMonitoring();
+    if (use_topic_filter_)
+    {
+      startMonitoring();
+    }
   }
 }
 
@@ -119,7 +126,10 @@ void RobotManager::clearSelection()
 {
   const QString topic_name = buildTopicName(QString::fromUtf8(T_CMD_VEL));
 
-  stopMonitoring();
+  if (use_topic_filter_)
+  {
+    stopMonitoring();
+  }
 
   if (!selected_robot_namespace_.isEmpty())
   {
@@ -135,6 +145,23 @@ void RobotManager::setUseNamespaceDiscovery(bool use_namespace_discovery)
   if (use_namespace_discovery_ != use_namespace_discovery)
   {
     use_namespace_discovery_ = use_namespace_discovery;
+  }
+}
+
+void RobotManager::setUseTopicFilter(bool use_topic_filter)
+{
+  if (use_topic_filter_ != use_topic_filter)
+  {
+    use_topic_filter_ = use_topic_filter;
+
+    if (is_monitoring_)
+    {
+      stopMonitoring();
+      if (use_topic_filter_)
+      {
+        startMonitoring();
+      }
+    }
   }
 }
 
@@ -271,6 +298,27 @@ void RobotManager::stopMonitoring()
   is_monitoring_ = false;
 
   qInfo() << "[RobotManager::stopMonitoring] Monitoring stopped";
+}
+
+void RobotManager::checkRobotAvailability(const QStringList& available_robots)
+{
+  if (use_topic_filter_)
+  {
+    return;
+  }
+
+  if (selected_robot_namespace_.isEmpty())
+  {
+    qWarning() << "[RobotManager::checkRobotAvailability] No robot selected";
+    return;
+  }
+
+  if (!available_robots.contains(selected_robot_namespace_))
+  {
+    qWarning() << "[RobotManager::checkRobotAvailability] Robot" << selected_robot_namespace_ << "is no longer available in the graph";
+
+    emit robotDisconnected();
+  }
 }
 
 void RobotManager::callbackRobotStatus(const std_msgs::msg::String::SharedPtr msg)
