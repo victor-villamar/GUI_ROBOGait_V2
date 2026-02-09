@@ -90,6 +90,13 @@ public:
   void setUseNamespaceDiscovery(bool use_namespace_discovery);
 
   /**
+   * @brief Set whether to use topic filter for monitoring
+   *
+   * @param use_topic_filter True to monitor via topic, false to skip monitoring
+   */
+  void setUseTopicFilter(bool use_topic_filter);
+
+  /**
    * @brief Enables manual control mode for the selected robot
    */
   Q_INVOKABLE void enableManualControl();
@@ -98,6 +105,12 @@ public:
    * @brief Disables manual control mode
    */
   Q_INVOKABLE void disableManualControl();
+
+  /**
+   * @brief Check if selected robot is still available in discovery list
+   * @param available_robots List of currently available robot namespaces
+   */
+  void checkRobotAvailability(const QStringList& available_robots);
 
 signals:
   void selectedRobotNamespaceChanged();   /**< Emitted when the selected robot namespace changes */
@@ -150,6 +163,7 @@ private:
 
   QString selected_robot_namespace_; /**< The namespace of the selected robot */
   bool use_namespace_discovery_;     /**< True if selected robot is identified by namespace, false if by node name */
+  bool use_topic_filter_;            /**< True to monitor via topic, false to skip monitoring */
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr sub_robot_status_; /**< Subscriber to robot_status topic */
   rclcpp::TimerBase::SharedPtr watchdog_timer_;                             /**< Timer for watchdog */

@@ -226,12 +226,15 @@ void RoboGaitApplication::onDeveloperSettingsApplied()
 
   auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
   const uint32_t new_domain_id = developer_settings.getRosDomainId();
+  const bool use_topic_filter = developer_settings.getUseTopicFilter();
 
   if (ros_node_manager_ == nullptr)
   {
     qCritical() << "[RoboGaitApplication::onDeveloperSettingsApplied] RosNodeManager is null, cannot restart";
     return;
   }
+
+  ros_node_manager_->setUseTopicFilter(use_topic_filter);
 
   const bool restart_success = ros_node_manager_->restartWithDomain(new_domain_id, argc_, argv_);
 
