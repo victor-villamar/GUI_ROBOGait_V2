@@ -40,7 +40,7 @@ Item {
         spacing: 15
         
         Text {
-            text: qsTr("Configuracion del uso del Namespaces")
+            text: qsTr("Configuracion del uso del descubrimiento")
             font.pixelSize: 18
             font.bold: true
             color: root.enabled ? "#045671" : "#999999"
@@ -52,6 +52,8 @@ Item {
             color: "#ffffff"
             width: parent.width
         }
+
+
 
         GroupBox {
             id: namespaceGroup
@@ -138,6 +140,93 @@ Item {
                     font.bold: true
 
                     property bool checked: namespaceCheckbox.checked
+                }
+            }
+        }
+
+        GroupBox {
+            id: topicFilterGroup
+            title: qsTr("Descubrimiento con filtrado por Tópico")
+            label: Text {
+                text: topicFilterGroup.title
+                font: topicFilterGroup.font
+                color: "#000000"
+            }
+
+            width: parent.width
+
+            contentItem: Column {
+                spacing: 10
+                width: parent.width
+
+                Text {
+                    text: qsTr("Habilitar filtrado por tópico para el descubrimiento")
+                    font.pixelSize: 12
+                    color: "#666666"
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                }
+
+                CheckBox {
+                    id: topicFilterCheckbox
+                    text: qsTr("Usar descubrimiento filtrado por tópico")
+                    width: parent.width
+
+                    enabled: root.enabled
+                    checked: developerSettings ? developerSettings.useTopicFilter : true
+
+                    indicator: Rectangle {
+                        implicitWidth: 20
+                        implicitHeight: 20
+                        x: topicFilterCheckbox.leftPadding
+                        y: parent.height / 2 - height / 2
+                        radius: 4
+                        border.color: "#045671"
+                        border.width: 2
+                        color: "#ffffff"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "✓"
+                            color: "#000000"
+                            font.pixelSize: 14
+                            font.bold: true
+                            visible: topicFilterCheckbox.checked
+                        }
+                    }
+
+                    contentItem: Text {
+                        text: topicFilterCheckbox.text
+                        font: topicFilterCheckbox.font
+                        color: "#045671"
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: topicFilterCheckbox.indicator.width + topicFilterCheckbox.spacing
+                    }
+
+                    onCheckedChanged: {
+                        if (!userSession || !userSession.isAuthenticated) {
+                            return
+                        }
+
+                        if (userSession.role === "manager" && developerSettings) {
+                            developerSettings.useTopicFilter = checked
+                        }
+                        else {
+                            checked = developerSettings ? developerSettings.useTopicFilter : true
+                        }
+                    }
+                }
+
+                Text {
+                    text: checked ? qsTr("Activo: Los robots se filtran por /robot_status") :
+                          qsTr("Inactivo: Detección de desconexión mediante análisis del grafo de ROS")
+                    font.pixelSize: 11
+                    color: checked ? "#2E7D32" : "#E65100"
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    font.bold: true
+
+                    property bool checked: topicFilterCheckbox.checked
                 }
             }
         }

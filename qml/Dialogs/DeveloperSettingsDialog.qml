@@ -135,7 +135,7 @@ Dialog {
 
                 TabButton {
                     id: rosTabButton
-                    text: qsTr("Ros Namespaces")
+                    text: qsTr("Descubrimiento de robots")
                     padding: 8
 
                     background: Rectangle {
@@ -181,11 +181,9 @@ Dialog {
             StackLayout {
                 id: settingsTabStack
                 Layout.fillWidth: true
-                property int fixedHeight: 200
-                Layout.preferredHeight: fixedHeight
-                Layout.minimumHeight: fixedHeight
-                Layout.maximumHeight: fixedHeight
                 currentIndex: settingsTabBar.currentIndex
+                Layout.preferredHeight: Math.max(rosSettingsTab.implicitHeight, rosDomainIdTab.implicitHeight)
+                Layout.minimumHeight: Layout.preferredHeight
 
                 RosSettingsTab {
                     id: rosSettingsTab
