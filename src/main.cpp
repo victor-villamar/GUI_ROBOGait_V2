@@ -1,9 +1,25 @@
 #include <memory>
+#include <signal.h>
 
 #include "Core/RoboGaitApplication.hpp"
 
+/**
+ * @brief Signal handler for graceful shutdown
+ *
+ * @param sig Signal number received
+ */
+void signalHandler(int sig)
+{
+  qInfo() << "[main::signalHandler] Received signal" << sig << "- shutting down gracefully";
+  QCoreApplication::quit();
+}
+
 int main(int argc, char* argv[])
 {
+  // Install signal handlers for graceful shutdown
+  signal(SIGINT, signalHandler);
+  signal(SIGTERM, signalHandler);
+
   qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
 
   auto app = std::make_unique<ROBOGait::core::RoboGaitApplication>(argc, argv);

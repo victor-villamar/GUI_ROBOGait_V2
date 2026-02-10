@@ -4,6 +4,7 @@
 #include <QString>
 
 #include "DataBase/Common/DbErrors.hpp"
+#include "DataBase/DatabaseSchema.hpp"
 
 namespace ROBOGait
 {

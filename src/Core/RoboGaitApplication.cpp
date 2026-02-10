@@ -68,19 +68,28 @@ bool RoboGaitApplication::initialize()
     return false;
   }
 
-  const std::string configured_path = yaml_loader.getValue<std::string>("database.path", "");
+  const std::string configured_dir = yaml_loader.getValue<std::string>("database.path", ".local/default");
+  const std::string configured_filename = yaml_loader.getValue<std::string>("database.filename", "default.db");
 
-  if (configured_path.empty())
+  if (configured_dir.empty())
   {
     qCritical() << "[RoboGaitApplication::initialize] Database path not configured in YAML";
     return false;
   }
 
+  if (configured_filename.empty())
+  {
+    qCritical() << "[RoboGaitApplication::initialize] Database filename not configured in YAML";
+    return false;
+  }
+
+  const QString full_db_path = QDir::homePath() + "/" + QString::fromStdString(configured_dir) + "/" + QString::fromStdString(configured_filename);
+
   // Setup application translator
   setupTranslator();
 
   // Setup database
-  if (!setupDatabase(QString::fromStdString(configured_path)))
+  if (!setupDatabase(full_db_path))
   {
     qCritical() << "[RoboGaitApplication::initialize] Failed to setup database";
     return false;
@@ -182,9 +191,33 @@ void RoboGaitApplication::setupTranslator()
 
 bool RoboGaitApplication::setupDatabase(const QString& db_path)
 {
-  auto& database = ROBOGait::db::DataBaseManager::getInstance();
+  QFileInfo file_info(db_path);
+  const QString dir_path = file_info.absolutePath();
 
-  qInfo() << "[RoboGaitApplication::setupDatabase] Using database path from config:" << db_path;
+  // Check if directory exists
+  QDir db_dir(dir_path);
+  if (!db_dir.exists())
+  {
+    qInfo() << "[RoboGaitApplication::setupDatabase] Directory does not exist, creating:" << dir_path;
+
+    if (!QDir().mkpath(dir_path))
+    {
+      qCritical() << "[RoboGaitApplication::setupDatabase] Failed to create directory:" << dir_path;
+      return false;
+    }
+
+    qInfo() << "[RoboGaitApplication::setupDatabase] Directory created successfully";
+  }
+
+  QFileInfo dir_info(dir_path);
+  if (!dir_info.isWritable())
+  {
+    qWarning() << "[RoboGaitApplication::setupDatabase] Directory is not writable:" << dir_path;
+    qWarning() << "[RoboGaitApplication::setupDatabase] This may cause database initialization to fail";
+  }
+
+  // Initialize database
+  auto& database = ROBOGait::db::DataBaseManager::getInstance();
 
   if (!database.initialize(db_path))
   {
