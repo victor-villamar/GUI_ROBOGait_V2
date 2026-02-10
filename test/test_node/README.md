@@ -99,7 +99,8 @@ Presione Ctrl+C para detener.
     ![settings.png](/test/test_node/images/Settings.png)
 
     Nos aparecerá el panel de configuracion de desarrollado
-        ![developer_settings.png](/test/test_node/images/developer_settings.png)
+
+   ![developer_settings.png](/test/test_node/images/developer_settings.png)
 
     En el podemos configurar tanto el descubrimiento por namespace o utilizando el tópico. También podemos cambiar el `ROS DOMAIN ID` (por defecto 0).
 
