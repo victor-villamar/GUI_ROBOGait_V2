@@ -152,8 +152,33 @@ target_link_libraries(${PROJECT_NAME}
     ${QT_LIBS}
 )
 
+# Add test_node executable
+add_executable(test_node_node
+    test/test_node/src/main.cpp
+    test/test_node/src/TestNode.cpp
+    test/test_node/include/TestNode.hpp
+)
+
+# Include directories for test_node
+target_include_directories(test_node_node PRIVATE
+    test/test_node/include
+    include/Ros
+    ${rclcpp_INCLUDE_DIRS}
+    ${std_msgs_INCLUDE_DIRS}
+)
+
+# Add dependencies for test_node
+ament_target_dependencies(test_node_node
+    rclcpp
+    std_msgs
+)
+
 # Install
 install(TARGETS ${PROJECT_NAME}
+    DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS test_node_node
     DESTINATION lib/${PROJECT_NAME}
 )
 
