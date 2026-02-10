@@ -45,6 +45,17 @@ DbResultVoid RoboGaitDb::open(const QString& db_path)
     }
   }
 
+  qInfo() << "[RoboGaitDb::open] Initializing/verifying database schema...";
+
+  if (auto result = DatabaseSchema::initializeSchema(db_); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    qCritical() << "[RoboGaitDb::open] Failed to initialize database schema, error:" << error.message;
+    return result;
+  }
+
+  qInfo() << "[RoboGaitDb::open] Database schema verified successfully";
+
   return makeSuccess();
 }
 

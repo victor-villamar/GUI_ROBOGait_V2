@@ -38,6 +38,7 @@ set(HEADERS
     include/DataBase/Repository/Repository.hpp
     include/DataBase/Repository/UserRepository.hpp
     include/DataBase/DataBaseManager.hpp
+    include/DataBase/DatabaseSchema.hpp
     include/DataBase/RoboGaitDb.hpp
     include/Loader/YamlLoader.hpp
     include/Settings/DeveloperSettings.hpp
@@ -62,6 +63,7 @@ set(SOURCES
     src/DataBase/Repository/Repository.cpp
     src/DataBase/Repository/UserRepository.cpp
     src/DataBase/DataBaseManager.cpp
+    src/DataBase/DatabaseSchema.cpp
     src/DataBase/RoboGaitDb.cpp
     src/Loader/YamlLoader.cpp
     src/Settings/DeveloperSettings.cpp

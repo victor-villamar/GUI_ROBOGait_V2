@@ -36,7 +36,8 @@ YAML::Node YamlLoader::getNode(const std::string& key) const
     keys.push_back(token);
   }
 
-  YAML::Node current_node = config_;
+  YAML::Node current_node = YAML::Clone(config_);
+
   for (const auto& k : keys)
   {
     if (!current_node[k])

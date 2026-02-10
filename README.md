@@ -20,9 +20,6 @@
                   <li><a href="#instalación-de-dependencias">Instalación de dependencias</a></li>
                </ul>
                <ul>
-                  <li><a href="#instalación-de-la-base-de-datos">Instalación de la base de datos</a></li>
-               </ul>
-               <ul>
                   <li><a href="#configuración-del-proyecto-en-qt-creator">Configuración del proyecto en Qt Creator</a></li>
                </ul>
         </li>
@@ -157,17 +154,6 @@ Para poder ejecutar este proyecto hay que seguir los siguientes pasos
       Y buscamos ***ROS Project Manager***
 
       ![plugin_verification](/images/plugin_verfication.png)
-
-<!-- INSTALACION DE LA BASE DE DATOS -->
-## Instalación de la base de datos
-
-La base de datos del proyecto debe ser instalada en el directorio ```/opt/robogait/``` . Para la instalación es necesario ejecutar el script ```install_db.sh``` que se encuentra en el directoria *scripts* del proyecto. Lo debemos ejecutar como ```sudo```.
-
-```terminal
-sudo $HOME/workspace/src/GUI_ROBOGait_V2/scripts/install_db.sh
-```
-
-Seguimos la indicaciones del script y al finalizar reiniciamos el dispositivo para que los cambios se apliquen correctamente.
 
 <!-- CONFIGURACION DEL PROYECTO EN QT CREATOR -->
 ## Configuración del proyecto en Qt Creator
