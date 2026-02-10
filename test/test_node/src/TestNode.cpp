@@ -23,7 +23,7 @@ TestNode::TestNode(std::shared_ptr<rclcpp::Node> node, const std::string& robot_
   loop_timer_ = parent_node_->create_wall_timer(std::chrono::duration<float>(1.0), std::bind(&TestNode::publishLoop, this), cb_group_);
 
   RCLCPP_INFO(parent_node_->get_logger(), "[TestNode::TestNode] TestNode initialized successfully");
-  RCLCPP_INFO(parent_node_->get_logger(), "[TestNode::TestNode] Publishing on topic: %s at 1Hz", T_ROBOT_STATUS);
+  RCLCPP_INFO(parent_node_->get_logger(), "[TestNode::TestNode] Publishing on topic: %s at 1Hz", topic_name.c_str());
 }
 
 TestNode::~TestNode() { RCLCPP_INFO(parent_node_->get_logger(), "[TestNode::~TestNode] TestNode destroyed"); }

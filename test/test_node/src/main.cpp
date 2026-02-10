@@ -58,7 +58,6 @@ int main(int argc, char** argv)
   // Create TestNode instance (robot info is hardcoded inside)
   auto test_node = std::make_unique<TestNode>(node, robot_namespace);
 
-  std::cout << "Nodo iniciado. Publicando en " << T_ROBOT_STATUS << " a 1Hz..." << std::endl;
   std::cout << "Presione Ctrl+C para detener." << std::endl;
   std::cout << std::endl;
 
