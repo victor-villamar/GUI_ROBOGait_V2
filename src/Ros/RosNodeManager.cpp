@@ -107,7 +107,7 @@ ROBOGait::robot::discovery::RobotDiscovery* RosNodeManager::getRobotDiscovery() 
 
 ROBOGait::robot::manager::RobotManager* RosNodeManager::getRobotManager() const { return robot_manager_.get(); }
 
-void RosNodeManager::initialize(int argc, char** argv, uint32_t domain_id)
+void RosNodeManager::initialize(int argc, char** argv, uint8_t domain_id)
 {
   if (is_running_)
   {
@@ -159,7 +159,7 @@ void RosNodeManager::initialize(int argc, char** argv, uint32_t domain_id)
   qCritical() << "[RosNodeManager::initialize] ROS Node" << node_name_ << "initialized and running on domain" << domain_id;
 }
 
-bool RosNodeManager::restartWithDomain(uint32_t new_domain_id, int argc, char** argv)
+bool RosNodeManager::restartWithDomain(uint8_t new_domain_id, int argc, char** argv)
 {
   qInfo() << "[RosNodeManager::restartWithDomain] Restarting ROS node with new domain ID:" << new_domain_id;
 

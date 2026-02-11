@@ -37,7 +37,7 @@ public:
              WRITE setUseNamespaceDiscovery
              NOTIFY useNamespaceDiscoveryChanged)
 
-  Q_PROPERTY(uint32_t rosDomainId
+  Q_PROPERTY(uint8_t rosDomainId
              READ getRosDomainId
              WRITE setRosDomainId
              NOTIFY rosDomainIdChanged)
@@ -64,7 +64,7 @@ public:
    *
    * @return ROS domain ID (0-232)
    */
-  uint32_t getRosDomainId() const;
+  uint8_t getRosDomainId() const;
 
   /**
    * @brief Get current pending value for topic filter
@@ -92,7 +92,7 @@ public:
    *
    * @param domain_id New pending domain ID (0-232)
    */
-  void setRosDomainId(uint32_t domain_id);
+  void setRosDomainId(uint8_t domain_id);
 
   /**
    * @brief Set pending value for topic filter
@@ -145,8 +145,8 @@ private:
 
   bool current_use_namespace_discovery_; /**< Current namespace discovery setting */
   bool pending_use_namespace_discovery_; /**< Pending namespace discovery setting */
-  uint32_t current_ros_domain_id_;       /**< Current ROS domain ID */
-  uint32_t pending_ros_domain_id_;       /**< Pending ROS domain ID */
+  uint8_t current_ros_domain_id_;        /**< Current ROS domain ID */
+  uint8_t pending_ros_domain_id_;        /**< Pending ROS domain ID */
   bool current_use_topic_filter_;        /**< Current topic filter setting */
   bool pending_use_topic_filter_;        /**< Pending topic filter setting */
 };

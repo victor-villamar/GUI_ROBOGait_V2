@@ -262,7 +262,7 @@ void RoboGaitApplication::onDeveloperSettingsApplied()
 {
 
   auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
-  const uint32_t new_domain_id = developer_settings.getRosDomainId();
+  const uint8_t new_domain_id = developer_settings.getRosDomainId();
   const bool use_topic_filter = developer_settings.getUseTopicFilter();
 
   if (ros_node_manager_ == nullptr)

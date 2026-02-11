@@ -24,7 +24,7 @@ DeveloperSettings::DeveloperSettings() :
 
 bool DeveloperSettings::getUseNamespaceDiscovery() const { return pending_use_namespace_discovery_; }
 
-uint32_t DeveloperSettings::getRosDomainId() const { return pending_ros_domain_id_; }
+uint8_t DeveloperSettings::getRosDomainId() const { return pending_ros_domain_id_; }
 
 bool DeveloperSettings::getUseTopicFilter() const { return pending_use_topic_filter_; }
 
@@ -44,7 +44,7 @@ void DeveloperSettings::setUseNamespaceDiscovery(bool value)
   }
 }
 
-void DeveloperSettings::setRosDomainId(uint32_t domain_id)
+void DeveloperSettings::setRosDomainId(uint8_t domain_id)
 {
   if (domain_id > 232)
   {
@@ -122,7 +122,7 @@ void DeveloperSettings::initializeDefaults()
     return;
   }
 
-  uint32_t ros_domain_id = yaml_loader.getValue<uint32_t>("ros2.domain_id", 0);
+  uint8_t ros_domain_id = yaml_loader.getValue<uint8_t>("ros2.domain_id", 0);
   bool use_namespace_discovery = yaml_loader.getValue<bool>("ros2.use_namespace_discovery", true);
   bool use_topic_filter = yaml_loader.getValue<bool>("ros2.use_topic_filter", true);
 
