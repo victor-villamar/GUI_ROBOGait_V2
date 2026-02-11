@@ -1,5 +1,6 @@
 #include <QDebug>
 
+#include "Loader/YamlLoader.hpp"
 #include "Settings/DeveloperSettings.hpp"
 
 using namespace ROBOGait::settings;
@@ -112,12 +113,31 @@ void DeveloperSettings::resetChanges()
 
 void DeveloperSettings::initializeDefaults()
 {
-  current_use_namespace_discovery_ = true;
-  pending_use_namespace_discovery_ = true;
-  current_ros_domain_id_ = 0;
-  pending_ros_domain_id_ = 0;
-  current_use_topic_filter_ = true;
-  pending_use_topic_filter_ = true;
+
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  if (!yaml_loader.isLoaded())
+  {
+    qWarning() << "[DeveloperSettings::initializeDefaults] YAML configuration not loaded, using defaults";
+    return;
+  }
+
+  uint32_t ros_domain_id = yaml_loader.getValue<uint32_t>("ros2.domain_id", 0);
+  bool use_namespace_discovery = yaml_loader.getValue<bool>("ros2.use_namespace_discovery", true);
+  bool use_topic_filter = yaml_loader.getValue<bool>("ros2.use_topic_filter", true);
+
+  if (ros_domain_id > 232)
+  {
+    qWarning() << "[DeveloperSettings::initializeDefaults] Invalid ROS domain ID:" << ros_domain_id << "(must be 0-232), setting to 0";
+    ros_domain_id = 0;
+  }
+
+  current_use_namespace_discovery_ = use_namespace_discovery;
+  pending_use_namespace_discovery_ = use_namespace_discovery;
+  current_ros_domain_id_ = ros_domain_id;
+  pending_ros_domain_id_ = ros_domain_id;
+  current_use_topic_filter_ = use_topic_filter;
+  pending_use_topic_filter_ = use_topic_filter;
 
   emit useNamespaceDiscoveryChanged();
   emit rosDomainIdChanged();

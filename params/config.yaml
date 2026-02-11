@@ -4,3 +4,9 @@
 database:
   path: ".local/robogait"
   filename: "db_robogait.db"
+
+# ROS2 Configuration
+ros2:
+  domain_id: 0
+  use_namespace_discovery: true
+  use_topic_filter: true

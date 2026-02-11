@@ -68,6 +68,7 @@ bool RoboGaitApplication::initialize()
     return false;
   }
 
+  // Database Configuration
   const std::string configured_dir = yaml_loader.getValue<std::string>("database.path", ".local/default");
   const std::string configured_filename = yaml_loader.getValue<std::string>("database.filename", "default.db");
 
@@ -95,6 +96,10 @@ bool RoboGaitApplication::initialize()
     return false;
   }
 
+  // Initialize DeveloperSettings singleton
+  auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
+  developer_settings.initializeDefaults();
+
   // Create ROS node manager
   ros_node_manager_ = std::make_unique<ROBOGait::ros::manager::RosNodeManager>();
 
@@ -113,14 +118,13 @@ bool RoboGaitApplication::initialize()
     args_char_ptr.append(arg.data());
   }
 
-  ros_node_manager_->initialize(argc, args_char_ptr.data());
+  ros_node_manager_->initialize(argc, args_char_ptr.data(), developer_settings.getRosDomainId());
+
+  ros_node_manager_->setUseNamespaceDiscovery(developer_settings.getUseNamespaceDiscovery());
+  ros_node_manager_->setUseTopicFilter(developer_settings.getUseTopicFilter());
 
   // Create user session
   user_session_ = std::make_unique<ROBOGait::session::UserSession>(ros_node_manager_.get());
-
-  // Initialize DeveloperSettings singleton
-  auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
-  developer_settings.initializeDefaults();
 
   connectSignals();
 
