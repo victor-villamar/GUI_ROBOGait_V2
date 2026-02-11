@@ -4,8 +4,8 @@ import QtQuick.Controls 2.15
 
 ApplicationWindow {
     id: window
-    height: 700
-    width: 1300
+    height: 1080
+    width: 1920
     visible: true
     visibility: Window.Windowed
 
