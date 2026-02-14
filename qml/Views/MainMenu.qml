@@ -25,7 +25,13 @@ MainMenuForm {
     }
 
     selectMapArea.onClicked: {
-        showNotImplemented(qsTr("Seleccionar mapa: en desarrollo."))
+        if (StackView.view) {
+            if (userSession.rosManager &&
+                userSession.rosManager.robotManager &&
+                userSession.rosManager.robotManager.selectedRobotNamespace) {
+                StackView.view.push(mapViewPage)
+            }
+        }
     }
 
     selectPatientArea.onClicked: {
@@ -46,5 +52,10 @@ MainMenuForm {
     Component {
         id: manualControlPage
         ManualControl { }
+    }
+
+    Component {
+        id: mapViewPage
+        MapView { }
     }
 }

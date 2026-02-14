@@ -16,6 +16,9 @@
     <file alias="SettingsBadgeForm.ui.qml">qml/Common/SettingsBadgeForm.ui.qml</file>
     <file alias="UserBadge.qml">qml/Common/UserBadge.qml</file>
   </qresource>
+  <qresource prefix="/Components">
+    <file alias="RobotItem.qml">qml/Components/RobotItem.qml</file>
+  </qresource>
   <qresource prefix="/Controls">
     <file alias="Joystick.qml">qml/Controls/Joystick.qml</file>
     <file alias="JoystickForm.ui.qml">qml/Controls/JoystickForm.ui.qml</file>
@@ -47,6 +50,8 @@
 	  <file alias="MainMenuForm.ui.qml">qml/Views/MainMenuForm.ui.qml</file>
 	  <file alias="ManualControl.qml">qml/Views/ManualControl.qml</file>
 	  <file alias="ManualControlForm.ui.qml">qml/Views/ManualControlForm.ui.qml</file>
+	  <file alias="MapView.qml">qml/Views/MapView.qml</file>
+	  <file alias="MapViewForm.ui.qml">qml/Views/MapViewForm.ui.qml</file>
 	  <file alias="RegisterPage.qml">qml/Views/RegisterPage.qml</file>
 	  <file alias="RegisterPageForm.ui.qml">qml/Views/RegisterPageForm.ui.qml</file>
 	  <file alias="RobotConnection.qml">qml/Views/RobotConnection.qml</file>
