@@ -111,8 +111,9 @@ void MapData::updateFromOccupancyGridUpdate(const map_msgs::msg::OccupancyGridUp
 
   image_dirty_ = true;
 
-  qDebug() << "[MapData::updateFromOccupancyGridUpdate] Applied incremental update:"
-           << "region [" << msg->x << "," << msg->y << "] size [" << msg->width << "x" << msg->height << "]";
+  // DEBUG
+  // qDebug() << "[MapData::updateFromOccupancyGridUpdate] Applied incremental update:"
+  //          << "region [" << msg->x << "," << msg->y << "] size [" << msg->width << "x" << msg->height << "]";
 }
 
 QImage MapData::toQImage()
@@ -184,7 +185,8 @@ void MapData::regenerateImage()
     }
   }
 
-  qDebug() << "[MapData::regenerateImage] Image regenerated successfully";
+  // DEBUG
+  // qDebug() << "[MapData::regenerateImage] Image regenerated successfully";
 }
 
 bool MapData::worldToPixel(double world_x, double world_y, int& pixel_x, int& pixel_y) const

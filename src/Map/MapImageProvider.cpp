@@ -35,7 +35,8 @@ QImage MapImageProvider::requestImage(const QString& id, QSize* size, const QSiz
     *size = map_image.size();
   }
 
-  qDebug() << "[MapImageProvider::requestImage] Providing map image of size:" << map_image.size() << "for id:" << id;
+  // DEBUG
+  // qDebug() << "[MapImageProvider::requestImage] Providing map image of size:" << map_image.size() << "for id:" << id;
 
   return map_image;
 }

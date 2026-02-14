@@ -145,8 +145,9 @@ void MapManager::callbackMap(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
   emit mapMetadataChanged();
   emit mapImageChanged();
 
-  qDebug() << "[MapManager::callbackMap] Map updated:" << map_data_.getMetadata().width << "x" << map_data_.getMetadata().height
-           << "cells, resolution:" << map_data_.getMetadata().resolution << "m/cell";
+  // DEBUG
+  // qDebug() << "[MapManager::callbackMap] Map updated:" << map_data_.getMetadata().width << "x" << map_data_.getMetadata().height
+  //          << "cells, resolution:" << map_data_.getMetadata().resolution << "m/cell";
 }
 
 void MapManager::callbackMapUpdates(const map_msgs::msg::OccupancyGridUpdate::SharedPtr msg)
@@ -161,8 +162,9 @@ void MapManager::callbackMapUpdates(const map_msgs::msg::OccupancyGridUpdate::Sh
 
   emit mapImageChanged();
 
-  qDebug() << "[MapManager::callbackMapUpdates] Map updated incrementally:"
-           << "region [" << msg->x << "," << msg->y << "] size [" << msg->width << "x" << msg->height << "]";
+  // DEBUG
+  // qDebug() << "[MapManager::callbackMapUpdates] Map updated incrementally:"
+  //          << "region [" << msg->x << "," << msg->y << "] size [" << msg->width << "x" << msg->height << "]";
 }
 
 void MapManager::setSelectedRobot(const QString& robot_identifier, bool is_namespace)
@@ -199,7 +201,8 @@ void MapManager::setSelectedRobot(const QString& robot_identifier, bool is_names
   selected_robot_namespace_ = normalized_identifier;
   use_namespace_discovery_ = is_namespace;
 
-  qDebug() << "[MapManager::setSelectedRobot] Robot configuration stored:" << normalized_identifier;
+  // DEBUG
+  // qDebug() << "[MapManager::setSelectedRobot] Robot configuration stored:" << normalized_identifier;
 }
 
 void MapManager::activateSubscriptions()
