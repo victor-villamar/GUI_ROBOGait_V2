@@ -2,6 +2,7 @@
   <qresource prefix="/qmlresources/icons">
     <file alias="arrow_down.svg">resources/Icons/arrow_down.svg</file>
     <file alias="arrow_up.svg">resources/Icons/arrow_up.svg</file>
+    <file alias="center_to_fit.svg">resources/Icons/center_to_fit.svg</file>
     <file alias="check_solid.svg">resources/Icons/check_solid.svg</file>
     <file alias="circle_info_solid.svg">resources/Icons/circle_info_solid.svg</file>
     <file alias="circle_question.svg">resources/Icons/circle_question.svg</file>
@@ -15,10 +16,13 @@
     <file alias="keyboard_left.svg">resources/Icons/keyboard_left.svg</file>
     <file alias="lock.svg">resources/Icons/lock.svg</file>
     <file alias="manual_control.png">resources/Icons/manual_control.png</file>
+    <file alias="map.svg">resources/Icons/map.svg</file>
+    <file alias="minus.svg">resources/Icons/minus.svg</file>
     <file alias="patient.svg">resources/Icons/patient.svg</file>
     <file alias="pen_to_square_regular.svg">resources/Icons/pen_to_square_regular.svg</file>
     <file alias="pencil_solid.svg">resources/Icons/pencil_solid.svg</file>
     <file alias="plus_solid.svg">resources/Icons/plus_solid.svg</file>
+    <file alias="plus.svg">resources/Icons/plus.svg</file>
     <file alias="save_button.png">resources/Icons/save_button.png</file>
     <file alias="stop_light.png">resources/Icons/stop_light.png</file>
     <file alias="stop.png">resources/Icons/stop.png</file>
