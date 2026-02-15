@@ -1,5 +1,12 @@
 #pragma once
 
+//------ TIME DEFINITIONS ------
+// clang-format off
+#define TIME_TO_ROBOT_POSE_UPDATE     100 // ms (10 Hz)
+#define TIME_TO_ROBOT_TIMEOUT         500 // ms (2 Hz)
+
+// clang-format on
+
 //---------------- PUBLISHER AND SUBSCRIPTION QoS SETTINGS ----------------
 /*This QoS is intended to be used in communications that require
  * retransmission and when a new subscriber joins, he does not receive the

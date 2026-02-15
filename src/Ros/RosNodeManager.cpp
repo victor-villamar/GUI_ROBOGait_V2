@@ -27,6 +27,7 @@ RosNodeManager::RosNodeManager() :
   robot_discovery_->setUseNamespaceDiscovery(use_namespace_discovery_);
   robot_manager_->setUseNamespaceDiscovery(use_namespace_discovery_);
 
+  // clang-format off
   QObject::connect(robot_discovery_.get(), &ROBOGait::robot::discovery::RobotDiscovery::robotsNamespacesChanged,
                    [this]()
                    {
@@ -35,6 +36,7 @@ RosNodeManager::RosNodeManager() :
                        robot_manager_->checkRobotAvailability(robot_discovery_->getRobotsNamespaces());
                      }
                    });
+  // clang-format on
 }
 
 RosNodeManager::~RosNodeManager()
@@ -107,6 +109,8 @@ ROBOGait::robot::discovery::RobotDiscovery* RosNodeManager::getRobotDiscovery() 
 
 ROBOGait::robot::manager::RobotManager* RosNodeManager::getRobotManager() const { return robot_manager_.get(); }
 
+ROBOGait::map::manager::MapManager* RosNodeManager::getMapManager() const { return &ROBOGait::map::manager::MapManager::getInstance(); }
+
 void RosNodeManager::initialize(int argc, char** argv, uint8_t domain_id)
 {
   if (is_running_)
@@ -148,6 +152,11 @@ void RosNodeManager::initialize(int argc, char** argv, uint8_t domain_id)
 
   robot_discovery_->setROSNode(ros_node_.get());
   robot_manager_->setROSNode(ros_node_.get());
+
+  // Initialize MapManager
+  auto& map_manager = ROBOGait::map::manager::MapManager::getInstance();
+
+  map_manager.setROSNode(ros_node_.get());
 
   is_running_ = true;
 

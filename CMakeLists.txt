@@ -12,6 +12,11 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(map_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 find_package(Qt6 REQUIRED COMPONENTS
     Core
@@ -50,6 +55,11 @@ set(HEADERS
     include/Ros/TopicsName.hpp
     include/User/Patient.hpp
     include/User/UserSession.hpp
+    include/Map/MapData.hpp
+    include/Map/RobotPose.hpp
+    include/Map/MapManager.hpp
+    include/Map/MapImageProvider.hpp
+    include/Map/Utils/Utils.hpp
 )
 
 # Set source files
@@ -74,6 +84,11 @@ set(SOURCES
     src/Ros/RosNodeManager.cpp
     src/User/Patient.cpp
     src/User/UserSession.cpp
+    src/Map/MapData.cpp
+    src/Map/RobotPose.cpp
+    src/Map/MapManager.cpp
+    src/Map/MapImageProvider.cpp
+    src/Map/Utils/Utils.cpp
 )
 
 # Set resource files
@@ -119,10 +134,14 @@ include_directories(
     include/Ros
     include/Settings
     include/User
+    include/map
+    include/Map/utils
 
     ${rclcpp_INCLUDE_DIRS}
     ${geometry_msgs_INCLUDE_DIRS}
     ${std_msgs_INCLUDE_DIRS}
+    ${nav_msgs_INCLUDE_DIRS}
+    ${tf2_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     ${Qt6Core_INCLUDE_DIRS}
     ${Qt6Gui_INCLUDE_DIRS}
@@ -145,6 +164,11 @@ ament_target_dependencies(${PROJECT_NAME}
     ament_index_cpp
     std_msgs
     geometry_msgs
+    nav_msgs
+    map_msgs
+    tf2
+    tf2_ros
+    tf2_geometry_msgs
     yaml-cpp
 )
 

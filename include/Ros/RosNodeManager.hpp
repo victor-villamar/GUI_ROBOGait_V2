@@ -8,6 +8,7 @@
 #include <rclcpp/node.hpp>
 #include <thread>
 
+#include "Map/MapManager.hpp"
 #include "Robot/RobotDiscovery.hpp"
 #include "Robot/RobotManager.hpp"
 
@@ -56,6 +57,10 @@ public:
   )
   Q_PROPERTY(ROBOGait::robot::manager::RobotManager* robotManager
              READ getRobotManager
+             CONSTANT
+  )
+  Q_PROPERTY(ROBOGait::map::manager::MapManager* mapManager
+             READ getMapManager
              CONSTANT
   )
   // clang-format on
@@ -107,6 +112,12 @@ public:
    * @return A pointer to the RobotManager instance
    */
   ROBOGait::robot::manager::RobotManager* getRobotManager() const;
+
+  /**
+   * @brief Gets the MapManager instance
+   * @return A pointer to the MapManager instance
+   */
+  ROBOGait::map::manager::MapManager* getMapManager() const;
 
   /**
    * @brief Initializes the ROS node manager

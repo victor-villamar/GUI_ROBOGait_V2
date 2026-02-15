@@ -2,6 +2,7 @@
 #include <chrono>
 #include <cmath>
 
+#include "Map/MapManager.hpp"
 #include "Robot/RobotManager.hpp"
 #include "Ros/Define.hpp"
 #include "Ros/TopicsName.hpp"
@@ -14,7 +15,7 @@ RobotManager::RobotManager() :
     use_namespace_discovery_(true),
     use_topic_filter_(true),
     sub_robot_status_(nullptr),
-    watchdog_timer_(nullptr),
+    timer_robot_timeout_(nullptr),
     cb_group_(nullptr),
     is_monitoring_(false)
 {
@@ -54,9 +55,10 @@ void RobotManager::setROSNode(rclcpp::Node* parent_node)
 
   cb_group_ = parent_node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-  watchdog_timer_ = parent_node_->create_wall_timer(std::chrono::milliseconds(500), std::bind(&RobotManager::checkRobotTimeout, this),
-                                                    cb_group_); // one-shot=false, auto-start=false
-  watchdog_timer_->cancel();                                    // Disable auto-start
+  timer_robot_timeout_ =
+      parent_node_->create_wall_timer(std::chrono::milliseconds(TIME_TO_ROBOT_TIMEOUT), std::bind(&RobotManager::callbackRobotTimeoutTimer, this),
+                                      cb_group_); // one-shot=false, auto-start=false
+  timer_robot_timeout_->cancel();                 // Disable auto-start
 
   qInfo() << "[RobotManager::setROSNode] ROS node set successfully";
 }
@@ -115,6 +117,15 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
 
     qInfo() << "[RobotManager::selectRobot] Selected robot:" << normalized_identifier << "Type:" << (is_namespace ? "namespace" : "node name");
 
+    // Store robot configuration in MapManager
+    auto& map_manager = ROBOGait::map::manager::MapManager::getInstance();
+
+    if (map_manager.isInitialized())
+    {
+      map_manager.setSelectedRobot(normalized_identifier, is_namespace);
+      qInfo() << "[RobotManager::selectRobot] MapManager configuration updated";
+    }
+
     if (use_topic_filter_)
     {
       startMonitoring();
@@ -137,6 +148,13 @@ void RobotManager::clearSelection()
     use_namespace_discovery_ = true;
     emit selectedRobotNamespaceChanged();
     emit selectedRobotDisplayNameChanged();
+
+    auto& map_manager = ROBOGait::map::manager::MapManager::getInstance();
+
+    if (map_manager.isInitialized())
+    {
+      map_manager.destroySubscriptions();
+    }
   }
 }
 
@@ -271,7 +289,7 @@ void RobotManager::startMonitoring()
   last_robot_message_time_ = parent_node_->now();
 
   is_monitoring_ = true;
-  watchdog_timer_->reset();
+  timer_robot_timeout_->reset();
 
   qInfo() << "[RobotManager::startMonitoring] Monitoring started successfully";
 }
@@ -286,10 +304,9 @@ void RobotManager::stopMonitoring()
 
   qInfo() << "[RobotManager::stopMonitoring] Stopping monitoring";
 
-  // Disable watchdog timer
-  if (watchdog_timer_)
+  if (timer_robot_timeout_)
   {
-    watchdog_timer_->cancel();
+    timer_robot_timeout_->cancel();
   }
 
   // Destroy subscription
@@ -338,17 +355,17 @@ void RobotManager::callbackRobotStatus(const std_msgs::msg::String::SharedPtr ms
   last_robot_message_time_ = parent_node_->now();
 }
 
-void RobotManager::checkRobotTimeout()
+void RobotManager::callbackRobotTimeoutTimer()
 {
   if (parent_node_ == nullptr)
   {
-    qCritical() << "[RobotManager::checkRobotTimeout] Cannot check timeout: null parent node";
+    qCritical() << "[RobotManager::callbackRobotTimeoutTimer] Cannot check timeout: null parent node";
     return;
   }
 
   if (!is_monitoring_)
   {
-    qCritical() << "[RobotManager::checkRobotTimeout] Cannot check timeout: monitoring is inactive";
+    qCritical() << "[RobotManager::callbackRobotTimeoutTimer] Cannot check timeout: monitoring is inactive";
     return;
   }
 
@@ -357,7 +374,7 @@ void RobotManager::checkRobotTimeout()
 
   if (elapsed > TIMEOUT_SECONDS)
   {
-    qWarning() << "[RobotManager::checkRobotTimeout] Robot timeout detected!"
+    qWarning() << "[RobotManager::callbackRobotTimeoutTimer] Robot timeout detected!"
                << "Robot:" << selected_robot_namespace_ << "has disconnected after" << elapsed << "seconds";
 
     stopMonitoring();

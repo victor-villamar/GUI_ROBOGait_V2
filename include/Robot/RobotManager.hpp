@@ -145,7 +145,7 @@ private:
   /**
    * @brief Check robot timeout and emit signal if disconnected
    */
-  void checkRobotTimeout();
+  void callbackRobotTimeoutTimer();
 
   /**
    * @brief Start monitoring the selected robot
@@ -166,7 +166,7 @@ private:
   bool use_topic_filter_;            /**< True to monitor via topic, false to skip monitoring */
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr sub_robot_status_; /**< Subscriber to robot_status topic */
-  rclcpp::TimerBase::SharedPtr watchdog_timer_;                             /**< Timer for watchdog */
+  rclcpp::TimerBase::SharedPtr timer_robot_timeout_;                        /**< Timer for robot disconnection */
   rclcpp::CallbackGroup::SharedPtr cb_group_;                               /**< Callback group for subscriptions */
   rclcpp::Time last_robot_message_time_;                                    /**< Timestamp of last robot message */
   bool is_monitoring_;                                                      /**< Flag indicating if monitoring is active */

@@ -49,8 +49,8 @@ JoystickForm {
         stick.x = totalArea.width / 2 + dx - stick.width / 2
         stick.y = totalArea.height / 2 + dy - stick.height / 2
 
-        var linearVelocity = -(dy / (totalArea.width / 2))
-        var angularVelocity = -(dx / (totalArea.width / 2))
+        var linearVelocity = -dy / (totalArea.width / 2)
+        var angularVelocity = -dx / (totalArea.width / 2)
 
         linearVelocity = Math.max(-1.0, Math.min(1.0, linearVelocity))
         angularVelocity = Math.max(-1.0, Math.min(1.0, angularVelocity))

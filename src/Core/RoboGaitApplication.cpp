@@ -12,6 +12,7 @@
 
 #include "Core/RoboGaitApplication.hpp"
 #include "Loader/YamlLoader.hpp"
+#include "Map/MapImageProvider.hpp"
 #include "Robot/ManualControl.hpp"
 #include "Robot/RobotDiscovery.hpp"
 #include "Robot/RobotManager.hpp"
@@ -240,6 +241,7 @@ void RoboGaitApplication::setupQmlContext()
   qml_app_engine_->rootContext()->setContextProperty("userSession", user_session_.get());
   qml_app_engine_->rootContext()->setContextProperty("dbManager", databaseManager());
   qml_app_engine_->rootContext()->setContextProperty("developerSettings", developerSettings());
+  qml_app_engine_->addImageProvider("mapimage", new ROBOGait::map::provider::MapImageProvider());
 
   qInfo() << "[RoboGaitApplication::setupQmlContext] QML context properties set";
 }
