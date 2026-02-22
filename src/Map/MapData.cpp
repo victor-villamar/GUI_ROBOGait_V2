@@ -175,16 +175,6 @@ void MapData::regenerateImage()
       cached_image_.setPixel(x, flipped_y, color);
     }
   }
-
-  // DEBUG: Save one snapshot to compare with RViz format
-  static bool snapshot_saved = false;
-  if (!snapshot_saved)
-  {
-    const QString snapshot_path = "/home/victor/Desktop/robogait_map.png";
-    const bool saved = cached_image_.save(snapshot_path);
-    qInfo() << "[MapData::regenerateImage] Snapshot saved:" << saved << snapshot_path;
-    snapshot_saved = true;
-  }
 }
 
 const MapMetadata& MapData::getMetadata() const { return metadata_; }
