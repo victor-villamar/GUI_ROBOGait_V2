@@ -17,7 +17,8 @@ RobotDisplay::RobotDisplay(QObject* parent) :
     interpolated_y_(0.0),
     interpolated_yaw_(0.0),
     robot_size_(0.5), // TODO: Obtain from Loader
-    first_update_(true)
+    first_update_(true),
+    has_context_(false)
 {
   // Create graphics items
   robot_group_ = std::make_unique<QGraphicsItemGroup>();
@@ -38,7 +39,11 @@ void RobotDisplay::initialize(rclcpp::Node* parent_node)
 
   parent_node_ = parent_node;
 
-  robot_pose_ = std::make_shared<ROBOGait::map::RobotPose>(parent_node_, std::string(TF_MAP_FRAME), std::string(TF_ROBOT_FRAME));
+  robot_pose_ = std::make_shared<ROBOGait::map::data::RobotPoseData>(parent_node_, std::string(TF_MAP_FRAME), std::string(TF_ROBOT_FRAME));
+  if (has_context_)
+  {
+    robot_pose_->setRobotContext(context_);
+  }
 }
 
 void RobotDisplay::shutdown()
@@ -62,7 +67,7 @@ void RobotDisplay::update(double wall_dt, double ros_dt)
     return;
   }
 
-  // Get target pose from RobotPose
+  // Get target pose from RobotPoseData
   double target_x = robot_pose_->getX();
   double target_y = robot_pose_->getY();
   double target_yaw = robot_pose_->getTheta();
@@ -182,4 +187,15 @@ void RobotDisplay::updateRobotGraphics()
   double qt_rotation = -qRadiansToDegrees(interpolated_yaw_); // Flip rotation, more accurate with ROS
 
   robot_group_->setRotation(qt_rotation);
+}
+
+void RobotDisplay::setRobotContext(const ROBOGait::context::RobotContext& context)
+{
+  context_ = context;
+  has_context_ = true;
+
+  if (robot_pose_)
+  {
+    robot_pose_->setRobotContext(context_);
+  }
 }

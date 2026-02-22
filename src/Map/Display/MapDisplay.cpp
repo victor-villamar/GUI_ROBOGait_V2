@@ -8,7 +8,7 @@
 using namespace ROBOGait::map::display;
 
 MapDisplay::MapDisplay(QObject* parent) :
-    BaseDisplay("MapDisplay", parent), map_data_(nullptr), map_graphics_dirty_(false), selected_robot_namespace_(""), use_namespace_discovery_(true)
+    BaseDisplay("MapDisplay", parent), map_data_(nullptr), map_graphics_dirty_(false), has_context_(false)
 {
   // Create graphics item
   map_item_ = std::make_unique<QGraphicsPixmapItem>();
@@ -30,7 +30,11 @@ void MapDisplay::initialize(rclcpp::Node* parent_node)
   parent_node_ = parent_node;
 
   // Create map data container
-  map_data_ = std::make_shared<MapData>();
+  map_data_ = std::make_shared<ROBOGait::map::data::MapLayerData>();
+  if (has_context_)
+  {
+    map_data_->setRobotContext(context_);
+  }
 
   qInfo() << "[MapDisplay::initialize] Map display initialized";
 }
@@ -66,32 +70,14 @@ void MapDisplay::update(double wall_dt, double ros_dt)
 
 void MapDisplay::setSelectedRobot(const QString& robot_identifier, bool is_namespace)
 {
-  QString normalized_identifier;
-
-  if (is_namespace)
-  {
-    normalized_identifier = normalizeNamespace(robot_identifier);
-  }
-  else
-  {
-    normalized_identifier = robot_identifier.trimmed();
-
-    if (normalized_identifier.isEmpty())
-    {
-      qCritical() << "[MapDisplay::setSelectedRobot] Invalid robot node name";
-      return;
-    }
-  }
-
-  if (normalized_identifier.isEmpty())
+  ROBOGait::context::RobotContext context;
+  if (!context.setSelectedRobot(robot_identifier, is_namespace))
   {
     qCritical() << "[MapDisplay::setSelectedRobot] Invalid robot identifier";
     return;
   }
 
-  // Store configuration
-  selected_robot_namespace_ = normalized_identifier;
-  use_namespace_discovery_ = is_namespace;
+  setRobotContext(context);
 }
 
 void MapDisplay::activateSubscriptions()
@@ -102,7 +88,7 @@ void MapDisplay::activateSubscriptions()
     return;
   }
 
-  if (selected_robot_namespace_.isEmpty())
+  if (!has_context_)
   {
     qWarning() << "[MapDisplay::activateSubscriptions] No robot selected, using default topics";
   }
@@ -116,7 +102,7 @@ void MapDisplay::callbackMap(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 
   if (!map_data_)
   {
-    qWarning() << "[MapDisplay::callbackMap] MapData is null";
+    qWarning() << "[MapDisplay::callbackMap] MapLayerData is null";
     return;
   }
 
@@ -161,7 +147,7 @@ void MapDisplay::updateMapGraphics()
     return;
   }
 
-  // Use MapData's built-in QImage conversion
+  // Use MapLayerData's built-in QImage conversion
   QImage map_image = map_data_->toQImage();
 
   if (map_image.isNull())
@@ -188,45 +174,6 @@ void MapDisplay::updateMapGraphics()
   // qDebug() << "[MapDisplay::updateMapGraphics] Map graphics updated. Position:" << scene_x << "," << scene_y << "Scale:" << metadata.resolution;
 }
 
-QString MapDisplay::normalizeNamespace(const QString& robot_namespace) const
-{
-  QString normalized = robot_namespace.trimmed();
-
-  if (normalized.isEmpty())
-  {
-    qWarning() << "[MapDisplay::normalizeNamespace] Empty namespace provided";
-    return QString();
-  }
-
-  if (!normalized.startsWith('/'))
-  {
-    normalized.prepend('/');
-  }
-
-  while (normalized.size() > 1 && normalized.endsWith('/'))
-  {
-    normalized.chop(1);
-  }
-
-  normalized.replace(" ", "_");
-
-  return normalized;
-}
-
-std::string MapDisplay::buildTopicName(const std::string& topic_suffix) const
-{
-  if (use_namespace_discovery_ && !selected_robot_namespace_.isEmpty())
-  {
-    // Multi-robot: namespace + topic
-    return (selected_robot_namespace_.toStdString() + topic_suffix);
-  }
-  else
-  {
-    // Single robot: topic only
-    return topic_suffix;
-  }
-}
-
 void MapDisplay::recreateSubscriptions()
 {
   if (!parent_node_)
@@ -246,9 +193,8 @@ void MapDisplay::recreateSubscriptions()
     sub_map_update_.reset();
   }
 
-  // Build topic names based on namespace configuration
-  const std::string map_topic = buildTopicName(std::string(T_MAP));
-  const std::string map_updates_topic = buildTopicName(std::string(T_MAP_UPDATES));
+  const std::string map_topic = map_data_ ? map_data_->mapTopic() : std::string(T_MAP);
+  const std::string map_updates_topic = map_data_ ? map_data_->mapUpdatesTopic() : std::string(T_MAP_UPDATES);
 
   // Create subscriptions
   sub_map_ = parent_node_->create_subscription<nav_msgs::msg::OccupancyGrid>(map_topic, QOS_RELIABLE_LATCH.keep_last(1),
@@ -258,4 +204,15 @@ void MapDisplay::recreateSubscriptions()
       map_updates_topic, QOS_RELIABLE.keep_last(10), std::bind(&MapDisplay::callbackMapUpdate, this, std::placeholders::_1));
 
   qInfo() << "[MapDisplay::recreateSubscriptions] Subscriptions created successfully";
+}
+
+void MapDisplay::setRobotContext(const ROBOGait::context::RobotContext& context)
+{
+  context_ = context;
+  has_context_ = true;
+
+  if (map_data_)
+  {
+    map_data_->setRobotContext(context_);
+  }
 }

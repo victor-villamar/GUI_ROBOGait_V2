@@ -1,5 +1,7 @@
 #include "Map/MapVisualizationManager.hpp"
 
+#include "Context/RobotContext.hpp"
+
 #include <QDebug>
 
 using namespace ROBOGait::map::manager;
@@ -101,8 +103,17 @@ void MapVisualizationManager::activateSubscriptions()
     return;
   }
 
-  // Set robot namespace in displays
-  map_display_->setSelectedRobot(selected_robot_namespace_, use_namespace_discovery_);
+  ROBOGait::context::RobotContext context;
+  if (context.setSelectedRobot(selected_robot_namespace_, use_namespace_discovery_))
+  {
+    map_display_->setRobotContext(context);
+    robot_display_->setRobotContext(context);
+  }
+  else
+  {
+    qWarning() << "[MapVisualizationManager::activateSubscriptions] Invalid robot context, using default topics";
+  }
+
   map_display_->activateSubscriptions();
 
   // Start visualization update loop

@@ -12,8 +12,9 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <rclcpp/subscription.hpp>
 
+#include "Context/RobotContext.hpp"
+#include "Map/Data/MapLayerData.hpp"
 #include "Map/Display/BaseDisplay.hpp"
-#include "Map/MapData.hpp"
 
 namespace ROBOGait
 {
@@ -88,9 +89,9 @@ public:
   /**
    * @brief Get map data
    *
-   * @return Shared pointer to MapData
+   * @return Shared pointer to MapLayerData
    */
-  std::shared_ptr<MapData> getMapData() const { return map_data_; }
+  std::shared_ptr<data::MapLayerData> getMapData() const { return map_data_; }
 
   /**
    * @brief Set selected robot configuration
@@ -102,9 +103,15 @@ public:
 
   /**
    * @brief Activate subscriptions based on selected robot configuration
-   *
    */
   void activateSubscriptions();
+
+  /**
+   * @brief Provide robot context for topic resolution
+   *
+   * @param context Robot context with namespace info
+   */
+  void setRobotContext(const ROBOGait::context::RobotContext& context);
 
 signals:
   void mapUpdated();         // Signal emitted when map is received or updated
@@ -131,24 +138,6 @@ private:
   void updateMapGraphics();
 
   /**
-   * @brief Normalize robot namespace
-   *
-   * @param robot_namespace Raw namespace string
-   *
-   * @return Normalized namespace (e.g., "/robot1")
-   */
-  QString normalizeNamespace(const QString& robot_namespace) const;
-
-  /**
-   * @brief Build topic name based on namespace configuration
-   *
-   * @param topic_suffix Topic suffix (e.g., "/map")
-   *
-   * @return Full topic name
-   */
-  std::string buildTopicName(const std::string& topic_suffix) const;
-
-  /**
    * @brief Recreate subscriptions with current robot configuration
    */
   void recreateSubscriptions();
@@ -156,14 +145,15 @@ private:
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_map_;              /**< Map subscription */
   rclcpp::Subscription<map_msgs::msg::OccupancyGridUpdate>::SharedPtr sub_map_update_; /**< Map update subscription */
 
-  std::shared_ptr<MapData> map_data_;             /**< Map data container */
+  std::shared_ptr<data::MapLayerData> map_data_;  /**< Map data container */
   std::unique_ptr<QGraphicsPixmapItem> map_item_; /**< Graphics item for map rendering */
 
   QMutex data_mutex_; /**< Mutex for thread-safe data access */
 
-  bool map_graphics_dirty_;          /**< Flag to indicate map graphics need update */
-  QString selected_robot_namespace_; /**< Selected robot namespace or identifier */
-  bool use_namespace_discovery_;     /**< True if using namespace discovery, false if direct topic */
+  bool map_graphics_dirty_; /**< Flag to indicate map graphics need update */
+
+  ROBOGait::context::RobotContext context_; /**< Robot context for topic resolution */
+  bool has_context_;                        /**< Flag indicating if context is set */
 };
 
 } // namespace display

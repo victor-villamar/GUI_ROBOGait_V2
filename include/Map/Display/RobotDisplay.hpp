@@ -7,8 +7,9 @@
 
 #include <memory>
 
+#include "Context/RobotContext.hpp"
+#include "Map/Data/RobotPoseData.hpp"
 #include "Map/Display/BaseDisplay.hpp"
-#include "Map/RobotPose.hpp"
 
 namespace ROBOGait
 {
@@ -91,6 +92,13 @@ public:
    */
   bool isRobotPoseAvailable() const { return robot_pose_ && robot_pose_->isAvailable(); }
 
+  /**
+   * @brief Provide robot context for frame resolution
+   *
+   * @param context Robot context with namespace info
+   */
+  void setRobotContext(const ROBOGait::context::RobotContext& context);
+
 signals:
   void poseUpdated(); // Signal emitted when robot pose is updated  /*double x, double y, double yaw);*/
 
@@ -105,7 +113,7 @@ private:
    */
   void updateRobotGraphics();
 
-  std::shared_ptr<ROBOGait::map::RobotPose> robot_pose_; /**< Robot pose tracker */
+  std::shared_ptr<ROBOGait::map::data::RobotPoseData> robot_pose_; /**< Robot pose tracker */
 
   std::unique_ptr<QGraphicsItemGroup> robot_group_; /**< Group containing all robot graphics */
   QGraphicsEllipseItem* body_item_;                 /**< Robot body circle */
@@ -124,6 +132,9 @@ private:
   double robot_size_; /**< Robot size in meters (default: 0.5m diameter) */
   QMutex data_mutex_; /**< Mutex for thread-safe data access */
   bool first_update_; /**< Flag for first update (no interpolation) */
+
+  ROBOGait::context::RobotContext context_; /**< Robot context for frame resolution */
+  bool has_context_;                        /**< Flag indicating if context is set */
 };
 
 } // namespace display
