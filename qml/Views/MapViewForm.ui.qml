@@ -1,34 +1,28 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import MapRendering 1.0
 
 import "qrc:/Dialogs"
-import "qrc:/Components"
 import "qrc:/Controls"
 
 Rectangle {
     id: root
     color: "#518bb7"
 
-    property alias mapImage: mapImage
-    property alias robotItem: robotItem
     property alias infoButton: infoButton
     property alias infoDialog: infoDialog
     property alias joystick: joystick
     property alias lockButton: lockButton
-    property alias mapContainer: mapContainer
     property alias zoomInButton: zoomInButton
     property alias zoomOutButton: zoomOutButton
     property alias fitButton: fitButton
+    property alias mapRenderWidget: mapRenderWidget
 
     // Properties for map manager state
     property bool mapAvailable: false
-    property int mapWidth: 0
-    property int mapHeight: 0
-    property double mapResolution: 0.0
 
-    property point robotScreenPos: Qt.point(0, 0)
-    property real robotScreenRotation: 0.0
+    // Properties for robot pose availability
     property bool robotPoseAvailable: false
 
     // Manual control properties
@@ -36,32 +30,9 @@ Rectangle {
     property real linearValue: 0.0
     property real angularValue: 0.0
 
-    // Map navigation properties
-    property real zoomLevel: 1.0
-    property real panX: 0.0
-    property real panY: 0.0
-
-    // Smooth animations for zoom and pan
-    Behavior on zoomLevel {
-        NumberAnimation {
-            duration: 300
-            easing.type: Easing.OutCubic
-        }
-    }
-
-    Behavior on panX {
-        NumberAnimation {
-            duration: 300
-            easing.type: Easing.OutCubic
-        }
-    }
-
-    Behavior on panY {
-        NumberAnimation {
-            duration: 300
-            easing.type: Easing.OutCubic
-        }
-    }
+    // Note: Zoom and pan removed - MapRenderWidget handles internally
+    // Note: Map dimensions removed - native widget handles sizing
+    // Note: Robot screen position removed - native widget renders robot directly
 
     ColumnLayout {
         anchors.fill: parent
@@ -130,146 +101,56 @@ Rectangle {
             border.width: 2
             clip: true
 
-            Item {
-                id: mapContainer
+            // MapRenderWidget - native QML integration
+            MapRenderWidget {
+                id: mapRenderWidget
                 anchors.fill: parent
                 anchors.margins: 10
+                visible: mapAvailable
 
-                Item {
-                    id: transformableContent
-                    width: parent.width
-                    height: parent.height
-                    scale: zoomLevel
-                    x: panX
-                    y: panY
-                    transformOrigin: Item.Center
-
-                    Image {
-                        id: mapImage
-                        anchors.centerIn: parent
-                        fillMode: Image.PreserveAspectFit
-                        width: mapContainer.width
-                        height: mapContainer.height
-                        visible: mapAvailable
-                        smooth: true
-                        cache: false
-                    }
-
-                    RobotItem {
-                        id: robotItem
-                        anchors.fill: parent
-                        robotScreenPos: root.robotScreenPos
-                        robotScreenRotation: root.robotScreenRotation
-                        robotPoseAvailable: root.robotPoseAvailable
-                        robotSize: 60
-                        mapWidth: root.mapWidth
-                        mapHeight: root.mapHeight
-                        visible: mapAvailable
+                Component.onCompleted: {
+                    if (userSession.rosManager &&
+                        userSession.rosManager.robotManager &&
+                        userSession.rosManager.robotManager.mapVisualizationManager)
+                    {
+                        var mapVizMgr = userSession.rosManager.robotManager.mapVisualizationManager
+                        mapVizMgr.registerMapRenderWidget(mapRenderWidget)
                     }
                 }
-
-                Column {
-                    anchors.centerIn: parent
-                    spacing: 20
-                    visible: !mapAvailable
-                    z: 100
-
-                    Image {
-                        source: "qrc:/qmlresources/icons/map.svg"
-                        width: 96
-                        height: 96
-                        fillMode: Image.PreserveAspectFit
-                        smooth: true
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-
-                    Text {
-                        text: qsTr("No hay mapa disponible")
-                        font.pixelSize: 20
-                        font.bold: true
-                        color: "#ffffff"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-
-                    Text {
-                        text: qsTr("Asegúrese de:\n• El robot tiene SLAM/mapa activo\n• El robot publica en /map")
-                        font.pixelSize: 14
-                        color: "#aaaaaa"
-                        horizontalAlignment: Text.AlignHCenter
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                }
-
-                // Multi-touch gesture handling for pan and zoom
-                PinchArea {
-                    anchors.fill: parent
-                    enabled: mapAvailable
-                    pinch.target: null
-                    pinch.minimumScale: 0.5
-                    pinch.maximumScale: 5.0
-
-                    onPinchUpdated: function(pinch) {
-                        // Calculate new zoom level
-                        var newZoom = zoomLevel * pinch.scale
-                        newZoom = Math.max(0.5, Math.min(5.0, newZoom))
-                        
-                        // Update zoom level
-                        zoomLevel = newZoom
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        enabled: mapAvailable
-                        preventStealing: false
-
-                        property point lastPos: Qt.point(0, 0)
-
-                        onPressed: function(mouse) {
-                            lastPos = Qt.point(mouse.x, mouse.y)
-                        }
-
-                        onPositionChanged: function(mouse) {
-                            if (pressed) {
-                                var dx = mouse.x - lastPos.x
-                                var dy = mouse.y - lastPos.y
-                                
-                                panX += dx
-                                panY += dy
-                                
-                                lastPos = Qt.point(mouse.x, mouse.y)
-                            }
-                        }
-
-                        onWheel: function(wheel) {
-                            var delta = wheel.angleDelta.y / 120
-                            var newZoom = zoomLevel + (delta * 0.1)
-                            zoomLevel = Math.max(0.5, Math.min(5.0, newZoom))
-                        }
-                    }
-                }
-
-                Rectangle {
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.margins: 10
-                    width: 80
-                    height: 30
-                    color: "#2c5f7c"
-                    radius: 6
-                    opacity: 0.9
-                    visible: mapAvailable
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: qsTr("Zoom: %1x").arg(zoomLevel.toFixed(1))
-                        font.pixelSize: 12
-                        color: "#ffffff"
-                        font.bold: true
-                    }
-                }
-
             }
 
+            // Placeholder when map is not available
+            Column {
+                anchors.centerIn: parent
+                spacing: 20
+                visible: !mapAvailable
+                z: 100
+
+                Image {
+                    source: "qrc:/qmlresources/icons/map.svg"
+                    width: 96
+                    height: 96
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                Text {
+                    text: qsTr("No hay mapa disponible")
+                    font.pixelSize: 20
+                    font.bold: true
+                    color: "#ffffff"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                Text {
+                    text: qsTr("Asegúrese de:\n• El robot tiene SLAM/mapa activo\n• El robot publica en /map")
+                    font.pixelSize: 14
+                    color: "#aaaaaa"
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
             // Joystick Control Panel
             Rectangle {
                 id: joystickPanel
@@ -343,16 +224,17 @@ Rectangle {
                                 smooth: true
                             }
 
-                            ToolTip.visible: hovered
-                            ToolTip.text: manualUnlocked 
-                                          ? qsTr("Bloquear joystick") 
-                                          : qsTr("Desbloquear joystick")
+                                ToolTip.visible: hovered
+                                ToolTip.text: manualUnlocked
+                                              ? qsTr("Bloquear joystick")
+                                              : qsTr("Desbloquear joystick")
                         }
                     }
                 }
             }
         }
 
+        // Zoom Controls
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 60
@@ -369,11 +251,10 @@ Rectangle {
                     id: zoomOutButton
                     Layout.preferredWidth: 50
                     Layout.preferredHeight: 44
-                    enabled: zoomLevel > 0.5
 
                     background: Rectangle {
                         radius: 6
-                        color: parent.enabled ? (parent.pressed ? "#1a3a4a" : "#3a7fa0") : "#555555"
+                        color: parent.pressed ? "#1a3a4a" : "#3a7fa0"
                         border.color: "#ffffff"
                         border.width: 1
                     }
@@ -388,16 +269,14 @@ Rectangle {
                     ToolTip.text: qsTr("Alejar (Zoom Out)")
                 }
 
-                // Zoom In Button
                 Button {
                     id: zoomInButton
                     Layout.preferredWidth: 50
                     Layout.preferredHeight: 44
-                    enabled: zoomLevel < 5.0
 
                     background: Rectangle {
                         radius: 6
-                        color: parent.enabled ? (parent.pressed ? "#1a3a4a" : "#3a7fa0") : "#555555"
+                        color: parent.pressed ? "#1a3a4a" : "#3a7fa0"
                         border.color: "#ffffff"
                         border.width: 1
                     }
@@ -446,6 +325,8 @@ Rectangle {
                 }
             }
         }
+
+
     }
 
     // Information Dialog

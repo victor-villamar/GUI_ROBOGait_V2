@@ -82,29 +82,6 @@ public:
   QImage toQImage();
 
   /**
-   * @brief Transform world coordinates to pixel coordinates
-   *
-   *
-   * @param world_x X coordinate in world frame (meters)
-   * @param world_y Y coordinate in world frame (meters)
-   * @param pixel_x Output pixel X coordinate (modified)
-   * @param pixel_y Output pixel Y coordinate (modified)
-   *
-   * @return true if coordinates are within map bounds, false otherwise
-   */
-  bool worldToPixel(double world_x, double world_y, int& pixel_x, int& pixel_y) const;
-
-  /**
-   * @brief Transform pixel coordinates to world coordinates
-   *
-   * @param pixel_x Pixel X coordinate
-   * @param pixel_y Pixel Y coordinate
-   * @param world_x Output world X coordinate in meters (modified)
-   * @param world_y Output world Y coordinate in meters (modified)
-   */
-  void pixelToWorld(int pixel_x, int pixel_y, double& world_x, double& world_y) const;
-
-  /**
    * @brief Get current map metadata
    *
    * @return Const reference to map metadata structure

@@ -2,7 +2,6 @@
 #include <chrono>
 #include <cmath>
 
-#include "Map/MapManager.hpp"
 #include "Robot/RobotManager.hpp"
 #include "Ros/Define.hpp"
 #include "Ros/TopicsName.hpp"
@@ -22,6 +21,7 @@ RobotManager::RobotManager() :
   qInfo() << "[RobotManager::RobotManager] RobotManager created";
 
   manual_control_ = std::make_unique<ROBOGait::robot::control::ManualControl>();
+  map_visualization_manager_ = nullptr;
 }
 
 RobotManager::~RobotManager()
@@ -52,6 +52,10 @@ void RobotManager::setROSNode(rclcpp::Node* parent_node)
   parent_node_ = parent_node;
 
   manual_control_->setROSNode(parent_node);
+  if (map_visualization_manager_)
+  {
+    map_visualization_manager_->setROSNode(parent_node);
+  }
 
   cb_group_ = parent_node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
@@ -117,13 +121,10 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
 
     qInfo() << "[RobotManager::selectRobot] Selected robot:" << normalized_identifier << "Type:" << (is_namespace ? "namespace" : "node name");
 
-    // Store robot configuration in MapManager
-    auto& map_manager = ROBOGait::map::manager::MapManager::getInstance();
-
-    if (map_manager.isInitialized())
+    // Update map visualization for new robot
+    if (map_visualization_manager_)
     {
-      map_manager.setSelectedRobot(normalized_identifier, is_namespace);
-      qInfo() << "[RobotManager::selectRobot] MapManager configuration updated";
+      map_visualization_manager_->setSelectedRobot(normalized_identifier, is_namespace);
     }
 
     if (use_topic_filter_)
@@ -149,11 +150,10 @@ void RobotManager::clearSelection()
     emit selectedRobotNamespaceChanged();
     emit selectedRobotDisplayNameChanged();
 
-    auto& map_manager = ROBOGait::map::manager::MapManager::getInstance();
-
-    if (map_manager.isInitialized())
+    // Destroy map visualization subscriptions
+    if (map_visualization_manager_)
     {
-      map_manager.destroySubscriptions();
+      map_visualization_manager_->destroySubscriptions();
     }
   }
 }
@@ -165,6 +165,8 @@ void RobotManager::setUseNamespaceDiscovery(bool use_namespace_discovery)
     use_namespace_discovery_ = use_namespace_discovery;
   }
 }
+
+bool RobotManager::getUseNamespaceDiscovery() const { return use_namespace_discovery_; }
 
 void RobotManager::setUseTopicFilter(bool use_topic_filter)
 {
@@ -220,6 +222,25 @@ QString RobotManager::buildTopicName(const QString& topic_suffix) const
 }
 
 ROBOGait::robot::control::ManualControl* RobotManager::getManualControl() const { return manual_control_.get(); }
+
+ROBOGait::map::manager::MapVisualizationManager* RobotManager::getMapVisualizationManager()
+{
+  if (!map_visualization_manager_)
+  {
+    map_visualization_manager_ = std::make_unique<ROBOGait::map::manager::MapVisualizationManager>();
+
+    if (parent_node_)
+    {
+      map_visualization_manager_->setROSNode(parent_node_);
+      if (!selected_robot_namespace_.isEmpty())
+      {
+        map_visualization_manager_->setSelectedRobot(selected_robot_namespace_, use_namespace_discovery_);
+      }
+    }
+  }
+
+  return map_visualization_manager_.get();
+}
 
 void RobotManager::enableManualControl()
 {

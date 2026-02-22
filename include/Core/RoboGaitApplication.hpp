@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QGuiApplication>
+#include <QApplication>
 #include <QLocale>
 #include <QQmlApplicationEngine>
 #include <QString>
@@ -21,9 +21,12 @@ namespace core
  * @brief Main application class for RoboGait GUI
  *
  * This class manages the application lifecycle, initializes all subsystems,
- * and provides access to core managers and services
+ * and provides access to core managers and services.
+ *
+ * Note: Uses QApplication (not QGuiApplication) to support Qt Widgets
+ * (QGraphicsView/QGraphicsScene) for map visualization.
  */
-class RoboGaitApplication : public QGuiApplication
+class RoboGaitApplication : public QApplication
 {
   Q_OBJECT
 

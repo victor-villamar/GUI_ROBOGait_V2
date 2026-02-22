@@ -5,38 +5,20 @@ MapViewForm {
     id: root
 
     property real maxLinearVelocity: 0.22
-    readonly property real zoomStep: 0.2
-    readonly property real minZoom: 0.5
-    readonly property real maxZoom: 5.0
 
-    // Bind to MapManager properties
-    mapAvailable: (userSession.rosManager && userSession.rosManager.mapManager)
-                  ? userSession.rosManager.mapManager.mapAvailable
+    // Bind to MapVisualizationManager properties
+    mapAvailable: (userSession.rosManager &&
+                   userSession.rosManager.robotManager &&
+                   userSession.rosManager.robotManager.mapVisualizationManager)
+                  ? userSession.rosManager.robotManager.mapVisualizationManager.mapAvailable
                   : false
 
-    mapWidth: (userSession.rosManager && userSession.rosManager.mapManager)
-              ? userSession.rosManager.mapManager.mapWidth
-              : 0
-
-    mapHeight: (userSession.rosManager && userSession.rosManager.mapManager)
-               ? userSession.rosManager.mapManager.mapHeight
-               : 0
-
-    mapResolution: (userSession.rosManager && userSession.rosManager.mapManager)
-                   ? userSession.rosManager.mapManager.mapResolution
-                   : 0.0
-
-    robotScreenPos: (userSession.rosManager && userSession.rosManager.mapManager)
-                    ? userSession.rosManager.mapManager.robotScreenPos
-                    : Qt.point(0, 0)
-
-    robotScreenRotation: (userSession.rosManager && userSession.rosManager.mapManager)
-                         ? userSession.rosManager.mapManager.robotScreenRotation
-                         : 0.0
-
-    robotPoseAvailable: (userSession.rosManager && userSession.rosManager.mapManager)
-                        ? userSession.rosManager.mapManager.robotPoseAvailable
-                        : false
+    // Robot pose availability for UI 
+    robotPoseAvailable: (userSession.rosManager &&
+                        userSession.rosManager.robotManager &&
+                        userSession.rosManager.robotManager.mapVisualizationManager)
+                       ? userSession.rosManager.robotManager.mapVisualizationManager.robotPoseAvailable
+                       : false
 
     // Bind to ManualControl properties
     linearValue: (userSession.rosManager && userSession.rosManager.robotManager && userSession.rosManager.robotManager.manualControl)
@@ -55,36 +37,23 @@ MapViewForm {
         return raw * (maxLinearVelocity / maxNormalized)
     }
 
-    function fitToView() {
-        // Reset zoom and pan
-        zoomLevel = 1.0
-        panX = 0
-        panY = 0
-    }
-
-    function zoomIn() {
-        var newZoom = zoomLevel + zoomStep
-        zoomLevel = Math.min(maxZoom, newZoom)
-    }
-
-    function zoomOut() {
-        var newZoom = zoomLevel - zoomStep
-        zoomLevel = Math.max(minZoom, newZoom)
-    }
-
     Component.onCompleted: {
         
-        if (!userSession.rosManager || !userSession.rosManager.mapManager) {
+        if (!userSession.rosManager || !userSession.rosManager.robotManager) {
             return
         }
 
-        if (!userSession.rosManager.robotManager || !userSession.rosManager.robotManager.selectedRobotNamespace) {
+        var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
+        if (!mapVizManager) {
             return
         }
 
-        // Activate MapManager subscriptions
-        userSession.rosManager.mapManager.activateSubscriptions()
-        console.log("[MapView] MapManager subscriptions activated")
+        if (!userSession.rosManager.robotManager.selectedRobotNamespace) {
+            return
+        }
+
+        // Activate MapVisualizationManager subscriptions
+        mapVizManager.activateSubscriptions()
 
         // Enable manual control
         if (userSession.rosManager && userSession.rosManager.robotManager) {
@@ -93,27 +62,13 @@ MapViewForm {
     }
 
     Component.onDestruction: {        
-        if (userSession.rosManager && userSession.rosManager.mapManager) {
-            userSession.rosManager.mapManager.destroySubscriptions()
-        }
-
         if (userSession.rosManager && userSession.rosManager.robotManager) {
-            userSession.rosManager.robotManager.disableManualControl()
-        }
-    }
-
-    // Update map image when it changes
-    // TODO: implement map image update
-    Connections {
-        target: userSession.rosManager && userSession.rosManager.mapManager 
-                ? userSession.rosManager.mapManager 
-                : null
-
-        function onMapImageChanged() {
-            if (userSession.rosManager && userSession.rosManager.mapManager) {
-                mapImage.source = ""
-                mapImage.source = "image://mapimage/" + Date.now()
+            var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
+            if (mapVizManager) {
+                mapVizManager.destroySubscriptions()
             }
+
+            userSession.rosManager.robotManager.disableManualControl()
         }
     }
 
@@ -155,15 +110,14 @@ MapViewForm {
     }
 
     zoomInButton.onClicked: {
-        zoomIn()
+        mapRenderWidget.zoomIn()
     }
 
     zoomOutButton.onClicked: {
-        zoomOut()
+        mapRenderWidget.zoomOut()
     }
 
     fitButton.onClicked: {
-        fitToView()
+        mapRenderWidget.fitToView()
     }
-
 }

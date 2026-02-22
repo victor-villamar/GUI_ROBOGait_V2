@@ -12,7 +12,7 @@
 
 #include "Core/RoboGaitApplication.hpp"
 #include "Loader/YamlLoader.hpp"
-#include "Map/MapImageProvider.hpp"
+#include "Map/Rendering/MapRenderWidget.hpp"
 #include "Robot/ManualControl.hpp"
 #include "Robot/RobotDiscovery.hpp"
 #include "Robot/RobotManager.hpp"
@@ -23,7 +23,7 @@ using namespace ROBOGait::core;
 RoboGaitApplication* RoboGaitApplication::app_instance_ = nullptr;
 
 RoboGaitApplication::RoboGaitApplication(int& argc, char* argv[]) :
-    QGuiApplication(argc, argv), ros_node_manager_(nullptr), user_session_(nullptr), qml_app_engine_(nullptr), translator_(), argc_(argc), argv_(argv)
+    QApplication(argc, argv), ros_node_manager_(nullptr), user_session_(nullptr), qml_app_engine_(nullptr), translator_(), argc_(argc), argv_(argv)
 {
   qInfo() << "************************ ROBOGait GUI ******************************";
 
@@ -52,6 +52,7 @@ RoboGaitApplication::~RoboGaitApplication()
 void RoboGaitApplication::initCommon()
 {
   qmlRegisterUncreatableType<ROBOGait::robot::discovery::RobotDiscovery>("RobotDiscovery", 1, 0, "RobotDiscovery", "Enums Only");
+  qmlRegisterType<ROBOGait::map::rendering::MapRenderWidget>("MapRendering", 1, 0, "MapRenderWidget");
   qRegisterMetaType<geometry_msgs::msg::Twist>("geometry_msgs::msg::Twist");
 
   qInfo() << "[RoboGaitApplication::initCommon] QML types and metatypes registered";
@@ -135,6 +136,9 @@ bool RoboGaitApplication::initialize()
 
 bool RoboGaitApplication::initForNormalAppBoot()
 {
+  // Needed to avoid cross-thread QBasicTimer
+  qputenv("QSG_RENDER_LOOP", "basic");
+
   qml_app_engine_ = new QQmlApplicationEngine(this);
 
   setupQmlContext();
@@ -241,7 +245,6 @@ void RoboGaitApplication::setupQmlContext()
   qml_app_engine_->rootContext()->setContextProperty("userSession", user_session_.get());
   qml_app_engine_->rootContext()->setContextProperty("dbManager", databaseManager());
   qml_app_engine_->rootContext()->setContextProperty("developerSettings", developerSettings());
-  qml_app_engine_->addImageProvider("mapimage", new ROBOGait::map::provider::MapImageProvider());
 
   qInfo() << "[RoboGaitApplication::setupQmlContext] QML context properties set";
 }
