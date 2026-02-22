@@ -7,31 +7,35 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include "Context/RobotContext.hpp"
+
 namespace ROBOGait
 {
 namespace map
+{
+namespace data
 {
 
 /**
  * @brief Class to store and manage robot pose (position and orientation)
  */
-class RobotPose
+class RobotPoseData
 {
 public:
   /**
-   * @brief Constructor of RobotPose class
+   * @brief Constructor of RobotPoseData class
    *
    * @param parent_node Pointer to parent ROS2 node
    * @param map_frame TF frame for the map (default: "map")
    * @param robot_frame TF frame for the robot base (default: "base_link")
    * @param update_rate Update frequency in Hz (default: 10.0)
    */
-  RobotPose(rclcpp::Node* parent_node, const std::string& map_frame = "map", const std::string& robot_frame = "base_link", double update_rate = 10.0);
+  RobotPoseData(rclcpp::Node* parent_node, const std::string& map_frame = "map", const std::string& robot_frame = "base_link", double update_rate = 10.0);
 
   /**
-   * @brief Destructor of RobotPose class
+   * @brief Destructor of RobotPoseData class
    */
-  ~RobotPose();
+  ~RobotPoseData();
 
   /**
    * @brief Get robot X position in map frame
@@ -66,6 +70,18 @@ public:
    */
   void reset();
 
+  /**
+   * @brief Provide robot context for frame resolution
+   *
+   * @param context Robot context with namespace info
+   */
+  void setRobotContext(const ROBOGait::context::RobotContext& context);
+
+  /**
+   * @brief Check if a context has been provided
+   */
+  bool hasRobotContext() const { return has_context_; }
+
 private:
   /**
    * @brief Timer callback to update pose from TF
@@ -85,7 +101,11 @@ private:
   double theta_;      /**< Robot orientation in radians (map frame) */
   bool is_available_; /**< Flag indicating if pose has been received */
   bool warn_logged_;  /**< Flag to avoid spamming warnings */
+
+  ROBOGait::context::RobotContext context_; /**< Robot context for frame resolution */
+  bool has_context_;                        /**< Flag indicating if context is set */
 };
 
+} // namespace data
 } // namespace map
 } // namespace ROBOGait

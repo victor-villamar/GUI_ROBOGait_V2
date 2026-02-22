@@ -6,9 +6,13 @@
 #include <stdint.h>
 #include <vector>
 
+#include "Context/RobotContext.hpp"
+
 namespace ROBOGait
 {
 namespace map
+{
+namespace data
 {
 
 /**
@@ -42,18 +46,18 @@ struct MapMetadata
  * - 100 = occupied (rendered as black)
  * - 1-99 = probability of occupation (rendered as gradient)
  */
-class MapData
+class MapLayerData
 {
 public:
   /**
-   * @brief Constructor of MapData class
+   * @brief Constructor of MapLayerDatarData class
    */
-  MapData();
+  MapLayerData();
 
   /**
-   * @brief Destructor of MapData class
+   * @brief Destructor of MapLayerDatarData class
    */
-  ~MapData() = default;
+  ~MapLayerData() = default;
 
   /**
    * @brief Update map data from ROS2 OccupancyGrid message
@@ -95,6 +99,34 @@ public:
    */
   bool isAvailable() const;
 
+  /**
+   * @brief Provide robot context for topic resolution
+   *
+   * @param context Robot context with namespace info
+   */
+  void setRobotContext(const ROBOGait::context::RobotContext& context);
+
+  /**
+   * @brief Check if a context has been provided
+   *
+   * @return true if context is set, false otherwise
+   */
+  bool hasRobotContext() const;
+
+  /**
+   * @brief Get the map topic using the stored context
+   *
+   * @return Fully qualified map topic name
+   */
+  std::string mapTopic() const;
+
+  /**
+   * @brief Resolve the map updates topic using the stored context
+   *
+   * @return Fully qualified map updates topic name
+   */
+  std::string mapUpdatesTopic() const;
+
 private:
   /**
    * @brief Regenerate QImage from occupancy data
@@ -107,7 +139,11 @@ private:
   QImage cached_image_;                /**< Cached converted image for performance */
   bool image_dirty_;                   /**< Flag indicating if image needs regeneration */
   bool is_available_;                  /**< Flag indicating if map data has been received */
+
+  ROBOGait::context::RobotContext context_; /**< Robot context for topic resolution */
+  bool has_context_;                        /**< Flag indicating if context is set */
 };
 
+} // namespace data
 } // namespace map
 } // namespace ROBOGait

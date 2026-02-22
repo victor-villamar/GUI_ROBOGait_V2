@@ -35,6 +35,7 @@ set(CMAKE_AUTORCC ON)
 
 # Set include directories
 set(HEADERS
+    include/Context/RobotContext.hpp
     include/Core/RoboGaitApplication.hpp
     include/DataBase/Common/DbErrors.hpp
     include/DataBase/Common/DbTypes.hpp
@@ -56,19 +57,20 @@ set(HEADERS
     include/Ros/TopicsName.hpp
     include/User/Patient.hpp
     include/User/UserSession.hpp
+    include/Map/Data/MapLayerData.hpp
+    include/Map/Data/RobotPoseData.hpp
     include/Map/Display/BaseDisplay.hpp
     include/Map/Display/MapDisplay.hpp
     include/Map/Display/RobotDisplay.hpp
     include/Map/Rendering/VisualizationManager.hpp
     include/Map/Rendering/MapRenderWidget.hpp
     include/Map/Utils/Utils.hpp
-    include/Map/MapData.hpp
     include/Map/MapVisualizationManager.hpp
-    include/Map/RobotPose.hpp
 )
 
 # Set source files
 set(SOURCES
+    src/Context/RobotContext.cpp
     src/Core/RoboGaitApplication.cpp
     src/DataBase/Common/DbErrors.cpp
     src/DataBase/Common/DbTypes.cpp
@@ -82,22 +84,22 @@ set(SOURCES
     src/DataBase/RoboGaitDb.cpp
     src/Loader/YamlLoader.cpp
     src/Settings/DeveloperSettings.cpp
-    src/main.cpp
     src/Robot/ManualControl.cpp
     src/Robot/RobotDiscovery.cpp
     src/Robot/RobotManager.cpp
     src/Ros/RosNodeManager.cpp
     src/User/Patient.cpp
     src/User/UserSession.cpp
+    src/Map/Data/MapLayerData.cpp
+    src/Map/Data/RobotPoseData.cpp
     src/Map/Display/BaseDisplay.cpp
     src/Map/Display/MapDisplay.cpp
     src/Map/Display/RobotDisplay.cpp
     src/Map/Rendering/VisualizationManager.cpp
     src/Map/Rendering/MapRenderWidget.cpp
     src/Map/Utils/Utils.cpp
-    src/Map/MapData.cpp
     src/Map/MapVisualizationManager.cpp
-    src/Map/RobotPose.cpp
+    src/main.cpp
 )
 
 # Set resource files
@@ -135,6 +137,7 @@ qt_add_resources(SOURCES
 # Include directories
 include_directories(
     include
+    include/Context
     include/Core
     include/DataBase
     include/DataBase/Common
@@ -144,8 +147,11 @@ include_directories(
     include/Ros
     include/Settings
     include/User
-    include/map
-    include/Map/utils
+    include/Map
+    include/Map/Data
+    include/Map/Display
+    include/Map/Rendering
+    include/Map/Utils
 
     ${rclcpp_INCLUDE_DIRS}
     ${geometry_msgs_INCLUDE_DIRS}

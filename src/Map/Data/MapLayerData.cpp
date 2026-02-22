@@ -2,18 +2,22 @@
 #include <algorithm>
 #include <cmath>
 
-#include "Map/MapData.hpp"
+#include "Map/Data/MapLayerData.hpp"
 #include "Map/Utils/Utils.hpp"
+#include "Ros/TopicsName.hpp"
 
-using namespace ROBOGait::map;
+using namespace ROBOGait::map::data;
 
-MapData::MapData() : image_dirty_(false), is_available_(false) { qInfo() << "[MapData::MapData] Map data handler initialized"; }
+MapLayerData::MapLayerData() : image_dirty_(false), is_available_(false), has_context_(false)
+{
+  qInfo() << "[MapLayerData::MapLayerData] Map data handler initialized";
+}
 
-void MapData::updateFromOccupancyGrid(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
+void MapLayerData::updateFromOccupancyGrid(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
   if (!msg)
   {
-    qCritical() << "[MapData::updateFromOccupancyGrid] Received null message pointer";
+    qCritical() << "[MapLayerData::updateFromOccupancyGrid] Received null message pointer";
     return;
   }
 
@@ -32,7 +36,7 @@ void MapData::updateFromOccupancyGrid(const nav_msgs::msg::OccupancyGrid::Shared
 
   if (msg->data.size() != expected_size)
   {
-    qCritical() << "[MapData::updateFromOccupancyGrid] Data size mismatch! Expected:" << expected_size << "Got:" << msg->data.size();
+    qCritical() << "[MapLayerData::updateFromOccupancyGrid] Data size mismatch! Expected:" << expected_size << "Got:" << msg->data.size();
     is_available_ = false;
     image_dirty_ = false;
     return;
@@ -50,17 +54,17 @@ void MapData::updateFromOccupancyGrid(const nav_msgs::msg::OccupancyGrid::Shared
   is_available_ = true;
 }
 
-void MapData::updateFromOccupancyGridUpdate(const map_msgs::msg::OccupancyGridUpdate::SharedPtr msg)
+void MapLayerData::updateFromOccupancyGridUpdate(const map_msgs::msg::OccupancyGridUpdate::SharedPtr msg)
 {
   if (!msg)
   {
-    qCritical() << "[MapData::updateFromOccupancyGridUpdate] Received null message pointer";
+    qCritical() << "[MapLayerData::updateFromOccupancyGridUpdate] Received null message pointer";
     return;
   }
 
   if (!is_available_)
   {
-    qWarning() << "[MapData::updateFromOccupancyGridUpdate] Cannot apply update: base map not initialized yet";
+    qWarning() << "[MapLayerData::updateFromOccupancyGridUpdate] Cannot apply update: base map not initialized yet";
     return;
   }
 
@@ -68,14 +72,14 @@ void MapData::updateFromOccupancyGridUpdate(const map_msgs::msg::OccupancyGridUp
   const size_t expected_size = static_cast<size_t>(msg->width) * static_cast<size_t>(msg->height);
   if (msg->data.size() != expected_size)
   {
-    qCritical() << "[MapData::updateFromOccupancyGridUpdate] Update data size mismatch! Expected:" << expected_size << "Got:" << msg->data.size();
+    qCritical() << "[MapLayerData::updateFromOccupancyGridUpdate] Update data size mismatch! Expected:" << expected_size << "Got:" << msg->data.size();
     return;
   }
 
   // Validate update region is within map bounds
   if (msg->x + msg->width > metadata_.width || msg->y + msg->height > metadata_.height)
   {
-    qCritical() << "[MapData::updateFromOccupancyGridUpdate] Update region out of bounds!"
+    qCritical() << "[MapLayerData::updateFromOccupancyGridUpdate] Update region out of bounds!"
                 << "Update region: [" << msg->x << "," << msg->y << "] size [" << msg->width << "x" << msg->height << "]"
                 << "Map size: [" << metadata_.width << "x" << metadata_.height << "]";
     return;
@@ -112,15 +116,15 @@ void MapData::updateFromOccupancyGridUpdate(const map_msgs::msg::OccupancyGridUp
   image_dirty_ = true;
 
   // DEBUG
-  // qDebug() << "[MapData::updateFromOccupancyGridUpdate] Applied incremental update:"
+  // qDebug() << "[MapLayerData::updateFromOccupancyGridUpdate] Applied incremental update:"
   //          << "region [" << msg->x << "," << msg->y << "] size [" << msg->width << "x" << msg->height << "]";
 }
 
-QImage MapData::toQImage()
+QImage MapLayerData::toQImage()
 {
   if (!is_available_)
   {
-    qWarning() << "[MapData::toQImage] Map data not available yet";
+    qWarning() << "[MapLayerData::toQImage] Map data not available yet";
     return QImage();
   }
 
@@ -133,7 +137,7 @@ QImage MapData::toQImage()
   return cached_image_;
 }
 
-void MapData::regenerateImage()
+void MapLayerData::regenerateImage()
 {
   uint32_t width = metadata_.width;
   uint32_t height = metadata_.height;
@@ -142,7 +146,7 @@ void MapData::regenerateImage()
 
   if (cached_image_.isNull())
   {
-    qCritical() << "[MapData::regenerateImage] Failed to create QImage";
+    qCritical() << "[MapLayerData::regenerateImage] Failed to create QImage";
     return;
   }
 
@@ -177,6 +181,36 @@ void MapData::regenerateImage()
   }
 }
 
-const MapMetadata& MapData::getMetadata() const { return metadata_; }
+const MapMetadata& MapLayerData::getMetadata() const { return metadata_; }
 
-bool MapData::isAvailable() const { return is_available_; }
+bool MapLayerData::isAvailable() const { return is_available_; }
+
+void MapLayerData::setRobotContext(const ROBOGait::context::RobotContext& context)
+{
+  context_ = context;
+  has_context_ = true;
+}
+
+bool MapLayerData::hasRobotContext() const { return has_context_; }
+
+std::string MapLayerData::mapTopic() const
+{
+  const std::string base = std::string(T_MAP);
+  if (!has_context_)
+  {
+    return base;
+  }
+
+  return context_.resolveTopic(base);
+}
+
+std::string MapLayerData::mapUpdatesTopic() const
+{
+  const std::string base = std::string(T_MAP_UPDATES);
+  if (!has_context_)
+  {
+    return base;
+  }
+
+  return context_.resolveTopic(base);
+}
