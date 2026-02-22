@@ -146,7 +146,6 @@ void MapData::regenerateImage()
     return;
   }
 
-  // Convert occupancy data to RGB
   for (uint32_t y = 0; y < height; ++y)
   {
     for (uint32_t x = 0; x < width; ++x)
@@ -161,23 +160,15 @@ void MapData::regenerateImage()
         // Unknown: gray
         color = qRgb(128, 128, 128);
       }
-      else if (occupancy == 0)
+      else if (occupancy < 50)
       {
         // Free space: white
         color = qRgb(255, 255, 255);
       }
-      else if (occupancy == 100)
+      else
       {
         // Occupied: black
         color = qRgb(0, 0, 0);
-      }
-      else
-      {
-        // Intermediate values: linear interpolation from white to black
-        // occupancy ranges from 1-99
-        // TODO: improve color mapping
-        const int gray_value = 255 - static_cast<int>((occupancy / 100.0) * 255);
-        color = qRgb(gray_value, gray_value, gray_value);
       }
 
       const uint32_t flipped_y = height - 1 - y;
@@ -185,50 +176,15 @@ void MapData::regenerateImage()
     }
   }
 
-  // DEBUG
-  // qDebug() << "[MapData::regenerateImage] Image regenerated successfully";
-}
-
-bool MapData::worldToPixel(double world_x, double world_y, int& pixel_x, int& pixel_y) const
-{
-  if (!is_available_)
+  // DEBUG: Save one snapshot to compare with RViz format
+  static bool snapshot_saved = false;
+  if (!snapshot_saved)
   {
-    qCritical() << "[MapData::worldToPixel] Map not available";
-    return false;
+    const QString snapshot_path = "/home/victor/Desktop/robogait_map.png";
+    const bool saved = cached_image_.save(snapshot_path);
+    qInfo() << "[MapData::regenerateImage] Snapshot saved:" << saved << snapshot_path;
+    snapshot_saved = true;
   }
-
-  const double dx = world_x - metadata_.origin_x;
-  const double dy = world_y - metadata_.origin_y;
-
-  // TODO: for now ignore rotation
-  pixel_x = static_cast<int>(std::round(dx / metadata_.resolution));
-  pixel_y = static_cast<int>(std::round(dy / metadata_.resolution));
-
-  // Check bounds
-  const bool in_bounds = (pixel_x >= 0 && pixel_x < static_cast<int>(metadata_.width) && pixel_y >= 0 && pixel_y < static_cast<int>(metadata_.height));
-
-  if (!in_bounds)
-  {
-    qWarning() << "[MapData::worldToPixel] Coordinates out of bounds:"
-               << "world(" << world_x << "," << world_y << ")"
-               << "-> pixel(" << pixel_x << "," << pixel_y << ")";
-  }
-
-  return in_bounds;
-}
-
-void MapData::pixelToWorld(int pixel_x, int pixel_y, double& world_x, double& world_y) const
-{
-  if (!is_available_)
-  {
-    qWarning() << "[MapData::pixelToWorld] Map not available";
-    world_x = 0.0;
-    world_y = 0.0;
-    return;
-  }
-
-  world_x = metadata_.origin_x + (pixel_x * metadata_.resolution);
-  world_y = metadata_.origin_y + (pixel_y * metadata_.resolution);
 }
 
 const MapMetadata& MapData::getMetadata() const { return metadata_; }

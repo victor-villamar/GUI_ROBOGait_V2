@@ -25,7 +25,8 @@ find_package(Qt6 REQUIRED COMPONENTS
     Quick
     VirtualKeyboard
     Network
-    Sql)
+    Sql
+    Widgets)
 
 # Enable Qt's automatic MOC, UIC and RCC
 set(CMAKE_AUTOUIC ON)
@@ -55,11 +56,15 @@ set(HEADERS
     include/Ros/TopicsName.hpp
     include/User/Patient.hpp
     include/User/UserSession.hpp
-    include/Map/MapData.hpp
-    include/Map/RobotPose.hpp
-    include/Map/MapManager.hpp
-    include/Map/MapImageProvider.hpp
+    include/Map/Display/BaseDisplay.hpp
+    include/Map/Display/MapDisplay.hpp
+    include/Map/Display/RobotDisplay.hpp
+    include/Map/Rendering/VisualizationManager.hpp
+    include/Map/Rendering/MapRenderWidget.hpp
     include/Map/Utils/Utils.hpp
+    include/Map/MapData.hpp
+    include/Map/MapVisualizationManager.hpp
+    include/Map/RobotPose.hpp
 )
 
 # Set source files
@@ -84,11 +89,15 @@ set(SOURCES
     src/Ros/RosNodeManager.cpp
     src/User/Patient.cpp
     src/User/UserSession.cpp
-    src/Map/MapData.cpp
-    src/Map/RobotPose.cpp
-    src/Map/MapManager.cpp
-    src/Map/MapImageProvider.cpp
+    src/Map/Display/BaseDisplay.cpp
+    src/Map/Display/MapDisplay.cpp
+    src/Map/Display/RobotDisplay.cpp
+    src/Map/Rendering/VisualizationManager.cpp
+    src/Map/Rendering/MapRenderWidget.cpp
     src/Map/Utils/Utils.cpp
+    src/Map/MapData.cpp
+    src/Map/MapVisualizationManager.cpp
+    src/Map/RobotPose.cpp
 )
 
 # Set resource files
@@ -115,6 +124,7 @@ set(QT_LIBS
     Qt6::Network
     Qt6::Sql
     Qt6::VirtualKeyboard
+    Qt6::Widgets
 )
 
 # Add Qt resources

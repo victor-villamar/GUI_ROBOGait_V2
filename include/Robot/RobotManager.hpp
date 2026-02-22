@@ -9,6 +9,7 @@
 #include <rclcpp/timer.hpp>
 #include <std_msgs/msg/string.hpp>
 
+#include "Map/MapVisualizationManager.hpp"
 #include "Robot/ManualControl.hpp"
 
 namespace ROBOGait
@@ -45,6 +46,10 @@ public:
              READ getManualControl
              CONSTANT
   )
+  Q_PROPERTY(ROBOGait::map::manager::MapVisualizationManager* mapVisualizationManager
+             READ getMapVisualizationManager
+             CONSTANT
+  )
   // clang-format on
 
   /**
@@ -61,6 +66,13 @@ public:
    * @brief Get the manual control instance
    */
   ROBOGait::robot::control::ManualControl* getManualControl() const;
+
+  /**
+   * @brief Get the map visualization manager instance
+   *
+   * Creates the manager on first access
+   */
+  ROBOGait::map::manager::MapVisualizationManager* getMapVisualizationManager();
 
   /**
    * @brief Set the ROS node for the RobotManager
@@ -88,6 +100,13 @@ public:
    * @param use_namespace_discovery True to use namespace, false to use node name
    */
   void setUseNamespaceDiscovery(bool use_namespace_discovery);
+
+  /**
+   * @brief Get whether namespace-based topic construction is enabled
+   *
+   * @return True if using namespace, false if using node name
+   */
+  bool getUseNamespaceDiscovery() const;
 
   /**
    * @brief Set whether to use topic filter for monitoring
@@ -159,7 +178,8 @@ private:
 
   rclcpp::Node* parent_node_; /**< Pointer to the parent ROS node */
 
-  std::unique_ptr<ROBOGait::robot::control::ManualControl> manual_control_; /**< Manual control instance */
+  std::unique_ptr<ROBOGait::robot::control::ManualControl> manual_control_;                    /**< Manual control instance */
+  std::unique_ptr<ROBOGait::map::manager::MapVisualizationManager> map_visualization_manager_; /**< Map visualization manager */
 
   QString selected_robot_namespace_; /**< The namespace of the selected robot */
   bool use_namespace_discovery_;     /**< True if selected robot is identified by namespace, false if by node name */
