@@ -1,10 +1,13 @@
 #pragma once
 
-#include <QImage>
-#include <map_msgs/msg/occupancy_grid_update.hpp>
-#include <nav_msgs/msg/occupancy_grid.hpp>
 #include <stdint.h>
 #include <vector>
+
+#include <QImage>
+#include <QMutex>
+
+#include <map_msgs/msg/occupancy_grid_update.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include "Context/RobotContext.hpp"
 
@@ -16,28 +19,6 @@ namespace data
 {
 
 /**
- * @brief Map metadata
- *
- * @param resolution Map resolution in meters per pixel
- * @param width Map width in cells
- * @param height Map height in cells
- * @param origin_x Map origin X coordinate in meters (map frame)
- * @param origin_y Map origin Y coordinate in meters (map frame)
- * @param origin_theta Map origin rotation in radians
- */
-struct MapMetadata
-{
-  double resolution;   /**< Map resolution in meters per pixel */
-  uint32_t width;      /**< Map width in cells */
-  uint32_t height;     /**< Map height in cells */
-  double origin_x;     /**< Map origin X coordinate in meters (map frame) */
-  double origin_y;     /**< Map origin Y coordinate in meters (map frame) */
-  double origin_theta; /**< Map origin rotation in radians */
-
-  MapMetadata() : resolution(0.05), width(0), height(0), origin_x(0.0), origin_y(0.0), origin_theta(0.0) {}
-};
-
-/**
  * @brief Class to store and process occupancy grid map data
  *
  * Occupancy values:
@@ -46,18 +27,40 @@ struct MapMetadata
  * - 100 = occupied (rendered as black)
  * - 1-99 = probability of occupation (rendered as gradient)
  */
-class MapLayerData
+class MapData
 {
 public:
   /**
-   * @brief Constructor of MapLayerDatarData class
+   * @brief Map metadata
+   *
+   * @param resolution Map resolution in meters per pixel
+   * @param width Map width in cells
+   * @param height Map height in cells
+   * @param origin_x Map origin X coordinate in meters (map frame)
+   * @param origin_y Map origin Y coordinate in meters (map frame)
+   * @param origin_theta Map origin rotation in radians
    */
-  MapLayerData();
+  struct MapMetadata
+  {
+    double resolution;
+    uint32_t width;
+    uint32_t height;
+    double origin_x;
+    double origin_y;
+    double origin_theta;
+
+    MapMetadata() : resolution(0.05), width(0), height(0), origin_x(0.0), origin_y(0.0), origin_theta(0.0) {}
+  };
 
   /**
-   * @brief Destructor of MapLayerDatarData class
+   * @brief Constructor of MapData class
    */
-  ~MapLayerData() = default;
+  MapData();
+
+  /**
+   * @brief Destructor of MapData class
+   */
+  ~MapData() = default;
 
   /**
    * @brief Update map data from ROS2 OccupancyGrid message
@@ -88,9 +91,9 @@ public:
   /**
    * @brief Get current map metadata
    *
-   * @return Const reference to map metadata structure
+   * @return Map metadata structure
    */
-  const MapMetadata& getMetadata() const;
+  MapMetadata getMetadata() const;
 
   /**
    * @brief Check if map data is available
@@ -98,6 +101,13 @@ public:
    * @return true if map has been initialized with valid data, false otherwise
    */
   bool isAvailable() const;
+
+  /**
+   * @brief Get the data update stamp
+   *
+   * @return Monotonic counter incremented on each update
+   */
+  uint64_t getUpdateStamp() const;
 
   /**
    * @brief Provide robot context for topic resolution
@@ -139,6 +149,9 @@ private:
   QImage cached_image_;                /**< Cached converted image for performance */
   bool image_dirty_;                   /**< Flag indicating if image needs regeneration */
   bool is_available_;                  /**< Flag indicating if map data has been received */
+  uint64_t update_stamp_;              /**< Monotonic update counter */
+
+  mutable QMutex data_mutex_; /**< Protects map data and image */
 
   ROBOGait::context::RobotContext context_; /**< Robot context for topic resolution */
   bool has_context_;                        /**< Flag indicating if context is set */
