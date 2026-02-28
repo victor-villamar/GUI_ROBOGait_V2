@@ -48,6 +48,22 @@ set(HEADERS
     include/DataBase/DatabaseSchema.hpp
     include/DataBase/RoboGaitDb.hpp
     include/Loader/YamlLoader.hpp
+    include/Map/Data/MapData.hpp
+    include/Map/Data/RobotPoseData.hpp
+    include/Map/Items/MapLayerItem.hpp
+    include/Map/Items/RobotLayerItem.hpp
+    include/Map/Layer/LayerInterface.hpp
+    include/Map/Layer/MapLayer.hpp
+    include/Map/Layer/RobotLayer.hpp
+    include/Map/Rendering/RenderCamera.hpp
+    include/Map/Rendering/RenderPipeline.hpp
+    include/Map/Rendering/RenderScene.hpp
+    include/Map/Source/MapSource.hpp
+    include/Map/Source/RobotPoseSource.hpp
+    include/Map/Source/SourceInterface.hpp
+    include/Map/Subscribers/MapSubscriber.hpp
+    include/Map/Utils/Utils.hpp
+    include/Map/MapVisualizationManager.hpp
     include/Settings/DeveloperSettings.hpp
     include/Robot/ManualControl.hpp
     include/Robot/RobotDiscovery.hpp
@@ -57,15 +73,6 @@ set(HEADERS
     include/Ros/TopicsName.hpp
     include/User/Patient.hpp
     include/User/UserSession.hpp
-    include/Map/Data/MapLayerData.hpp
-    include/Map/Data/RobotPoseData.hpp
-    include/Map/Display/BaseDisplay.hpp
-    include/Map/Display/MapDisplay.hpp
-    include/Map/Display/RobotDisplay.hpp
-    include/Map/Rendering/VisualizationManager.hpp
-    include/Map/Rendering/MapRenderWidget.hpp
-    include/Map/Utils/Utils.hpp
-    include/Map/MapVisualizationManager.hpp
 )
 
 # Set source files
@@ -83,22 +90,27 @@ set(SOURCES
     src/DataBase/DatabaseSchema.cpp
     src/DataBase/RoboGaitDb.cpp
     src/Loader/YamlLoader.cpp
-    src/Settings/DeveloperSettings.cpp
+    src/Map/Data/MapData.cpp
+    src/Map/Data/RobotPoseData.cpp
+    src/Map/Items/MapLayerItem.cpp
+    src/Map/Items/RobotLayerItem.cpp
+    src/Map/Layer/MapLayer.cpp
+    src/Map/Layer/RobotLayer.cpp
+    src/Map/Rendering/RenderCamera.cpp
+    src/Map/Rendering/RenderPipeline.cpp
+    src/Map/Rendering/RenderScene.cpp
+    src/Map/Source/MapSource.cpp
+    src/Map/Source/RobotPoseSource.cpp
+    src/Map/Subscribers/MapSubscriber.cpp
+    src/Map/Utils/Utils.cpp
+    src/Map/MapVisualizationManager.cpp
     src/Robot/ManualControl.cpp
     src/Robot/RobotDiscovery.cpp
     src/Robot/RobotManager.cpp
     src/Ros/RosNodeManager.cpp
+    src/Settings/DeveloperSettings.cpp
     src/User/Patient.cpp
     src/User/UserSession.cpp
-    src/Map/Data/MapLayerData.cpp
-    src/Map/Data/RobotPoseData.cpp
-    src/Map/Display/BaseDisplay.cpp
-    src/Map/Display/MapDisplay.cpp
-    src/Map/Display/RobotDisplay.cpp
-    src/Map/Rendering/VisualizationManager.cpp
-    src/Map/Rendering/MapRenderWidget.cpp
-    src/Map/Utils/Utils.cpp
-    src/Map/MapVisualizationManager.cpp
     src/main.cpp
 )
 
@@ -143,15 +155,17 @@ include_directories(
     include/DataBase/Common
     include/DataBase/Repository
     include/Loader
+    include/Map
+    include/Map/Data
+    include/Map/Items
+    include/Map/Rendering
+    include/Map/Source
+    include/Map/Subscribers
+    include/Map/Utils
     include/Robot
     include/Ros
     include/Settings
     include/User
-    include/Map
-    include/Map/Data
-    include/Map/Display
-    include/Map/Rendering
-    include/Map/Utils
 
     ${rclcpp_INCLUDE_DIRS}
     ${geometry_msgs_INCLUDE_DIRS}

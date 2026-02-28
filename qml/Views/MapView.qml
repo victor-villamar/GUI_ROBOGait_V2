@@ -52,7 +52,6 @@ MapViewForm {
             return
         }
 
-        // Activate MapVisualizationManager subscriptions
         mapVizManager.activateSubscriptions()
 
         // Enable manual control
@@ -110,14 +109,26 @@ MapViewForm {
     }
 
     zoomInButton.onClicked: {
-        mapRenderWidget.zoomIn()
+        if (userSession.rosManager &&
+            userSession.rosManager.robotManager &&
+            userSession.rosManager.robotManager.mapVisualizationManager) {
+            userSession.rosManager.robotManager.mapVisualizationManager.zoomIn()
+        }
     }
 
     zoomOutButton.onClicked: {
-        mapRenderWidget.zoomOut()
+        if (userSession.rosManager &&
+            userSession.rosManager.robotManager &&
+            userSession.rosManager.robotManager.mapVisualizationManager) {
+            userSession.rosManager.robotManager.mapVisualizationManager.zoomOut()
+        }
     }
 
     fitButton.onClicked: {
-        mapRenderWidget.fitToView()
+        if (userSession.rosManager &&
+            userSession.rosManager.robotManager &&
+            userSession.rosManager.robotManager.mapVisualizationManager) {
+            userSession.rosManager.robotManager.mapVisualizationManager.fitToView()
+        }
     }
 }

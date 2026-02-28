@@ -17,7 +17,8 @@ Rectangle {
     property alias zoomInButton: zoomInButton
     property alias zoomOutButton: zoomOutButton
     property alias fitButton: fitButton
-    property alias mapRenderWidget: mapRenderWidget
+    property alias mapLayerItem: mapLayerItem
+    property alias robotLayerItem: robotLayerItem
 
     // Properties for map manager state
     property bool mapAvailable: false
@@ -29,10 +30,6 @@ Rectangle {
     property bool manualUnlocked: false
     property real linearValue: 0.0
     property real angularValue: 0.0
-
-    // Note: Zoom and pan removed - MapRenderWidget handles internally
-    // Note: Map dimensions removed - native widget handles sizing
-    // Note: Robot screen position removed - native widget renders robot directly
 
     ColumnLayout {
         anchors.fill: parent
@@ -101,20 +98,36 @@ Rectangle {
             border.width: 2
             clip: true
 
-            // MapRenderWidget - native QML integration
-            MapRenderWidget {
-                id: mapRenderWidget
+            MapLayerItem {
+                id: mapLayerItem
                 anchors.fill: parent
                 anchors.margins: 10
                 visible: mapAvailable
+                z: 1
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
                         userSession.rosManager.robotManager &&
                         userSession.rosManager.robotManager.mapVisualizationManager)
                     {
-                        var mapVizMgr = userSession.rosManager.robotManager.mapVisualizationManager
-                        mapVizMgr.registerMapRenderWidget(mapRenderWidget)
+                        userSession.rosManager.robotManager.mapVisualizationManager.registerMapLayerItem(mapLayerItem)
+                    }
+                }
+            }
+
+            RobotLayerItem {
+                id: robotLayerItem
+                anchors.fill: parent
+                anchors.margins: 10
+                visible: mapAvailable
+                z: 2
+
+                Component.onCompleted: {
+                    if (userSession.rosManager &&
+                        userSession.rosManager.robotManager &&
+                        userSession.rosManager.robotManager.mapVisualizationManager)
+                    {
+                        userSession.rosManager.robotManager.mapVisualizationManager.registerRobotLayerItem(robotLayerItem)
                     }
                 }
             }
