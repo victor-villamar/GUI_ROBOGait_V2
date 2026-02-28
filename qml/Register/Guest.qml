@@ -53,7 +53,11 @@ GuestForm {
             return
         }
 
-        dbManager.loginGuest(name)
+        var ok = userSession ? userSession.loginGuest(name) : false
+        if (!ok) {
+            showError(qsTr("Error: No se pudo iniciar sesión como invitado"))
+            return
+        }
         clear()
         authenticated()
     }

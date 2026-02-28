@@ -78,11 +78,7 @@ void ManualControl::updateVelocity(double linear, double angular)
   }
 }
 
-void ManualControl::stopRobot()
-{
-  qInfo() << "[ManualControl::stopRobot] Stopping robot";
-  updateVelocity(0.0, 0.0);
-}
+void ManualControl::stopRobot() { updateVelocity(0.0, 0.0); }
 
 double ManualControl::getLinearVelocity() const { return linear_velocity_; }
 

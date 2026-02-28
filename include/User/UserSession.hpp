@@ -281,6 +281,15 @@ public slots:
   Q_INVOKABLE bool loginUser(const QString& username, const QString& password);
 
   /**
+   * @brief Login as guest and setup user session
+   *
+   * @param display_name Display name for the guest session
+   *
+   * @return true if guest login successful, false otherwise
+   */
+  Q_INVOKABLE bool loginGuest(const QString& display_name);
+
+  /**
    * @brief Get patients list for current authenticated user
    *
    * @return QVariantList of patients associated with current user

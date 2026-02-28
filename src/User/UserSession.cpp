@@ -465,6 +465,26 @@ bool UserSession::loginUser(const QString& username, const QString& password)
   return login_success;
 }
 
+bool UserSession::loginGuest(const QString& display_name)
+{
+  if (!db_manager_)
+  {
+    qWarning() << "[UserSession::loginGuest] Database manager not available";
+    return false;
+  }
+
+  const QString trimmed = display_name.trimmed();
+  if (trimmed.isEmpty())
+  {
+    qWarning() << "[UserSession::loginGuest] Display name is empty";
+    return false;
+  }
+
+  db_manager_->loginGuest(trimmed);
+  authenticateUser(db_manager_->getUserId(), db_manager_->getUserName(), db_manager_->getDisplayName(), db_manager_->getUserRole());
+  return true;
+}
+
 QVariantList UserSession::getUserPatients()
 {
   if (!db_manager_)
