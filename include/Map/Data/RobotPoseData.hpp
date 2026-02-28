@@ -1,9 +1,12 @@
 #pragma once
 
 #include <memory>
+#include <string>
+
+#include <QMutex>
+
 #include <rclcpp/node.hpp>
 #include <rclcpp/timer.hpp>
-#include <string>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -28,9 +31,8 @@ public:
    * @param parent_node Pointer to parent ROS2 node
    * @param map_frame TF frame for the map (default: "map")
    * @param robot_frame TF frame for the robot base (default: "base_link")
-   * @param update_rate Update frequency in Hz (default: 10.0)
    */
-  RobotPoseData(rclcpp::Node* parent_node, const std::string& map_frame = "map", const std::string& robot_frame = "base_link", double update_rate = 10.0);
+  RobotPoseData(rclcpp::Node* parent_node, const std::string& map_frame = "map", const std::string& robot_frame = "base_link");
 
   /**
    * @brief Destructor of RobotPoseData class
@@ -66,6 +68,18 @@ public:
   bool isAvailable() const;
 
   /**
+   * @brief Enable or disable TF updates
+   *
+   * @param enabled true to enable updates, false to disable
+   */
+  void setEnabled(bool enabled);
+
+  /**
+   * @brief Check if TF updates are enabled
+   */
+  bool isEnabled() const;
+
+  /**
    * @brief Reset pose to default values (origin)
    */
   void reset();
@@ -82,6 +96,13 @@ public:
    */
   bool hasRobotContext() const { return has_context_; }
 
+  /**
+   * @brief Get the data update stamp
+   *
+   * @return Monotonic counter incremented on pose updates
+   */
+  uint64_t getUpdateStamp() const;
+
 private:
   /**
    * @brief Timer callback to update pose from TF
@@ -96,11 +117,15 @@ private:
   std::string map_frame_;   /**< Map frame name */
   std::string robot_frame_; /**< Robot base frame name */
 
-  double x_;          /**< Robot X position in meters (map frame) */
-  double y_;          /**< Robot Y position in meters (map frame) */
-  double theta_;      /**< Robot orientation in radians (map frame) */
-  bool is_available_; /**< Flag indicating if pose has been received */
-  bool warn_logged_;  /**< Flag to avoid spamming warnings */
+  double x_;              /**< Robot X position in meters (map frame) */
+  double y_;              /**< Robot Y position in meters (map frame) */
+  double theta_;          /**< Robot orientation in radians (map frame) */
+  bool is_available_;     /**< Flag indicating if pose has been received */
+  bool warn_logged_;      /**< Flag to avoid spamming warnings */
+  uint64_t update_stamp_; /**< Monotonic update counter */
+  bool enabled_;          /**< Whether TF updates are enabled */
+
+  mutable QMutex data_mutex_; /**< Protects pose data */
 
   ROBOGait::context::RobotContext context_; /**< Robot context for frame resolution */
   bool has_context_;                        /**< Flag indicating if context is set */
