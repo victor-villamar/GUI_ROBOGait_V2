@@ -46,6 +46,11 @@ class MapVisualizationManager : public QObject
   Q_PROPERTY(double zoomLevel
              READ getZoomLevel
              NOTIFY zoomLevelChanged)
+
+  Q_PROPERTY(bool followRobot
+             READ isFollowingRobot
+             WRITE setFollowRobot
+             NOTIFY followRobotChanged)
   // clang-format on
 
 public:
@@ -97,6 +102,15 @@ public:
    */
   double getZoomLevel() const;
 
+  bool isFollowingRobot() const;
+
+  /**
+   * @brief Set whether the camera follows the robot
+   *
+   * @param follow_robot True to enable following, false to disable
+   */
+  void setFollowRobot(bool follow_robot);
+
   Q_INVOKABLE void activateSubscriptions();
   Q_INVOKABLE void destroySubscriptions();
 
@@ -137,11 +151,13 @@ signals:
   void mapAvailableChanged();       // Emitted when map availability changes
   void robotPoseAvailableChanged(); // Emitted when robot pose availability changes
   void zoomLevelChanged();          // Emitted when zoom level changes
+  void followRobotChanged();        // Emitted when follow mode changes
 
 private:
   void createLayers();
   void destroyLayers();
   void updateAvailability();
+  void updateFollowRobotCamera();
 
   rclcpp::Node* parent_node_; /**< Parent ROS node pointer */
 
@@ -162,6 +178,7 @@ private:
   bool map_available_cache_;         /**< Cached map availability state */
   bool robot_pose_available_cache_;  /**< Cached robot pose availability state */
   double robot_size_;                /**< Robot diameter used for rendering (meters) */
+  bool follow_robot_;                /**< Whether the camera follows the robot */
 };
 
 } // namespace manager

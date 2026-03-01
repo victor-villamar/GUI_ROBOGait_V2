@@ -1,4 +1,5 @@
 #include <QDebug>
+#include <QPointF>
 #include <QRectF>
 
 #include "Context/RobotContext.hpp"
@@ -21,7 +22,8 @@ MapVisualizationManager::MapVisualizationManager() :
     subscriptions_active_(false),
     map_available_cache_(false),
     robot_pose_available_cache_(false),
-    robot_size_(0.5)
+    robot_size_(0.5),
+    follow_robot_(false)
 {
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
 
@@ -132,6 +134,37 @@ void MapVisualizationManager::setSelectedRobot(const QString& robot_identifier, 
   createLayers();
 }
 
+bool MapVisualizationManager::isInitialized() const { return is_initialized_; }
+
+bool MapVisualizationManager::isMapAvailable() const { return map_source_ && map_source_->isAvailable(); }
+
+bool MapVisualizationManager::isRobotPoseAvailable() const { return pose_source_ && pose_source_->isAvailable(); }
+
+double MapVisualizationManager::getZoomLevel() const
+{
+  if (!render_camera_)
+  {
+    qWarning() << "[MapVisualizationManager::getZoomLevel] Render camera not available";
+    return 1.0;
+  }
+
+  return render_camera_->getZoom();
+}
+
+bool MapVisualizationManager::isFollowingRobot() const { return follow_robot_; }
+
+void MapVisualizationManager::setFollowRobot(bool follow_robot)
+{
+
+  if (follow_robot_ != follow_robot)
+  {
+
+    follow_robot_ = follow_robot;
+    emit followRobotChanged();
+    updateFollowRobotCamera();
+  }
+}
+
 void MapVisualizationManager::activateSubscriptions()
 {
   if (!is_initialized_)
@@ -192,103 +225,6 @@ void MapVisualizationManager::destroySubscriptions()
   subscriptions_active_ = false;
 
   qInfo() << "[MapVisualizationManager::destroySubscriptions] Subscriptions destroyed";
-}
-
-bool MapVisualizationManager::isInitialized() const { return is_initialized_; }
-
-bool MapVisualizationManager::isMapAvailable() const { return map_source_ && map_source_->isAvailable(); }
-
-bool MapVisualizationManager::isRobotPoseAvailable() const { return pose_source_ && pose_source_->isAvailable(); }
-
-double MapVisualizationManager::getZoomLevel() const
-{
-  if (!render_camera_)
-  {
-    qWarning() << "[MapVisualizationManager::getZoomLevel] Render camera not available";
-    return 1.0;
-  }
-
-  return render_camera_->getZoom();
-}
-
-void MapVisualizationManager::createLayers()
-{
-  if (!is_initialized_)
-  {
-    qCritical() << "[MapVisualizationManager::createLayers] Not initialized";
-    return;
-  }
-
-  if (!map_source_ || !pose_source_)
-  {
-    qCritical() << "[MapVisualizationManager::createLayers] Data sources not initialized";
-    return;
-  }
-
-  if (!render_scene_)
-  {
-    qCritical() << "[MapVisualizationManager::createLayers] Render scene not available";
-    return;
-  }
-
-  const auto map_data = map_source_->getMapData();
-  const auto pose_data = pose_source_->getRobotPoseData();
-
-  map_layer_ = std::make_shared<ROBOGait::map::layer::MapLayer>(map_data);
-
-  robot_layer_ = std::make_shared<ROBOGait::map::layer::RobotLayer>(pose_data);
-  robot_layer_->setRobotSize(robot_size_);
-
-  if (!map_layer_ || !robot_layer_)
-  {
-    qCritical() << "[MapVisualizationManager::createLayers] Failed to create render layers";
-    return;
-  }
-
-  render_scene_->setMapLayer(map_layer_);
-  render_scene_->setRobotLayer(robot_layer_);
-
-  updateAvailability();
-
-  qInfo() << "[MapVisualizationManager::createLayers] Layers created";
-}
-
-void MapVisualizationManager::destroyLayers()
-{
-  if (!map_layer_ && !robot_layer_)
-  {
-    qWarning() << "[MapVisualizationManager::destroyLayers] No layers to destroy";
-    return;
-  }
-
-  if (!render_scene_)
-  {
-    qWarning() << "[MapVisualizationManager::destroyLayers] Render scene not available, cannot properly disconnect layers from scene";
-    return;
-  }
-
-  render_scene_->stop();
-  render_scene_->setMapLayer(nullptr);
-  render_scene_->setRobotLayer(nullptr);
-
-  if (map_layer_item_)
-  {
-    map_layer_item_->setRenderer(nullptr);
-  }
-  if (robot_layer_item_)
-  {
-    robot_layer_item_->setRenderer(nullptr);
-  }
-
-  map_layer_.reset();
-  robot_layer_.reset();
-  map_available_cache_ = false;
-  robot_pose_available_cache_ = false;
-
-  emit mapAvailableChanged();
-  emit robotPoseAvailableChanged();
-
-  qInfo() << "[MapVisualizationManager::destroyLayers] Layers destroyed";
 }
 
 void MapVisualizationManager::registerMapLayerItem(QObject* item)
@@ -412,6 +348,7 @@ void MapVisualizationManager::zoomIn()
     return;
   }
 
+  setFollowRobot(false);
   render_camera_->zoomByFactor(1.1);
 
   emit zoomLevelChanged();
@@ -434,6 +371,7 @@ void MapVisualizationManager::zoomOut()
     return;
   }
 
+  setFollowRobot(false);
   render_camera_->zoomByFactor(1.0 / 1.1);
 
   emit zoomLevelChanged();
@@ -455,6 +393,7 @@ void MapVisualizationManager::fitToView()
     return;
   }
 
+  setFollowRobot(false);
   const auto metadata = map_layer_->getMapData()->getMetadata();
   const double width_m = static_cast<double>(metadata.width) * metadata.resolution;
   const double height_m = static_cast<double>(metadata.height) * metadata.resolution;
@@ -482,7 +421,91 @@ void MapVisualizationManager::fitToView()
   robot_layer_item_->update();
 }
 
-void MapVisualizationManager::onFrameReady() { updateAvailability(); }
+void MapVisualizationManager::onFrameReady()
+{
+  updateFollowRobotCamera();
+  updateAvailability();
+}
+
+void MapVisualizationManager::createLayers()
+{
+  if (!is_initialized_)
+  {
+    qCritical() << "[MapVisualizationManager::createLayers] Not initialized";
+    return;
+  }
+
+  if (!map_source_ || !pose_source_)
+  {
+    qCritical() << "[MapVisualizationManager::createLayers] Data sources not initialized";
+    return;
+  }
+
+  if (!render_scene_)
+  {
+    qCritical() << "[MapVisualizationManager::createLayers] Render scene not available";
+    return;
+  }
+
+  const auto map_data = map_source_->getMapData();
+  const auto pose_data = pose_source_->getRobotPoseData();
+
+  map_layer_ = std::make_shared<ROBOGait::map::layer::MapLayer>(map_data);
+
+  robot_layer_ = std::make_shared<ROBOGait::map::layer::RobotLayer>(pose_data);
+  robot_layer_->setRobotSize(robot_size_);
+
+  if (!map_layer_ || !robot_layer_)
+  {
+    qCritical() << "[MapVisualizationManager::createLayers] Failed to create render layers";
+    return;
+  }
+
+  render_scene_->setMapLayer(map_layer_);
+  render_scene_->setRobotLayer(robot_layer_);
+
+  updateAvailability();
+
+  qInfo() << "[MapVisualizationManager::createLayers] Layers created";
+}
+
+void MapVisualizationManager::destroyLayers()
+{
+  if (!map_layer_ && !robot_layer_)
+  {
+    qWarning() << "[MapVisualizationManager::destroyLayers] No layers to destroy";
+    return;
+  }
+
+  if (!render_scene_)
+  {
+    qWarning() << "[MapVisualizationManager::destroyLayers] Render scene not available, cannot properly disconnect layers from scene";
+    return;
+  }
+
+  render_scene_->stop();
+  render_scene_->setMapLayer(nullptr);
+  render_scene_->setRobotLayer(nullptr);
+
+  if (map_layer_item_)
+  {
+    map_layer_item_->setRenderer(nullptr);
+  }
+  if (robot_layer_item_)
+  {
+    robot_layer_item_->setRenderer(nullptr);
+  }
+
+  map_layer_.reset();
+  robot_layer_.reset();
+  map_available_cache_ = false;
+  robot_pose_available_cache_ = false;
+
+  emit mapAvailableChanged();
+  emit robotPoseAvailableChanged();
+
+  qInfo() << "[MapVisualizationManager::destroyLayers] Layers destroyed";
+}
 
 void MapVisualizationManager::updateAvailability()
 {
@@ -500,5 +523,30 @@ void MapVisualizationManager::updateAvailability()
   {
     robot_pose_available_cache_ = robot_available;
     emit robotPoseAvailableChanged();
+  }
+}
+
+void MapVisualizationManager::updateFollowRobotCamera()
+{
+  if (!follow_robot_)
+  {
+    return;
+  }
+
+  if (!robot_layer_ || !render_camera_)
+  {
+    qWarning() << "[MapVisualizationManager::updateFollowRobotCamera] Follow enabled but camera or robot layer not available";
+    return;
+  }
+
+  const auto pose = robot_layer_->getInterpolatedPose();
+  render_camera_->setViewCenter(QPointF(pose.x, -pose.y));
+  if (map_layer_item_)
+  {
+    map_layer_item_->update();
+  }
+  if (robot_layer_item_)
+  {
+    robot_layer_item_->update();
   }
 }

@@ -60,6 +60,7 @@ MapViewForm {
         }
 
         mapVizManager.activateSubscriptions()
+        followButton.checked = mapVizManager.followRobot
 
         // Enable manual control
         if (userSession.rosManager && userSession.rosManager.robotManager) {
@@ -119,6 +120,7 @@ MapViewForm {
         if (userSession.rosManager &&
             userSession.rosManager.robotManager &&
             userSession.rosManager.robotManager.mapVisualizationManager) {
+            userSession.rosManager.robotManager.mapVisualizationManager.followRobot = false
             userSession.rosManager.robotManager.mapVisualizationManager.zoomIn()
         }
     }
@@ -127,6 +129,7 @@ MapViewForm {
         if (userSession.rosManager &&
             userSession.rosManager.robotManager &&
             userSession.rosManager.robotManager.mapVisualizationManager) {
+            userSession.rosManager.robotManager.mapVisualizationManager.followRobot = false
             userSession.rosManager.robotManager.mapVisualizationManager.zoomOut()
         }
     }
@@ -135,7 +138,29 @@ MapViewForm {
         if (userSession.rosManager &&
             userSession.rosManager.robotManager &&
             userSession.rosManager.robotManager.mapVisualizationManager) {
+            userSession.rosManager.robotManager.mapVisualizationManager.followRobot = false
             userSession.rosManager.robotManager.mapVisualizationManager.fitToView()
+        }
+    }
+
+    followButton.onClicked: {
+        if (userSession.rosManager &&
+            userSession.rosManager.robotManager &&
+            userSession.rosManager.robotManager.mapVisualizationManager) {
+            var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
+            mapVizManager.followRobot = !mapVizManager.followRobot
+        }
+    }
+
+    Connections {
+        target: (userSession.rosManager &&
+                 userSession.rosManager.robotManager &&
+                 userSession.rosManager.robotManager.mapVisualizationManager)
+                ? userSession.rosManager.robotManager.mapVisualizationManager
+                : null
+
+        function onFollowRobotChanged() {
+            followButton.checked = target.followRobot
         }
     }
 }

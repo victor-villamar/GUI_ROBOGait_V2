@@ -17,6 +17,7 @@ Rectangle {
     property alias zoomInButton: zoomInButton
     property alias zoomOutButton: zoomOutButton
     property alias fitButton: fitButton
+    property alias followButton: followButton
     property alias mapLayerItem: mapLayerItem
     property alias robotLayerItem: robotLayerItem
 
@@ -354,6 +355,29 @@ Rectangle {
 
                     ToolTip.visible: hovered
                     ToolTip.text: qsTr("Ajustar a la vista")
+                }
+
+                Button {
+                    id: followButton
+                    Layout.preferredWidth: 50
+                    Layout.preferredHeight: 44
+                    checkable: true
+
+                    background: Rectangle {
+                        radius: 6
+                        color: followButton.checked ? "#1a3a4a" : "#3a7fa0"
+                        border.color: "#ffffff"
+                        border.width: 1
+                    }
+
+                    contentItem: Image {
+                        source: "qrc:/qmlresources/icons/center_view.svg"
+                        fillMode: Image.PreserveAspectFit
+                        smooth: true
+                    }
+
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Seguir robot")
                 }
 
                 Item {
