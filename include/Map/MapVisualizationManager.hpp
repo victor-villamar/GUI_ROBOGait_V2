@@ -161,6 +161,7 @@ private:
   bool subscriptions_active_;        /**< Subscriptions active flag */
   bool map_available_cache_;         /**< Cached map availability state */
   bool robot_pose_available_cache_;  /**< Cached robot pose availability state */
+  double robot_size_;                /**< Robot diameter used for rendering (meters) */
 };
 
 } // namespace manager

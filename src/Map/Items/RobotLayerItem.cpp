@@ -1,4 +1,5 @@
 #include <QDebug>
+#include <QMatrix4x4>
 #include <QSGFlatColorMaterial>
 #include <QSGTransformNode>
 #include <QtMath>
@@ -66,10 +67,22 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
     transform_node = new QSGTransformNode();
   }
 
+  QSGTransformNode* robot_node = nullptr;
   QSGGeometryNode* body_node = nullptr;
-  QSGGeometryNode* arrow_node = nullptr;
+  QSGGeometryNode* wheels_node = nullptr;
+  QSGGeometryNode* head_node = nullptr;
 
   if (!transform_node->firstChild())
+  {
+    robot_node = new QSGTransformNode();
+    transform_node->appendChildNode(robot_node);
+  }
+  else
+  {
+    robot_node = static_cast<QSGTransformNode*>(transform_node->firstChild());
+  }
+
+  if (!robot_node->firstChild())
   {
     body_node = new QSGGeometryNode();
     auto* body_geom = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), 0);
@@ -78,80 +91,92 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
     body_node->setFlag(QSGNode::OwnsGeometry);
 
     auto* body_mat = new QSGFlatColorMaterial();
-    body_mat->setColor(QColor(0, 120, 255, 180));
+    body_mat->setColor(QColor(75, 80, 86));
     body_node->setMaterial(body_mat);
     body_node->setFlag(QSGNode::OwnsMaterial);
-    transform_node->appendChildNode(body_node);
+    robot_node->appendChildNode(body_node);
 
-    arrow_node = new QSGGeometryNode();
-    auto* arrow_geom = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), 0);
-    arrow_geom->setDrawingMode(QSGGeometry::DrawTriangles);
-    arrow_node->setGeometry(arrow_geom);
-    arrow_node->setFlag(QSGNode::OwnsGeometry);
+    wheels_node = new QSGGeometryNode();
+    auto* wheels_geom = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), 0);
+    wheels_geom->setDrawingMode(QSGGeometry::DrawTriangles);
+    wheels_node->setGeometry(wheels_geom);
+    wheels_node->setFlag(QSGNode::OwnsGeometry);
 
-    auto* arrow_mat = new QSGFlatColorMaterial();
-    arrow_mat->setColor(QColor(255, 255, 0, 220));
-    arrow_node->setMaterial(arrow_mat);
-    arrow_node->setFlag(QSGNode::OwnsMaterial);
-    transform_node->appendChildNode(arrow_node);
+    auto* wheels_mat = new QSGFlatColorMaterial();
+    wheels_mat->setColor(QColor(21, 24, 31));
+    wheels_node->setMaterial(wheels_mat);
+    wheels_node->setFlag(QSGNode::OwnsMaterial);
+    robot_node->appendChildNode(wheels_node);
+
+    head_node = new QSGGeometryNode();
+    auto* head_geom = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), 0);
+    head_geom->setDrawingMode(QSGGeometry::DrawTriangles);
+    head_node->setGeometry(head_geom);
+    head_node->setFlag(QSGNode::OwnsGeometry);
+
+    auto* head_mat = new QSGFlatColorMaterial();
+    head_mat->setColor(QColor(220, 20, 20));
+    head_node->setMaterial(head_mat);
+    head_node->setFlag(QSGNode::OwnsMaterial);
+    robot_node->appendChildNode(head_node);
   }
   else
   {
-    body_node = static_cast<QSGGeometryNode*>(transform_node->firstChild());
-    arrow_node = static_cast<QSGGeometryNode*>(body_node->nextSibling());
+    body_node = static_cast<QSGGeometryNode*>(robot_node->firstChild());
+    wheels_node = static_cast<QSGGeometryNode*>(body_node->nextSibling());
+    head_node = static_cast<QSGGeometryNode*>(wheels_node->nextSibling());
   }
 
   const ROBOGait::map::layer::RobotLayer::Pose2D pose = robot_render_->getInterpolatedPose();
-  const double radius = robot_render_->getRobotSize() * 0.5;
-  const int segments = 20;
+  const double size = robot_render_->getRobotSize();
+  const double body_w = size * 0.72;
+  const double body_h = size * 0.48;
+  const double wheel_w = size * 0.2;
+  const double wheel_h = size * 0.1;
+  const double connector_w = wheel_w * 0.4;
+  const double head_w = size * 0.18;
+  const double head_h = size * 0.07;
 
-  const int body_vertex_count = segments * 3;
   QSGGeometry* body_geometry = body_node->geometry();
-  body_geometry->allocate(body_vertex_count);
+  body_geometry->allocate(6);
   auto* body_vertices = body_geometry->vertexDataAsPoint2D();
+  writeRect(body_vertices, 0, 0.0f, 0.0f, static_cast<float>(body_w), static_cast<float>(body_h));
 
-  const float cx = static_cast<float>(pose.x);
-  const float cy = static_cast<float>(-pose.y); // Match ROS -> Qt Y flip
+  QSGGeometry* wheels_geometry = wheels_node->geometry();
+  wheels_geometry->allocate(48);
+  auto* wheel_vertices = wheels_geometry->vertexDataAsPoint2D();
 
-  for (int i = 0; i < segments; ++i)
+  const float wheel_x = static_cast<float>(body_w * 0.3);
+  const float wheel_y = static_cast<float>(size * 0.5 - wheel_h * 0.5);
+
+  writeRect(wheel_vertices, 0, -wheel_x, wheel_y, static_cast<float>(wheel_w), static_cast<float>(wheel_h));
+  writeRect(wheel_vertices, 6, wheel_x, wheel_y, static_cast<float>(wheel_w), static_cast<float>(wheel_h));
+  writeRect(wheel_vertices, 12, -wheel_x, -wheel_y, static_cast<float>(wheel_w), static_cast<float>(wheel_h));
+  writeRect(wheel_vertices, 18, wheel_x, -wheel_y, static_cast<float>(wheel_w), static_cast<float>(wheel_h));
+
+  const float wheel_inner_y = static_cast<float>(wheel_y - (wheel_h * 0.5));
+  const float body_edge_y = static_cast<float>(body_h * 0.5);
+  float connector_h = wheel_inner_y - body_edge_y;
+  if (connector_h < 0.0f)
   {
-    const double a0 = (static_cast<double>(i) / segments) * 2.0 * M_PI;
-    const double a1 = (static_cast<double>(i + 1) / segments) * 2.0 * M_PI;
-
-    const float x0 = cx + static_cast<float>(std::cos(a0) * radius);
-    const float y0 = cy + static_cast<float>(std::sin(a0) * radius);
-    const float x1 = cx + static_cast<float>(std::cos(a1) * radius);
-    const float y1 = cy + static_cast<float>(std::sin(a1) * radius);
-
-    const int base = i * 3;
-    body_vertices[base + 0].set(cx, cy);
-    body_vertices[base + 1].set(x0, y0);
-    body_vertices[base + 2].set(x1, y1);
+    connector_h = 0.0f;
   }
+  const float connector_y = body_edge_y + (connector_h * 0.5f);
 
-  const double arrow_length = robot_render_->getRobotSize() * 0.6;
-  const double arrow_width = robot_render_->getRobotSize() * 0.3;
+  writeRect(wheel_vertices, 24, -wheel_x, connector_y, static_cast<float>(connector_w), connector_h);
+  writeRect(wheel_vertices, 30, wheel_x, connector_y, static_cast<float>(connector_w), connector_h);
+  writeRect(wheel_vertices, 36, -wheel_x, -connector_y, static_cast<float>(connector_w), connector_h);
+  writeRect(wheel_vertices, 42, wheel_x, -connector_y, static_cast<float>(connector_w), connector_h);
 
-  const double yaw = -pose.yaw; // Match ROS -> Qt rotation
-  const float tip_x = cx + static_cast<float>(std::cos(yaw) * arrow_length);
-  const float tip_y = cy + static_cast<float>(std::sin(yaw) * arrow_length);
-
-  const double left_angle = yaw + M_PI * 0.5;
-  const double right_angle = yaw - M_PI * 0.5;
-  const float left_x = cx + static_cast<float>(std::cos(left_angle) * (arrow_width * 0.5));
-  const float left_y = cy + static_cast<float>(std::sin(left_angle) * (arrow_width * 0.5));
-  const float right_x = cx + static_cast<float>(std::cos(right_angle) * (arrow_width * 0.5));
-  const float right_y = cy + static_cast<float>(std::sin(right_angle) * (arrow_width * 0.5));
-
-  QSGGeometry* arrow_geometry = arrow_node->geometry();
-  arrow_geometry->allocate(3);
-  auto* arrow_vertices = arrow_geometry->vertexDataAsPoint2D();
-  arrow_vertices[0].set(tip_x, tip_y);
-  arrow_vertices[1].set(left_x, left_y);
-  arrow_vertices[2].set(right_x, right_y);
+  QSGGeometry* head_geometry = head_node->geometry();
+  head_geometry->allocate(6);
+  auto* head_vertices = head_geometry->vertexDataAsPoint2D();
+  const float head_x = static_cast<float>(body_w * 0.5 - head_w * 0.5 - size * 0.02);
+  writeRect(head_vertices, 0, head_x, 0.0f, static_cast<float>(head_w), static_cast<float>(head_h));
 
   body_node->markDirty(QSGNode::DirtyGeometry);
-  arrow_node->markDirty(QSGNode::DirtyGeometry);
+  wheels_node->markDirty(QSGNode::DirtyGeometry);
+  head_node->markDirty(QSGNode::DirtyGeometry);
 
   if (camera_)
   {
@@ -159,7 +184,30 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
     transform_node->setMatrix(camera_->getMatrix());
   }
 
+  const float cx = static_cast<float>(pose.x);
+  const float cy = static_cast<float>(-pose.y); // Match ROS -> Qt Y flip
+  const double yaw = -pose.yaw;                 // Match ROS -> Qt rotation
+
+  QMatrix4x4 robot_matrix;
+  robot_matrix.translate(cx, cy);
+  robot_matrix.rotate(qRadiansToDegrees(yaw), 0.0f, 0.0f, 1.0f);
+  robot_node->setMatrix(robot_matrix);
+
   return transform_node;
 }
 
 void RobotLayerItem::onFrameReady() { update(); }
+
+void RobotLayerItem::writeRect(QSGGeometry::Point2D* vertices, int start, float cx, float cy, float w, float h)
+{
+  const float x0 = cx - w * 0.5f;
+  const float x1 = cx + w * 0.5f;
+  const float y0 = cy - h * 0.5f;
+  const float y1 = cy + h * 0.5f;
+  vertices[start + 0].set(x0, y0);
+  vertices[start + 1].set(x1, y0);
+  vertices[start + 2].set(x1, y1);
+  vertices[start + 3].set(x0, y0);
+  vertices[start + 4].set(x1, y1);
+  vertices[start + 5].set(x0, y1);
+}

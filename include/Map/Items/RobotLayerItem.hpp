@@ -64,6 +64,18 @@ private slots:
   void onFrameReady(); // Slot for frame ready signal
 
 private:
+  /**
+   * @brief Writes a rectangle to the given vertex buffer
+   *
+   * @param vertices The vertex buffer to write to
+   * @param start The starting index in the vertex buffer
+   * @param cx The center x-coordinate of the rectangle
+   * @param cy The center y-coordinate of the rectangle
+   * @param w The width of the rectangle
+   * @param h The height of the rectangle
+   */
+  static void writeRect(QSGGeometry::Point2D* vertices, int start, float cx, float cy, float w, float h);
+
   QPointer<ROBOGait::map::rendering::RenderPipeline> pipeline_;         /**< Render pipeline for the robot item */
   std::shared_ptr<ROBOGait::map::rendering::RenderScene> render_scene_; /**< Render scene for the robot item */
   std::shared_ptr<ROBOGait::map::layer::RobotLayer> robot_render_;      /**< Robot layer for the robot item */

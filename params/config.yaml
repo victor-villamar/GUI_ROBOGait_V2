@@ -10,3 +10,7 @@ ros2:
   domain_id: 0
   use_namespace_discovery: true
   use_topic_filter: true
+
+# Map Rendering Configuration
+map:
+  robot_size: 0.32 # turtlebot3 waffle

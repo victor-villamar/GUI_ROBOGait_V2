@@ -2,6 +2,7 @@
 #include <QRectF>
 
 #include "Context/RobotContext.hpp"
+#include "Loader/YamlLoader.hpp"
 #include "Map/MapVisualizationManager.hpp"
 
 using namespace ROBOGait::map::manager;
@@ -19,8 +20,29 @@ MapVisualizationManager::MapVisualizationManager() :
     is_initialized_(false),
     subscriptions_active_(false),
     map_available_cache_(false),
-    robot_pose_available_cache_(false)
+    robot_pose_available_cache_(false),
+    robot_size_(0.5)
 {
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  if (yaml_loader.isLoaded())
+  {
+    const double configured_size = yaml_loader.getValue<double>("map.robot_size", robot_size_);
+
+    if (configured_size > 0.0)
+    {
+      robot_size_ = configured_size;
+    }
+    else
+    {
+      qWarning() << "[MapVisualizationManager::MapVisualizationManager] Invalid map.robot_size (must be > 0), using default:" << robot_size_;
+    }
+  }
+  else
+  {
+    qWarning() << "[MapVisualizationManager::MapVisualizationManager] YAML not loaded, using default robot_size:" << robot_size_;
+  }
+
   if (render_scene_ && render_scene_->getPipeline())
   {
     // clang-format off
@@ -209,16 +231,13 @@ void MapVisualizationManager::createLayers()
     return;
   }
 
-  if (!map_layer_item_ || !robot_layer_item_)
-  {
-    qWarning() << "[MapVisualizationManager::createLayers] Layer items not registered yet, layers will be created but not displayed until items are registered";
-  }
-
   const auto map_data = map_source_->getMapData();
   const auto pose_data = pose_source_->getRobotPoseData();
 
   map_layer_ = std::make_shared<ROBOGait::map::layer::MapLayer>(map_data);
+
   robot_layer_ = std::make_shared<ROBOGait::map::layer::RobotLayer>(pose_data);
+  robot_layer_->setRobotSize(robot_size_);
 
   if (!map_layer_ || !robot_layer_)
   {
@@ -228,14 +247,6 @@ void MapVisualizationManager::createLayers()
 
   render_scene_->setMapLayer(map_layer_);
   render_scene_->setRobotLayer(robot_layer_);
-
-  map_layer_item_->setRenderScene(render_scene_);
-  map_layer_item_->setRenderer(map_layer_);
-  map_layer_item_->setCamera(render_camera_);
-
-  robot_layer_item_->setRenderScene(render_scene_);
-  robot_layer_item_->setRenderer(robot_layer_);
-  robot_layer_item_->setCamera(render_camera_);
 
   updateAvailability();
 
@@ -253,19 +264,21 @@ void MapVisualizationManager::destroyLayers()
   if (!render_scene_)
   {
     qWarning() << "[MapVisualizationManager::destroyLayers] Render scene not available, cannot properly disconnect layers from scene";
-  }
-
-  if (!map_layer_item_ || !robot_layer_item_)
-  {
-    qWarning() << "[MapVisualizationManager::destroyLayers] Layer items not available, cannot properly disconnect layers from items";
+    return;
   }
 
   render_scene_->stop();
   render_scene_->setMapLayer(nullptr);
   render_scene_->setRobotLayer(nullptr);
 
-  map_layer_item_->setRenderer(nullptr);
-  robot_layer_item_->setRenderer(nullptr);
+  if (map_layer_item_)
+  {
+    map_layer_item_->setRenderer(nullptr);
+  }
+  if (robot_layer_item_)
+  {
+    robot_layer_item_->setRenderer(nullptr);
+  }
 
   map_layer_.reset();
   robot_layer_.reset();
@@ -296,22 +309,41 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
 
   map_layer_item_ = layer_item;
 
-  if (render_scene_)
+  if (!map_layer_item_)
   {
-    map_layer_item_->setRenderScene(render_scene_);
+    qCritical() << "[MapVisualizationManager::registerMapLayerItem] Failed to register MapLayerItem";
+    return;
   }
-  if (map_layer_)
+
+  if (!render_scene_)
   {
-    map_layer_item_->setRenderer(map_layer_);
+    qCritical() << "[MapVisualizationManager::registerMapLayerItem] Render scene not available, cannot set render scene for MapLayerItem";
+    return;
   }
-  if (render_camera_)
+
+  if (!map_layer_)
   {
-    map_layer_item_->setCamera(render_camera_);
+    qCritical() << "[MapVisualizationManager::registerMapLayerItem] Map layer not available, cannot set renderer for MapLayerItem";
+    return;
   }
-  if (robot_layer_item_)
+
+  if (!render_camera_)
   {
-    map_layer_item_->setSyncItem(robot_layer_item_);
+    qCritical() << "[MapVisualizationManager::registerMapLayerItem] Render camera not available, cannot set camera for MapLayerItem";
+    return;
   }
+
+  if (!robot_layer_item_)
+  {
+    qWarning() << "[MapVisualizationManager::registerMapLayerItem] Robot layer item not registered yet, MapLayerItem will be registered without sync item "
+                  "until RobotLayerItem is registered";
+    return;
+  }
+
+  map_layer_item_->setRenderScene(render_scene_);
+  map_layer_item_->setRenderer(map_layer_);
+  map_layer_item_->setCamera(render_camera_);
+  map_layer_item_->setSyncItem(robot_layer_item_);
 
   qInfo() << "[MapVisualizationManager::registerMapLayerItem] Item registered";
 }
@@ -332,22 +364,34 @@ void MapVisualizationManager::registerRobotLayerItem(QObject* item)
   }
 
   robot_layer_item_ = layer_item;
-  if (render_scene_)
+
+  if (!robot_layer_item_)
   {
-    robot_layer_item_->setRenderScene(render_scene_);
+    qCritical() << "[MapVisualizationManager::registerRobotLayerItem] Failed to register RobotLayerItem";
+    return;
   }
-  if (robot_layer_)
+
+  if (!render_scene_)
   {
-    robot_layer_item_->setRenderer(robot_layer_);
+    qCritical() << "[MapVisualizationManager::registerRobotLayerItem] Render scene not available, cannot set render scene for RobotLayerItem";
+    return;
   }
-  if (render_camera_)
+
+  if (!robot_layer_)
   {
-    robot_layer_item_->setCamera(render_camera_);
+    qCritical() << "[MapVisualizationManager::registerRobotLayerItem] Robot layer not available, cannot set renderer for RobotLayerItem";
+    return;
   }
-  if (map_layer_item_)
+
+  if (!render_camera_)
   {
-    map_layer_item_->setSyncItem(robot_layer_item_);
+    qCritical() << "[MapVisualizationManager::registerRobotLayerItem] Render camera not available, cannot set camera for RobotLayerItem";
+    return;
   }
+
+  robot_layer_item_->setRenderScene(render_scene_);
+  robot_layer_item_->setRenderer(robot_layer_);
+  robot_layer_item_->setCamera(render_camera_);
 
   qInfo() << "[MapVisualizationManager::registerRobotLayerItem] Item registered";
 }
