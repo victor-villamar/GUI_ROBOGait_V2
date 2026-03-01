@@ -20,6 +20,13 @@ MapViewForm {
                        ? userSession.rosManager.robotManager.mapVisualizationManager.robotPoseAvailable
                        : false
 
+    // Zoom level for UI
+    zoomLevel: (userSession.rosManager &&
+                userSession.rosManager.robotManager &&
+                userSession.rosManager.robotManager.mapVisualizationManager)
+               ? userSession.rosManager.robotManager.mapVisualizationManager.zoomLevel
+               : 1.0
+
     // Bind to ManualControl properties
     linearValue: (userSession.rosManager && userSession.rosManager.robotManager && userSession.rosManager.robotManager.manualControl)
                  ? userSession.rosManager.robotManager.manualControl.linearVelocity
@@ -52,8 +59,8 @@ MapViewForm {
             return
         }
 
-        // Activate MapVisualizationManager subscriptions
         mapVizManager.activateSubscriptions()
+        followButton.checked = mapVizManager.followRobot
 
         // Enable manual control
         if (userSession.rosManager && userSession.rosManager.robotManager) {
@@ -110,14 +117,50 @@ MapViewForm {
     }
 
     zoomInButton.onClicked: {
-        mapRenderWidget.zoomIn()
+        if (userSession.rosManager &&
+            userSession.rosManager.robotManager &&
+            userSession.rosManager.robotManager.mapVisualizationManager) {
+            userSession.rosManager.robotManager.mapVisualizationManager.followRobot = false
+            userSession.rosManager.robotManager.mapVisualizationManager.zoomIn()
+        }
     }
 
     zoomOutButton.onClicked: {
-        mapRenderWidget.zoomOut()
+        if (userSession.rosManager &&
+            userSession.rosManager.robotManager &&
+            userSession.rosManager.robotManager.mapVisualizationManager) {
+            userSession.rosManager.robotManager.mapVisualizationManager.followRobot = false
+            userSession.rosManager.robotManager.mapVisualizationManager.zoomOut()
+        }
     }
 
     fitButton.onClicked: {
-        mapRenderWidget.fitToView()
+        if (userSession.rosManager &&
+            userSession.rosManager.robotManager &&
+            userSession.rosManager.robotManager.mapVisualizationManager) {
+            userSession.rosManager.robotManager.mapVisualizationManager.followRobot = false
+            userSession.rosManager.robotManager.mapVisualizationManager.fitToView()
+        }
+    }
+
+    followButton.onClicked: {
+        if (userSession.rosManager &&
+            userSession.rosManager.robotManager &&
+            userSession.rosManager.robotManager.mapVisualizationManager) {
+            var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
+            mapVizManager.followRobot = !mapVizManager.followRobot
+        }
+    }
+
+    Connections {
+        target: (userSession.rosManager &&
+                 userSession.rosManager.robotManager &&
+                 userSession.rosManager.robotManager.mapVisualizationManager)
+                ? userSession.rosManager.robotManager.mapVisualizationManager
+                : null
+
+        function onFollowRobotChanged() {
+            followButton.checked = target.followRobot
+        }
     }
 }

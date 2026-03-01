@@ -17,7 +17,9 @@ Rectangle {
     property alias zoomInButton: zoomInButton
     property alias zoomOutButton: zoomOutButton
     property alias fitButton: fitButton
-    property alias mapRenderWidget: mapRenderWidget
+    property alias followButton: followButton
+    property alias mapLayerItem: mapLayerItem
+    property alias robotLayerItem: robotLayerItem
 
     // Properties for map manager state
     property bool mapAvailable: false
@@ -25,14 +27,13 @@ Rectangle {
     // Properties for robot pose availability
     property bool robotPoseAvailable: false
 
+    // Zoom level
+    property real zoomLevel: 1.0
+
     // Manual control properties
     property bool manualUnlocked: false
     property real linearValue: 0.0
     property real angularValue: 0.0
-
-    // Note: Zoom and pan removed - MapRenderWidget handles internally
-    // Note: Map dimensions removed - native widget handles sizing
-    // Note: Robot screen position removed - native widget renders robot directly
 
     ColumnLayout {
         anchors.fill: parent
@@ -101,20 +102,63 @@ Rectangle {
             border.width: 2
             clip: true
 
-            // MapRenderWidget - native QML integration
-            MapRenderWidget {
-                id: mapRenderWidget
+            Rectangle {
+                id: zoomBadge
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.leftMargin: 16
+                anchors.topMargin: 16
+                color: "#2c5f7c"
+                radius: 6
+                border.color: "#6aa3c8"
+                border.width: 1
+                z: 80
+                visible: mapAvailable
+
+                property int padding: 8
+                implicitWidth: zoomText.implicitWidth + (padding * 2)
+                implicitHeight: zoomText.implicitHeight + (padding * 2)
+
+                Text {
+                    id: zoomText
+                    anchors.centerIn: parent
+                    text: qsTr("Zoom: %1x").arg(Math.round(zoomLevel))
+                    font.pixelSize: 12
+                    font.bold: true
+                    color: "#ffffff"
+                }
+            }
+
+            MapLayerItem {
+                id: mapLayerItem
                 anchors.fill: parent
                 anchors.margins: 10
                 visible: mapAvailable
+                z: 1
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
                         userSession.rosManager.robotManager &&
                         userSession.rosManager.robotManager.mapVisualizationManager)
                     {
-                        var mapVizMgr = userSession.rosManager.robotManager.mapVisualizationManager
-                        mapVizMgr.registerMapRenderWidget(mapRenderWidget)
+                        userSession.rosManager.robotManager.mapVisualizationManager.registerMapLayerItem(mapLayerItem)
+                    }
+                }
+            }
+
+            RobotLayerItem {
+                id: robotLayerItem
+                anchors.fill: parent
+                anchors.margins: 10
+                visible: mapAvailable
+                z: 2
+
+                Component.onCompleted: {
+                    if (userSession.rosManager &&
+                        userSession.rosManager.robotManager &&
+                        userSession.rosManager.robotManager.mapVisualizationManager)
+                    {
+                        userSession.rosManager.robotManager.mapVisualizationManager.registerRobotLayerItem(robotLayerItem)
                     }
                 }
             }
@@ -311,6 +355,29 @@ Rectangle {
 
                     ToolTip.visible: hovered
                     ToolTip.text: qsTr("Ajustar a la vista")
+                }
+
+                Button {
+                    id: followButton
+                    Layout.preferredWidth: 50
+                    Layout.preferredHeight: 44
+                    checkable: true
+
+                    background: Rectangle {
+                        radius: 6
+                        color: followButton.checked ? "#1a3a4a" : "#3a7fa0"
+                        border.color: "#ffffff"
+                        border.width: 1
+                    }
+
+                    contentItem: Image {
+                        source: "qrc:/qmlresources/icons/center_view.svg"
+                        fillMode: Image.PreserveAspectFit
+                        smooth: true
+                    }
+
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Seguir robot")
                 }
 
                 Item {
