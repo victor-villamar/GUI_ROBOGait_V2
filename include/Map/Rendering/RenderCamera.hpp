@@ -78,10 +78,21 @@ public:
   QMatrix4x4 getMatrix() const;
 
 private:
+  /**
+   * @brief Clamp the zoom level to the defined limits
+   *
+   * @param zoom Zoom level to clamp
+   * @return Clamped zoom level
+   */
+  static double clampZoom(double zoom);
+
   mutable QMutex mutex_; /**< Mutex for thread-safe access */
   QSizeF viewport_;      /**< Current viewport size */
   QPointF center_;       /**< Current view center */
   double zoom_;          /**< Current zoom level */
+
+  static constexpr double MIN_ZOOM = 70.0;  /**< Minimum zoom level */
+  static constexpr double MAX_ZOOM = 470.0; /**< Maximum zoom level */
 };
 
 } // namespace rendering

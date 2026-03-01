@@ -52,6 +52,9 @@ public:
 
   void setSyncItem(QQuickItem* item);
 
+signals:
+  void zoomChanged(); // Emitted when the zoom level changes
+
 protected:
   /**
    * @brief Update the paint node for the map layer item

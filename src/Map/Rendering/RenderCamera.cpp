@@ -27,7 +27,7 @@ QPointF RenderCamera::getViewCenter() const
 void RenderCamera::setZoom(double zoom)
 {
   QMutexLocker lock(&mutex_);
-  zoom_ = qMax(1e-6, zoom);
+  zoom_ = clampZoom(zoom);
 }
 
 double RenderCamera::getZoom() const
@@ -39,7 +39,7 @@ double RenderCamera::getZoom() const
 void RenderCamera::zoomByFactor(double factor)
 {
   QMutexLocker lock(&mutex_);
-  zoom_ = qMax(1e-6, zoom_ * factor);
+  zoom_ = clampZoom(zoom_ * factor);
 }
 
 void RenderCamera::fitToRect(const QRectF& rect, double margin)
@@ -55,7 +55,7 @@ void RenderCamera::fitToRect(const QRectF& rect, double margin)
   const double h = qMax(1.0, viewport_.height());
   const double zoom_x = w / (rect.width() * margin);
   const double zoom_y = h / (rect.height() * margin);
-  zoom_ = qMax(1e-6, qMin(zoom_x, zoom_y));
+  zoom_ = clampZoom(qMin(zoom_x, zoom_y));
   center_ = rect.center();
 }
 
@@ -67,4 +67,17 @@ QMatrix4x4 RenderCamera::getMatrix() const
   matrix.scale(zoom_, zoom_);
   matrix.translate(-center_.x(), -center_.y());
   return matrix;
+}
+
+double RenderCamera::clampZoom(double zoom)
+{
+  if (zoom < MIN_ZOOM)
+  {
+    return MIN_ZOOM;
+  }
+  if (zoom > MAX_ZOOM)
+  {
+    return MAX_ZOOM;
+  }
+  return zoom;
 }

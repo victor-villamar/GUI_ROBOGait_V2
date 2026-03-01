@@ -26,6 +26,9 @@ Rectangle {
     // Properties for robot pose availability
     property bool robotPoseAvailable: false
 
+    // Zoom level
+    property real zoomLevel: 1.0
+
     // Manual control properties
     property bool manualUnlocked: false
     property real linearValue: 0.0
@@ -97,6 +100,33 @@ Rectangle {
             border.color: "#2c5f7c"
             border.width: 2
             clip: true
+
+            Rectangle {
+                id: zoomBadge
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.leftMargin: 16
+                anchors.topMargin: 16
+                color: "#2c5f7c"
+                radius: 6
+                border.color: "#6aa3c8"
+                border.width: 1
+                z: 80
+                visible: mapAvailable
+
+                property int padding: 8
+                implicitWidth: zoomText.implicitWidth + (padding * 2)
+                implicitHeight: zoomText.implicitHeight + (padding * 2)
+
+                Text {
+                    id: zoomText
+                    anchors.centerIn: parent
+                    text: qsTr("Zoom: %1x").arg(Math.round(zoomLevel))
+                    font.pixelSize: 12
+                    font.bold: true
+                    color: "#ffffff"
+                }
+            }
 
             MapLayerItem {
                 id: mapLayerItem

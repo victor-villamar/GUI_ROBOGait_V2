@@ -345,6 +345,14 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
   map_layer_item_->setCamera(render_camera_);
   map_layer_item_->setSyncItem(robot_layer_item_);
 
+  // clang-format off
+  connect(map_layer_item_,
+          &ROBOGait::map::item::MapLayerItem::zoomChanged,
+          this,
+          &MapVisualizationManager::zoomLevelChanged,
+          Qt::QueuedConnection);
+  // clang-format on
+
   qInfo() << "[MapVisualizationManager::registerMapLayerItem] Item registered";
 }
 

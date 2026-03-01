@@ -118,6 +118,7 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
     {
       camera_->fitToRect(map_rect);
       fit_done_ = true;
+      emit zoomChanged();
       if (sync_item_)
       {
         sync_item_->update();
@@ -148,6 +149,7 @@ void MapLayerItem::wheelEvent(QWheelEvent* event)
 
   const qreal delta = event->angleDelta().y() > 0 ? 1.1 : 1.0 / 1.1;
   camera_->zoomByFactor(delta);
+  emit zoomChanged();
   update();
   if (sync_item_)
   {
@@ -241,6 +243,7 @@ bool MapLayerItem::event(QEvent* event)
       }
       const qreal scale = pinch_gesture->scaleFactor();
       camera_->setZoom(pinch_start_zoom_ * scale);
+      emit zoomChanged();
       update();
       if (sync_item_)
       {

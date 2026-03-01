@@ -20,6 +20,13 @@ MapViewForm {
                        ? userSession.rosManager.robotManager.mapVisualizationManager.robotPoseAvailable
                        : false
 
+    // Zoom level for UI
+    zoomLevel: (userSession.rosManager &&
+                userSession.rosManager.robotManager &&
+                userSession.rosManager.robotManager.mapVisualizationManager)
+               ? userSession.rosManager.robotManager.mapVisualizationManager.zoomLevel
+               : 1.0
+
     // Bind to ManualControl properties
     linearValue: (userSession.rosManager && userSession.rosManager.robotManager && userSession.rosManager.robotManager.manualControl)
                  ? userSession.rosManager.robotManager.manualControl.linearVelocity
