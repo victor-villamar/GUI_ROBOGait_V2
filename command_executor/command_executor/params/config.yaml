@@ -1,0 +1,22 @@
+robot_info:
+  id: 1
+  namespace: "ROBOGait"
+  version: 3
+  hardware_id: 12345678
+  serial_number: "ROBOGait-001"
+
+allow_list:
+  - action
+  - bag
+  - node
+  - component
+  - param
+  - control
+  - pkg
+  - run
+  - security
+  - service
+  - topic
+  - interface
+  - launch
+  - lifecycle
