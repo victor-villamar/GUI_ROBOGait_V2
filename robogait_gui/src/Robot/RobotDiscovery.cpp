@@ -13,19 +13,28 @@ RobotDiscovery::RobotDiscovery() :
     robots_namespaces_(QStringList()),
     is_scanning_(false),
     state_(State::IDLE),
-    poll_interval_(1000),
     poll_timer_(this),
+    scan_timeout_timer_(this),
+    scan_timeout_(DEFAULT_SCAN_TIMEOUT),
+    poll_interval_(DEFAULT_POLL_INTERVAL),
     use_namespace_discovery_(true),
     use_topic_filter_(true)
 {
   poll_timer_.setInterval(poll_interval_);
   poll_timer_.setSingleShot(false);
+  scan_timeout_timer_.setInterval(scan_timeout_);
+  scan_timeout_timer_.setSingleShot(true);
 
   // clang-format off
   connect(&poll_timer_,
           &QTimer::timeout,
           this,
           &RobotDiscovery::updateFromGraph
+  );
+  connect(&scan_timeout_timer_,
+          &QTimer::timeout,
+          this,
+          &RobotDiscovery::onScanTimeout
   );
   // clang-format on
 
@@ -80,6 +89,7 @@ void RobotDiscovery::startScanning()
   setState(State::SCANNING);
   updateFromGraph();
   poll_timer_.start();
+  scan_timeout_timer_.start();
 }
 
 void RobotDiscovery::stopScanning()
@@ -91,6 +101,7 @@ void RobotDiscovery::stopScanning()
   }
 
   poll_timer_.stop();
+  scan_timeout_timer_.stop();
   setIsScanning(false);
 
   if (state_ == State::SCANNING || state_ == State::ROBOTS_FOUND)
@@ -335,4 +346,13 @@ bool RobotDiscovery::hasRobotStatusTopic(const std::string& robot_namespace) con
   const auto topics = parent_node_->get_topic_names_and_types();
 
   return topics.find(full_topic) != topics.end();
+}
+
+void RobotDiscovery::onScanTimeout()
+{
+  if (is_scanning_ && state_ == State::SCANNING)
+  {
+    qInfo() << "[RobotDiscovery] Scan timeout reached, stopping discovery";
+    stopScanning();
+  }
 }

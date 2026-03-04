@@ -200,14 +200,21 @@ private:
    */
   bool hasRobotStatusTopic(const std::string& robot_namespace) const;
 
+  void onScanTimeout();
+
   rclcpp::Node* parent_node_;     /**< Pointer to the ROS node */
   QStringList robots_namespaces_; /**< List of discovered robot namespaces or node names */
   bool is_scanning_;              /**< Flag indicating if scanning is active */
   State state_;                   /**< Current state of the discovery process */
-  int poll_interval_;             /**< Polling interval in milliseconds */
   QTimer poll_timer_;             /**< Timer for polling */
+  int poll_interval_;             /**< Polling interval in milliseconds */
+  QTimer scan_timeout_timer_;     /**< Timer for scan timeout */
+  int scan_timeout_;              /**< Max scan duration before returning to IDLE */
   bool use_namespace_discovery_;  /**< True to discover by namespace, false to discover by node names */
   bool use_topic_filter_;         /**< True to use topic filter, false to use node name pattern */
+
+  static constexpr int DEFAULT_POLL_INTERVAL = 1000; /**< Default polling interval in milliseconds */
+  static constexpr int DEFAULT_SCAN_TIMEOUT = 5000;  /**< Default scan timeout in milliseconds */
 };
 } // namespace discovery
 } // namespace robot
