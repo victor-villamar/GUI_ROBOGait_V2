@@ -54,7 +54,7 @@ void RobotPoseSource::start()
     return;
   }
 
-  robot_pose_data_->setEnabled(true);
+  robot_pose_data_->startTFListener();
   active_ = true;
 }
 
@@ -65,7 +65,7 @@ void RobotPoseSource::stop()
     return;
   }
 
-  robot_pose_data_->setEnabled(false);
+  robot_pose_data_->stopTFListener();
   robot_pose_data_->reset();
   active_ = false;
 }

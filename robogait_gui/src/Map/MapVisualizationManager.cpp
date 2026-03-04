@@ -213,13 +213,33 @@ void MapVisualizationManager::destroySubscriptions()
   {
     render_scene_->stop();
   }
+
   if (map_source_)
   {
     map_source_->stop();
   }
+
   if (pose_source_)
   {
     pose_source_->stop();
+  }
+
+  updateAvailability();
+
+  if (map_layer_item_)
+  {
+    map_layer_item_->update();
+  }
+
+  if (robot_layer_item_)
+  {
+    robot_layer_item_->update();
+  }
+
+  if (follow_robot_)
+  {
+    follow_robot_ = false;
+    emit followRobotChanged();
   }
 
   subscriptions_active_ = false;

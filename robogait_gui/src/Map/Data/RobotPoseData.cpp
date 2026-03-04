@@ -22,50 +22,36 @@ RobotPoseData::RobotPoseData(rclcpp::Node* parent_node, const std::string& map_f
     warn_logged_(false),
     update_stamp_(0),
     has_context_(false),
-    enabled_(true)
+    enabled_(false)
 {
-  if (!parent_node_)
-  {
-    qCritical() << "[RobotPoseData::RobotPoseData] Null parent node pointer";
-    return;
-  }
-
-  // Create TF2 buffer and listener
-  tf_buffer_ = std::make_shared<tf2_ros::Buffer>(parent_node_->get_clock());
-  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, parent_node_, false);
-
-  // Create timer for periodic TF updates
-  tf_timer_ = parent_node_->create_wall_timer(std::chrono::milliseconds(TIME_TO_ROBOT_POSE_UPDATE), std::bind(&RobotPoseData::updatePoseFromTF, this));
-
-  qInfo() << "[RobotPoseData::RobotPoseData] Robot pose data handler initialized with map frame:" << QString::fromStdString(map_frame_)
-          << "and robot frame:" << QString::fromStdString(robot_frame_);
 }
 
 RobotPoseData::~RobotPoseData()
 {
-  if (tf_timer_)
-  {
-    tf_timer_->cancel();
-  }
+  stopTFListener();
 
   qInfo() << "[RobotPoseData::~RobotPoseData] Robot pose data destroyed";
 }
 
 void RobotPoseData::updatePoseFromTF()
 {
+  std::shared_ptr<tf2_ros::Buffer> buffer;
   {
     QMutexLocker lock(&data_mutex_);
-    if (!enabled_)
+    if (!enabled_ || !tf_buffer_)
     {
+      qWarning() << "[RobotPoseData::updatePoseFromTF] TF updates not enabled or buffer not available";
       return;
     }
+
+    buffer = tf_buffer_;
   }
 
   try
   {
     // Lookup transform from map to robot base_link
     // tf2::TimePointZero gets the latest available transform
-    geometry_msgs::msg::TransformStamped transform = tf_buffer_->lookupTransform(map_frame_, robot_frame_, tf2::TimePointZero);
+    geometry_msgs::msg::TransformStamped transform = buffer->lookupTransform(map_frame_, robot_frame_, tf2::TimePointZero);
 
     // Extract position
     {
@@ -132,17 +118,6 @@ bool RobotPoseData::isAvailable() const
   return is_available_;
 }
 
-void RobotPoseData::setEnabled(bool enabled)
-{
-  QMutexLocker lock(&data_mutex_);
-  enabled_ = enabled;
-  if (!enabled_)
-  {
-    is_available_ = false;
-    warn_logged_ = false;
-  }
-}
-
 bool RobotPoseData::isEnabled() const
 {
   QMutexLocker lock(&data_mutex_);
@@ -160,6 +135,69 @@ void RobotPoseData::reset()
   ++update_stamp_;
 
   qInfo() << "[RobotPoseData::reset] Robot pose reset to origin";
+}
+
+void RobotPoseData::startTFListener()
+{
+  if (!parent_node_)
+  {
+    qCritical() << "[RobotPoseData::startTFListener] Null parent node pointer";
+    return;
+  }
+
+  // Create TF2 buffer and listener
+  if (!tf_buffer_)
+  {
+    tf_buffer_ = std::make_shared<tf2_ros::Buffer>(parent_node_->get_clock());
+  }
+  if (!tf_listener_)
+  {
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, parent_node_, false);
+  }
+
+  // Create timer for periodic TF updates
+  if (!tf_timer_)
+  {
+    tf_timer_ = parent_node_->create_wall_timer(std::chrono::milliseconds(TIME_TO_ROBOT_POSE_UPDATE), std::bind(&RobotPoseData::updatePoseFromTF, this));
+  }
+
+  {
+    QMutexLocker lock(&data_mutex_);
+    enabled_ = true;
+    is_available_ = false;
+    warn_logged_ = false;
+  }
+
+  qInfo() << "[RobotPoseData::startTFListener] TF listener started for frames:" << QString::fromStdString(map_frame_) << "->"
+          << QString::fromStdString(robot_frame_);
+}
+
+void RobotPoseData::stopTFListener()
+{
+  {
+    QMutexLocker lock(&data_mutex_);
+    enabled_ = false;
+    is_available_ = false;
+    warn_logged_ = false;
+  }
+
+  if (tf_timer_)
+  {
+    tf_timer_->cancel();
+    tf_timer_.reset();
+  }
+
+  if (tf_listener_)
+  {
+    tf_listener_.reset();
+  }
+
+  if (tf_buffer_)
+  {
+    tf_buffer_.reset();
+  }
+
+  qInfo() << "[RobotPoseData::stopTFListener] TF listener stopped";
 }
 
 void RobotPoseData::setRobotContext(const ROBOGait::context::RobotContext& context)

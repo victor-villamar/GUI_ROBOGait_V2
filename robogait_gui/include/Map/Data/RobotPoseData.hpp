@@ -68,13 +68,6 @@ public:
   bool isAvailable() const;
 
   /**
-   * @brief Enable or disable TF updates
-   *
-   * @param enabled true to enable updates, false to disable
-   */
-  void setEnabled(bool enabled);
-
-  /**
    * @brief Check if TF updates are enabled
    */
   bool isEnabled() const;
@@ -83,6 +76,16 @@ public:
    * @brief Reset pose to default values (origin)
    */
   void reset();
+
+  /**
+   * @brief Start tf listener
+   */
+  void startTFListener();
+
+  /**
+   * @brief Stop tf listener
+   */
+  void stopTFListener();
 
   /**
    * @brief Provide robot context for frame resolution
