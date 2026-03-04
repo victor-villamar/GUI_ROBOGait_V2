@@ -103,6 +103,11 @@ public:
   bool isAvailable() const;
 
   /**
+   * @brief Reset map data to initial state
+   */
+  void reset();
+
+  /**
    * @brief Get the data update stamp
    *
    * @return Monotonic counter incremented on each update

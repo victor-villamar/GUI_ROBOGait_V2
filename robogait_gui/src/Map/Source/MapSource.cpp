@@ -72,6 +72,11 @@ void MapSource::stop()
     subscriber_->stop();
   }
 
+  if (map_data_)
+  {
+    map_data_->reset();
+  }
+
   active_ = false;
 }
 

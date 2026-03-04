@@ -200,6 +200,17 @@ MapData::MapMetadata MapData::getMetadata() const
 
 bool MapData::isAvailable() const { return is_available_; }
 
+void MapData::reset()
+{
+  QMutexLocker lock(&data_mutex_);
+  occupancy_data_.clear();
+  cached_image_ = QImage();
+  metadata_ = MapMetadata{};
+  image_dirty_ = false;
+  is_available_ = false;
+  ++update_stamp_;
+}
+
 uint64_t MapData::getUpdateStamp() const
 {
   QMutexLocker lock(&data_mutex_);
