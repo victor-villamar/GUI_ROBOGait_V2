@@ -18,6 +18,8 @@ Rectangle {
     property alias zoomOutButton: zoomOutButton
     property alias fitButton: fitButton
     property alias followButton: followButton
+    property alias saveMapButton: saveMapButton
+    property alias resetMapButton: resetMapButton
     property alias mapLayerItem: mapLayerItem
     property alias robotLayerItem: robotLayerItem
 
@@ -54,7 +56,7 @@ Rectangle {
 
                 Text {
                     Layout.fillWidth: true
-                    text: qsTr("Visualizacion del Mapa")
+                    text: qsTr("Creacion del Mapa")
                     font.pixelSize: 24
                     font.bold: true
                     color: "#ffffff"
@@ -380,9 +382,59 @@ Rectangle {
                     ToolTip.text: qsTr("Seguir robot")
                 }
 
-                Item {
-                    Layout.fillWidth: true
+                Item { Layout.fillWidth: true }
+
+                RowLayout {
+                    id: saveResetRow
+                    spacing: 12
+                    Layout.alignment: Qt.AlignHCenter
+
+                    Button {
+                        id: saveMapButton
+                        Layout.preferredWidth: 110
+                        Layout.preferredHeight: 36
+
+                        background: Rectangle {
+                            radius: 6
+                            color: saveMapButton.pressed ? "#1a3a4a" : "#3a7fa0"
+                            border.color: "#ffffff"
+                            border.width: 1
+                        }
+
+                        contentItem: Label {
+                            text: qsTr("GUARDAR")
+                            color: "#ffffff"
+                            font.pixelSize: 14
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                    }
+
+                    Button {
+                        id: resetMapButton
+                        Layout.preferredWidth: 110
+                        Layout.preferredHeight: 36
+
+                        background: Rectangle {
+                            radius: 6
+                            color: resetMapButton.pressed ? "#1a3a4a" : "#3a7fa0"
+                            border.color: "#ffffff"
+                            border.width: 1
+                        }
+
+                        contentItem: Label {
+                            text: qsTr("RESETEAR")
+                            color: "#ffffff"
+                            font.pixelSize: 14
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                    }
                 }
+
+                Item { Layout.fillWidth: true }
 
                 Text {
                     text: qsTr("Pellizque para zoom • Arrastre para mover")
