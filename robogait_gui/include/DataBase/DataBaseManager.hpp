@@ -228,6 +228,39 @@ public:
    */
   Q_INVOKABLE bool deletePatient(int patient_id);
 
+  /**
+   * @brief List all maps
+   *
+   * @return A list of maps
+   */
+  Q_INVOKABLE QVariantList listMaps();
+
+  /**
+   * @brief Get map details by name
+   *
+   * @param map_name The map name
+   * @return A map containing map details
+   */
+  Q_INVOKABLE QVariantMap getMapDetails(const QString& map_name);
+
+  /**
+   * @brief Register a new map
+   *
+   * @param map_name The map name
+   * @param location The map location
+   * @param details Additional details/description
+   * @return True if the registration was successful, false otherwise
+   */
+  Q_INVOKABLE bool registerMap(const QString& map_name, const QString& location, const QString& details);
+
+  /**
+   * @brief Delete a map by name
+   *
+   * @param map_name The map name
+   * @return True if the deletion was successful, false otherwise
+   */
+  Q_INVOKABLE bool deleteMap(const QString& map_name);
+
 signals:
   void passLoginChanged();
   void passCheckUserNameChanged();

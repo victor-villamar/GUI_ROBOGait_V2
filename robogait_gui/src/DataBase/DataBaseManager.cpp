@@ -503,6 +503,140 @@ bool DataBaseManager::deletePatient(int patient_id)
   return true;
 }
 
+QVariantList DataBaseManager::listMaps()
+{
+  QVariantList maps_list;
+
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::listMaps] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return maps_list;
+  }
+
+  const auto result = map_repository_.listMapNames();
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return maps_list;
+  }
+
+  const auto maps = std::get<QVector<QString>>(result);
+
+  for (const auto& map_name : maps)
+  {
+    QVariantMap map;
+    map["map_name"] = map_name;
+    map["display"] = map_name;
+    maps_list.append(map);
+  }
+
+  setLastError("");
+  qInfo() << "[DataBaseManager::listMaps] Listed" << maps.size() << "maps";
+  return maps_list;
+}
+
+QVariantMap DataBaseManager::getMapDetails(const QString& map_name)
+{
+  QVariantMap map;
+
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::getMapDetails] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return map;
+  }
+
+  if (map_name.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::getMapDetails] Invalid map name";
+    setLastError("Nombre de mapa invalido");
+    return map;
+  }
+
+  const auto result = map_repository_.getMapDetailsByName(map_name);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return map;
+  }
+
+  setLastError("");
+  qInfo() << "[DataBaseManager::getMapDetails] Retrieved details for map:" << map_name;
+  return toVariantMap(std::get<MapDetails>(result));
+}
+
+bool DataBaseManager::registerMap(const QString& map_name, const QString& location, const QString& details)
+{
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::registerMap] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return false;
+  }
+
+  if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::registerMap] Action not allowed for guest users";
+    setLastError("Accion no permitida para usuario invitado");
+    return false;
+  }
+
+  if (map_name.trimmed().isEmpty() || location.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::registerMap] Map name or location is empty";
+    setLastError("Nombre y localizacion del mapa son obligatorios");
+    return false;
+  }
+
+  const auto result = map_repository_.insertMapForUserName(user_name_, map_name, location, details);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return false;
+  }
+
+  setLastError("");
+  qInfo() << "[DataBaseManager::registerMap] Map registered successfully:" << map_name;
+  return true;
+}
+
+bool DataBaseManager::deleteMap(const QString& map_name)
+{
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::deleteMap] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return false;
+  }
+
+  if (map_name.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::deleteMap] Map name is empty";
+    setLastError("Nombre de mapa invalido");
+    return false;
+  }
+
+  const auto result = map_repository_.deleteMapByName(map_name);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return false;
+  }
+
+  setLastError("");
+  qInfo() << "[DataBaseManager::deleteMap] Map deleted successfully:" << map_name;
+  return true;
+}
+
 QString DataBaseManager::hashPasswordSha256Hex(const QString& password) const
 {
   const QByteArray hash = QCryptographicHash::hash(password.toUtf8(), QCryptographicHash::Sha256);
