@@ -419,6 +419,8 @@ void UserSession::onRobotDisconnected()
 
 void UserSession::clearUserState()
 {
+  clearPatient();
+  clearMap();
 
   // Clear authentication
   is_authenticated_ = false;
@@ -426,13 +428,6 @@ void UserSession::clearUserState()
   username_.clear();
   display_name_.clear();
   role_.clear();
-
-  current_map_name_.clear();
-
-  if (current_patient_)
-  {
-    current_patient_->clear();
-  }
 
   updateSessionState();
 }

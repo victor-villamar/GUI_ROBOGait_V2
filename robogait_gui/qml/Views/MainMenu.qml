@@ -29,7 +29,7 @@ MainMenuForm {
             if (userSession.rosManager &&
                 userSession.rosManager.robotManager &&
                 userSession.rosManager.robotManager.selectedRobotNamespace) {
-                StackView.view.push(mapViewPage)
+                StackView.view.push(selectMapPage)
             }
         }
     }
@@ -45,6 +45,11 @@ MainMenuForm {
     }
 
     Component {
+        id: selectMapPage
+        SelectMap { }
+    }
+
+    Component {
         id: selectPatientPage
         SelectPatient { }
     }
@@ -52,10 +57,5 @@ MainMenuForm {
     Component {
         id: manualControlPage
         ManualControl { }
-    }
-
-    Component {
-        id: mapViewPage
-        MapView { }
     }
 }

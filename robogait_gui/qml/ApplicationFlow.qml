@@ -24,6 +24,14 @@ ApplicationFlowForm {
 
     function backButton()
     {
+        var currentItem = mystackview.currentItem
+        if (currentItem && currentItem.handleBackNavigation && typeof currentItem.handleBackNavigation === "function") {
+            var handled = currentItem.handleBackNavigation()
+            if (handled === true) {
+                return
+            }
+        }
+
         if (mystackview.depth > 3) {
             mystackview.pop()
             applicationFlow.state = "main_menu"

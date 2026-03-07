@@ -240,7 +240,9 @@ Item {
             anchors.bottomMargin: 12
 
             readonly property string mapStatusRichText:
-                "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY MAPA ACTIVO</span>"
+                (userSession && userSession.hasMapAssigned)
+                ? "<span style='color:#cce54d'>HAY MAPA ACTIVO</span>"
+                : "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY MAPA ACTIVO</span>"
 
             Text {
                 id: bottomStatusMap
