@@ -143,6 +143,21 @@ public:
    */
   Q_INVOKABLE void fitToView();
 
+  /**
+   * @brief Generate a PNG preview for the given map data
+   */
+  Q_INVOKABLE bool generateMapPreview(const QString& map_name);
+
+  /**
+   * @brief Delete the generated map preview
+   */
+  Q_INVOKABLE bool deleteMapPreview(const QString& map_name);
+
+  /**
+   * @brief Get the file path for the map preview image
+   */
+  Q_INVOKABLE QString getMapPreviewPath(const QString& map_name);
+
 private slots:
   void onFrameReady(); // Slot for handling frame readiness
 

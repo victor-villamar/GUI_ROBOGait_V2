@@ -26,6 +26,8 @@
     <file alias="DiagnosticDialog.qml">qml/Dialogs/DiagnosticDialog.qml</file>
 	  <file alias="ErrorRectangle.qml">qml/Dialogs/ErrorRectangle.qml</file>
 	  <file alias="InformationDialog.qml">qml/Dialogs/InformationDialog.qml</file>
+	  <file alias="MapDetailsDialog.qml">qml/Dialogs/MapDetailsDialog.qml</file>
+    <file alias="MapRegisterDialog.qml">qml/Dialogs/MapRegisterDialog.qml</file>
 	  <file alias="PatientDetailsDialog.qml">qml/Dialogs/PatientDetailsDialog.qml</file>
 	  <file alias="PatientRegisterDialog.qml">qml/Dialogs/PatientRegisterDialog.qml</file>
 	  <file alias="RosDomainIdTab.qml">qml/Dialogs/RosDomainIdTab.qml</file>
@@ -53,6 +55,8 @@
 	  <file alias="RegisterPageForm.ui.qml">qml/Views/RegisterPageForm.ui.qml</file>
 	  <file alias="RobotConnection.qml">qml/Views/RobotConnection.qml</file>
 	  <file alias="RobotConnectionForm.ui.qml">qml/Views/RobotConnectionForm.ui.qml</file>
+    <file alias="SelectMap.qml">qml/Views/SelectMap.qml</file>
+    <file alias="SelectMapForm.ui.qml">qml/Views/SelectMapForm.ui.qml</file>
     <file alias="SelectPatient.qml">qml/Views/SelectPatient.qml</file>
 	  <file alias="SelectPatientForm.ui.qml">qml/Views/SelectPatientForm.ui.qml</file>
 	  <file alias="UserSwitchPage.qml">qml/Views/UserSwitchPage.qml</file>
