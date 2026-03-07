@@ -17,6 +17,8 @@ Item {
 
     readonly property bool isGuest: (dbManager && dbManager.userRole === "guest")
 
+    readonly property bool canStartTest: (!isGuest && userSession && userSession.hasMapAssigned && userSession.hasPatientAssigned)
+
 	    Rectangle {
 	        anchors.fill: parent
 	        color: "#518bb7"
@@ -172,13 +174,13 @@ Item {
                     source: "qrc:/qmlresources/menu/image_test.png"
                     fillMode: Image.PreserveAspectFit
                     smooth: true
-                    opacity: root.isGuest ? 0.45 : 1.0
+                    opacity: root.canStartTest ? 1.0 : 0.45
                 }
 
                 MouseArea {
                     id: testArea
                     anchors.fill: parent
-                    enabled: !root.isGuest
+                    enabled: root.canStartTest
 	                }
 	            }
 	        }
