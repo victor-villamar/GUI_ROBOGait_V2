@@ -1,6 +1,11 @@
 #pragma once
 
+#include <QString>
+#include <memory>
+
 #include <geometry_msgs/msg/quaternion.hpp>
+
+#include "Map/Data/MapData.hpp"
 
 namespace ROBOGait
 {
@@ -35,6 +40,33 @@ double rad2deg(double radians);
  * @return Angle in radians
  */
 double deg2rad(double degrees);
+
+/**
+ * @brief Generate PNG preview for the given map data
+ *
+ * @param map_data Shared pointer to the map data
+ * @param map_name Name of the map
+ *
+ * @return true if the preview was generated successfully, false otherwise
+ */
+bool generateMapPreview(const std::shared_ptr<data::MapData>& map_data, const QString& map_name);
+
+/**
+ * @brief Delete the generated map preview
+ *
+ * @param map_name Name of the map
+ * @return true if the preview was deleted successfully, false otherwise
+ */
+bool deleteMapPreview(const QString& map_name);
+
+/**
+ * @brief Get the file path of the generated map preview
+ *
+ * @param map_name Name of the map
+ *
+ * @return File path of the generated PNG preview
+ */
+QString getMapPreviewPath(const QString& map_name);
 
 } // namespace utils
 } // namespace map

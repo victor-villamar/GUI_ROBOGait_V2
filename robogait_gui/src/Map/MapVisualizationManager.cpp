@@ -5,6 +5,7 @@
 #include "Context/RobotContext.hpp"
 #include "Loader/YamlLoader.hpp"
 #include "Map/MapVisualizationManager.hpp"
+#include "Map/Utils/Utils.hpp"
 
 using namespace ROBOGait::map::manager;
 
@@ -439,6 +440,57 @@ void MapVisualizationManager::fitToView()
 
   map_layer_item_->update();
   robot_layer_item_->update();
+}
+
+bool MapVisualizationManager::generateMapPreview(const QString& map_name)
+{
+  if (map_name.isEmpty())
+  {
+    qWarning() << "[MapVisualizationManager::generateMapPreview] Empty map name provided";
+    return false;
+  }
+
+  if (!map_layer_)
+  {
+    qCritical() << "[MapVisualizationManager::generateMapPreview] Map layer not available";
+    return false;
+  }
+
+  if (!map_layer_->getMapData())
+  {
+    qCritical() << "[MapVisualizationManager::generateMapPreview] Map data not available";
+    return false;
+  }
+
+  if (!ROBOGait::map::utils::generateMapPreview(map_layer_->getMapData(), map_name))
+  {
+    qCritical() << "[MapVisualizationManager::generateMapPreview] Failed to generate map preview for map:" << map_name;
+    return false;
+  }
+
+  return true;
+}
+
+bool MapVisualizationManager::deleteMapPreview(const QString& map_name)
+{
+  if (map_name.isEmpty())
+  {
+    qWarning() << "[MapVisualizationManager::deleteMapPreview] Empty map name provided";
+    return false;
+  }
+
+  return ROBOGait::map::utils::deleteMapPreview(map_name);
+}
+
+QString MapVisualizationManager::getMapPreviewPath(const QString& map_name)
+{
+  if (map_name.isEmpty())
+  {
+    qCritical() << "[MapVisualizationManager::getMapPreviewPath] Map name is empty";
+    return QString();
+  }
+
+  return ROBOGait::map::utils::getMapPreviewPath(map_name);
 }
 
 void MapVisualizationManager::onFrameReady()
