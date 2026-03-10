@@ -1,0 +1,9 @@
+cartographer:
+  name: "cartographer_node"
+  cmd: "ros2 launch turtlebot3_cartographer cartographer.launch.py"
+  append_args: "use_sim_time:=True" # use simulation time
+
+map_saver:
+  name: "map_saver"
+  cmd: "ros2 run nav2_map_server map_saver_cli"
+  append_args: "-t {map_topic} -f $HOME/" # map file path`
