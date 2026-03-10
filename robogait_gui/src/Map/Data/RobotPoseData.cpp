@@ -149,6 +149,7 @@ void RobotPoseData::startTFListener()
   if (!tf_buffer_)
   {
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(parent_node_->get_clock());
+    tf_buffer_->setUsingDedicatedThread(true);
   }
   if (!tf_listener_)
   {
