@@ -609,7 +609,7 @@ void MapVisualizationManager::createLayers()
 
   const auto map_data = map_source_->getMapData();
   const auto pose_data = pose_source_->getRobotPoseData();
-  const auto laser_data = laser_source_->getLaserScanData() : nullptr;
+  const auto laser_data = laser_source_->getLaserScanData();
 
   map_layer_ = std::make_shared<ROBOGait::map::layer::MapLayer>(map_data);
 

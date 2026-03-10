@@ -18,7 +18,7 @@ TestNode::TestNode(std::shared_ptr<rclcpp::Node> node, const std::string& robot_
     topic_name = "/" + robot_namespace_ + T_ROBOT_STATUS;
   }
 
-  pub_robot_status_ = parent_node_->create_publisher<std_msgs::msg::String>(topic_name, QOS_BEST_EFFORT);
+  pub_robot_status_ = parent_node_->create_publisher<command_executor_msgs::msg::RobotStatus>(topic_name, QOS_BEST_EFFORT);
 
   loop_timer_ = parent_node_->create_wall_timer(std::chrono::duration<float>(1.0), std::bind(&TestNode::publishLoop, this), cb_group_);
 
@@ -30,8 +30,13 @@ TestNode::~TestNode() { RCLCPP_INFO(parent_node_->get_logger(), "[TestNode::~Tes
 
 void TestNode::publishLoop()
 {
-  std_msgs::msg::String msg;
-  msg.data = robot_name_;
+  command_executor_msgs::msg::RobotStatus msg;
+  msg.id = 1;
+  msg.battery = 100;
+  msg.ns = robot_namespace_;
+  msg.version = "1.0";
+  msg.hardware_id = 35;
+  msg.serial_number = "SN12345";
 
   pub_robot_status_->publish(msg);
 }
