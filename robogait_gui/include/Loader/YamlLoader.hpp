@@ -1,9 +1,11 @@
 #pragma once
 
+#include <string>
+
+#include <yaml-cpp/yaml.h>
+
 #include <QDebug>
 #include <QString>
-#include <string>
-#include <yaml-cpp/yaml.h>
 
 namespace ROBOGait
 {
