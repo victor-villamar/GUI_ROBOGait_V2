@@ -7,6 +7,7 @@
 #include <QTranslator>
 #include <memory>
 
+#include "CommandExecutor/CommandExecutorBridge.hpp"
 #include "DataBase/DataBaseManager.hpp"
 #include "Ros/RosNodeManager.hpp"
 #include "Settings/DeveloperSettings.hpp"
@@ -136,8 +137,9 @@ private:
    */
   void connectSignals();
 
-  std::unique_ptr<ROBOGait::ros::manager::RosNodeManager> ros_node_manager_; /**< ROS node manager instance */
-  std::unique_ptr<ROBOGait::session::UserSession> user_session_;             /**< User session instance */
+  std::unique_ptr<ROBOGait::ros::manager::RosNodeManager> ros_node_manager_;                /**< ROS node manager instance */
+  std::unique_ptr<ROBOGait::session::UserSession> user_session_;                            /**< User session instance */
+  std::unique_ptr<ROBOGait::qml::executor::CommandExecutorBridge> command_executor_bridge_; /**< Command executor bridge instance */
 
   QQmlApplicationEngine* qml_app_engine_; /**< QML application engine */
   QTranslator translator_;                /**< Application translator for i18n */

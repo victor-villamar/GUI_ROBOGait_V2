@@ -1,6 +1,8 @@
 #include <QDebug>
 #include <QPointF>
 #include <QRectF>
+#include <QtGlobal>
+#include <cmath>
 
 #include "Context/RobotContext.hpp"
 #include "Loader/YamlLoader.hpp"
@@ -14,15 +16,21 @@ MapVisualizationManager::MapVisualizationManager() :
     render_scene_(std::make_shared<ROBOGait::map::rendering::RenderScene>()),
     map_layer_(nullptr),
     robot_layer_(nullptr),
+    laser_layer_(nullptr),
     render_camera_(std::make_shared<ROBOGait::map::rendering::RenderCamera>()),
     map_source_(std::make_shared<ROBOGait::map::source::MapSource>()),
     pose_source_(std::make_shared<ROBOGait::map::source::RobotPoseSource>()),
+    laser_source_(std::make_shared<ROBOGait::map::source::LaserSource>()),
     selected_robot_namespace_(""),
     use_namespace_discovery_(true),
     is_initialized_(false),
     subscriptions_active_(false),
     map_available_cache_(false),
     robot_pose_available_cache_(false),
+    laser_available_cache_(false),
+    map_resolution_cache_(0.0),
+    scale_meters_cache_(0.0),
+    scale_pixels_cache_(0),
     robot_size_(0.5),
     follow_robot_(false)
 {
@@ -91,6 +99,10 @@ void MapVisualizationManager::setROSNode(rclcpp::Node* parent_node)
   {
     pose_source_->initialize(parent_node_);
   }
+  if (laser_source_)
+  {
+    laser_source_->initialize(parent_node_);
+  }
 
   is_initialized_ = true;
 
@@ -129,6 +141,10 @@ void MapVisualizationManager::setSelectedRobot(const QString& robot_identifier, 
     {
       pose_source_->setRobotContext(context);
     }
+    if (laser_source_)
+    {
+      laser_source_->setRobotContext(context);
+    }
   }
 
   // Create new displays for this robot
@@ -141,6 +157,8 @@ bool MapVisualizationManager::isMapAvailable() const { return map_source_ && map
 
 bool MapVisualizationManager::isRobotPoseAvailable() const { return pose_source_ && pose_source_->isAvailable(); }
 
+bool MapVisualizationManager::isLaserAvailable() const { return laser_source_ && laser_source_->isAvailable(); }
+
 double MapVisualizationManager::getZoomLevel() const
 {
   if (!render_camera_)
@@ -151,6 +169,12 @@ double MapVisualizationManager::getZoomLevel() const
 
   return render_camera_->getZoom();
 }
+
+double MapVisualizationManager::getMapResolution() const { return map_resolution_cache_; }
+
+double MapVisualizationManager::getScaleMeters() const { return scale_meters_cache_; }
+
+int MapVisualizationManager::getScalePixels() const { return scale_pixels_cache_; }
 
 bool MapVisualizationManager::isFollowingRobot() const { return follow_robot_; }
 
@@ -194,6 +218,10 @@ void MapVisualizationManager::activateSubscriptions()
   {
     pose_source_->start();
   }
+  if (laser_source_)
+  {
+    laser_source_->start();
+  }
   if (render_scene_)
   {
     render_scene_->start();
@@ -223,6 +251,10 @@ void MapVisualizationManager::destroySubscriptions()
   if (pose_source_)
   {
     pose_source_->stop();
+  }
+  if (laser_source_)
+  {
+    laser_source_->stop();
   }
 
   updateAvailability();
@@ -361,6 +393,54 @@ void MapVisualizationManager::registerRobotLayerItem(QObject* item)
   qInfo() << "[MapVisualizationManager::registerRobotLayerItem] Item registered";
 }
 
+void MapVisualizationManager::registerLaserLayerItem(QObject* item)
+{
+  if (!item)
+  {
+    qCritical() << "[MapVisualizationManager::registerLaserLayerItem] Null item";
+    return;
+  }
+
+  auto* layer_item = qobject_cast<ROBOGait::map::item::LaserLayerItem*>(item);
+  if (!layer_item)
+  {
+    qCritical() << "[MapVisualizationManager::registerLaserLayerItem] Invalid item type";
+    return;
+  }
+
+  laser_layer_item_ = layer_item;
+
+  if (!laser_layer_item_)
+  {
+    qCritical() << "[MapVisualizationManager::registerLaserLayerItem] Failed to register LaserLayerItem";
+    return;
+  }
+
+  if (!render_scene_)
+  {
+    qCritical() << "[MapVisualizationManager::registerLaserLayerItem] Render scene not available, cannot set render scene for LaserLayerItem";
+    return;
+  }
+
+  if (!laser_layer_)
+  {
+    qCritical() << "[MapVisualizationManager::registerLaserLayerItem] Laser layer not available, cannot set renderer for LaserLayerItem";
+    return;
+  }
+
+  if (!render_camera_)
+  {
+    qCritical() << "[MapVisualizationManager::registerLaserLayerItem] Render camera not available, cannot set camera for LaserLayerItem";
+    return;
+  }
+
+  laser_layer_item_->setRenderScene(render_scene_);
+  laser_layer_item_->setRenderer(laser_layer_);
+  laser_layer_item_->setCamera(render_camera_);
+
+  qInfo() << "[MapVisualizationManager::registerLaserLayerItem] Item registered";
+}
+
 void MapVisualizationManager::zoomIn()
 {
   if (!render_camera_)
@@ -373,6 +453,8 @@ void MapVisualizationManager::zoomIn()
   render_camera_->zoomByFactor(1.1);
 
   emit zoomLevelChanged();
+
+  updateScale();
 
   if (map_layer_item_)
   {
@@ -396,6 +478,9 @@ void MapVisualizationManager::zoomOut()
   render_camera_->zoomByFactor(1.0 / 1.1);
 
   emit zoomLevelChanged();
+
+  updateScale();
+
   if (map_layer_item_)
   {
     map_layer_item_->update();
@@ -432,6 +517,9 @@ void MapVisualizationManager::fitToView()
   render_camera_->fitToRect(map_rect);
 
   emit zoomLevelChanged();
+
+  updateScale();
+
   if (!map_layer_item_ || !robot_layer_item_)
   {
     qWarning() << "[MapVisualizationManager::fitToView] Layer items not registered yet, cannot update view";
@@ -507,7 +595,7 @@ void MapVisualizationManager::createLayers()
     return;
   }
 
-  if (!map_source_ || !pose_source_)
+  if (!map_source_ || !pose_source_ || !laser_source_)
   {
     qCritical() << "[MapVisualizationManager::createLayers] Data sources not initialized";
     return;
@@ -521,13 +609,16 @@ void MapVisualizationManager::createLayers()
 
   const auto map_data = map_source_->getMapData();
   const auto pose_data = pose_source_->getRobotPoseData();
+  const auto laser_data = laser_source_->getLaserScanData();
 
   map_layer_ = std::make_shared<ROBOGait::map::layer::MapLayer>(map_data);
 
   robot_layer_ = std::make_shared<ROBOGait::map::layer::RobotLayer>(pose_data);
   robot_layer_->setRobotSize(robot_size_);
 
-  if (!map_layer_ || !robot_layer_)
+  laser_layer_ = std::make_shared<ROBOGait::map::layer::LaserLayer>(laser_data);
+
+  if (!map_layer_ || !robot_layer_ || !laser_layer_)
   {
     qCritical() << "[MapVisualizationManager::createLayers] Failed to create render layers";
     return;
@@ -535,6 +626,7 @@ void MapVisualizationManager::createLayers()
 
   render_scene_->setMapLayer(map_layer_);
   render_scene_->setRobotLayer(robot_layer_);
+  render_scene_->setLaserLayer(laser_layer_);
 
   updateAvailability();
 
@@ -543,7 +635,7 @@ void MapVisualizationManager::createLayers()
 
 void MapVisualizationManager::destroyLayers()
 {
-  if (!map_layer_ && !robot_layer_)
+  if (!map_layer_ && !robot_layer_ && !laser_layer_)
   {
     qWarning() << "[MapVisualizationManager::destroyLayers] No layers to destroy";
     return;
@@ -558,6 +650,7 @@ void MapVisualizationManager::destroyLayers()
   render_scene_->stop();
   render_scene_->setMapLayer(nullptr);
   render_scene_->setRobotLayer(nullptr);
+  render_scene_->setLaserLayer(nullptr);
 
   if (map_layer_item_)
   {
@@ -567,14 +660,26 @@ void MapVisualizationManager::destroyLayers()
   {
     robot_layer_item_->setRenderer(nullptr);
   }
+  if (laser_layer_item_)
+  {
+    laser_layer_item_->setRenderer(nullptr);
+  }
 
   map_layer_.reset();
   robot_layer_.reset();
+  laser_layer_.reset();
   map_available_cache_ = false;
   robot_pose_available_cache_ = false;
+  laser_available_cache_ = false;
+  map_resolution_cache_ = 0.0;
+  scale_meters_cache_ = 0.0;
+  scale_pixels_cache_ = 0;
 
   emit mapAvailableChanged();
   emit robotPoseAvailableChanged();
+  emit laserAvailableChanged();
+  emit mapResolutionChanged();
+  emit scaleChanged();
 
   qInfo() << "[MapVisualizationManager::destroyLayers] Layers destroyed";
 }
@@ -595,6 +700,60 @@ void MapVisualizationManager::updateAvailability()
   {
     robot_pose_available_cache_ = robot_available;
     emit robotPoseAvailableChanged();
+  }
+
+  const bool laser_available = isLaserAvailable();
+  if (laser_available != laser_available_cache_)
+  {
+    laser_available_cache_ = laser_available;
+    emit laserAvailableChanged();
+  }
+
+  updateMapResolution();
+  updateScale();
+}
+
+void MapVisualizationManager::updateMapResolution()
+{
+  double new_resolution = 0.0;
+
+  if (map_source_ && map_source_->isAvailable())
+  {
+    const auto map_data = map_source_->getMapData();
+    if (map_data)
+    {
+      new_resolution = map_data->getMetadata().resolution;
+    }
+  }
+
+  if (!qFuzzyCompare(new_resolution + 1.0, map_resolution_cache_ + 1.0))
+  {
+    map_resolution_cache_ = new_resolution;
+    emit mapResolutionChanged();
+  }
+}
+
+void MapVisualizationManager::updateScale()
+{
+  double new_meters = 0.0;
+  int new_pixels = 0;
+
+  if (map_available_cache_ && render_camera_)
+  {
+    const double ppm = render_camera_->getZoom();
+    if (ppm > 0.0)
+    {
+      const int target_px = 70;
+      new_pixels = target_px;
+      new_meters = static_cast<double>(target_px) / ppm;
+    }
+  }
+
+  if (!qFuzzyCompare(new_meters + 1.0, scale_meters_cache_ + 1.0) || new_pixels != scale_pixels_cache_)
+  {
+    scale_meters_cache_ = new_meters;
+    scale_pixels_cache_ = new_pixels;
+    emit scaleChanged();
   }
 }
 

@@ -244,6 +244,14 @@ public:
   Q_INVOKABLE QVariantMap getMapDetails(const QString& map_name);
 
   /**
+   * @brief Check if a map name already exists
+   *
+   * @param map_name The map name to check
+   * @return True if the map exists, false otherwise
+   */
+  Q_INVOKABLE bool mapExists(const QString& map_name);
+
+  /**
    * @brief Register a new map
    *
    * @param map_name The map name

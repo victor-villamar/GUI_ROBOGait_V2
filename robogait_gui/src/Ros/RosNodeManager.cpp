@@ -1,14 +1,19 @@
+#include <string>
+
 #include <QDebug>
+
 #include <rclcpp/executor_options.hpp>
 #include <rclcpp/init_options.hpp>
 #include <rclcpp/node_options.hpp>
 
+#include "Loader/YamlLoader.hpp"
+#include "Ros/Define.hpp"
 #include "Ros/RosNodeManager.hpp"
 
 using namespace ROBOGait::ros::manager;
 
 RosNodeManager::RosNodeManager() :
-    node_name_("ros_node_manager"),
+    node_name_(ROBOGAIT_GUI),
     context_(nullptr),
     ros_node_(nullptr),
     executor_(nullptr),
@@ -140,7 +145,17 @@ void RosNodeManager::initialize(int argc, char** argv, uint8_t domain_id)
   rclcpp::NodeOptions node_options;
   node_options.context(context_);
 
-  ros_node_ = std::make_shared<rclcpp::Node>(node_name_.toStdString(), "RoboGait_GUI", node_options);
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  if (!yaml_loader.isLoaded())
+  {
+    qCritical() << "[RosNodeManager::initialize] Failed to load YAML configuration";
+    return;
+  }
+
+  std::string node_namespace = yaml_loader.getValue<std::string>("node.namespace");
+
+  ros_node_ = std::make_shared<rclcpp::Node>(node_name_.toStdString(), node_namespace, node_options);
 
   rclcpp::ExecutorOptions executor_options;
   executor_options.context = context_;

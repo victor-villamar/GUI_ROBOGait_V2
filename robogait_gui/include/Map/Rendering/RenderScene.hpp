@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "Map/Layer/LaserLayer.hpp"
 #include "Map/Layer/MapLayer.hpp"
 #include "Map/Layer/RobotLayer.hpp"
 #include "Map/Rendering/RenderPipeline.hpp"
@@ -21,11 +22,37 @@ namespace rendering
 class RenderScene
 {
 public:
+  /**
+   * @brief Constructor for the RenderScene class
+   */
   RenderScene();
 
+  /**
+   * @brief Set the map layer for the render scene
+   *
+   * @param map_layer The map layer to set
+   */
   void setMapLayer(std::shared_ptr<ROBOGait::map::layer::MapLayer> map_layer);
+
+  /**
+   * @brief Set the robot layer for the render scene
+   *
+   * @param robot_layer The robot layer to set
+   */
   void setRobotLayer(std::shared_ptr<ROBOGait::map::layer::RobotLayer> robot_layer);
 
+  /**
+   * @brief Set the laser layer for the render scene
+   *
+   * @param laser_layer The laser layer to set
+   */
+  void setLaserLayer(std::shared_ptr<ROBOGait::map::layer::LaserLayer> laser_layer);
+
+  /**
+   * @brief Get the render pipeline for the render scene
+   *
+   * @return The render pipeline
+   */
   std::shared_ptr<RenderPipeline> getPipeline() const;
 
   /**
@@ -42,6 +69,7 @@ private:
   std::shared_ptr<RenderPipeline> pipeline_;                      /**< Render pipeline */
   std::shared_ptr<ROBOGait::map::layer::MapLayer> map_layer_;     /**< Map layer */
   std::shared_ptr<ROBOGait::map::layer::RobotLayer> robot_layer_; /**< Robot layer */
+  std::shared_ptr<ROBOGait::map::layer::LaserLayer> laser_layer_; /**< Laser layer */
 };
 
 } // namespace rendering

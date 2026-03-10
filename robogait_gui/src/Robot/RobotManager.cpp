@@ -2,6 +2,7 @@
 #include <chrono>
 #include <cmath>
 
+#include "CommandExecutor/CommandExecutorClient.hpp"
 #include "Robot/RobotManager.hpp"
 #include "Ros/Define.hpp"
 #include "Ros/TopicsName.hpp"
@@ -50,6 +51,11 @@ void RobotManager::setROSNode(rclcpp::Node* parent_node)
     return;
   }
   parent_node_ = parent_node;
+
+  if (!ROBOGait::ros::executor::CommandExecutorClient::getInstance().initialize(parent_node_))
+  {
+    qWarning() << "[RobotManager::setROSNode] CommandExecutorClient initialization failed";
+  }
 
   manual_control_->setROSNode(parent_node);
   if (map_visualization_manager_)
@@ -127,6 +133,16 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
       map_visualization_manager_->setSelectedRobot(normalized_identifier, is_namespace);
     }
 
+    ROBOGait::context::RobotContext context;
+    if (context.setSelectedRobot(normalized_identifier, is_namespace))
+    {
+      ROBOGait::ros::executor::CommandExecutorClient::getInstance().setRobotContext(context);
+    }
+    else
+    {
+      ROBOGait::ros::executor::CommandExecutorClient::getInstance().clearRobotContext();
+    }
+
     if (use_topic_filter_)
     {
       startMonitoring();
@@ -149,6 +165,8 @@ void RobotManager::clearSelection()
     use_namespace_discovery_ = true;
     emit selectedRobotNamespaceChanged();
     emit selectedRobotDisplayNameChanged();
+
+    ROBOGait::ros::executor::CommandExecutorClient::getInstance().clearRobotContext();
 
     // Destroy map visualization subscriptions
     if (map_visualization_manager_)
@@ -304,8 +322,8 @@ void RobotManager::startMonitoring()
   qInfo() << "[RobotManager::startMonitoring] Starting monitoring for:" << full_topic.c_str()
           << "(mode:" << (use_namespace_discovery_ ? "namespace" : "node name") << ")";
 
-  sub_robot_status_ = parent_node_->create_subscription<std_msgs::msg::String>(full_topic, QOS_BEST_EFFORT,
-                                                                               std::bind(&RobotManager::callbackRobotStatus, this, std::placeholders::_1));
+  sub_robot_status_ = parent_node_->create_subscription<command_executor_msgs::msg::RobotStatus>(
+      full_topic, QOS_BEST_EFFORT, std::bind(&RobotManager::callbackRobotStatus, this, std::placeholders::_1));
 
   last_robot_message_time_ = parent_node_->now();
 
@@ -359,8 +377,10 @@ void RobotManager::checkRobotAvailability(const QStringList& available_robots)
   }
 }
 
-void RobotManager::callbackRobotStatus(const std_msgs::msg::String::SharedPtr msg)
+void RobotManager::callbackRobotStatus(const command_executor_msgs::msg::RobotStatus::SharedPtr msg)
 {
+  (void)msg; // TODO: Implement handling of RobotStatus messages
+
   if (parent_node_ == nullptr)
   {
     qCritical() << "[RobotManager::callbackRobotStatus] Received message but parent node is null, ignoring";

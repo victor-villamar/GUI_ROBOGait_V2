@@ -184,16 +184,26 @@ Dialog {
                             }
 
                             onClicked: {
-                                if (nameField.text.trim() === "" ||
-                                    locationField.text.trim() === "" ||
-                                    descriptionField.text.trim() === "") {
+                                var nameTrim = nameField.text.trim()
+                                var locationTrim = locationField.text.trim()
+                                var descriptionTrim = descriptionField.text.trim()
+
+                                if (nameTrim === "" ||
+                                    locationTrim === "" ||
+                                    descriptionTrim === "") {
                                     errorPopup.errorRectangleTextError.text = qsTr("Error: Has dejado campos vacíos")
                                     errorPopup.open()
                                     return
                                 }
 
+                                if (dbManager && dbManager.mapExists(nameTrim)) {
+                                    errorPopup.errorRectangleTextError.text = qsTr("Error: El mapa ya existe. Introduzca otro nombre.")
+                                    errorPopup.open()
+                                    return
+                                }
+
                                 root.close()
-                                root.createMapRequested(nameField.text, locationField.text, descriptionField.text)
+                                root.createMapRequested(nameTrim, locationTrim, descriptionTrim)
                             }
                         }
 

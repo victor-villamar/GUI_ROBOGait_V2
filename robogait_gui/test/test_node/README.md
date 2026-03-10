@@ -8,7 +8,7 @@ Nodo de prueba para verificar el funcionamiento del sistema de descubrimiento de
 
 Este nodo permite:
 - Probar el descubrimiento automático de robots sin hardware físico
-- Verificar la recepción de mensajes `std_msgs/String` en el topic de descubrimiento
+- Verificar la recepción de mensajes `command_executor_msgs` en el topic de descubrimiento
 - Simular múltiples robots publicando en diferentes namespaces
 - Validar la lógica de detección de robots del sistema principal
 

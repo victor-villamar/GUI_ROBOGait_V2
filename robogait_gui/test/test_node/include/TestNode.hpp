@@ -4,7 +4,8 @@
 #include <rclcpp/node.hpp>
 #include <rclcpp/publisher.hpp>
 #include <rclcpp/timer.hpp>
-#include <std_msgs/msg/string.hpp>
+
+#include <command_executor_msgs/msg/robot_status.hpp>
 
 #include <chrono>
 #include <memory>
@@ -43,7 +44,7 @@ private:
 
   std::shared_ptr<rclcpp::Node> parent_node_; /**< Parent ROS2 node */
 
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_robot_status_; /**< Publisher for robot name */
+  rclcpp::Publisher<command_executor_msgs::msg::RobotStatus>::SharedPtr pub_robot_status_; /**< Publisher for robot status */
 
   rclcpp::TimerBase::SharedPtr loop_timer_; /**< Timer for periodic publishing */
 
