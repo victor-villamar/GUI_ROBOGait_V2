@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
@@ -17,6 +17,7 @@ find_package(map_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(command_executor_msgs REQUIRED)
 
 find_package(Qt6 REQUIRED COMPONENTS
     Core
@@ -35,6 +36,8 @@ set(CMAKE_AUTORCC ON)
 
 # Set include directories
 set(HEADERS
+    include/CommandExecutor/CommandExecutorBridge.hpp
+    include/CommandExecutor/CommandExecutorClient.hpp
     include/Context/RobotContext.hpp
     include/Core/RoboGaitApplication.hpp
     include/DataBase/Common/DbErrors.hpp
@@ -48,19 +51,24 @@ set(HEADERS
     include/DataBase/DatabaseSchema.hpp
     include/DataBase/RoboGaitDb.hpp
     include/Loader/YamlLoader.hpp
+    include/Map/Data/LaserScanData.hpp
     include/Map/Data/MapData.hpp
     include/Map/Data/RobotPoseData.hpp
+    include/Map/Items/LaserLayerItem.hpp
     include/Map/Items/MapLayerItem.hpp
     include/Map/Items/RobotLayerItem.hpp
     include/Map/Layer/LayerInterface.hpp
+    include/Map/Layer/LaserLayer.hpp
     include/Map/Layer/MapLayer.hpp
     include/Map/Layer/RobotLayer.hpp
     include/Map/Rendering/RenderCamera.hpp
     include/Map/Rendering/RenderPipeline.hpp
     include/Map/Rendering/RenderScene.hpp
+    include/Map/Source/LaserSource.hpp
     include/Map/Source/MapSource.hpp
     include/Map/Source/RobotPoseSource.hpp
     include/Map/Source/SourceInterface.hpp
+    include/Map/Subscribers/LaserScanSubscriber.hpp
     include/Map/Subscribers/MapSubscriber.hpp
     include/Map/Utils/Utils.hpp
     include/Map/MapVisualizationManager.hpp
@@ -77,6 +85,8 @@ set(HEADERS
 
 # Set source files
 set(SOURCES
+    src/CommandExecutor/CommandExecutorBridge.cpp
+    src/CommandExecutor/CommandExecutorClient.cpp
     src/Context/RobotContext.cpp
     src/Core/RoboGaitApplication.cpp
     src/DataBase/Common/DbErrors.cpp
@@ -90,17 +100,22 @@ set(SOURCES
     src/DataBase/DatabaseSchema.cpp
     src/DataBase/RoboGaitDb.cpp
     src/Loader/YamlLoader.cpp
+    src/Map/Data/LaserScanData.cpp
     src/Map/Data/MapData.cpp
     src/Map/Data/RobotPoseData.cpp
+    src/Map/Items/LaserLayerItem.cpp
     src/Map/Items/MapLayerItem.cpp
     src/Map/Items/RobotLayerItem.cpp
+    src/Map/Layer/LaserLayer.cpp
     src/Map/Layer/MapLayer.cpp
     src/Map/Layer/RobotLayer.cpp
     src/Map/Rendering/RenderCamera.cpp
     src/Map/Rendering/RenderPipeline.cpp
     src/Map/Rendering/RenderScene.cpp
+    src/Map/Source/LaserSource.cpp
     src/Map/Source/MapSource.cpp
     src/Map/Source/RobotPoseSource.cpp
+    src/Map/Subscribers/LaserScanSubscriber.cpp
     src/Map/Subscribers/MapSubscriber.cpp
     src/Map/Utils/Utils.cpp
     src/Map/MapVisualizationManager.cpp
@@ -192,7 +207,6 @@ add_executable(${PROJECT_NAME}
 ament_target_dependencies(${PROJECT_NAME}
     rclcpp
     ament_index_cpp
-    std_msgs
     geometry_msgs
     nav_msgs
     map_msgs
@@ -200,6 +214,7 @@ ament_target_dependencies(${PROJECT_NAME}
     tf2_ros
     tf2_geometry_msgs
     yaml-cpp
+    command_executor_msgs
 )
 
 # Link libraries
@@ -220,13 +235,12 @@ target_include_directories(test_node_node PRIVATE
     test/test_node/include
     include/Ros
     ${rclcpp_INCLUDE_DIRS}
-    ${std_msgs_INCLUDE_DIRS}
 )
 
 # Add dependencies for test_node
 ament_target_dependencies(test_node_node
     rclcpp
-    std_msgs
+    command_executor_msgs
 )
 
 # Install
