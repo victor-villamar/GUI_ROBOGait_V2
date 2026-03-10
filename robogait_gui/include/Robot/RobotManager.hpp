@@ -2,12 +2,14 @@
 
 #include <QObject>
 #include <QString>
+
 #include <rclcpp/callback_group.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/subscription.hpp>
 #include <rclcpp/time.hpp>
 #include <rclcpp/timer.hpp>
-#include <std_msgs/msg/string.hpp>
+
+#include <command_executor_msgs/msg/robot_status.hpp>
 
 #include "Map/MapVisualizationManager.hpp"
 #include "Robot/ManualControl.hpp"
@@ -18,6 +20,9 @@ namespace robot
 {
 namespace manager
 {
+/**
+ * @brief Manages the robot's state and behavior
+ */
 class RobotManager : public QObject
 {
   Q_OBJECT
@@ -159,7 +164,7 @@ private:
    *
    * @param msg Message received from robot
    */
-  void callbackRobotStatus(const std_msgs::msg::String::SharedPtr msg);
+  void callbackRobotStatus(const command_executor_msgs::msg::RobotStatus::SharedPtr msg);
 
   /**
    * @brief Check robot timeout and emit signal if disconnected
@@ -185,11 +190,11 @@ private:
   bool use_namespace_discovery_;     /**< True if selected robot is identified by namespace, false if by node name */
   bool use_topic_filter_;            /**< True to monitor via topic, false to skip monitoring */
 
-  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr sub_robot_status_; /**< Subscriber to robot_status topic */
-  rclcpp::TimerBase::SharedPtr timer_robot_timeout_;                        /**< Timer for robot disconnection */
-  rclcpp::CallbackGroup::SharedPtr cb_group_;                               /**< Callback group for subscriptions */
-  rclcpp::Time last_robot_message_time_;                                    /**< Timestamp of last robot message */
-  bool is_monitoring_;                                                      /**< Flag indicating if monitoring is active */
+  rclcpp::Subscription<command_executor_msgs::msg::RobotStatus>::SharedPtr sub_robot_status_; /**< Subscriber to robot_status topic */
+  rclcpp::TimerBase::SharedPtr timer_robot_timeout_;                                          /**< Timer for robot disconnection */
+  rclcpp::CallbackGroup::SharedPtr cb_group_;                                                 /**< Callback group for subscriptions */
+  rclcpp::Time last_robot_message_time_;                                                      /**< Timestamp of last robot message */
+  bool is_monitoring_;                                                                        /**< Flag indicating if monitoring is active */
 
   static constexpr double TIMEOUT_SECONDS = 3.0; /**< Timeout in seconds for robot disconnection */
 };
