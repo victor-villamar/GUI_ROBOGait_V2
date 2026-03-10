@@ -12,6 +12,7 @@
 
 #include "Core/RoboGaitApplication.hpp"
 #include "Loader/YamlLoader.hpp"
+#include "Map/Items/LaserLayerItem.hpp"
 #include "Map/Items/MapLayerItem.hpp"
 #include "Map/Items/RobotLayerItem.hpp"
 #include "Robot/ManualControl.hpp"
@@ -58,6 +59,7 @@ void RoboGaitApplication::initCommon()
   qmlRegisterUncreatableType<ROBOGait::qml::executor::CommandExecutorBridge>("CommandExecutorBridge", 1, 0, "CommandExecutorBridge", "Enums Only");
   qmlRegisterType<ROBOGait::map::item::MapLayerItem>("MapRendering", 1, 0, "MapLayerItem");
   qmlRegisterType<ROBOGait::map::item::RobotLayerItem>("MapRendering", 1, 0, "RobotLayerItem");
+  qmlRegisterType<ROBOGait::map::item::LaserLayerItem>("MapRendering", 1, 0, "LaserLayerItem");
   qRegisterMetaType<geometry_msgs::msg::Twist>("geometry_msgs::msg::Twist");
 
   qInfo() << "[RoboGaitApplication::initCommon] QML types and metatypes registered";

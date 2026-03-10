@@ -30,6 +30,19 @@ void RenderScene::setRobotLayer(std::shared_ptr<ROBOGait::map::layer::RobotLayer
   }
 }
 
+void RenderScene::setLaserLayer(std::shared_ptr<ROBOGait::map::layer::LaserLayer> laser_layer)
+{
+  laser_layer_ = std::move(laser_layer);
+  if (pipeline_)
+  {
+    pipeline_->removeLayer("laser");
+    if (laser_layer_)
+    {
+      pipeline_->addLayer("laser", laser_layer_);
+    }
+  }
+}
+
 std::shared_ptr<RenderPipeline> RenderScene::getPipeline() const { return pipeline_; }
 
 void RenderScene::start()

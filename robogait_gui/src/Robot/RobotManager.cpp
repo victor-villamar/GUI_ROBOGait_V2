@@ -2,6 +2,7 @@
 #include <chrono>
 #include <cmath>
 
+#include "CommandExecutor/CommandExecutorClient.hpp"
 #include "Robot/RobotManager.hpp"
 #include "Ros/Define.hpp"
 #include "Ros/TopicsName.hpp"
@@ -50,6 +51,11 @@ void RobotManager::setROSNode(rclcpp::Node* parent_node)
     return;
   }
   parent_node_ = parent_node;
+
+  if (!ROBOGait::ros::executor::CommandExecutorClient::getInstance().initialize(parent_node_))
+  {
+    qWarning() << "[RobotManager::setROSNode] CommandExecutorClient initialization failed";
+  }
 
   manual_control_->setROSNode(parent_node);
   if (map_visualization_manager_)
@@ -127,6 +133,16 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
       map_visualization_manager_->setSelectedRobot(normalized_identifier, is_namespace);
     }
 
+    ROBOGait::context::RobotContext context;
+    if (context.setSelectedRobot(normalized_identifier, is_namespace))
+    {
+      ROBOGait::ros::executor::CommandExecutorClient::getInstance().setRobotContext(context);
+    }
+    else
+    {
+      ROBOGait::ros::executor::CommandExecutorClient::getInstance().clearRobotContext();
+    }
+
     if (use_topic_filter_)
     {
       startMonitoring();
@@ -149,6 +165,8 @@ void RobotManager::clearSelection()
     use_namespace_discovery_ = true;
     emit selectedRobotNamespaceChanged();
     emit selectedRobotDisplayNameChanged();
+
+    ROBOGait::ros::executor::CommandExecutorClient::getInstance().clearRobotContext();
 
     // Destroy map visualization subscriptions
     if (map_visualization_manager_)

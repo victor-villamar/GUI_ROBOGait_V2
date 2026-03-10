@@ -7,12 +7,15 @@
 
 #include <rclcpp/node.hpp>
 
+#include "Map/Items/LaserLayerItem.hpp"
 #include "Map/Items/MapLayerItem.hpp"
 #include "Map/Items/RobotLayerItem.hpp"
+#include "Map/Layer/LaserLayer.hpp"
 #include "Map/Layer/MapLayer.hpp"
 #include "Map/Layer/RobotLayer.hpp"
 #include "Map/Rendering/RenderCamera.hpp"
 #include "Map/Rendering/RenderScene.hpp"
+#include "Map/Source/LaserSource.hpp"
 #include "Map/Source/MapSource.hpp"
 #include "Map/Source/RobotPoseSource.hpp"
 
@@ -43,9 +46,25 @@ class MapVisualizationManager : public QObject
              READ isRobotPoseAvailable
              NOTIFY robotPoseAvailableChanged)
 
+  Q_PROPERTY(bool laserAvailable
+             READ isLaserAvailable
+             NOTIFY laserAvailableChanged)
+
   Q_PROPERTY(double zoomLevel
              READ getZoomLevel
              NOTIFY zoomLevelChanged)
+
+  Q_PROPERTY(double mapResolution
+             READ getMapResolution
+             NOTIFY mapResolutionChanged)
+
+  Q_PROPERTY(double scaleMeters
+             READ getScaleMeters
+             NOTIFY scaleChanged)
+
+  Q_PROPERTY(int scalePixels
+             READ getScalePixels
+             NOTIFY scaleChanged)
 
   Q_PROPERTY(bool followRobot
              READ isFollowingRobot
@@ -54,7 +73,14 @@ class MapVisualizationManager : public QObject
   // clang-format on
 
 public:
+  /**
+   * @brief Constructor of MapVisualizationManager class
+   */
   MapVisualizationManager();
+
+  /**
+   * @brief Destructor of MapVisualizationManager class
+   */
   ~MapVisualizationManager();
 
   /**
@@ -96,12 +122,45 @@ public:
   bool isRobotPoseAvailable() const;
 
   /**
+   * @brief Check if laser data is available
+   *
+   * @return true if laser data has been received
+   */
+  bool isLaserAvailable() const;
+
+  /**
    * @brief Get current zoom level
    *
    * @return Zoom level (1.0 = 100%)
    */
   double getZoomLevel() const;
 
+  /**
+   * @brief Get current map resolution
+   *
+   * @return Map resolution in meters per pixel
+   */
+  double getMapResolution() const;
+
+  /**
+   * @brief Get current scale in meters
+   *
+   * @return Scale in meters
+   */
+  double getScaleMeters() const;
+
+  /**
+   * @brief Get current scale in pixels
+   *
+   * @return Scale in pixels
+   */
+  int getScalePixels() const;
+
+  /**
+   * @brief Check if the camera is following the robot
+   *
+   * @return true if following the robot, false otherwise
+   */
   bool isFollowingRobot() const;
 
   /**
@@ -111,7 +170,14 @@ public:
    */
   void setFollowRobot(bool follow_robot);
 
+  /**
+   * @brief Activate subscriptions for data sources
+   */
   Q_INVOKABLE void activateSubscriptions();
+
+  /**
+   * @brief Destroy subscriptions for data sources
+   */
   Q_INVOKABLE void destroySubscriptions();
 
   /**
@@ -127,6 +193,13 @@ public:
    * @param item Pointer to RobotLayerItem created in QML
    */
   Q_INVOKABLE void registerRobotLayerItem(QObject* item);
+
+  /**
+   * @brief Register LaserLayerItem created in QML
+   *
+   * @param item Pointer to LaserLayerItem created in QML
+   */
+  Q_INVOKABLE void registerLaserLayerItem(QObject* item);
 
   /**
    * @brief Zoom in for GPU rendering camera
@@ -165,13 +238,41 @@ signals:
   void isInitializedChanged();      // Emitted when initialization state changes
   void mapAvailableChanged();       // Emitted when map availability changes
   void robotPoseAvailableChanged(); // Emitted when robot pose availability changes
+  void laserAvailableChanged();     // Emitted when laser availability changes
   void zoomLevelChanged();          // Emitted when zoom level changes
+  void mapResolutionChanged();      // Emitted when map resolution changes
+  void scaleChanged();              // Emitted when scale changes
   void followRobotChanged();        // Emitted when follow mode changes
 
 private:
+  /**
+   * @brief Create render layers
+   */
   void createLayers();
+
+  /**
+   * @brief Destroy render layers
+   */
   void destroyLayers();
+
+  /**
+   * @brief Update availability of data sources
+   */
   void updateAvailability();
+
+  /**
+   * @brief Update map resolution
+   */
+  void updateMapResolution();
+
+  /**
+   * @brief Update scale
+   */
+  void updateScale();
+
+  /**
+   * @brief Update follow robot camera
+   */
   void updateFollowRobotCamera();
 
   rclcpp::Node* parent_node_; /**< Parent ROS node pointer */
@@ -180,11 +281,14 @@ private:
   std::shared_ptr<ROBOGait::map::rendering::RenderCamera> render_camera_; /**< Shared camera for layers */
   std::shared_ptr<ROBOGait::map::layer::MapLayer> map_layer_;             /**< Map layer renderer */
   std::shared_ptr<ROBOGait::map::layer::RobotLayer> robot_layer_;         /**< Robot layer renderer */
+  std::shared_ptr<ROBOGait::map::layer::LaserLayer> laser_layer_;         /**< Laser layer renderer */
   QPointer<ROBOGait::map::item::MapLayerItem> map_layer_item_;            /**< Map layer item */
   QPointer<ROBOGait::map::item::RobotLayerItem> robot_layer_item_;        /**< Robot layer item */
+  QPointer<ROBOGait::map::item::LaserLayerItem> laser_layer_item_;        /**< Laser layer item */
 
   std::shared_ptr<ROBOGait::map::source::MapSource> map_source_;        /**< Map source */
   std::shared_ptr<ROBOGait::map::source::RobotPoseSource> pose_source_; /**< Robot pose source */
+  std::shared_ptr<ROBOGait::map::source::LaserSource> laser_source_;    /**< Laser source */
 
   QString selected_robot_namespace_; /**< Selected robot namespace */
   bool use_namespace_discovery_;     /**< Use namespace-based topic discovery */
@@ -192,6 +296,10 @@ private:
   bool subscriptions_active_;        /**< Subscriptions active flag */
   bool map_available_cache_;         /**< Cached map availability state */
   bool robot_pose_available_cache_;  /**< Cached robot pose availability state */
+  bool laser_available_cache_;       /**< Cached laser availability state */
+  double map_resolution_cache_;      /**< Cached map resolution (meters per pixel) */
+  double scale_meters_cache_;        /**< Cached scale bar meters value */
+  int scale_pixels_cache_;           /**< Cached scale bar pixel length */
   double robot_size_;                /**< Robot diameter used for rendering (meters) */
   bool follow_robot_;                /**< Whether the camera follows the robot */
 };
