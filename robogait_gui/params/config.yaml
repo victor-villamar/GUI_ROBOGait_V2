@@ -1,5 +1,9 @@
 # ROBOGait Configuration File
 
+# Node Configuration
+node:
+  namespace: "RoboGait_GUI"
+
 # Database Configuration
 database:
   path: ".local/robogait"

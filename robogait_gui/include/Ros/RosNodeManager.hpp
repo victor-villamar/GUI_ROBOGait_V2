@@ -1,12 +1,14 @@
 #pragma once
 
-#include <QObject>
 #include <atomic>
 #include <memory>
+#include <thread>
+
+#include <QObject>
+
 #include <rclcpp/context.hpp>
 #include <rclcpp/executors.hpp>
 #include <rclcpp/node.hpp>
-#include <thread>
 
 #include "Robot/RobotDiscovery.hpp"
 #include "Robot/RobotManager.hpp"
@@ -131,10 +133,10 @@ public:
   Q_INVOKABLE void shutdown();
 
 signals:
-  void isRunningChanged();
-  void nodeNameChanged();
-  void useNamespaceDiscoveryChanged();
-  void rosNodeConnected(rclcpp::Node* node);
+  void isRunningChanged();                   // Emit when the running state changes
+  void nodeNameChanged();                    // Emit when the node name changes
+  void useNamespaceDiscoveryChanged();       // Emit when the namespace discovery setting changes
+  void rosNodeConnected(rclcpp::Node* node); // Emit when the ROS node is connected
 
 private:
   /**
