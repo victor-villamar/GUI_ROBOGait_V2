@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import CommandExecutorBridge 1.0
 
 import "qrc:/Dialogs"
 
@@ -11,6 +12,9 @@ MapViewForm {
     property string mapName: ""
     property string mapLocation: ""
     property string mapDescription: ""
+    property bool waitingForMappingStop: false
+    property bool pendingSaveAndExit: false
+    property bool pendingSaveToDb: false
 
     // Bind to MapVisualizationManager properties
     mapAvailable: (userSession.rosManager &&
@@ -18,6 +22,26 @@ MapViewForm {
                    userSession.rosManager.robotManager.mapVisualizationManager)
                   ? userSession.rosManager.robotManager.mapVisualizationManager.mapAvailable
                   : false
+
+    // Map resolution (meters per pixel)
+    mapResolution: (userSession.rosManager &&
+                   userSession.rosManager.robotManager &&
+                   userSession.rosManager.robotManager.mapVisualizationManager)
+                  ? userSession.rosManager.robotManager.mapVisualizationManager.mapResolution
+                  : 0.0
+
+    // Scale bar values
+    scaleMeters: (userSession.rosManager &&
+                  userSession.rosManager.robotManager &&
+                  userSession.rosManager.robotManager.mapVisualizationManager)
+                 ? userSession.rosManager.robotManager.mapVisualizationManager.scaleMeters
+                 : 0.0
+
+    scalePixels: (userSession.rosManager &&
+                  userSession.rosManager.robotManager &&
+                  userSession.rosManager.robotManager.mapVisualizationManager)
+                 ? userSession.rosManager.robotManager.mapVisualizationManager.scalePixels
+                 : 0
 
     // Robot pose availability for UI 
     robotPoseAvailable: (userSession.rosManager &&
@@ -57,6 +81,13 @@ MapViewForm {
             return false
         }
 
+        var ok = dbManager.registerMap(mapName, mapLocation, mapDescription)
+        if (!ok) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: %1").arg(dbManager.lastError)
+            errorPopup.open()
+            return false
+        }
+
         if (!userSession || !userSession.rosManager || !userSession.rosManager.robotManager
             || !userSession.rosManager.robotManager.mapVisualizationManager) {
             errorPopup.errorRectangleTextError.text = qsTr("Error: Mapa no disponible")
@@ -72,18 +103,48 @@ MapViewForm {
             return false
         }
 
-        var ok = dbManager.registerMap(mapName, mapLocation, mapDescription)
-        if (!ok) {
-            errorPopup.errorRectangleTextError.text = qsTr("Error: %1").arg(dbManager.lastError)
-            errorPopup.open()
-            return false
-        }
-
         if (shouldPop && root.StackView.view) {
             root.StackView.view.pop()
         }
 
         return true
+    }
+
+    function beginSaveAndStop(shouldPop) {
+        pendingSaveAndExit = shouldPop
+        pendingSaveToDb = true
+        waitingForMappingStop = true
+
+        busyDialog.openWithMessage(qsTr("Guardando mapa..."))
+
+        var okStop = commandExecutorBridge.stopMapping(true, mapName)
+
+        if(!okStop) {
+            waitingForMappingStop = false
+            pendingSaveAndExit = false
+            pendingSaveToDb = false
+            busyDialog.close()
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo guardar el mapa")
+            errorPopup.open()
+        }
+    }
+
+    function beginStopWithoutSave(shouldPop) {
+        pendingSaveAndExit = shouldPop
+        pendingSaveToDb = false
+        waitingForMappingStop = true
+
+        busyDialog.openWithMessage(qsTr("Saliendo sin guardar..."))
+
+        var okStop = commandExecutorBridge.stopMapping(false, "")
+
+        if(!okStop) {
+            waitingForMappingStop = false
+            pendingSaveAndExit = false
+            busyDialog.close()
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo detener el mapeo")
+            errorPopup.open()
+        }
     }
 
     function handleBackNavigation() {
@@ -297,9 +358,8 @@ MapViewForm {
                     }
 
                     onClicked: {
-                        if (saveMapToDatabase(true)) {
-                            saveChangesDialog.close()
-                        }
+                        beginSaveAndStop(true)
+                        saveChangesDialog.close()
                     }
                 }
 
@@ -327,9 +387,7 @@ MapViewForm {
 
                     onClicked: {
                         saveChangesDialog.close()
-                        if (root.StackView.view) {
-                            root.StackView.view.pop()
-                        }
+                        beginStopWithoutSave(true)
                     }
                 }
 
@@ -361,6 +419,10 @@ MapViewForm {
         }
     }
 
+    BusyDialog {
+        id: busyDialog
+    }
+
     ErrorRectangle {
         id: errorPopup
         anchors.centerIn: parent
@@ -373,7 +435,7 @@ MapViewForm {
         acceptText: qsTr("Guardar")
 
         onAccepted: {
-            saveMapToDatabase(true)
+            beginSaveAndStop(true)
         }
     }
 
@@ -387,4 +449,39 @@ MapViewForm {
         }
     }
 
+    Connections {
+        target: commandExecutorBridge
+
+        function onStatusChanged() {
+            if(!waitingForMappingStop) {
+                return
+            }
+
+            if (commandExecutorBridge.status === CommandExecutorBridge.STOPPED) {
+                waitingForMappingStop = false
+                busyDialog.close()
+
+                if (pendingSaveAndExit) {
+                    pendingSaveAndExit = false
+                    if (pendingSaveToDb) {
+                        pendingSaveToDb = false
+                        saveMapToDatabase(true)
+                    } else if (root.StackView.view) {
+                        root.StackView.view.pop()
+                    }
+                }
+            }
+            else if (commandExecutorBridge.status === CommandExecutorBridge.ERROR) {
+                var wasSaving = pendingSaveToDb
+                waitingForMappingStop = false
+                pendingSaveAndExit = false
+                pendingSaveToDb = false
+                busyDialog.close()
+                errorPopup.errorRectangleTextError.text = wasSaving
+                    ? qsTr("Error: No se pudo guardar el mapa.")
+                    : qsTr("Error: No se pudo detener el mapeo.")
+                errorPopup.open()
+            }
+        }
+    }
 }

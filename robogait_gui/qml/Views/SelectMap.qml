@@ -3,6 +3,7 @@ import QtQuick.Controls 2.15
 
 import "qrc:/Dialogs"
 import "qrc:/Views"
+import CommandExecutorBridge 1.0
 
 SelectMapForm {
     id: root
@@ -15,6 +16,7 @@ SelectMapForm {
     property string pendingMapLocation: ""
     property string pendingMapDescription: ""
     property string pendingDeleteMapName: ""
+    property bool waitingForMappingStart: false
 
     mapsListView.model: mapsModel
     selectedMapIndex: -1
@@ -70,11 +72,21 @@ SelectMapForm {
         id: mapRegisterDialog
 
         onCreateMapRequested: function(name, location, description) {
-            if (root.StackView.view) {
-                pendingMapName = name
-                pendingMapLocation = location
-                pendingMapDescription = description
-                root.StackView.view.push(mapViewPage)
+            pendingMapName = name
+            pendingMapLocation = location
+            pendingMapDescription = description
+
+            waitingForMappingStart = true
+            busyDialog.openWithMessage(qsTr("Iniciando creación del mapa..."))
+
+            var ok = commandExecutorBridge.startMapping()
+            if(!ok)
+            {
+                waitingForMappingStart = false
+                busyDialog.close()
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la creación del mapa")
+                errorPopup.open()
+                return
             }
         }
     }
@@ -141,9 +153,38 @@ SelectMapForm {
         }
     }
 
+    BusyDialog {
+        id: busyDialog
+    }
+
     ErrorRectangle {
         id: errorPopup
         anchors.centerIn: parent
         errorRectangleTextError.text: ""
+    }
+
+    Connections {
+        target: commandExecutorBridge
+
+        function onStatusChanged() {
+
+            if(!waitingForMappingStart) {
+                return
+            }
+
+            if(commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
+                waitingForMappingStart = false
+                busyDialog.close()
+                if(root.StackView.view) {
+                    root.StackView.view.push(mapViewPage)
+                }
+            }
+            else if (commandExecutorBridge.status === CommandExecutorBridge.ERROR) {
+                waitingForMappingStart = false
+                busyDialog.close()
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la creación del mapa")
+                errorPopup.open()
+            }
+        }
     }
 }

@@ -22,6 +22,7 @@ Rectangle {
     property alias resetMapButton: resetMapButton
     property alias mapLayerItem: mapLayerItem
     property alias robotLayerItem: robotLayerItem
+    property alias laserLayerItem: laserLayerItem
 
     // Properties for map manager state
     property bool mapAvailable: false
@@ -29,8 +30,18 @@ Rectangle {
     // Properties for robot pose availability
     property bool robotPoseAvailable: false
 
+    // Properties for laser availability
+    property bool laserAvailable: false
+
     // Zoom level
     property real zoomLevel: 1.0
+
+    // Map resolution (meters per pixel)
+    property real mapResolution: 0.0
+
+    // Scale bar values
+    property real scaleMeters: 0.0
+    property int scalePixels: 0
 
     // Manual control properties
     property bool manualUnlocked: false
@@ -128,6 +139,59 @@ Rectangle {
                     font.pixelSize: 12
                     font.bold: true
                     color: "#ffffff"
+                }
+            }
+
+            Rectangle {
+                id: scaleBadge
+                anchors.left: parent.left
+                anchors.top: zoomBadge.bottom
+                anchors.leftMargin: 16
+                anchors.topMargin: 8
+                color: "#2c5f7c"
+                radius: 6
+                border.color: "#6aa3c8"
+                border.width: 1
+                z: 80
+                visible: mapAvailable && scaleMeters > 0 && scalePixels > 0
+
+                property int padding: 8
+                property real meters: scaleMeters
+                property int pixels: scalePixels
+
+                function formatMeters(value) {
+                    if (value < 0.1) {
+                        return value.toFixed(2)
+                    }
+                    if (value < 1) {
+                        return value.toFixed(1)
+                    }
+                    return value.toFixed(0)
+                }
+
+                implicitWidth: Math.max(scaleLabel.implicitWidth, scaleBar.width) + (padding * 2)
+                implicitHeight: scaleLabel.implicitHeight + scaleBar.height + (padding * 2) + 4
+
+                Column {
+                    anchors.fill: parent
+                    anchors.margins: scaleBadge.padding
+                    spacing: 4
+
+                    Text {
+                        id: scaleLabel
+                        text: scaleBadge.pixels + " px | " + scaleBadge.formatMeters(scaleBadge.meters) + " m"
+                        font.pixelSize: 12
+                        font.bold: true
+                        color: "#ffffff"
+                    }
+
+                    Rectangle {
+                        id: scaleBar
+                        width: Math.max(24, scaleBadge.pixels)
+                        height: 4
+                        radius: 2
+                        color: "#ffffff"
+                    }
                 }
             }
 
