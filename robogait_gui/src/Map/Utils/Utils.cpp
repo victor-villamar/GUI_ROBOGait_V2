@@ -3,12 +3,13 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QString>
 #include <QUrl>
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 
+#include "Loader/YamlLoader.hpp"
 #include "Map/Utils/Utils.hpp"
 
 namespace ROBOGait
@@ -45,8 +46,17 @@ bool generateMapPreview(const std::shared_ptr<data::MapData>& map_data, const QS
     return false;
   }
 
-  std::string package_share_dir = ament_index_cpp::get_package_share_directory("robogait_gui");
-  QString maps_directory = QString::fromStdString(package_share_dir) + "/maps";
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  if (!yaml_loader.isLoaded())
+  {
+    qWarning() << "[utils::generateMapPreview] YAML loader is not loaded";
+    return false;
+  }
+
+  const std::string image_path = yaml_loader.getValue<std::string>("map.image_path", "");
+
+  const QString maps_directory = QDir::homePath() + "/" + QString::fromStdString(image_path);
 
   QDir dir;
   if (!dir.exists(maps_directory))
@@ -59,7 +69,7 @@ bool generateMapPreview(const std::shared_ptr<data::MapData>& map_data, const QS
     qInfo() << "[utils::generateMapPreview] Created maps directory:" << maps_directory;
   }
 
-  QString file_path = maps_directory + "/" + map_name + ".png";
+  QString file_path = maps_directory + map_name + ".png";
 
   QImage image = map_data->toQImage();
 
@@ -119,8 +129,17 @@ QString getMapPreviewPath(const QString& map_name)
     return QString();
   }
 
-  std::string package_share_dir = ament_index_cpp::get_package_share_directory("robogait_gui");
-  QString file_path = QString::fromStdString(package_share_dir) + "/maps/" + map_name + ".png";
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+  if (!yaml_loader.isLoaded())
+  {
+    qWarning() << "[utils::getMapPreviewPath] YAML loader is not loaded";
+    return QString();
+  }
+
+  std::string image_path = yaml_loader.getValue<std::string>("map.image_path", "");
+  QString maps_directory = QDir::homePath() + "/" + QString::fromStdString(image_path);
+
+  QString file_path = maps_directory + map_name + ".png";
 
   QFileInfo file_info(file_path);
   if (!file_info.exists())
