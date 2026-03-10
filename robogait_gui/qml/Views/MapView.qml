@@ -50,6 +50,13 @@ MapViewForm {
                        ? userSession.rosManager.robotManager.mapVisualizationManager.robotPoseAvailable
                        : false
 
+    // Laser availability for UI
+    laserAvailable: (userSession.rosManager &&
+                     userSession.rosManager.robotManager &&
+                     userSession.rosManager.robotManager.mapVisualizationManager)
+                    ? userSession.rosManager.robotManager.mapVisualizationManager.laserAvailable
+                    : false
+
     // Zoom level for UI
     zoomLevel: (userSession.rosManager &&
                 userSession.rosManager.robotManager &&

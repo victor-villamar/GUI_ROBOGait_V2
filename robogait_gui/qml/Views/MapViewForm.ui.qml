@@ -229,6 +229,23 @@ Rectangle {
                 }
             }
 
+            LaserLayerItem {
+                id: laserLayerItem
+                anchors.fill: parent
+                anchors.margins: 10
+                visible: mapAvailable && laserAvailable
+                z: 1.5
+
+                Component.onCompleted: {
+                    if (userSession.rosManager &&
+                        userSession.rosManager.robotManager &&
+                        userSession.rosManager.robotManager.mapVisualizationManager)
+                    {
+                        userSession.rosManager.robotManager.mapVisualizationManager.registerLaserLayerItem(laserLayerItem)
+                    }
+                }
+            }
+
             // Placeholder when map is not available
             Column {
                 anchors.centerIn: parent
