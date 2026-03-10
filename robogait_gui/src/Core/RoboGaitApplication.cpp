@@ -17,6 +17,7 @@
 #include "Robot/ManualControl.hpp"
 #include "Robot/RobotDiscovery.hpp"
 #include "Robot/RobotManager.hpp"
+#include "Ros/Define.hpp"
 #include "User/Patient.hpp"
 
 using namespace ROBOGait::core;
@@ -46,6 +47,7 @@ RoboGaitApplication::~RoboGaitApplication()
 
   user_session_.reset();
   ros_node_manager_.reset();
+  command_executor_bridge_.reset();
 
   app_instance_ = nullptr;
 }
@@ -53,6 +55,7 @@ RoboGaitApplication::~RoboGaitApplication()
 void RoboGaitApplication::initCommon()
 {
   qmlRegisterUncreatableType<ROBOGait::robot::discovery::RobotDiscovery>("RobotDiscovery", 1, 0, "RobotDiscovery", "Enums Only");
+  qmlRegisterUncreatableType<ROBOGait::qml::executor::CommandExecutorBridge>("CommandExecutorBridge", 1, 0, "CommandExecutorBridge", "Enums Only");
   qmlRegisterType<ROBOGait::map::item::MapLayerItem>("MapRendering", 1, 0, "MapLayerItem");
   qmlRegisterType<ROBOGait::map::item::RobotLayerItem>("MapRendering", 1, 0, "RobotLayerItem");
   qRegisterMetaType<geometry_msgs::msg::Twist>("geometry_msgs::msg::Twist");
@@ -64,7 +67,7 @@ bool RoboGaitApplication::initialize()
 {
   // Load YAML configuration
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
-  const std::string config_path = ament_index_cpp::get_package_share_directory("robogait_gui") + "/params/config.yaml";
+  const std::string config_path = ament_index_cpp::get_package_share_directory(ROBOGAIT_GUI) + "/params/config.yaml";
 
   if (!yaml_loader.loadConfig(config_path))
   {
@@ -106,6 +109,9 @@ bool RoboGaitApplication::initialize()
 
   // Create ROS node manager
   ros_node_manager_ = std::make_unique<ROBOGait::ros::manager::RosNodeManager>();
+
+  // Create command executor bridge
+  command_executor_bridge_ = std::make_unique<ROBOGait::qml::executor::CommandExecutorBridge>();
 
   // Initialize ROS with command line arguments
   int argc = arguments().size();
@@ -247,6 +253,7 @@ void RoboGaitApplication::setupQmlContext()
   qml_app_engine_->rootContext()->setContextProperty("userSession", user_session_.get());
   qml_app_engine_->rootContext()->setContextProperty("dbManager", databaseManager());
   qml_app_engine_->rootContext()->setContextProperty("developerSettings", developerSettings());
+  qml_app_engine_->rootContext()->setContextProperty("commandExecutorBridge", command_executor_bridge_.get());
 
   qInfo() << "[RoboGaitApplication::setupQmlContext] QML context properties set";
 }
