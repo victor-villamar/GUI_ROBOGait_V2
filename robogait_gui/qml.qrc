@@ -21,6 +21,7 @@
     <file alias="JoystickForm.ui.qml">qml/Controls/JoystickForm.ui.qml</file>
   </qresource>
 	<qresource prefix="/Dialogs">
+    <file alias="BusyDialog.qml">qml/Dialogs/BusyDialog.qml</file>
 	  <file alias="ConfirmationDialog.qml">qml/Dialogs/ConfirmationDialog.qml</file>
 	  <file alias="DeveloperSettingsDialog.qml">qml/Dialogs/DeveloperSettingsDialog.qml</file>
     <file alias="DiagnosticDialog.qml">qml/Dialogs/DiagnosticDialog.qml</file>
