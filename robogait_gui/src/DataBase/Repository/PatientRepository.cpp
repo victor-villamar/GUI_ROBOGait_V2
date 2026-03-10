@@ -59,8 +59,8 @@ DbResultVoid PatientRepository::insertPatientForUserName(const QString& name, co
 
     // clang-format off
     const QString patient_sql =
-        "INSERT INTO patient (name, lastname, age, weight, height, description, create_day) "
-        "VALUES (:name, :lastname, :age, :weight, :height, '', CURRENT_TIMESTAMP);";
+        "INSERT INTO patient (name, lastname, age, weight, height) "
+        "VALUES (:name, :lastname, :age, :weight, :height);";
     // clang-format on
 
     if (auto result = prepareQuery(insert_patient_query, patient_sql); !statusOk(result))

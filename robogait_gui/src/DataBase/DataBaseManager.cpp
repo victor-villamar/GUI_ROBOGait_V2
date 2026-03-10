@@ -570,6 +570,42 @@ QVariantMap DataBaseManager::getMapDetails(const QString& map_name)
   return toVariantMap(std::get<MapDetails>(result));
 }
 
+bool DataBaseManager::mapExists(const QString& map_name)
+{
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::mapExists] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return false;
+  }
+
+  const QString trimmed = map_name.trimmed();
+  if (trimmed.isEmpty())
+  {
+    qWarning() << "[DataBaseManager::mapExists] Invalid map name";
+    setLastError("Nombre de mapa invalido");
+    return false;
+  }
+
+  const auto result = map_repository_.getMapDetailsByName(trimmed);
+
+  if (statusOk(result))
+  {
+    setLastError("");
+    return true;
+  }
+
+  const auto error = std::get<DbError>(result);
+  if (error.code == DbErrorCode::NOT_FOUND)
+  {
+    setLastError("");
+    return false;
+  }
+
+  setLastError(error.message);
+  return false;
+}
+
 bool DataBaseManager::registerMap(const QString& map_name, const QString& location, const QString& details)
 {
   if (!db_.isOpen())
