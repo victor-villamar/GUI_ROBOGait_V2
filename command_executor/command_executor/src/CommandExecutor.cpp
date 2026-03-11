@@ -15,18 +15,30 @@
 
 using namespace ROBOGait::command;
 
-CommandExecutor::CommandExecutor() : Node(CMD_EXECUTOR)
+CommandExecutor::CommandExecutor(const rclcpp::NodeOptions& options) : Node(COMMAND_EXECUTOR, options)
 {
-  loadConfig();
+  RCLCPP_INFO(get_logger(), "[CommandExecutor::CommandExecutor] CommandExecutor created");
+}
 
-  srv_cmd_ =
-      create_service<command_executor_msgs::srv::Cmd>(S_CMD, std::bind(&CommandExecutor::handleCommand, this, std::placeholders::_1, std::placeholders::_2));
+CommandExecutor::~CommandExecutor() { RCLCPP_INFO(get_logger(), "[CommandExecutor::~CommandExecutor] CommandExecutor destroyed"); }
 
-  pub_robot_status_ = create_publisher<command_executor_msgs::msg::RobotStatus>(T_ROBOT_STATUS, QOS_RELIABLE);
+bool CommandExecutor::initialize()
+{
 
-  timer_ = create_wall_timer(std::chrono::milliseconds(TIME_MAIN_LOOP), std::bind(&CommandExecutor::mainLoop, this)); // one-shot: false, autostart: true
+  if (!loadConfig())
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::initialize] Failed to load config");
+    return false;
+  }
 
-  RCLCPP_INFO(get_logger(), "CommandExecutor ready");
+  if (!createRosInterfaces())
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::initialize] Failed to create ROS interfaces");
+    return false;
+  }
+
+  RCLCPP_INFO(get_logger(), "[CommandExecutor::initialize] Initialization successful");
+  return true;
 }
 
 void CommandExecutor::handleCommand(const std::shared_ptr<command_executor_msgs::srv::Cmd::Request>& request,
@@ -36,7 +48,7 @@ void CommandExecutor::handleCommand(const std::shared_ptr<command_executor_msgs:
 
   if (!isAllowedCommand(cmd))
   {
-    RCLCPP_WARN(get_logger(), "Rejected command '%s', not allowed", cmd.c_str());
+    RCLCPP_WARN(get_logger(), "[CommandExecutor::handleCommand] Rejected command '%s', not allowed", cmd.c_str());
     response->success = false;
     return;
   }
@@ -46,12 +58,12 @@ void CommandExecutor::handleCommand(const std::shared_ptr<command_executor_msgs:
   if (request->execute)
   {
     ok = process_manager_.startProcess(cmd);
-    RCLCPP_INFO(get_logger(), "Start command '%s' executed %s", cmd.c_str(), ok ? "successfully" : "failed");
+    RCLCPP_INFO(get_logger(), "[CommandExecutor::handleCommand] Start command '%s' executed %s", cmd.c_str(), ok ? "successfully" : "failed");
   }
   else
   {
     ok = process_manager_.stopProcess(cmd);
-    RCLCPP_INFO(get_logger(), "Stop command '%s' executed %s", cmd.c_str(), ok ? "successfully" : "failed");
+    RCLCPP_INFO(get_logger(), "[CommandExecutor::handleCommand] Stop command '%s' executed %s", cmd.c_str(), ok ? "successfully" : "failed");
   }
 
   response->success = ok;
@@ -100,44 +112,39 @@ std::string CommandExecutor::ltrimCopy(const std::string& value)
   return value.substr(pos);
 }
 
-void CommandExecutor::loadConfig()
+bool CommandExecutor::loadConfig()
 {
   auto& loader = ROBOGait::loader::YamlLoader::getInstance();
   const std::string config_path = resolveConfigPath();
 
   if (!loader.loadConfig(config_path))
   {
-    RCLCPP_ERROR(get_logger(), "Failed to load config: %s", config_path.c_str());
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::loadConfig] Failed to load config: %s", config_path.c_str());
+    return false;
   }
 
   allow_list_ = loader.getValue<std::vector<std::string>>("allow_list", {});
 
-  // Fall back to defaults if allow_list is empty
   if (allow_list_.empty())
   {
-    allow_list_ = {"action", "bag", "node", "component", "param", "control", "pkg", "run", "security", "service", "topic", "interface", "launch", "lifecycle"};
-    RCLCPP_WARN(get_logger(), "allow_list empty; using defaults (%zu entries).", allow_list_.size());
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::loadConfig] allow_list is empty");
+    return false;
   }
 
   const int id_value = loader.getValue<int>("robot_info.id", 0);
   robot_info_.id = static_cast<uint8_t>(std::max(0, id_value));
-  robot_info_.battery = loader.getValue<float>("robot_info.battery", 0.0f);
+  robot_info_.battery = 0.0; // TODO: subscribe to robot battery status
   robot_info_.ns = loader.getValue<std::string>("robot_info.namespace", "");
 
-  const std::string version_str = loader.getValue<std::string>("robot_info.version", "");
-  if (!version_str.empty())
-  {
-    robot_info_.version = version_str;
-  }
-  else
-  {
-    const int version_value = loader.getValue<int>("robot_info.version", 0);
-    robot_info_.version = std::to_string(version_value);
-  }
+  robot_info_.version = loader.getValue<std::string>("robot_info.version", "");
 
   const int hardware_id_value = loader.getValue<int>("robot_info.hardware_id", 0);
   robot_info_.hardware_id = static_cast<uint32_t>(std::max(0, hardware_id_value));
   robot_info_.serial_number = loader.getValue<std::string>("robot_info.serial_number", "");
+
+  RCLCPP_INFO(get_logger(), "[CommandExecutor::loadConfig] Config loaded successfully from %s", config_path.c_str());
+
+  return true;
 }
 
 std::string CommandExecutor::resolveConfigPath()
@@ -145,4 +152,32 @@ std::string CommandExecutor::resolveConfigPath()
   const std::filesystem::path share_path = ament_index_cpp::get_package_share_directory("command_executor");
   const std::filesystem::path installed = share_path / "params" / "config.yaml";
   return installed.string();
+}
+
+bool CommandExecutor::createRosInterfaces()
+{
+  srv_cmd_ =
+      create_service<command_executor_msgs::srv::Cmd>(S_CMD, std::bind(&CommandExecutor::handleCommand, this, std::placeholders::_1, std::placeholders::_2));
+
+  pub_robot_status_ = create_publisher<command_executor_msgs::msg::RobotStatus>(T_ROBOT_STATUS, QOS_BEST_EFFORT);
+
+  timer_ = create_wall_timer(std::chrono::milliseconds(TIME_MAIN_LOOP), std::bind(&CommandExecutor::mainLoop, this)); // one-shot: false, autostart: true
+
+  if (!srv_cmd_)
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::createRosInterfaces] Failed to create service");
+    return false;
+  }
+  if (!pub_robot_status_)
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::createRosInterfaces] Failed to create publisher");
+    return false;
+  }
+  if (!timer_)
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::createRosInterfaces] Failed to create timer");
+    return false;
+  }
+
+  return true;
 }

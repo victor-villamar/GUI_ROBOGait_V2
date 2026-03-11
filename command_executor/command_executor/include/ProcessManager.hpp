@@ -12,15 +12,39 @@ namespace ROBOGait
 {
 namespace command
 {
+/**
+ * @brief ProcessManager class for managing system processes
+ */
 class ProcessManager
 {
 public:
-  ProcessManager() = default;
+  /**
+   * @brief Constructor for the ProcessManager class
+   */
+  ProcessManager();
+
+  /**
+   * @brief Destructor for the ProcessManager class
+   */
   ~ProcessManager();
 
+  /**
+   * @brief Start a new process
+   *
+   * @param cmd The command to execute
+   *
+   * @return true if the process was started successfully, false otherwise
+   */
   bool startProcess(const std::string& cmd);
+
+  /**
+   * @brief Stop a running process
+   *
+   * @param cmd The command of the process to stop
+   *
+   * @return true if the process was stopped successfully, false otherwise`
+   */
   bool stopProcess(const std::string& cmd);
-  std::optional<boost::process::pid_t> getPid(const std::string& cmd) const;
 
 private:
   /**
@@ -37,6 +61,13 @@ private:
     boost::process::pid_t pid{-1};
   };
 
+  /**
+   * @brief Check if a process is running
+   *
+   * @param entry The process entry to check
+   *
+   * @return true if the process is running, false otherwise
+   */
   bool isRunning(ProcessEntry& entry);
 
   mutable std::mutex mutex_;                                /**< Mutex for synchronizing access to the process map */
