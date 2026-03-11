@@ -1,12 +1,16 @@
+#include <iostream>
+#include <signal.h>
 #include <vector>
 
 #include <boost/process/args.hpp>
+#include <boost/process/io.hpp>
 #include <boost/process/search_path.hpp>
 
 #include "ProcessManager.hpp"
 
 using namespace ROBOGait::command;
 
+ProcessManager::ProcessManager() { std::cout << "[ProcessManager::ProcessManager] ProcessManager initialized" << std::endl; }
 ProcessManager::~ProcessManager()
 {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -20,6 +24,8 @@ ProcessManager::~ProcessManager()
     }
   }
   processes_.clear();
+
+  std::cout << "[ProcessManager::~ProcessManager] ProcessManager destroyed" << std::endl;
 }
 
 bool ProcessManager::startProcess(const std::string& cmd)
@@ -35,19 +41,17 @@ bool ProcessManager::startProcess(const std::string& cmd)
     processes_.erase(existing);
   }
 
-  auto terminal = boost::process::search_path("xfce4-terminal");
-  if (terminal.empty())
-  {
-    return false;
-  }
-
-  const std::string command_arg = std::string("bash -lc \"") + cmd + "\"";
-  std::vector<std::string> terminal_args = {
-      "--disable-server", "--maximize", "-T", "command_executor", "--command", command_arg,
-  };
-
   boost::process::group group;
-  boost::process::child child(terminal.string(), group, boost::process::args(terminal_args));
+
+  // clang-format off
+  boost::process::child child(
+    "/bin/bash",
+    boost::process::args({"-lc", cmd}),
+    group,
+    boost::process::std_out > "/tmp/command_executor_stdout.log",
+    boost::process::std_err > "/tmp/command_executor_stderr.log"
+  );
+  // clang-format on
 
   const auto pid = child.id();
   ProcessEntry entry{std::move(group), std::move(child), pid};
@@ -67,23 +71,23 @@ bool ProcessManager::stopProcess(const std::string& cmd)
   std::error_code ec;
   if (isRunning(it->second))
   {
-    it->second.group.terminate(ec);
-    it->second.child.wait(ec);
+    const pid_t group_pid = it->second.pid;
+
+    ::kill(-group_pid, SIGINT);
+
+    if (it->second.child.wait_for(std::chrono::seconds(1), ec))
+    {
+      processes_.erase(it);
+      return true;
+    }
+
+    std::cout << "[ProcessManager::stopProcess] Process not terminated gracefully, forcing kill" << std::endl;
+    ::kill(-group_pid, SIGKILL);
+    it->second.child.wait_for(std::chrono::milliseconds(50), ec);
   }
 
   processes_.erase(it);
   return true;
-}
-
-std::optional<boost::process::pid_t> ProcessManager::getPid(const std::string& cmd) const
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  auto it = processes_.find(cmd);
-  if (it == processes_.end())
-  {
-    return std::nullopt;
-  }
-  return it->second.pid;
 }
 
 bool ProcessManager::isRunning(ProcessEntry& entry) { return entry.child.valid() && entry.child.running(); }

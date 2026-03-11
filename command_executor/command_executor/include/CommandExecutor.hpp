@@ -19,10 +19,28 @@ namespace ROBOGait
 {
 namespace command
 {
+/**
+ * @brief Class for executing specific ros2 commands on the robot
+ */
 class CommandExecutor : public rclcpp::Node
 {
 public:
+  /**
+   * @brief Constructor for the CommandExecutor class
+   */
   CommandExecutor();
+
+  /**
+   * @brief Destructor for the CommandExecutor class
+   */
+  ~CommandExecutor();
+
+  /**
+   * @brief Initialize the command executor
+   *
+   * @return true if initialization was successful, false otherwise
+   */
+  bool initialize();
 
 private:
   /**
@@ -45,14 +63,58 @@ private:
     std::string serial_number;
   };
 
+  /**
+   * @brief Handle a command request
+   *
+   * @param request The command request
+   * @param response The command response
+   */
   void handleCommand(const std::shared_ptr<command_executor_msgs::srv::Cmd::Request>& request,
                      std::shared_ptr<command_executor_msgs::srv::Cmd::Response> response);
+
+  /**
+   * @brief Main loop for processing commands
+   */
   void mainLoop();
 
+  /**
+   * @brief Check if a command is allowed
+   *
+   * @param cmd The command to check
+   *
+   * @return true if the command is allowed, false otherwise
+   */
   bool isAllowedCommand(const std::string& cmd) const;
+
+  /**
+   * @brief Trim leading whitespace from a string
+   *
+   * @param value The string to trim
+   *
+   * @return A copy of the string with leading whitespace removed
+   */
   static std::string ltrimCopy(const std::string& value);
-  void loadConfig();
+
+  /**
+   * @brief Load configuration from YAML file
+   *
+   * @return true if loading was successful, false otherwise
+   */
+  bool loadConfig();
+
+  /**
+   * @brief Resolve the configuration file path
+   *
+   * @return The resolved configuration file path
+   */
   static std::string resolveConfigPath();
+
+  /**
+   * @brief Create ROS interfaces (service, publisher, subscriber)
+   *
+   * @return true if creation was successful, false otherwise
+   */
+  bool createRosInterfaces();
 
   rclcpp::Service<command_executor_msgs::srv::Cmd>::SharedPtr srv_cmd_;                    /**< Command service */
   rclcpp::Publisher<command_executor_msgs::msg::RobotStatus>::SharedPtr pub_robot_status_; /**< Robot status publisher */
