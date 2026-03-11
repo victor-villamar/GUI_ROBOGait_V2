@@ -1,13 +1,15 @@
 #include <memory>
 
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/executors.hpp>
+#include <rclcpp/node_options.hpp>
+#include <rclcpp/utilities.hpp>
 
 #include "CommandExecutor.hpp"
 
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
-  auto command_executor = std::make_shared<ROBOGait::command::CommandExecutor>();
+  auto command_executor = std::make_shared<ROBOGait::command::CommandExecutor>(rclcpp::NodeOptions());
 
   if (!command_executor->initialize())
   {

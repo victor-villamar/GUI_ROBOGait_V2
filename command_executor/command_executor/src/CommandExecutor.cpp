@@ -15,7 +15,10 @@
 
 using namespace ROBOGait::command;
 
-CommandExecutor::CommandExecutor() : Node(COMMAND_EXECUTOR) { RCLCPP_INFO(get_logger(), "[CommandExecutor::CommandExecutor] CommandExecutor created"); }
+CommandExecutor::CommandExecutor(const rclcpp::NodeOptions& options) : Node(COMMAND_EXECUTOR, options)
+{
+  RCLCPP_INFO(get_logger(), "[CommandExecutor::CommandExecutor] CommandExecutor created");
+}
 
 CommandExecutor::~CommandExecutor() { RCLCPP_INFO(get_logger(), "[CommandExecutor::~CommandExecutor] CommandExecutor destroyed"); }
 

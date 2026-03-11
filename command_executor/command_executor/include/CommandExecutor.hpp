@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <rclcpp/node.hpp>
+#include <rclcpp/node_options.hpp>
 #include <rclcpp/publisher.hpp>
 #include <rclcpp/service.hpp>
 #include <rclcpp/timer.hpp>
@@ -27,8 +28,10 @@ class CommandExecutor : public rclcpp::Node
 public:
   /**
    * @brief Constructor for the CommandExecutor class
+   *
+   * @param options Node options
    */
-  CommandExecutor();
+  CommandExecutor(const rclcpp::NodeOptions& options);
 
   /**
    * @brief Destructor for the CommandExecutor class
