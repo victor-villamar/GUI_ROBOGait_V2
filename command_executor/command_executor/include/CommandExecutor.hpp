@@ -119,6 +119,16 @@ private:
    */
   bool createRosInterfaces();
 
+  /**
+   * @brief Check if a command is a delete command
+   *
+   * @param cmd The command to check
+   * @param translated_cmd The translated command (if it is a delete command)
+   *
+   * @return true if the command is a delete command, false otherwise
+   */
+  bool isDeleteCommand(const std::string& cmd, std::string& translated_cmd) const;
+
   rclcpp::Service<command_executor_msgs::srv::Cmd>::SharedPtr srv_cmd_;                    /**< Command service */
   rclcpp::Publisher<command_executor_msgs::msg::RobotStatus>::SharedPtr pub_robot_status_; /**< Robot status publisher */
   rclcpp::TimerBase::SharedPtr timer_;                                                     /**< Timer */
