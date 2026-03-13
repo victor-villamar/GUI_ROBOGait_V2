@@ -1,7 +1,9 @@
 #pragma once
 
-#include <QString>
 #include <memory>
+#include <string>
+
+#include <QString>
 
 #include <geometry_msgs/msg/quaternion.hpp>
 
@@ -67,6 +69,17 @@ bool deleteMapPreview(const QString& map_name);
  * @return File path of the generated PNG preview
  */
 QString getMapPreviewPath(const QString& map_name);
+
+/**
+ * @brief Sanitize map name for filesystem usage
+ *
+ * Replaces spaces and unsafe characters with underscores.
+ *
+ * @param map_name Original map name
+ *
+ * @return Sanitized map name safe for file paths
+ */
+std::string sanitizeMapName(const std::string& map_name);
 
 } // namespace utils
 } // namespace map
