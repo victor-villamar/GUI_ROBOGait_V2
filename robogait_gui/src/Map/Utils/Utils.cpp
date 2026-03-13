@@ -1,3 +1,4 @@
+#include <cctype>
 #include <cmath>
 
 #include <QDebug>
@@ -149,6 +150,46 @@ QString getMapPreviewPath(const QString& map_name)
   }
 
   return "file://" + file_path;
+}
+
+std::string sanitizeMapName(const std::string& map_name)
+{
+  if (map_name.empty())
+  {
+    qWarning() << "[utils::sanitizeMapName] Map name is empty";
+    return std::string();
+  }
+
+  std::string out;
+  out.reserve(map_name.size());
+
+  bool last_was_separator = true;
+
+  for (unsigned char ch : map_name)
+  {
+    const bool is_space = std::isspace(ch);
+    const bool is_allowed = std::isalnum(ch) != 0 || ch == '-' || ch == '_';
+
+    if (is_space || !is_allowed)
+    {
+      if (!last_was_separator)
+      {
+        out.push_back('_');
+        last_was_separator = true;
+      }
+      continue;
+    }
+
+    out.push_back(static_cast<char>(ch));
+    last_was_separator = false;
+  }
+
+  if (!out.empty() && out.back() == '_')
+  {
+    out.pop_back();
+  }
+
+  return out;
 }
 
 } // namespace utils

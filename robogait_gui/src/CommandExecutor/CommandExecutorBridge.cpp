@@ -33,6 +33,11 @@ bool CommandExecutorBridge::stopMapping(bool save_map, const QString& map_name)
   return ROBOGait::ros::executor::CommandExecutorClient::getInstance().stopMapping(save_map, map_name.trimmed().toStdString());
 }
 
+bool CommandExecutorBridge::deleteMap(const QString& map_name)
+{
+  return ROBOGait::ros::executor::CommandExecutorClient::getInstance().deleteMap(map_name.trimmed().toStdString());
+}
+
 void CommandExecutorBridge::onPoll() { syncFromClient(); }
 
 void CommandExecutorBridge::syncFromClient()

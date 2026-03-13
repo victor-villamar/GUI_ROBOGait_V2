@@ -46,6 +46,15 @@ public:
    */
   bool stopProcess(const std::string& cmd);
 
+  /**
+   * @brief Execute a one-shot command
+   *
+   * @param cmd The command to execute
+   *
+   * @return true if the command was executed successfully, false otherwise
+   */
+  bool executeOneShotCommand(const std::string& cmd);
+
 private:
   /**
    * @brief Struct to hold information about a running process

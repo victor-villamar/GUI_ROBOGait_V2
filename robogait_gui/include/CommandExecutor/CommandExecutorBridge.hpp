@@ -79,6 +79,15 @@ public:
    */
   Q_INVOKABLE bool stopMapping(bool save_map, const QString& map_name);
 
+  /**
+   * @brief Delete a map
+   *
+   * @param map_name The name of the map to delete
+   *
+   * @return true if the map was deleted successfully, false otherwise
+   */
+  Q_INVOKABLE bool deleteMap(const QString& map_name);
+
 signals:
   void statusChanged(); // Emitted when the status changes
 

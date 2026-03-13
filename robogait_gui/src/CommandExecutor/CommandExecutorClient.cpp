@@ -8,6 +8,7 @@
 #include "CommandExecutor/CommandExecutorClient.hpp"
 #include "Define.hpp"
 #include "Loader/YamlLoader.hpp"
+#include "Map/Utils/Utils.hpp"
 #include "TopicsName.hpp"
 
 using namespace ROBOGait::ros::executor;
@@ -133,39 +134,53 @@ bool CommandExecutorClient::stopMapping(bool save_map, const std::string& map_na
   return stopCommand(KEY_CARTOGRAPHER);
 }
 
-bool CommandExecutorClient::saveMap(const std::string& map_name)
+bool CommandExecutorClient::deleteMap(const std::string& map_name)
 {
-
   if (map_name.empty())
   {
-    qCritical() << "[CommandExecutorClient::saveMap] Map name is empty";
+    qCritical() << "[CommandExecutorClient::deleteMap] Map name is empty";
     return false;
   }
 
-  if (!validateCommandKey(KEY_MAP_SAVER))
+  const std::string safe_name = ROBOGait::map::utils::sanitizeMapName(map_name);
+  if (safe_name.empty())
   {
-    qCritical() << "[CommandExecutorClient::saveMap] Command key 'map_saver' is not valid";
+    qCritical() << "[CommandExecutorClient::deleteMap] Sanitized map name is empty";
     return false;
   }
-
-  const CommandExecutorClient::CommandInfo& cmd_info = commands_[KEY_MAP_SAVER];
-
-  std::string map_topic = has_context_ ? context_.resolveTopic(std::string(T_MAP)) : std::string(T_MAP);
-
-  std::string args = cmd_info.append_args;
-  args = replacePlaceholders(args, "{map_topic}", map_topic);
 
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
 
   if (!yaml_loader.isLoaded())
   {
-    qWarning() << "[CommandExecutorClient::saveMap] YAML loader is not loaded";
+    qCritical() << "[CommandExecutorClient::deleteMap] YAML loader is not loaded";
     return false;
   }
 
   const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
 
-  args = args + map_path + map_name;
+  if (map_path.empty())
+  {
+    qCritical() << "[CommandExecutorClient::deleteMap] Map path is empty in YAML configuration";
+    return false;
+  }
+
+  if (!validateCommandKey(KEY_DELETE_MAP))
+  {
+    qCritical() << "[CommandExecutorClient::deleteMap] Command key 'delete_map' is not valid";
+    return false;
+  }
+
+  const CommandExecutorClient::CommandInfo& cmd_info = commands_[KEY_DELETE_MAP];
+
+  std::string args = cmd_info.append_args;
+
+  const std::unordered_map<std::string, std::string> vars = {
+      {"{map_path}", map_path},
+      {"{map_name}", safe_name},
+  };
+
+  args = replacePlaceholders(args, vars);
 
   const std::string full_cmd = buildCommand(cmd_info.cmd, args);
 
@@ -173,13 +188,11 @@ bool CommandExecutorClient::saveMap(const std::string& map_name)
 
   if (!success)
   {
-    qCritical() << "[CommandExecutorClient::saveMap] Failed to save map";
+    qCritical() << "[CommandExecutorClient::deleteMap] Failed to delete map";
     return false;
   }
 
-  setCommandState(KEY_MAP_SAVER, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
-  startHealthTimer();
-  qInfo() << "[CommandExecutorClient::saveMap] Successfully saved map";
+  qInfo() << "[CommandExecutorClient::deleteMap] Successfully deleted map " << QString::fromStdString(map_name);
   return true;
 }
 
@@ -403,19 +416,73 @@ bool CommandExecutorClient::rebuildClient()
   return true;
 }
 
-void CommandExecutorClient::setCommandState(const std::string& key, CommandExecutorClient::CommandStatus status, const std::string& full_cmd)
+bool CommandExecutorClient::saveMap(const std::string& map_name)
 {
-  auto& state = command_states_[key];
-  if (!full_cmd.empty())
+
+  if (map_name.empty())
   {
-    state.full_cmd = full_cmd;
+    qCritical() << "[CommandExecutorClient::saveMap] Map name is empty";
+    return false;
   }
 
-  if (state.status != status)
+  const std::string safe_name = ROBOGait::map::utils::sanitizeMapName(map_name);
+
+  if (safe_name.empty())
   {
-    state.status = status;
-    state.timestamp = std::chrono::steady_clock::now();
+    qCritical() << "[CommandExecutorClient::saveMap] Sanitized map name is empty";
+    return false;
   }
+
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  if (!yaml_loader.isLoaded())
+  {
+    qCritical() << "[CommandExecutorClient::saveMap] YAML loader is not loaded";
+    return false;
+  }
+
+  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
+
+  if (map_path.empty())
+  {
+    qCritical() << "[CommandExecutorClient::saveMap] Map path is empty in YAML configuration";
+    return false;
+  }
+
+  if (!validateCommandKey(KEY_MAP_SAVER))
+  {
+    qCritical() << "[CommandExecutorClient::saveMap] Command key 'map_saver' is not valid";
+    return false;
+  }
+
+  const CommandExecutorClient::CommandInfo& cmd_info = commands_[KEY_MAP_SAVER];
+
+  std::string map_topic = has_context_ ? context_.resolveTopic(std::string(T_MAP)) : std::string(T_MAP);
+
+  std::string args = cmd_info.append_args;
+
+  const std::unordered_map<std::string, std::string> vars = {
+      {"{map_topic}", map_topic},
+      {"{map_path}", map_path},
+      {"{map_name}", safe_name},
+  };
+
+  args = replacePlaceholders(args, vars);
+
+  const std::string full_cmd = buildCommand(cmd_info.cmd, args);
+
+  const bool success = callCommandService(full_cmd, true);
+
+  if (!success)
+  {
+    qCritical() << "[CommandExecutorClient::saveMap] Failed to save map";
+    return false;
+  }
+
+  setCommandState(KEY_MAP_SAVER, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
+  startHealthTimer();
+  qInfo() << "[CommandExecutorClient::saveMap] Successfully saved map";
+  return true;
 }
 
 bool CommandExecutorClient::stopCommand(const std::string& key)
@@ -457,6 +524,21 @@ bool CommandExecutorClient::stopCommand(const std::string& key)
   setCommandState(key, CommandExecutorClient::CommandStatus::STOPPING, full_cmd);
   startHealthTimer();
   return true;
+}
+
+void CommandExecutorClient::setCommandState(const std::string& key, CommandExecutorClient::CommandStatus status, const std::string& full_cmd)
+{
+  auto& state = command_states_[key];
+  if (!full_cmd.empty())
+  {
+    state.full_cmd = full_cmd;
+  }
+
+  if (state.status != status)
+  {
+    state.status = status;
+    state.timestamp = std::chrono::steady_clock::now();
+  }
 }
 
 void CommandExecutorClient::startHealthTimer()
@@ -624,12 +706,31 @@ void CommandExecutorClient::onHealthTimer()
   }
 }
 
-std::string CommandExecutorClient::replacePlaceholders(std::string input, const std::string& placeholder, const std::string& value) const
+std::string CommandExecutorClient::replacePlaceholders(std::string input, const std::unordered_map<std::string, std::string>& values) const
 {
-  std::size_t pos = input.find(placeholder);
-  if (pos != std::string::npos)
+  if (values.empty())
   {
-    input.replace(pos, placeholder.length(), value);
+    return input;
   }
+
+  for (const auto& [placeholder, value] : values)
+  {
+    if (placeholder.empty())
+    {
+      continue;
+    }
+
+    const std::size_t placeholder_size = placeholder.size();
+    const std::size_t value_size = value.size();
+
+    std::size_t pos = 0;
+
+    while ((pos = input.find(placeholder, pos)) != std::string::npos)
+    {
+      input.replace(pos, placeholder_size, value);
+      pos += value_size;
+    }
+  }
+
   return input;
 }

@@ -53,6 +53,16 @@ void CommandExecutor::handleCommand(const std::shared_ptr<command_executor_msgs:
     return;
   }
 
+  // Handle delete command
+  std::string delete_cmd;
+  if (isDeleteCommand(cmd, delete_cmd))
+  {
+    bool ok = process_manager_.executeOneShotCommand(delete_cmd);
+    RCLCPP_INFO(get_logger(), "[CommandExecutor::handleCommand] Delete command '%s' executed %s", delete_cmd.c_str(), ok ? "successfully" : "failed");
+    response->success = ok;
+    return;
+  }
+
   bool ok = false;
 
   if (request->execute)
@@ -178,6 +188,45 @@ bool CommandExecutor::createRosInterfaces()
     RCLCPP_ERROR(get_logger(), "[CommandExecutor::createRosInterfaces] Failed to create timer");
     return false;
   }
+
+  return true;
+}
+
+bool CommandExecutor::isDeleteCommand(const std::string& cmd, std::string& translated_cmd) const
+{
+  const std::string trimmed = ltrimCopy(cmd);
+  std::istringstream iss(trimmed);
+  std::string first;
+  std::string second;
+
+  if (!(iss >> first >> second))
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::isDeleteCommand] Failed to parse command: %s", cmd.c_str());
+    return false;
+  }
+
+  if (first != "ros2" || second != "delete")
+  {
+    return false;
+  }
+
+  std::string path;
+  std::getline(iss, path);
+  path = ltrimCopy(path);
+
+  if (path.empty())
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::isDeleteCommand] Delete command missing path: %s", cmd.c_str());
+    return false;
+  }
+
+  if (path == "/" || path == "/*" || path.find("..") != std::string::npos)
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::isDeleteCommand] Unsafe delete path: %s", path.c_str());
+    return false;
+  }
+
+  translated_cmd = "rm -f " + path;
 
   return true;
 }

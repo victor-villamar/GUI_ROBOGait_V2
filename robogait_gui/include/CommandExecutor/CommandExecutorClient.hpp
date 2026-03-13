@@ -125,6 +125,15 @@ public:
   bool stopMapping(bool save_map, const std::string& map_name);
 
   /**
+   * @brief Delete a map
+   *
+   * @param map_name The name of the map to delete
+   *
+   * @return true if the map was deleted successfully, false otherwise
+   */
+  bool deleteMap(const std::string& map_name);
+
+  /**
    * @brief Check if a ROS2 node is alive
    *
    * @param node_name The name of the ROS2 node
@@ -261,12 +270,11 @@ private:
    * @brief Replace placeholders in a string
    *
    * @param input The input string
-   * @param placeholder The placeholder to replace
-   * @param value The value to replace the placeholder with
+   * @param values The map of placeholder values. Keys are the placeholders to replace, values are the corresponding replacement strings.
    *
    * @return The modified input string
    */
-  std::string replacePlaceholders(std::string input, const std::string& placeholder, const std::string& value) const;
+  std::string replacePlaceholders(std::string input, const std::unordered_map<std::string, std::string>& values) const;
 
   rclcpp::Node* parent_node_;                                          /**< The parent ROS2 node */
   rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedPtr cli_cmd_; /**< The command service client */
@@ -286,6 +294,7 @@ private:
 
   static constexpr const char* KEY_CARTOGRAPHER = "cartographer"; /**< Key for the cartographer command */
   static constexpr const char* KEY_MAP_SAVER = "map_saver";       /**< Key for the map saver command */
+  static constexpr const char* KEY_DELETE_MAP = "delete_map";     /**< Key for the delete map command */
 
   static constexpr std::chrono::milliseconds HEALTH_CHECK_PERIOD = std::chrono::milliseconds(100);                 /**< Health check period */
   static constexpr std::chrono::seconds START_STOP_TIMEOUT = std::chrono::seconds(5);                              /**< Start/stop timeout */

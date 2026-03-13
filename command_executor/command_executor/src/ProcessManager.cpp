@@ -90,4 +90,31 @@ bool ProcessManager::stopProcess(const std::string& cmd)
   return true;
 }
 
+bool ProcessManager::executeOneShotCommand(const std::string& cmd)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  // clang-format off
+  boost::process::child child(
+    "/bin/bash",
+    boost::process::args({"-lc", cmd}),
+    boost::process::std_out > "/tmp/command_executor_stdout.log",
+    boost::process::std_err > "/tmp/command_executor_stderr.log"
+  );
+  // clang-format on
+
+  child.wait();
+
+  const int exit_code = child.exit_code();
+
+  if (exit_code != 0)
+  {
+    return false;
+  }
+  else
+  {
+    return true;
+  }
+}
+
 bool ProcessManager::isRunning(ProcessEntry& entry) { return entry.child.valid() && entry.child.running(); }
