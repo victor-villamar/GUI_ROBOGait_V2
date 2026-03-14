@@ -1,4 +1,4 @@
-#include <QDebug>
+#include <iostream>
 
 #include "Map/Source/LaserSource.hpp"
 
@@ -7,20 +7,19 @@ using namespace ROBOGait::map::source;
 LaserSource::LaserSource()
 {
   parent_node_ = nullptr;
-  context_ = ROBOGait::context::RobotContext();
-  has_context_ = false;
+  context_ = std::nullopt;
   initialized_ = false;
   active_ = false;
 
   scan_data_ = std::make_shared<ROBOGait::map::data::LaserScanData>();
-  subscriber_ = std::make_shared<ROBOGait::map::data::LaserScanSubscriber>();
+  subscriber_ = std::make_shared<ROBOGait::map::subscribers::LaserScanSubscriber>();
 }
 
 void LaserSource::initialize(rclcpp::Node* parent_node)
 {
   if (!parent_node)
   {
-    qCritical() << "[LaserSource::initialize] Null parent node pointer";
+    std::cerr << "[LaserSource::initialize] Null parent node pointer" << std::endl;
     return;
   }
 
@@ -31,9 +30,9 @@ void LaserSource::initialize(rclcpp::Node* parent_node)
     subscriber_->initialize(parent_node_);
     subscriber_->setLaserScanData(scan_data_.get());
 
-    if (has_context_)
+    if (context_)
     {
-      subscriber_->setRobotContext(context_);
+      subscriber_->setRobotContext(context_.value());
     }
   }
 
@@ -43,10 +42,9 @@ void LaserSource::initialize(rclcpp::Node* parent_node)
 void LaserSource::setRobotContext(const ROBOGait::context::RobotContext& context)
 {
   context_ = context;
-  has_context_ = true;
   if (subscriber_)
   {
-    subscriber_->setRobotContext(context_);
+    subscriber_->setRobotContext(context_.value());
   }
 }
 

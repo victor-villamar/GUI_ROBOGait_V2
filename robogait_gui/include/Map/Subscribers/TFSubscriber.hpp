@@ -16,7 +16,7 @@ namespace ROBOGait
 {
 namespace map
 {
-namespace data
+namespace subscribers
 {
 
 /**
@@ -94,6 +94,6 @@ private:
 
   std::optional<ROBOGait::context::RobotContext> context_;
 };
-} // namespace data
+} // namespace subscribers
 } // namespace map
 } // namespace ROBOGait

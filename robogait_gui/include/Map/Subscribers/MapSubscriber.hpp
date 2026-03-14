@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 #include <map_msgs/msg/occupancy_grid_update.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
@@ -14,7 +15,7 @@ namespace ROBOGait
 {
 namespace map
 {
-namespace data
+namespace subscribers
 {
 
 /**
@@ -40,7 +41,7 @@ public:
    *
    * @param map_data The map data
    */
-  void setMapData(MapData* map_data);
+  void setMapData(data::MapData* map_data);
 
   /**
    * @brief Sets the robot context
@@ -85,12 +86,11 @@ private:
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_map_;              /**< Subscription to the map topic */
   rclcpp::Subscription<map_msgs::msg::OccupancyGridUpdate>::SharedPtr sub_map_update_; /**< Subscription to the map update topic */
 
-  MapData* map_data_;                       /**< Map data */
-  ROBOGait::context::RobotContext context_; /**< Robot context */
-  bool has_context_;                        /**< Flag indicating if context is set */
-  bool active_;                             /**< Flag indicating if subscriber is active */
+  data::MapData* map_data_;                                /**< Map data */
+  std::optional<ROBOGait::context::RobotContext> context_; /**< Robot context */
+  bool active_;                                            /**< Flag indicating if subscriber is active */
 };
 
-} // namespace data
+} // namespace subscribers
 } // namespace map
 } // namespace ROBOGait

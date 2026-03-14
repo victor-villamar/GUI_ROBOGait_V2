@@ -1,14 +1,13 @@
-#include <QDebug>
+#include <iostream>
 
 #include "Map/Source/MapSource.hpp"
 
 using namespace ROBOGait::map::source;
 
-MapSource::MapSource() : map_data_(std::make_shared<ROBOGait::map::data::MapData>()), subscriber_(std::make_shared<ROBOGait::map::data::MapSubscriber>())
+MapSource::MapSource() : map_data_(std::make_shared<ROBOGait::map::data::MapData>()), subscriber_(std::make_shared<ROBOGait::map::subscribers::MapSubscriber>())
 {
   parent_node_ = nullptr;
-  context_ = ROBOGait::context::RobotContext();
-  has_context_ = false;
+  context_ = std::nullopt;
   initialized_ = false;
   active_ = false;
 }
@@ -17,7 +16,7 @@ void MapSource::initialize(rclcpp::Node* parent_node)
 {
   if (!parent_node)
   {
-    qCritical() << "[MapSource::initialize] Null parent node pointer";
+    std::cerr << "[MapSource::initialize] Null parent node pointer" << std::endl;
     return;
   }
 
@@ -27,9 +26,9 @@ void MapSource::initialize(rclcpp::Node* parent_node)
   {
     subscriber_->initialize(parent_node_);
     subscriber_->setMapData(map_data_.get());
-    if (has_context_)
+    if (context_)
     {
-      subscriber_->setRobotContext(context_);
+      subscriber_->setRobotContext(context_.value());
     }
   }
 
@@ -39,10 +38,9 @@ void MapSource::initialize(rclcpp::Node* parent_node)
 void MapSource::setRobotContext(const ROBOGait::context::RobotContext& context)
 {
   context_ = context;
-  has_context_ = true;
   if (subscriber_)
   {
-    subscriber_->setRobotContext(context_);
+    subscriber_->setRobotContext(context_.value());
   }
 }
 

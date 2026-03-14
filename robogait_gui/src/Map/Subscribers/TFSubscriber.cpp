@@ -8,7 +8,7 @@
 #include "Map/Utils/Utils.hpp"
 #include "Ros/Define.hpp"
 
-using namespace ROBOGait::map::data;
+using namespace ROBOGait::map::subscribers;
 
 TFSubscriber::TFSubscriber() : robot_pose_data_(nullptr), map_frame_(""), robot_frame_(""), active_(false), warn_logged_(false) {}
 
@@ -113,7 +113,7 @@ void TFSubscriber::updatePoseFromTF()
   {
     geometry_msgs::msg::TransformStamped transform = tf_buffer_->lookupTransform(map_frame_, robot_frame_, tf2::TimePointZero);
 
-    RobotPoseData::RobotPoseMetadata metadata;
+    data::RobotPoseData::RobotPoseMetadata metadata;
     // Extract position
     metadata.x = transform.transform.translation.x;
     metadata.y = transform.transform.translation.y;

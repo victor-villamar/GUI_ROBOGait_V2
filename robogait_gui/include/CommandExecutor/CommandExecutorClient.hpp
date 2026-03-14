@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -281,8 +282,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr cb_group_;                          /**< The callback group for the command executor */
   rclcpp::TimerBase::SharedPtr timer_health_;                          /**< The health timer */
 
-  ROBOGait::context::RobotContext context_; /**< The robot context */
-  bool has_context_;                        /**< Flag indicating if the context is available */
+  std::optional<ROBOGait::context::RobotContext> context_; /**< The robot context */
 
   std::unordered_map<std::string, CommandInfo> commands_; /**< Map of command names to their info. Keys are command names, values are CommandInfo structs. */
   std::unordered_map<std::string, CommandState>

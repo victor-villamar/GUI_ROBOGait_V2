@@ -7,9 +7,9 @@
 #include "Ros/Define.hpp"
 #include "Ros/TopicsName.hpp"
 
-using namespace ROBOGait::map::data;
+using namespace ROBOGait::map::subscribers;
 
-MapSubscriber::MapSubscriber() : parent_node_(nullptr), map_data_(nullptr), has_context_(false), active_(false) {}
+MapSubscriber::MapSubscriber() : parent_node_(nullptr), map_data_(nullptr), active_(false), context_(std::nullopt) {}
 
 void MapSubscriber::initialize(rclcpp::Node* parent_node)
 {
@@ -22,13 +22,9 @@ void MapSubscriber::initialize(rclcpp::Node* parent_node)
   parent_node_ = parent_node;
 }
 
-void MapSubscriber::setMapData(MapData* map_data) { map_data_ = map_data; }
+void MapSubscriber::setMapData(data::MapData* map_data) { map_data_ = map_data; }
 
-void MapSubscriber::setRobotContext(const ROBOGait::context::RobotContext& context)
-{
-  context_ = context;
-  has_context_ = true;
-}
+void MapSubscriber::setRobotContext(const ROBOGait::context::RobotContext& context) { context_ = context; }
 
 void MapSubscriber::start()
 {
@@ -43,14 +39,14 @@ void MapSubscriber::start()
     return;
   }
 
-  if (!has_context_)
+  if (!context_)
   {
     std::cerr << "[MapSubscriber::start] Robot context is not set" << std::endl;
     return;
   }
 
-  const std::string map_topic = context_.resolveTopic(T_MAP);
-  const std::string map_updates_topic = context_.resolveTopic(T_MAP_UPDATES);
+  const std::string map_topic = context_->resolveTopic(T_MAP);
+  const std::string map_updates_topic = context_->resolveTopic(T_MAP_UPDATES);
 
   sub_map_ = parent_node_->create_subscription<nav_msgs::msg::OccupancyGrid>(map_topic, QOS_RELIABLE_LATCH.keep_last(1),
                                                                              std::bind(&MapSubscriber::callbackMap, this, std::placeholders::_1));
@@ -84,7 +80,7 @@ void MapSubscriber::callbackMap(const nav_msgs::msg::OccupancyGrid::SharedPtr ms
     return;
   }
 
-  MapData::MapMetadata metadata;
+  data::MapData::MapMetadata metadata;
   metadata.resolution = msg->info.resolution;
   metadata.width = msg->info.width;
   metadata.height = msg->info.height;

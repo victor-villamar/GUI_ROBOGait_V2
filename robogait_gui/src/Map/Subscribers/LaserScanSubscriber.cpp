@@ -11,9 +11,12 @@
 #include "Ros/Define.hpp"
 #include "Ros/TopicsName.hpp"
 
-using namespace ROBOGait::map::data;
+using namespace ROBOGait::map::subscribers;
 
-LaserScanSubscriber::LaserScanSubscriber() : parent_node_(nullptr), laser_scan_data_(nullptr), map_frame_(TF_MAP_FRAME), active_(false), warn_logged_(false) {}
+LaserScanSubscriber::LaserScanSubscriber() :
+    parent_node_(nullptr), laser_scan_data_(nullptr), map_frame_(TF_MAP_FRAME), active_(false), warn_logged_(false), context_(std::nullopt)
+{
+}
 
 LaserScanSubscriber::~LaserScanSubscriber() { stop(); }
 
@@ -28,7 +31,7 @@ void LaserScanSubscriber::initialize(rclcpp::Node* parent_node)
   parent_node_ = parent_node;
 }
 
-void LaserScanSubscriber::setLaserScanData(LaserScanData* laser_scan_data) { laser_scan_data_ = laser_scan_data; }
+void LaserScanSubscriber::setLaserScanData(data::LaserScanData* laser_scan_data) { laser_scan_data_ = laser_scan_data; }
 
 void LaserScanSubscriber::setRobotContext(const ROBOGait::context::RobotContext& context)
 {
@@ -135,7 +138,7 @@ void LaserScanSubscriber::callbackScan(const sensor_msgs::msg::LaserScan::Shared
     return;
   }
 
-  LaserScanData::LaserScanMetadata metadata = transformLaserScan(msg, scan_frame);
+  data::LaserScanData::LaserScanMetadata metadata = transformLaserScan(msg, scan_frame);
 
   if (metadata.points.empty())
   {
@@ -146,9 +149,10 @@ void LaserScanSubscriber::callbackScan(const sensor_msgs::msg::LaserScan::Shared
   warn_logged_ = false;
 }
 
-LaserScanData::LaserScanMetadata LaserScanSubscriber::transformLaserScan(const sensor_msgs::msg::LaserScan::SharedPtr msg, const std::string& scan_frame)
+ROBOGait::map::data::LaserScanData::LaserScanMetadata LaserScanSubscriber::transformLaserScan(const sensor_msgs::msg::LaserScan::SharedPtr msg,
+                                                                                              const std::string& scan_frame)
 {
-  LaserScanData::LaserScanMetadata metadata;
+  data::LaserScanData::LaserScanMetadata metadata;
 
   geometry_msgs::msg::TransformStamped transform_stamped;
   bool transform_found = false;

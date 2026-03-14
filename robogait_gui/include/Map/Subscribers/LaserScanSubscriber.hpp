@@ -16,7 +16,7 @@ namespace ROBOGait
 {
 namespace map
 {
-namespace data
+namespace subscribers
 {
 /**
  * @brief Class for subscribing to laser scan data and updating the LaserScanData instance
@@ -46,7 +46,7 @@ public:
    *
    * @param laser_scan_data The LaserScanData instance
    */
-  void setLaserScanData(LaserScanData* laser_scan_data);
+  void setLaserScanData(data::LaserScanData* laser_scan_data);
 
   /**
    * @brief Set the robot context
@@ -88,21 +88,21 @@ private:
    *
    * @return LaserScanMetadata with transformed points, or empty metadata on failure
    */
-  LaserScanData::LaserScanMetadata transformLaserScan(const sensor_msgs::msg::LaserScan::SharedPtr msg, const std::string& scan_frame);
+  data::LaserScanData::LaserScanMetadata transformLaserScan(const sensor_msgs::msg::LaserScan::SharedPtr msg, const std::string& scan_frame);
 
   rclcpp::Node* parent_node_;                                             /**< Pointer to the parent ROS node */
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr sub_scan_; /**< Subscription to the laser scan topic */
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;                            /**< TF buffer for transform lookups */
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;               /**< TF listener for transform lookups */
 
-  LaserScanData* laser_scan_data_; /**< Laser scan data */
-  std::string map_frame_;          /**< The map frame for transforming laser scan points */
-  bool active_;                    /**< Flag indicating if the subscriber is active */
-  bool warn_logged_;               /**< Flag indicating if a warning has been logged */
+  data::LaserScanData* laser_scan_data_; /**< Laser scan data */
+  std::string map_frame_;                /**< The map frame for transforming laser scan points */
+  bool active_;                          /**< Flag indicating if the subscriber is active */
+  bool warn_logged_;                     /**< Flag indicating if a warning has been logged */
 
   std::optional<ROBOGait::context::RobotContext> context_;
 };
 
-} // namespace data
+} // namespace subscribers
 } // namespace map
 } // namespace ROBOGait

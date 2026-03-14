@@ -48,10 +48,10 @@ public:
   std::shared_ptr<ROBOGait::map::data::RobotPoseData> getRobotPoseData() const;
 
 private:
-  std::shared_ptr<ROBOGait::map::data::RobotPoseData> robot_pose_data_; /**< Robot pose data */
-  std::shared_ptr<ROBOGait::map::data::TFSubscriber> tf_subscriber_;    /**< TF subscriber for pose updates */
-  std::string map_frame_;                                               /**< Map frame to use for TF lookups */
-  std::string robot_frame_;                                             /**< Robot frame to use for TF lookups */
+  std::shared_ptr<ROBOGait::map::data::RobotPoseData> robot_pose_data_;     /**< Robot pose data */
+  std::shared_ptr<ROBOGait::map::subscribers::TFSubscriber> tf_subscriber_; /**< TF subscriber for pose updates */
+  std::string map_frame_;                                                   /**< Map frame to use for TF lookups */
+  std::string robot_frame_;                                                 /**< Robot frame to use for TF lookups */
 };
 
 } // namespace source
