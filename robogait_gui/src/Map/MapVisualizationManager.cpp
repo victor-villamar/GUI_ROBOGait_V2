@@ -550,7 +550,7 @@ bool MapVisualizationManager::generateMapPreview(const QString& map_name)
     return false;
   }
 
-  if (!ROBOGait::map::utils::generateMapPreview(map_layer_->getMapData(), map_name))
+  if (!ROBOGait::map::utils::generateMapPreview(*map_layer_->getMapData(), map_name))
   {
     qCritical() << "[MapVisualizationManager::generateMapPreview] Failed to generate map preview for map:" << map_name;
     return false;
@@ -611,12 +611,15 @@ void MapVisualizationManager::createLayers()
   const auto pose_data = pose_source_->getRobotPoseData();
   const auto laser_data = laser_source_->getLaserScanData();
 
-  map_layer_ = std::make_shared<ROBOGait::map::layer::MapLayer>(map_data);
+  map_layer_ = std::make_shared<ROBOGait::map::layer::MapLayer>();
+  map_layer_->setMapData(map_data);
 
-  robot_layer_ = std::make_shared<ROBOGait::map::layer::RobotLayer>(pose_data);
+  robot_layer_ = std::make_shared<ROBOGait::map::layer::RobotLayer>();
+  robot_layer_->setRobotPoseData(pose_data);
   robot_layer_->setRobotSize(robot_size_);
 
-  laser_layer_ = std::make_shared<ROBOGait::map::layer::LaserLayer>(laser_data);
+  laser_layer_ = std::make_shared<ROBOGait::map::layer::LaserLayer>();
+  laser_layer_->setLaserScanData(laser_data);
 
   if (!map_layer_ || !robot_layer_ || !laser_layer_)
   {

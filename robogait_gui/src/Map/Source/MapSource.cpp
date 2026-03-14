@@ -26,7 +26,7 @@ void MapSource::initialize(rclcpp::Node* parent_node)
   if (subscriber_)
   {
     subscriber_->initialize(parent_node_);
-    subscriber_->setMapData(map_data_);
+    subscriber_->setMapData(map_data_.get());
     if (has_context_)
     {
       subscriber_->setRobotContext(context_);
