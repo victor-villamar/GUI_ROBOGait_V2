@@ -1,4 +1,11 @@
-#include <QDebug>
+#include <cmath>
+#include <cstddef>
+#include <iostream>
+
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/exceptions.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include "Map/Subscribers/LaserScanSubscriber.hpp"
 #include "Ros/Define.hpp"
@@ -6,35 +13,30 @@
 
 using namespace ROBOGait::map::data;
 
-LaserScanSubscriber::LaserScanSubscriber() : parent_node_(nullptr), has_context_(false), active_(false) {}
+LaserScanSubscriber::LaserScanSubscriber() : parent_node_(nullptr), laser_scan_data_(nullptr), map_frame_(TF_MAP_FRAME), active_(false), warn_logged_(false) {}
+
+LaserScanSubscriber::~LaserScanSubscriber() { stop(); }
 
 void LaserScanSubscriber::initialize(rclcpp::Node* parent_node)
 {
   if (!parent_node)
   {
-    qCritical() << "[LaserScanSubscriber::initialize] Null parent node pointer";
+    std::cerr << "[LaserScanSubscriber::initialize] Null parent node pointer" << std::endl;
     return;
   }
 
   parent_node_ = parent_node;
 }
 
-void LaserScanSubscriber::setScanData(const std::shared_ptr<LaserScanData>& scan_data)
-{
-  scan_data_ = scan_data;
-  if (scan_data_ && has_context_)
-  {
-    scan_data_->setRobotContext(context_);
-  }
-}
+void LaserScanSubscriber::setLaserScanData(LaserScanData* laser_scan_data) { laser_scan_data_ = laser_scan_data; }
 
 void LaserScanSubscriber::setRobotContext(const ROBOGait::context::RobotContext& context)
 {
   context_ = context;
-  has_context_ = true;
-  if (scan_data_)
+
+  if (context_)
   {
-    scan_data_->setRobotContext(context_);
+    map_frame_ = context_->resolveFrame(map_frame_);
   }
 }
 
@@ -42,7 +44,7 @@ void LaserScanSubscriber::start()
 {
   if (!parent_node_)
   {
-    qCritical() << "[LaserScanSubscriber::start] Parent node is null";
+    std::cerr << "[LaserScanSubscriber::start] Parent node is null" << std::endl;
     return;
   }
 
@@ -51,13 +53,24 @@ void LaserScanSubscriber::start()
     return;
   }
 
-  const std::string scan_topic = scan_data_ ? scan_data_->getScanTopic() : std::string(T_SCAN);
+  // Create TF buffer and listener
+  tf_buffer_ = std::make_shared<tf2_ros::Buffer>(parent_node_->get_clock());
+  tf_buffer_->setUsingDedicatedThread(true);
+  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, parent_node_, false);
+
+  std::string scan_topic = T_SCAN;
+
+  if (context_)
+  {
+    scan_topic = context_->resolveTopic(scan_topic);
+  }
 
   sub_scan_ = parent_node_->create_subscription<sensor_msgs::msg::LaserScan>(scan_topic, QOS_BEST_EFFORT.keep_last(5),
                                                                              std::bind(&LaserScanSubscriber::callbackScan, this, std::placeholders::_1));
 
   active_ = true;
-  qInfo() << "[LaserScanSubscriber::start] Subscribed to laser scan topic:" << QString::fromStdString(scan_topic);
+  warn_logged_ = false;
+  std::cout << "[LaserScanSubscriber::start] Subscribed to laser scan topic:" << scan_topic << std::endl;
 }
 
 void LaserScanSubscriber::stop()
@@ -67,21 +80,137 @@ void LaserScanSubscriber::stop()
     return;
   }
 
-  sub_scan_.reset();
+  if (sub_scan_)
+  {
+    sub_scan_.reset();
+  }
+
+  if (tf_listener_)
+  {
+    tf_listener_.reset();
+  }
+
+  if (tf_buffer_)
+  {
+    tf_buffer_.reset();
+  }
+
   active_ = false;
 
-  qInfo() << "[LaserScanSubscriber::stop] Subscriptions stopped";
+  std::cout << "[LaserScanSubscriber::stop] Subscriptions stopped" << std::endl;
 }
 
 bool LaserScanSubscriber::isActive() const { return active_; }
 
 void LaserScanSubscriber::callbackScan(const sensor_msgs::msg::LaserScan::SharedPtr msg)
 {
-  if (!scan_data_)
+  if (!laser_scan_data_)
   {
-    qCritical() << "[LaserScanSubscriber::callbackScan] LaserScanData is null";
+    std::cerr << "[LaserScanSubscriber::callbackScan] LaserScanData is null" << std::endl;
     return;
   }
 
-  scan_data_->updateFromLaserScan(msg);
+  if (!msg)
+  {
+    std::cerr << "[LaserScanSubscriber::callbackScan] Invalid LaserScan message" << std::endl;
+    return;
+  }
+
+  if (!tf_buffer_)
+  {
+    std::cerr << "[LaserScanSubscriber::callbackScan] TF buffer is not initialized" << std::endl;
+    return;
+  }
+
+  std::string scan_frame = msg->header.frame_id;
+
+  if (!scan_frame.empty() && scan_frame.front() == '/')
+  {
+    scan_frame.erase(0, 1);
+  }
+
+  if (scan_frame.empty())
+  {
+    std::cerr << "[LaserScanSubscriber::callbackScan] Scan frame is empty" << std::endl;
+    return;
+  }
+
+  LaserScanData::LaserScanMetadata metadata = transformLaserScan(msg, scan_frame);
+
+  if (metadata.points.empty())
+  {
+    return;
+  }
+
+  laser_scan_data_->setLaserScanData(metadata);
+  warn_logged_ = false;
+}
+
+LaserScanData::LaserScanMetadata LaserScanSubscriber::transformLaserScan(const sensor_msgs::msg::LaserScan::SharedPtr msg, const std::string& scan_frame)
+{
+  LaserScanData::LaserScanMetadata metadata;
+
+  geometry_msgs::msg::TransformStamped transform_stamped;
+  bool transform_found = false;
+
+  // Look up the transform from the scan frame to the map frame
+  try
+  {
+    transform_stamped = tf_buffer_->lookupTransform(map_frame_, scan_frame, msg->header.stamp);
+    transform_found = true;
+  }
+  catch (const tf2::TransformException& ex)
+  {
+    try
+    {
+      transform_stamped = tf_buffer_->lookupTransform(map_frame_, scan_frame, tf2::TimePointZero);
+      transform_found = true;
+    }
+    catch (const tf2::TransformException& e)
+    {
+      if (!warn_logged_)
+      {
+        std::cerr << "[LaserScanSubscriber::transformLaserScan] Could not transform from " << scan_frame << " to " << map_frame_ << ": " << e.what()
+                  << std::endl;
+        warn_logged_ = true;
+      }
+      return metadata;
+    }
+  }
+
+  if (!transform_found)
+  {
+    std::cerr << "[LaserScanSubscriber::transformLaserScan] Could not find transform from " << scan_frame << " to " << map_frame_ << std::endl;
+    return metadata;
+  }
+
+  tf2::Transform tf;
+  tf2::fromMsg(transform_stamped.transform, tf);
+
+  metadata.points.reserve(msg->ranges.size());
+
+  double angle = msg->angle_min;
+  for (size_t i = 0; i < msg->ranges.size(); ++i)
+  {
+    const float range = msg->ranges[i];
+    if (!std::isfinite(range) || range < msg->range_min || range > msg->range_max)
+    {
+      angle += msg->angle_increment;
+      continue;
+    }
+
+    // Convert polar coordinates to Cartesian coordinates
+    const double lx = range * cos(angle);
+    const double ly = range * sin(angle);
+
+    // Transform to map frame
+    const tf2::Vector3 laser_point(lx, ly, 0.0);
+    const tf2::Vector3 map_point = tf * laser_point;
+
+    metadata.points.emplace_back(map_point.x(), map_point.y());
+
+    angle += msg->angle_increment;
+  }
+
+  return metadata;
 }
