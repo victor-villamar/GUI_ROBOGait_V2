@@ -69,8 +69,8 @@ public:
   std::shared_ptr<ROBOGait::map::data::LaserScanData> getLaserScanData() const;
 
 private:
-  std::shared_ptr<ROBOGait::map::data::LaserScanData> scan_data_;        /**< Laser scan data */
-  std::shared_ptr<ROBOGait::map::data::LaserScanSubscriber> subscriber_; /**< Laser scan subscriber */
+  std::shared_ptr<ROBOGait::map::data::LaserScanData> scan_data_;               /**< Laser scan data */
+  std::shared_ptr<ROBOGait::map::subscribers::LaserScanSubscriber> subscriber_; /**< Laser scan subscriber */
 };
 
 } // namespace source

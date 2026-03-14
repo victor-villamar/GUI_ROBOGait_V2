@@ -6,10 +6,10 @@
 #include <QDebug>
 
 #include "CommandExecutor/CommandExecutorClient.hpp"
-#include "Define.hpp"
 #include "Loader/YamlLoader.hpp"
 #include "Map/Utils/Utils.hpp"
-#include "TopicsName.hpp"
+#include "Ros/Define.hpp"
+#include "Ros/TopicsName.hpp"
 
 using namespace ROBOGait::ros::executor;
 
@@ -20,7 +20,12 @@ CommandExecutorClient& CommandExecutorClient::getInstance()
 }
 
 CommandExecutorClient::CommandExecutorClient() :
-    parent_node_(nullptr), timer_health_(nullptr), has_context_(false), initialized_(false), pending_stop_after_save_(false), map_saver_stop_requested_(false)
+    parent_node_(nullptr),
+    timer_health_(nullptr),
+    context_(std::nullopt),
+    initialized_(false),
+    pending_stop_after_save_(false),
+    map_saver_stop_requested_(false)
 {
 }
 
@@ -63,7 +68,6 @@ bool CommandExecutorClient::isInitialized() const { return initialized_; }
 void CommandExecutorClient::setRobotContext(const ROBOGait::context::RobotContext& context)
 {
   context_ = context;
-  has_context_ = true;
 
   if (initialized_)
   {
@@ -76,8 +80,7 @@ void CommandExecutorClient::setRobotContext(const ROBOGait::context::RobotContex
 
 void CommandExecutorClient::clearRobotContext()
 {
-  context_.clear();
-  has_context_ = false;
+  context_->clear();
   cli_cmd_.reset();
   command_states_.clear();
   pending_stop_after_save_ = false;
@@ -218,9 +221,9 @@ bool CommandExecutorClient::isNodeAlive(const std::string& node_name) const
   }
 
   std::string target_ns = "/";
-  if (has_context_ && context_.usesNamespace())
+  if (context_ && context_->usesNamespace())
   {
-    const QString ns = context_.topicNamespace();
+    const QString ns = context_->topicNamespace();
 
     if (ns.isEmpty())
     {
@@ -240,7 +243,7 @@ bool CommandExecutorClient::isNodeAlive(const std::string& node_name) const
       continue;
     }
 
-    if (!has_context_ || !context_.usesNamespace())
+    if (!context_ || !context_->usesNamespace())
     {
       return true;
     }
@@ -377,9 +380,9 @@ std::string CommandExecutorClient::resolveServiceName() const
 {
   const std::string base = std::string(S_CMD);
 
-  if (has_context_)
+  if (context_)
   {
-    return context_.resolveTopic(base);
+    return context_->resolveTopic(base);
   }
 
   if (base.empty() || base.front() == '/')
@@ -457,7 +460,7 @@ bool CommandExecutorClient::saveMap(const std::string& map_name)
 
   const CommandExecutorClient::CommandInfo& cmd_info = commands_[KEY_MAP_SAVER];
 
-  std::string map_topic = has_context_ ? context_.resolveTopic(std::string(T_MAP)) : std::string(T_MAP);
+  std::string map_topic = context_ ? context_->resolveTopic(std::string(T_MAP)) : std::string(T_MAP);
 
   std::string args = cmd_info.append_args;
 

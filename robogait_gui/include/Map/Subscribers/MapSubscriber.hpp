@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 #include <map_msgs/msg/occupancy_grid_update.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
@@ -14,23 +15,56 @@ namespace ROBOGait
 {
 namespace map
 {
-namespace data
+namespace subscribers
 {
 
 /**
- * @brief Subscribes to map topics and fills MapData.
+ * @brief Subscribes to map topics and fills and populates MapData
  */
 class MapSubscriber
 {
 public:
+  /**
+   * @brief Constructor of MapSubscriber class
+   */
   MapSubscriber();
 
+  /**
+   * @brief Initializes the subscriber
+   *
+   * @param parent_node The parent ROS node
+   */
   void initialize(rclcpp::Node* parent_node);
-  void setMapData(const std::shared_ptr<MapData>& map_data);
+
+  /**
+   * @brief Sets the map data
+   *
+   * @param map_data The map data
+   */
+  void setMapData(data::MapData* map_data);
+
+  /**
+   * @brief Sets the robot context
+   *
+   * @param context The robot context
+   */
   void setRobotContext(const ROBOGait::context::RobotContext& context);
 
+  /**
+   * @brief Starts the subscriber
+   */
   void start();
+
+  /**
+   * @brief Stops the subscriber
+   */
   void stop();
+
+  /**
+   * @brief Checks if the subscriber is active
+   *
+   * @return True if active, false otherwise
+   */
   bool isActive() const;
 
 private:
@@ -52,12 +86,11 @@ private:
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_map_;              /**< Subscription to the map topic */
   rclcpp::Subscription<map_msgs::msg::OccupancyGridUpdate>::SharedPtr sub_map_update_; /**< Subscription to the map update topic */
 
-  std::shared_ptr<MapData> map_data_;       /**< Map data */
-  ROBOGait::context::RobotContext context_; /**< Robot context */
-  bool has_context_;                        /**< Flag indicating if context is set */
-  bool active_;                             /**< Flag indicating if subscriber is active */
+  data::MapData* map_data_;                                /**< Map data */
+  std::optional<ROBOGait::context::RobotContext> context_; /**< Robot context */
+  bool active_;                                            /**< Flag indicating if subscriber is active */
 };
 
-} // namespace data
+} // namespace subscribers
 } // namespace map
 } // namespace ROBOGait

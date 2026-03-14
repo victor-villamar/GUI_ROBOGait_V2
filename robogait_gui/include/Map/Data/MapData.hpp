@@ -1,15 +1,8 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <mutex>
 #include <vector>
-
-#include <QImage>
-#include <QMutex>
-
-#include <map_msgs/msg/occupancy_grid_update.hpp>
-#include <nav_msgs/msg/occupancy_grid.hpp>
-
-#include "Context/RobotContext.hpp"
 
 namespace ROBOGait
 {
@@ -63,37 +56,37 @@ public:
   ~MapData() = default;
 
   /**
-   * @brief Update map data from ROS2 OccupancyGrid message
-   *
-   * @param msg ROS2 OccupancyGrid message from /map topic
-   */
-  void updateFromOccupancyGrid(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
-
-  /**
-   * @brief Update map data from ROS2 OccupancyGridUpdate message (incremental)
-   *
-   * @param msg ROS2 OccupancyGridUpdate message from /map_updates topic
-   */
-  void updateFromOccupancyGridUpdate(const map_msgs::msg::OccupancyGridUpdate::SharedPtr msg);
-
-  /**
-   * @brief Convert occupancy grid to QImage for rendering
-   *
-   * - Unknown (-1): RGB(128, 128, 128) gray
-   * - Free (0): RGB(255, 255, 255) white
-   * - Occupied (100): RGB(0, 0, 0) black
-   * - Intermediate values: linear interpolation
-   *
-   * @return QImage in Format_RGB888 ready for QML rendering
-   */
-  QImage toQImage();
-
-  /**
    * @brief Get current map metadata
    *
    * @return Map metadata structure
    */
   MapMetadata getMetadata() const;
+
+  /**
+   * @brief Set occupancy data for the map
+   *
+   * @param occupancy_data Occupancy data vector (row-major order)
+   * @param metadata Map metadata (resolution, dimensions, origin)
+   */
+  void setOccupancyData(const std::vector<int8_t>& occupancy_data, const MapMetadata& metadata);
+
+  /**
+   * @brief Get occupancy data for the map
+   *
+   * @return Occupancy data vector (row-major order)
+   */
+  const std::vector<int8_t>& getOccupancyData() const;
+
+  /**
+   * @brief Update a region of the map with new occupancy data
+   *
+   * @param x X coordinate of the region (in cells)
+   * @param y Y coordinate of the region (in cells)
+   * @param width Width of the region (in cells)
+   * @param height Height of the region (in cells)
+   * @param data Region data (size must be equal to width * height)
+   */
+  void updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height, const std::vector<int8_t>& data);
 
   /**
    * @brief Check if map data is available
@@ -114,52 +107,13 @@ public:
    */
   uint64_t getUpdateStamp() const;
 
-  /**
-   * @brief Provide robot context for topic resolution
-   *
-   * @param context Robot context with namespace info
-   */
-  void setRobotContext(const ROBOGait::context::RobotContext& context);
-
-  /**
-   * @brief Check if a context has been provided
-   *
-   * @return true if context is set, false otherwise
-   */
-  bool hasRobotContext() const;
-
-  /**
-   * @brief Get the map topic using the stored context
-   *
-   * @return Fully qualified map topic name
-   */
-  std::string mapTopic() const;
-
-  /**
-   * @brief Resolve the map updates topic using the stored context
-   *
-   * @return Fully qualified map updates topic name
-   */
-  std::string mapUpdatesTopic() const;
-
 private:
-  /**
-   * @brief Regenerate QImage from occupancy data
-   *
-   */
-  void regenerateImage();
-
   MapMetadata metadata_;               /**< Map resolution, dimensions and origin */
   std::vector<int8_t> occupancy_data_; /**< Occupancy grid data (row-major order) */
-  QImage cached_image_;                /**< Cached converted image for performance */
-  bool image_dirty_;                   /**< Flag indicating if image needs regeneration */
   bool is_available_;                  /**< Flag indicating if map data has been received */
   uint64_t update_stamp_;              /**< Monotonic update counter */
 
-  mutable QMutex data_mutex_; /**< Protects map data and image */
-
-  ROBOGait::context::RobotContext context_; /**< Robot context for topic resolution */
-  bool has_context_;                        /**< Flag indicating if context is set */
+  mutable std::mutex data_mutex_; /**< Protects map data and image */
 };
 
 } // namespace data

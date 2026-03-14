@@ -1,10 +1,17 @@
 #include <QDebug>
 
 #include "Map/Layer/MapLayer.hpp"
+#include "Map/Utils/Utils.hpp"
 
 using namespace ROBOGait::map::layer;
 
-MapLayer::MapLayer(std::shared_ptr<data::MapData> map_data) : map_data_(std::move(map_data)), last_stamp_(0), render_requested_(false) {}
+MapLayer::MapLayer() : last_stamp_(0), render_requested_(false) {}
+
+void MapLayer::setMapData(std::shared_ptr<data::MapData> map_data)
+{
+  QMutexLocker lock(&image_mutex_);
+  map_data_ = std::move(map_data);
+}
 
 std::shared_ptr<ROBOGait::map::data::MapData> MapLayer::getMapData() const { return map_data_; }
 
@@ -42,7 +49,7 @@ void MapLayer::refreshImage()
     return;
   }
 
-  QImage image = map_data_->toQImage();
+  QImage image = utils::toQImage(*map_data_);
 
   if (image.isNull())
   {

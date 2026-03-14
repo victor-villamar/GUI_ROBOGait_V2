@@ -67,7 +67,23 @@ std::string RobotContext::resolveTopic(const std::string& topic) const
   return ns + normalized;
 }
 
-std::string RobotContext::resolveFrame(const std::string& frame) const { return normalizeFrame(frame); }
+std::string RobotContext::resolveFrame(const std::string& frame) const
+{
+  std::string normalized = normalizeFrame(frame);
+
+  if (!use_namespace_ || topic_namespace_.isEmpty())
+  {
+    return normalized;
+  }
+
+  const std::string ns = topic_namespace_.toStdString();
+  if (normalized == ns || normalized.rfind(ns + "/", 0) == 0)
+  {
+    return normalized;
+  }
+
+  return ns + normalized;
+}
 
 QString RobotContext::normalizeNamespace(const QString& robot_namespace) const
 {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <rclcpp/node.hpp>
 
 #include "Context/RobotContext.hpp"
@@ -31,11 +33,10 @@ public:
 protected:
   SourceInterface() = default;
 
-  rclcpp::Node* parent_node_;               /**< Parent node for subscriptions */
-  ROBOGait::context::RobotContext context_; /**< Robot context */
-  bool has_context_;                        /**< Flag indicating if context is set */
-  bool initialized_;                        /**< Flag indicating if source is initialized */
-  bool active_;                             /**< Flag indicating if source is active */
+  rclcpp::Node* parent_node_;                              /**< Parent node for subscriptions */
+  std::optional<ROBOGait::context::RobotContext> context_; /**< Robot context */
+  bool initialized_;                                       /**< Flag indicating if source is initialized */
+  bool active_;                                            /**< Flag indicating if source is active */
 };
 
 } // namespace source

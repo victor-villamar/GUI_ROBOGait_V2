@@ -1,8 +1,10 @@
 #pragma once
 
+#include <cmath>
 #include <memory>
 #include <string>
 
+#include <QImage>
 #include <QString>
 
 #include <geometry_msgs/msg/quaternion.hpp>
@@ -15,6 +17,15 @@ namespace map
 {
 namespace utils
 {
+
+static constexpr double RAD2DEG = 180.0 / M_PI;
+static constexpr double DEG2RAD = M_PI / 180.0;
+static constexpr int8_t UNKNOWN_OCCUPANCY = -1;
+static constexpr int8_t FREE_SPACE_THRESHOLD = 50;
+
+static constexpr auto DARK_BLUE_GRAY = qRgb(26, 58, 74);
+static constexpr auto LIGHT_BLUE = qRgb(169, 207, 232);
+static constexpr auto WHITE = qRgb(255, 255, 255);
 
 /**
  * @brief Extract yaw angle from ROS2 Quaternion message
@@ -44,6 +55,20 @@ double rad2deg(double radians);
 double deg2rad(double degrees);
 
 /**
+ * @brief Convert MapData to QImage
+ *
+ * Colormap:
+ * - Unknown (-1): dark blue-gray
+ * - Free space (< 50): light blue
+ * - Occupied (>= 50): white
+ *
+ * @param map_data MapData object
+ *
+ * @return QImage representation of the map data
+ */
+QImage toQImage(const data::MapData& map_data);
+
+/**
  * @brief Generate PNG preview for the given map data
  *
  * @param map_data Shared pointer to the map data
@@ -51,7 +76,7 @@ double deg2rad(double degrees);
  *
  * @return true if the preview was generated successfully, false otherwise
  */
-bool generateMapPreview(const std::shared_ptr<data::MapData>& map_data, const QString& map_name);
+bool generateMapPreview(const data::MapData& map_data, const QString& map_name);
 
 /**
  * @brief Delete the generated map preview

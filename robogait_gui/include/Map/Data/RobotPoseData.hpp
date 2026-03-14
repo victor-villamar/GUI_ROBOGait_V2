@@ -1,16 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
-
-#include <QMutex>
-
-#include <rclcpp/node.hpp>
-#include <rclcpp/timer.hpp>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
-
-#include "Context/RobotContext.hpp"
 
 namespace ROBOGait
 {
@@ -26,39 +19,44 @@ class RobotPoseData
 {
 public:
   /**
-   * @brief Constructor of RobotPoseData class
+   * @brief Robot Pose Metadata
    *
-   * @param parent_node Pointer to parent ROS2 node
-   * @param map_frame TF frame for the map (default: "map")
-   * @param robot_frame TF frame for the robot base (default: "base_link")
+   * @param x Robot X position in meters
+   * @param y Robot Y position in meters
+   * @param theta Robot orientation in radians
    */
-  RobotPoseData(rclcpp::Node* parent_node, const std::string& map_frame = "map", const std::string& robot_frame = "base_link");
+  struct RobotPoseMetadata
+  {
+    double x;
+    double y;
+    double theta;
+
+    RobotPoseMetadata() : x(0.0), y(0.0), theta(0.0) {}
+  };
+
+  /**
+   * @brief Constructor of RobotPoseData class
+   */
+  RobotPoseData();
 
   /**
    * @brief Destructor of RobotPoseData class
    */
-  ~RobotPoseData();
+  ~RobotPoseData() = default;
 
   /**
-   * @brief Get robot X position in map frame
+   * @brief Set robot pose metadata
    *
-   * @return X coordinate in meters
+   * @param metadata Robot pose metadata
    */
-  double getX() const;
+  void setPose(const RobotPoseMetadata& metadata);
 
   /**
-   * @brief Get robot Y position in map frame
+   * @brief Get robot pose metadata
    *
-   * @return Y coordinate in meters
+   * @return Robot pose metadata
    */
-  double getY() const;
-
-  /**
-   * @brief Get robot orientation (yaw angle) in map frame
-   *
-   * @return Theta angle in radians (-π to π)
-   */
-  double getTheta() const;
+  RobotPoseMetadata getMetadata() const;
 
   /**
    * @brief Check if robot pose has been initialized
@@ -68,36 +66,9 @@ public:
   bool isAvailable() const;
 
   /**
-   * @brief Check if TF updates are enabled
-   */
-  bool isEnabled() const;
-
-  /**
    * @brief Reset pose to default values (origin)
    */
   void reset();
-
-  /**
-   * @brief Start tf listener
-   */
-  void startTFListener();
-
-  /**
-   * @brief Stop tf listener
-   */
-  void stopTFListener();
-
-  /**
-   * @brief Provide robot context for frame resolution
-   *
-   * @param context Robot context with namespace info
-   */
-  void setRobotContext(const ROBOGait::context::RobotContext& context);
-
-  /**
-   * @brief Check if a context has been provided
-   */
-  bool hasRobotContext() const { return has_context_; }
 
   /**
    * @brief Get the data update stamp
@@ -107,31 +78,11 @@ public:
   uint64_t getUpdateStamp() const;
 
 private:
-  /**
-   * @brief Timer callback to update pose from TF
-   */
-  void updatePoseFromTF();
+  RobotPoseMetadata metadata_; /**< Robot pose metadata */
+  bool is_available_;          /**< Flag indicating if pose has been received */
+  uint64_t update_stamp_;      /**< Monotonic update counter */
 
-  rclcpp::Node* parent_node_;                               /**< Parent ROS2 node pointer */
-  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;              /**< TF2 buffer for transform lookups */
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_; /**< TF2 listener */
-  rclcpp::TimerBase::SharedPtr tf_timer_;                   /**< Timer for periodic TF updates */
-
-  std::string map_frame_;   /**< Map frame name */
-  std::string robot_frame_; /**< Robot base frame name */
-
-  double x_;              /**< Robot X position in meters (map frame) */
-  double y_;              /**< Robot Y position in meters (map frame) */
-  double theta_;          /**< Robot orientation in radians (map frame) */
-  bool is_available_;     /**< Flag indicating if pose has been received */
-  bool warn_logged_;      /**< Flag to avoid spamming warnings */
-  uint64_t update_stamp_; /**< Monotonic update counter */
-  bool enabled_;          /**< Whether TF updates are enabled */
-
-  mutable QMutex data_mutex_; /**< Protects pose data */
-
-  ROBOGait::context::RobotContext context_; /**< Robot context for frame resolution */
-  bool has_context_;                        /**< Flag indicating if context is set */
+  mutable std::mutex data_mutex_; /**< Protects pose data */
 };
 
 } // namespace data

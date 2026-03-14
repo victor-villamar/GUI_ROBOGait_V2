@@ -47,8 +47,8 @@ public:
   std::shared_ptr<ROBOGait::map::data::MapData> getMapData() const;
 
 private:
-  std::shared_ptr<ROBOGait::map::data::MapData> map_data_;         /**< Map data */
-  std::shared_ptr<ROBOGait::map::data::MapSubscriber> subscriber_; /**< Map subscriber */
+  std::shared_ptr<ROBOGait::map::data::MapData> map_data_;                /**< Map data */
+  std::shared_ptr<ROBOGait::map::subscribers::MapSubscriber> subscriber_; /**< Map subscriber */
 };
 
 } // namespace source
