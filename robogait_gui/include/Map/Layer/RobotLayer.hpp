@@ -109,9 +109,11 @@ private:
   bool has_last_update_;                              /**< Flag for last update availability */
   double robot_size_;                                 /**< Robot size for rendering */
 
-  static constexpr double ALPHA_POSITION = 0.3;       /**< Position interpolation factor */
-  static constexpr double ALPHA_ROTATION = 0.5;       /**< Rotation interpolation factor */
-  static constexpr double REFERENCE_UPDATE_HZ = 30.0; /**< Reference update frequency for interpolation */
+  static constexpr double ALPHA_POSITION = 0.3;           /**< Position interpolation factor */
+  static constexpr double ALPHA_ROTATION = 0.5;           /**< Rotation interpolation factor */
+  static constexpr double REFERENCE_UPDATE_HZ = 30.0;     /**< Reference update frequency for interpolation */
+  static constexpr double MAX_INTERPOLATION_FACTOR = 3.0; /**< Maximum interpolation factor to prevent overshooting */
+  static constexpr double DEFAULT_ROBOT_SIZE = 0.5;       /**< Default robot size in meters */
 };
 
 } // namespace layer

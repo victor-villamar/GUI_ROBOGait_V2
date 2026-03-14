@@ -80,6 +80,10 @@ private:
   std::shared_ptr<ROBOGait::map::rendering::RenderScene> render_scene_; /**< Render scene for the robot item */
   std::shared_ptr<ROBOGait::map::layer::RobotLayer> robot_render_;      /**< Robot layer for the robot item */
   std::shared_ptr<ROBOGait::map::rendering::RenderCamera> camera_;      /**< Camera for the robot item */
+
+  static constexpr auto BODY_COLOR = QColor(75, 80, 86);  /**< Color for the robot body */
+  static constexpr auto WHEEL_COLOR = QColor(21, 24, 31); /**< Color for the robot wheels */
+  static constexpr auto HEAD_COLOR = QColor(220, 20, 20); /**< Color for the robot head */
 };
 
 } // namespace item

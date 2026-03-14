@@ -85,8 +85,9 @@ private:
   bool render_requested_; /**< Flag indicating if a render is requested */
   QMutex render_mutex_;   /**< Mutex for synchronizing access to render_requested_ */
 
-  static constexpr int UPDATE_RATE_MS = 33;                /**< Update rate in milliseconds (30Hz) */
-  static constexpr double FORCE_RENDER_INTERVAL_SEC = 0.1; /**< Force render if no render has occurred within this interval (0.1s) */
+  static constexpr int UPDATE_RATE_MS = 33;                   /**< Update rate in milliseconds (30Hz) */
+  static constexpr double FORCE_RENDER_INTERVAL_SEC = 0.1;    /**< Force render if no render has occurred within this interval (0.1s) */
+  static constexpr double FPS_CALCULATION_INTERVAL_SEC = 1.0; /**< Interval for calculating FPS (1 second) */
 };
 
 } // namespace rendering

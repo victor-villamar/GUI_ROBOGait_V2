@@ -91,7 +91,7 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
     body_node->setFlag(QSGNode::OwnsGeometry);
 
     auto* body_mat = new QSGFlatColorMaterial();
-    body_mat->setColor(QColor(75, 80, 86));
+    body_mat->setColor(BODY_COLOR);
     body_node->setMaterial(body_mat);
     body_node->setFlag(QSGNode::OwnsMaterial);
     robot_node->appendChildNode(body_node);
@@ -103,7 +103,7 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
     wheels_node->setFlag(QSGNode::OwnsGeometry);
 
     auto* wheels_mat = new QSGFlatColorMaterial();
-    wheels_mat->setColor(QColor(21, 24, 31));
+    wheels_mat->setColor(WHEEL_COLOR);
     wheels_node->setMaterial(wheels_mat);
     wheels_node->setFlag(QSGNode::OwnsMaterial);
     robot_node->appendChildNode(wheels_node);
@@ -115,7 +115,7 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
     head_node->setFlag(QSGNode::OwnsGeometry);
 
     auto* head_mat = new QSGFlatColorMaterial();
-    head_mat->setColor(QColor(220, 20, 20));
+    head_mat->setColor(HEAD_COLOR);
     head_node->setMaterial(head_mat);
     head_node->setFlag(QSGNode::OwnsMaterial);
     robot_node->appendChildNode(head_node);

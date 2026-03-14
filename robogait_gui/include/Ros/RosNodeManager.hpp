@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <thread>
 
@@ -114,13 +115,13 @@ public:
    * @brief Initializes the ROS node manager
    * @param argc The argument count
    * @param argv The argument vector
-   * @param domain_id ROS domain ID to use for the node (0-232)
+   * @param domain_id ROS domain ID to use for the node (0-MAX_DOMAIN_ID)
    */
   void initialize(int argc, char** argv, uint8_t domain_id = 0);
 
   /**
    * @brief Restarts ROS node with a new domain ID
-   * @param new_domain_id New ROS domain ID (0-232)
+   * @param new_domain_id New ROS domain ID (0-MAX_DOMAIN_ID)
    * @param argc The argument count
    * @param argv The argument vector
    * @return True if restart was successful, false otherwise
@@ -161,6 +162,8 @@ private:
   std::atomic<bool> is_running_; /**< Indicates if the ROS node is running */
   bool use_namespace_discovery_; /**< Indicates if namespace discovery is enabled */
   uint8_t current_domain_id_;    /**< Current ROS domain ID */
+
+  static constexpr uint8_t MAX_DOMAIN_ID = 232; /**< Maximum valid ROS domain ID */
 };
 } // namespace manager
 } // namespace ros

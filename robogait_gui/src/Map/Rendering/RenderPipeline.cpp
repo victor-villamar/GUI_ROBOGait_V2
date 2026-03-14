@@ -167,7 +167,7 @@ void RenderPipeline::renderFrame()
   auto elapsed = std::chrono::duration<double>(now - last_fps).count();
 
   double fps = 0.0;
-  if (elapsed >= 1.0)
+  if (elapsed >= FPS_CALCULATION_INTERVAL_SEC)
   {
     fps = frame_count / elapsed;
     frame_count = 0;

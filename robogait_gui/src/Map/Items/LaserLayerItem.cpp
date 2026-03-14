@@ -82,7 +82,7 @@ QSGNode* LaserLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
     points_node->setFlag(QSGNode::OwnsGeometry);
 
     auto* material = new QSGFlatColorMaterial();
-    material->setColor(QColor(255, 0, 0));
+    material->setColor(LASER_COLOR);
     material->setFlag(QSGMaterial::Blending, false);
     points_node->setMaterial(material);
     points_node->setFlag(QSGNode::OwnsMaterial);

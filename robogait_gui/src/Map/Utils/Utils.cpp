@@ -151,7 +151,7 @@ bool generateMapPreview(const data::MapData& map_data, const QString& map_name)
     return false;
   }
 
-  if (!image.save(file_path, "PNG", 100))
+  if (!image.save(file_path, "PNG", IMAGE_QUALITY))
   {
     qCritical() << "[utils::generateMapPreview] Failed to save map preview to file:" << file_path;
     return false;

@@ -46,7 +46,7 @@ void DeveloperSettings::setUseNamespaceDiscovery(bool value)
 
 void DeveloperSettings::setRosDomainId(uint8_t domain_id)
 {
-  if (domain_id > 232)
+  if (domain_id > MAX_DOMAIN_ID)
   {
     qWarning() << "[DeveloperSettings::setRosDomainId] Invalid domain ID:" << domain_id << "(must be 0-232)";
     return;
@@ -126,7 +126,7 @@ void DeveloperSettings::initializeDefaults()
   bool use_namespace_discovery = yaml_loader.getValue<bool>("ros2.use_namespace_discovery", true);
   bool use_topic_filter = yaml_loader.getValue<bool>("ros2.use_topic_filter", true);
 
-  if (ros_domain_id > 232)
+  if (ros_domain_id > MAX_DOMAIN_ID)
   {
     qWarning() << "[DeveloperSettings::initializeDefaults] Invalid ROS domain ID:" << ros_domain_id << "(must be 0-232), setting to 0";
     ros_domain_id = 0;

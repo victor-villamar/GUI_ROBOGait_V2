@@ -62,7 +62,7 @@ public:
   /**
    * @brief Get current pending value for ROS domain ID
    *
-   * @return ROS domain ID (0-232)
+   * @return ROS domain ID (0-MAX_DOMAIN_ID)
    */
   uint8_t getRosDomainId() const;
 
@@ -90,7 +90,7 @@ public:
   /**
    * @brief Set pending value for ROS domain ID
    *
-   * @param domain_id New pending domain ID (0-232)
+   * @param domain_id New pending domain ID (0-MAX_DOMAIN_ID)
    */
   void setRosDomainId(uint8_t domain_id);
 
@@ -149,6 +149,8 @@ private:
   uint8_t pending_ros_domain_id_;        /**< Pending ROS domain ID */
   bool current_use_topic_filter_;        /**< Current topic filter setting */
   bool pending_use_topic_filter_;        /**< Pending topic filter setting */
+
+  static constexpr uint8_t MAX_DOMAIN_ID = 232; /**< Maximum valid ROS domain ID */
 };
 
 } // namespace settings

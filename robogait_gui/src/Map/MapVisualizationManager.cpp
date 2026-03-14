@@ -450,7 +450,7 @@ void MapVisualizationManager::zoomIn()
   }
 
   setFollowRobot(false);
-  render_camera_->zoomByFactor(1.1);
+  render_camera_->zoomByFactor(rendering::RenderCamera::ZOOM_FACTOR);
 
   emit zoomLevelChanged();
 
@@ -475,7 +475,7 @@ void MapVisualizationManager::zoomOut()
   }
 
   setFollowRobot(false);
-  render_camera_->zoomByFactor(1.0 / 1.1);
+  render_camera_->zoomByFactor(1.0 / rendering::RenderCamera::ZOOM_FACTOR);
 
   emit zoomLevelChanged();
 
@@ -746,7 +746,7 @@ void MapVisualizationManager::updateScale()
     const double ppm = render_camera_->getZoom();
     if (ppm > 0.0)
     {
-      const int target_px = 70;
+      const int target_px = rendering::RenderCamera::SCALE_BAR_TARGET_LENGTH_PX;
       new_pixels = target_px;
       new_meters = static_cast<double>(target_px) / ppm;
     }

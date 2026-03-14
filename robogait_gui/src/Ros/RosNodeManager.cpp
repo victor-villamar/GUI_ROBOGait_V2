@@ -122,7 +122,7 @@ void RosNodeManager::initialize(int argc, char** argv, uint8_t domain_id)
     return;
   }
 
-  if (domain_id > 232)
+  if (domain_id > MAX_DOMAIN_ID)
   {
     qCritical() << "[RosNodeManager::initialize] Invalid domain ID:" << domain_id << "(must be 0-232)";
     return;
@@ -180,7 +180,7 @@ bool RosNodeManager::restartWithDomain(uint8_t new_domain_id, int argc, char** a
 {
   qInfo() << "[RosNodeManager::restartWithDomain] Restarting ROS node with new domain ID:" << new_domain_id;
 
-  if (new_domain_id > 232)
+  if (new_domain_id > MAX_DOMAIN_ID)
   {
     qCritical() << "[RosNodeManager::restartWithDomain] Invalid domain ID:" << new_domain_id << "(must be 0-232)";
     return false;

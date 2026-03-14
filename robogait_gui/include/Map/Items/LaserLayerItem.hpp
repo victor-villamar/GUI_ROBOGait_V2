@@ -86,7 +86,8 @@ private:
   std::shared_ptr<ROBOGait::map::layer::LaserLayer> laser_render_;      /**< Laser layer for the laser item */
   std::shared_ptr<ROBOGait::map::rendering::RenderCamera> camera_;      /**< Camera for the laser item */
 
-  static constexpr float POINT_SIZE = 0.03f; /**< Size of the laser points */
+  static constexpr float POINT_SIZE = 0.03f;             /**< Size of the laser points */
+  static constexpr auto LASER_COLOR = QColor(255, 0, 0); /**< Color of the laser points */
 };
 
 } // namespace item

@@ -13,7 +13,7 @@ RobotLayer::RobotLayer() :
     render_requested_(false),
     last_update_(),
     has_last_update_(false),
-    robot_size_(0.5)
+    robot_size_(DEFAULT_ROBOT_SIZE)
 {
 }
 
@@ -76,9 +76,9 @@ void RobotLayer::update()
   double dt_factor = wall_dt * REFERENCE_UPDATE_HZ;
 
   // Normalize dt_factor to [0, 3]
-  if (dt_factor > 3.0)
+  if (dt_factor > MAX_INTERPOLATION_FACTOR)
   {
-    dt_factor = 3.0;
+    dt_factor = MAX_INTERPOLATION_FACTOR;
   }
   const double alpha_pos = 1.0 - std::pow(1.0 - ALPHA_POSITION, dt_factor);
   interpolated_pose_.x += (target_pose_.x - interpolated_pose_.x) * alpha_pos;

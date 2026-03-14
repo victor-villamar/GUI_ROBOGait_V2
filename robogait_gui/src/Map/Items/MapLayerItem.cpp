@@ -147,7 +147,7 @@ void MapLayerItem::wheelEvent(QWheelEvent* event)
     return;
   }
 
-  const qreal delta = event->angleDelta().y() > 0 ? 1.1 : 1.0 / 1.1;
+  const qreal delta = event->angleDelta().y() > 0 ? rendering::RenderCamera::ZOOM_FACTOR : (1.0 / rendering::RenderCamera::ZOOM_FACTOR);
   camera_->zoomByFactor(delta);
   emit zoomChanged();
   update();
