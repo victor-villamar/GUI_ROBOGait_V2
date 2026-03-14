@@ -22,8 +22,23 @@ namespace layer
 class MapLayer : public LayerInterface
 {
 public:
-  explicit MapLayer(std::shared_ptr<data::MapData> map_data = nullptr);
+  /**
+   * @brief Constructor of MapLayer class
+   */
+  explicit MapLayer();
 
+  /**
+   * @brief Set the map data
+   *
+   * @param map_data Shared pointer to the map data
+   */
+  void setMapData(std::shared_ptr<data::MapData> map_data);
+
+  /**
+   * @brief Get the map data
+   *
+   * @return Shared pointer to the map data
+   */
   std::shared_ptr<data::MapData> getMapData() const;
 
   /**

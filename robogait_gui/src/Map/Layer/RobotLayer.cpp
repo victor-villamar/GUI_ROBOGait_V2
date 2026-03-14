@@ -6,8 +6,7 @@
 
 using namespace ROBOGait::map::layer;
 
-RobotLayer::RobotLayer(std::shared_ptr<data::RobotPoseData> robot_pose_data) :
-    robot_pose_data_(std::move(robot_pose_data)),
+RobotLayer::RobotLayer() :
     interpolated_pose_{0.0, 0.0, 0.0},
     target_pose_{0.0, 0.0, 0.0},
     first_update_(true),
@@ -16,6 +15,12 @@ RobotLayer::RobotLayer(std::shared_ptr<data::RobotPoseData> robot_pose_data) :
     has_last_update_(false),
     robot_size_(0.5)
 {
+}
+
+void RobotLayer::setRobotPoseData(std::shared_ptr<data::RobotPoseData> robot_pose_data)
+{
+  QMutexLocker lock(&state_mutex_);
+  robot_pose_data_ = std::move(robot_pose_data);
 }
 
 RobotLayer::Pose2D RobotLayer::getInterpolatedPose() const

@@ -2,8 +2,13 @@
 
 using namespace ROBOGait::map::layer;
 
-LaserLayer::LaserLayer(std::shared_ptr<data::LaserScanData> scan_data) : scan_data_(std::move(scan_data)), last_stamp_(0), render_requested_(false) {}
+LaserLayer::LaserLayer() : last_stamp_(0), render_requested_(false) {}
 
+void LaserLayer::setLaserScanData(std::shared_ptr<data::LaserScanData> scan_data)
+{
+  QMutexLocker lock(&data_mutex_);
+  scan_data_ = std::move(scan_data);
+}
 void LaserLayer::update()
 {
   if (!scan_data_)

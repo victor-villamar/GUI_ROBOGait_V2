@@ -24,7 +24,14 @@ public:
   /**
    * @brief Constructor for the LaserLayer class
    */
-  explicit LaserLayer(std::shared_ptr<data::LaserScanData> scan_data = nullptr);
+  explicit LaserLayer();
+
+  /**
+   * @brief Set the laser scan data
+   *
+   * @param scan_data Shared pointer to the laser scan data
+   */
+  void setLaserScanData(std::shared_ptr<data::LaserScanData> scan_data);
 
   /**
    * @brief Update the renderer state

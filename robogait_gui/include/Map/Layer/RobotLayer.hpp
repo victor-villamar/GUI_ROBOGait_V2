@@ -36,7 +36,17 @@ public:
     double yaw;
   };
 
-  explicit RobotLayer(std::shared_ptr<data::RobotPoseData> robot_pose_data = nullptr);
+  /**
+   * @brief Constructor of RobotLayer class
+   */
+  explicit RobotLayer();
+
+  /**
+   * @brief Set the robot pose data
+   *
+   * @param robot_pose_data Shared pointer to the robot pose data
+   */
+  void setRobotPoseData(std::shared_ptr<data::RobotPoseData> robot_pose_data);
 
   /**
    * @brief Get the interpolated pose
@@ -45,7 +55,18 @@ public:
    */
   Pose2D getInterpolatedPose() const;
 
+  /**
+   * @brief Set the robot size
+   *
+   * @param size Robot size
+   */
   void setRobotSize(double size);
+
+  /**
+   * @brief Get the robot size
+   *
+   * @return Robot size
+   */
   double getRobotSize() const;
 
   /**
