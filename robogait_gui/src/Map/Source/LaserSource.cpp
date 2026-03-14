@@ -4,14 +4,16 @@
 
 using namespace ROBOGait::map::source;
 
-LaserSource::LaserSource() :
-    scan_data_(std::make_shared<ROBOGait::map::data::LaserScanData>()), subscriber_(std::make_shared<ROBOGait::map::data::LaserScanSubscriber>())
+LaserSource::LaserSource()
 {
   parent_node_ = nullptr;
   context_ = ROBOGait::context::RobotContext();
   has_context_ = false;
   initialized_ = false;
   active_ = false;
+
+  scan_data_ = std::make_shared<ROBOGait::map::data::LaserScanData>();
+  subscriber_ = std::make_shared<ROBOGait::map::data::LaserScanSubscriber>();
 }
 
 void LaserSource::initialize(rclcpp::Node* parent_node)
@@ -27,13 +29,7 @@ void LaserSource::initialize(rclcpp::Node* parent_node)
   if (subscriber_)
   {
     subscriber_->initialize(parent_node_);
-
-    if (scan_data_)
-    {
-      scan_data_->initialize(parent_node_);
-    }
-
-    subscriber_->setScanData(scan_data_);
+    subscriber_->setLaserScanData(scan_data_.get());
 
     if (has_context_)
     {
@@ -56,53 +52,34 @@ void LaserSource::setRobotContext(const ROBOGait::context::RobotContext& context
 
 void LaserSource::start()
 {
-  if (!initialized_ || active_)
+  if (!initialized_ || active_ || !subscriber_)
   {
     return;
   }
 
-  if (scan_data_)
-  {
-    scan_data_->startTFListener();
-  }
+  subscriber_->start();
 
-  if (subscriber_)
-  {
-    subscriber_->start();
-    active_ = subscriber_->isActive();
-  }
+  active_ = true;
 }
 
 void LaserSource::stop()
 {
-  if (!active_)
+  if (!active_ || !subscriber_)
   {
     return;
   }
 
-  if (subscriber_)
-  {
-    subscriber_->stop();
-  }
+  subscriber_->stop();
 
   if (scan_data_)
   {
-    scan_data_->stopTFListener();
     scan_data_->reset();
   }
 
   active_ = false;
 }
 
-bool LaserSource::isActive() const
-{
-  if (subscriber_)
-  {
-    return subscriber_->isActive();
-  }
-
-  return active_;
-}
+bool LaserSource::isActive() const { return active_; }
 
 bool LaserSource::isAvailable() const { return scan_data_ && scan_data_->isAvailable(); }
 

@@ -17,6 +17,5 @@
 // TF Frames
 #define TF_MAP_FRAME                "map"
 #define TF_ROBOT_FRAME              "base_link"
-#define TF_ODOM_FRAME               "odom"
 
 // clang-format on

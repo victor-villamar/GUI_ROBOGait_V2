@@ -60,6 +60,7 @@ void TFSubscriber::start()
   }
 
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(parent_node_->get_clock());
+  tf_buffer_->setUsingDedicatedThread(true);
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, parent_node_, false);
   tf_timer_ = parent_node_->create_wall_timer(std::chrono::milliseconds(TIME_TO_ROBOT_POSE_UPDATE), std::bind(&TFSubscriber::updatePoseFromTF, this));
 

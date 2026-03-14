@@ -4,7 +4,6 @@
 #include <vector>
 
 #include <QMutex>
-#include <QPointF>
 
 #include "Map/Data/LaserScanData.hpp"
 #include "Map/Layer/LayerInterface.hpp"
@@ -51,14 +50,14 @@ public:
   /**
    * @brief Get the points to be rendered
    */
-  std::vector<QPointF> getPoints() const;
+  std::vector<data::LaserScanData::LaserPoint> getPoints() const;
 
 private:
-  std::shared_ptr<data::LaserScanData> scan_data_; /**< Laser scan data source */
-  mutable QMutex data_mutex_;                      /**< Mutex for thread-safe access to data */
-  std::vector<QPointF> cached_points_;             /**< Cached points for rendering */
-  uint64_t last_stamp_;                            /**< Timestamp of the last update */
-  bool render_requested_;                          /**< Flag indicating if rendering is requested */
+  std::shared_ptr<data::LaserScanData> scan_data_;             /**< Laser scan data source */
+  mutable QMutex data_mutex_;                                  /**< Mutex for thread-safe access to data */
+  std::vector<data::LaserScanData::LaserPoint> cached_points_; /**< Cached points for rendering */
+  uint64_t last_stamp_;                                        /**< Timestamp of the last update */
+  bool render_requested_;                                      /**< Flag indicating if rendering is requested */
 };
 
 } // namespace layer

@@ -23,11 +23,10 @@ void LaserLayer::update()
     return;
   }
 
-  std::vector<QPointF> points;
-  const bool available = scan_data_->getPoints(points);
+  std::vector<data::LaserScanData::LaserPoint> points = scan_data_->getPoints();
 
   QMutexLocker lock(&data_mutex_);
-  if (!available)
+  if (!scan_data_->isAvailable() || points.empty())
   {
     if (!cached_points_.empty())
     {
@@ -47,7 +46,7 @@ bool LaserLayer::needsRender() const { return render_requested_; }
 
 void LaserLayer::clearRenderRequest() { render_requested_ = false; }
 
-std::vector<QPointF> LaserLayer::getPoints() const
+std::vector<ROBOGait::map::data::LaserScanData::LaserPoint> LaserLayer::getPoints() const
 {
   QMutexLocker lock(&data_mutex_);
   return cached_points_;
