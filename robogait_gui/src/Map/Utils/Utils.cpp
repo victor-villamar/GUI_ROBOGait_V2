@@ -1,5 +1,5 @@
 #include <cctype>
-#include <cmath>
+#include <cstdint>
 
 #include <QDebug>
 #include <QDir>
@@ -29,13 +29,84 @@ double getYaw(const geometry_msgs::msg::Quaternion& quaternion)
   return yaw;
 }
 
-double rad2deg(double radians) { return radians * (180.0 / M_PI); }
+double rad2deg(double radians) { return radians * RAD2DEG; }
 
-double deg2rad(double degrees) { return degrees * (M_PI / 180.0); }
+double deg2rad(double degrees) { return degrees * DEG2RAD; }
 
-bool generateMapPreview(const std::shared_ptr<data::MapData>& map_data, const QString& map_name)
+QImage toQImage(const data::MapData& map_data)
 {
-  if (!map_data || !map_data->isAvailable())
+
+  if (!map_data.isAvailable())
+  {
+    qWarning() << "[utils::toQImage] Map data not available, cannot convert to QImage";
+    return QImage();
+  }
+
+  const auto metadata = map_data.getMetadata();
+  const auto& occupancy_data = map_data.getOccupancyData();
+
+  const uint32_t width = metadata.width;
+  const uint32_t height = metadata.height;
+
+  if (width == 0 || height == 0)
+  {
+    qCritical() << "[utils::toQImage] Invalid map dimensions";
+    return QImage();
+  }
+
+  const size_t expected_size = static_cast<size_t>(width) * static_cast<size_t>(height);
+
+  if (occupancy_data.size() != expected_size)
+  {
+    qCritical() << "[utils::toQImage] Mismatched occupancy data size";
+    return QImage();
+  }
+
+  QImage image(width, height, QImage::Format_RGB888);
+
+  if (image.isNull())
+  {
+    qCritical() << "[utils::toQImage] Failed to create QImage";
+    return QImage();
+  }
+
+  for (uint32_t y = 0; y < height; ++y)
+  {
+    for (uint32_t x = 0; x < width; ++x)
+    {
+      const uint32_t index = y * width + x;
+      const int8_t occupancy = occupancy_data[index];
+
+      QRgb color;
+
+      if (occupancy == UNKNOWN_OCCUPANCY)
+      {
+        // Unknown: dark blue-gray
+        color = DARK_BLUE_GRAY;
+      }
+      else if (occupancy < FREE_SPACE_THRESHOLD)
+      {
+        // Free space: light blue
+        color = LIGHT_BLUE;
+      }
+      else
+      {
+        // Occupied: white
+        color = WHITE;
+      }
+
+      // Flip Y axis (ROS uses bottom-up, Qt uses top-down)
+      const uint32_t flipped_y = height - 1 - y;
+      image.setPixel(x, flipped_y, color);
+    }
+  }
+
+  return image;
+}
+
+bool generateMapPreview(const data::MapData& map_data, const QString& map_name)
+{
+  if (!map_data.isAvailable())
   {
     qCritical() << "[utils::generateMapPreview] Invalid or unavailable map data";
     return false;
@@ -72,7 +143,7 @@ bool generateMapPreview(const std::shared_ptr<data::MapData>& map_data, const QS
 
   QString file_path = maps_directory + map_name + ".png";
 
-  QImage image = map_data->toQImage();
+  QImage image = toQImage(map_data);
 
   if (image.isNull())
   {
