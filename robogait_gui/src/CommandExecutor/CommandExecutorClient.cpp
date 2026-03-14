@@ -6,10 +6,10 @@
 #include <QDebug>
 
 #include "CommandExecutor/CommandExecutorClient.hpp"
-#include "Define.hpp"
 #include "Loader/YamlLoader.hpp"
 #include "Map/Utils/Utils.hpp"
-#include "TopicsName.hpp"
+#include "Ros/Define.hpp"
+#include "Ros/TopicsName.hpp"
 
 using namespace ROBOGait::ros::executor;
 

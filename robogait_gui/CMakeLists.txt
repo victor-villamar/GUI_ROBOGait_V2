@@ -70,6 +70,7 @@ set(HEADERS
     include/Map/Source/SourceInterface.hpp
     include/Map/Subscribers/LaserScanSubscriber.hpp
     include/Map/Subscribers/MapSubscriber.hpp
+    include/Map/Subscribers/TFSubscriber.hpp
     include/Map/Utils/Utils.hpp
     include/Map/MapVisualizationManager.hpp
     include/Settings/DeveloperSettings.hpp
@@ -117,6 +118,7 @@ set(SOURCES
     src/Map/Source/RobotPoseSource.cpp
     src/Map/Subscribers/LaserScanSubscriber.cpp
     src/Map/Subscribers/MapSubscriber.cpp
+    src/Map/Subscribers/TFSubscriber.cpp
     src/Map/Utils/Utils.cpp
     src/Map/MapVisualizationManager.cpp
     src/Robot/ManualControl.cpp
@@ -164,23 +166,6 @@ qt_add_resources(SOURCES
 # Include directories
 include_directories(
     include
-    include/Context
-    include/Core
-    include/DataBase
-    include/DataBase/Common
-    include/DataBase/Repository
-    include/Loader
-    include/Map
-    include/Map/Data
-    include/Map/Items
-    include/Map/Rendering
-    include/Map/Source
-    include/Map/Subscribers
-    include/Map/Utils
-    include/Robot
-    include/Ros
-    include/Settings
-    include/User
 
     ${rclcpp_INCLUDE_DIRS}
     ${geometry_msgs_INCLUDE_DIRS}
