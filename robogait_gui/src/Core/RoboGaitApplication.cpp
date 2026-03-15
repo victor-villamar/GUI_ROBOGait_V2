@@ -48,7 +48,6 @@ RoboGaitApplication::~RoboGaitApplication()
 
   user_session_.reset();
   ros_node_manager_.reset();
-  command_executor_bridge_.reset();
 
   app_instance_ = nullptr;
 }
@@ -111,9 +110,6 @@ bool RoboGaitApplication::initialize()
 
   // Create ROS node manager
   ros_node_manager_ = std::make_unique<ROBOGait::ros::manager::RosNodeManager>();
-
-  // Create command executor bridge
-  command_executor_bridge_ = std::make_unique<ROBOGait::qml::executor::CommandExecutorBridge>();
 
   // Initialize ROS with command line arguments
   int argc = arguments().size();
@@ -255,7 +251,6 @@ void RoboGaitApplication::setupQmlContext()
   qml_app_engine_->rootContext()->setContextProperty("userSession", user_session_.get());
   qml_app_engine_->rootContext()->setContextProperty("dbManager", databaseManager());
   qml_app_engine_->rootContext()->setContextProperty("developerSettings", developerSettings());
-  qml_app_engine_->rootContext()->setContextProperty("commandExecutorBridge", command_executor_bridge_.get());
 
   qInfo() << "[RoboGaitApplication::setupQmlContext] QML context properties set";
 }

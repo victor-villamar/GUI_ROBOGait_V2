@@ -260,6 +260,15 @@ ROBOGait::map::manager::MapVisualizationManager* RobotManager::getMapVisualizati
   return map_visualization_manager_.get();
 }
 
+ROBOGait::qml::executor::CommandExecutorBridge* RobotManager::getCommandExecutorBridge()
+{
+  if (!command_executor_bridge_)
+  {
+    command_executor_bridge_ = std::make_unique<ROBOGait::qml::executor::CommandExecutorBridge>();
+  }
+  return command_executor_bridge_.get();
+}
+
 void RobotManager::enableManualControl()
 {
   if (!manual_control_)
