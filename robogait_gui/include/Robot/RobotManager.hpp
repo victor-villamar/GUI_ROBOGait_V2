@@ -11,6 +11,7 @@
 
 #include <command_executor_msgs/msg/robot_status.hpp>
 
+#include "CommandExecutor/CommandExecutorBridge.hpp"
 #include "Map/MapVisualizationManager.hpp"
 #include "Robot/ManualControl.hpp"
 
@@ -41,20 +42,23 @@ public:
   // clang-format off
   Q_PROPERTY(QString selectedRobotNamespace
              READ getSelectedRobotNamespace
-             NOTIFY selectedRobotNamespaceChanged
-  )
+             NOTIFY selectedRobotNamespaceChanged)
+
   Q_PROPERTY(QString selectedRobotDisplayName
              READ getSelectedRobotDisplayName
-             NOTIFY selectedRobotDisplayNameChanged
-  )
+             NOTIFY selectedRobotDisplayNameChanged)
+
   Q_PROPERTY(ROBOGait::robot::control::ManualControl* manualControl
              READ getManualControl
-             CONSTANT
-  )
+             CONSTANT)
+
   Q_PROPERTY(ROBOGait::map::manager::MapVisualizationManager* mapVisualizationManager
              READ getMapVisualizationManager
-             CONSTANT
-  )
+             CONSTANT)
+
+  Q_PROPERTY(ROBOGait::qml::executor::CommandExecutorBridge* commandExecutorBridge
+             READ getCommandExecutorBridge
+             CONSTANT)
   // clang-format on
 
   /**
@@ -78,6 +82,13 @@ public:
    * Creates the manager on first access
    */
   ROBOGait::map::manager::MapVisualizationManager* getMapVisualizationManager();
+
+  /**
+   * @brief Get the command executor bridge instance
+   *
+   * Creates the bridge on first access
+   */
+  ROBOGait::qml::executor::CommandExecutorBridge* getCommandExecutorBridge();
 
   /**
    * @brief Set the ROS node for the RobotManager
@@ -185,6 +196,7 @@ private:
 
   std::unique_ptr<ROBOGait::robot::control::ManualControl> manual_control_;                    /**< Manual control instance */
   std::unique_ptr<ROBOGait::map::manager::MapVisualizationManager> map_visualization_manager_; /**< Map visualization manager */
+  std::unique_ptr<ROBOGait::qml::executor::CommandExecutorBridge> command_executor_bridge_;    /**< Command executor bridge instance */
 
   QString selected_robot_namespace_; /**< The namespace of the selected robot */
   bool use_namespace_discovery_;     /**< True if selected robot is identified by namespace, false if by node name */

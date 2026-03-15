@@ -15,6 +15,8 @@ MapViewForm {
     property bool waitingForMappingStop: false
     property bool pendingSaveAndExit: false
     property bool pendingSaveToDb: false
+    property bool waitingForResetStop: false
+    property bool waitingForResetStart: false
 
     // Bind to MapVisualizationManager properties
     mapAvailable: (userSession.rosManager &&
@@ -72,6 +74,10 @@ MapViewForm {
     angularValue: (userSession.rosManager && userSession.rosManager.robotManager && userSession.rosManager.robotManager.manualControl)
                   ? userSession.rosManager.robotManager.manualControl.angularVelocity
                   : 0.0
+
+    readonly property var commandExecutorBridge : (userSession && userSession.rosManager && userSession.rosManager.robotManager)
+                                                  ? userSession.rosManager.robotManager.commandExecutorBridge
+                                                  : null
 
     function scaleLinear(raw) {
         var maxNormalized = 1.0 - (joystick.stick.width / joystick.totalArea.width)
@@ -154,6 +160,30 @@ MapViewForm {
         }
     }
 
+    function beginResetMapping() {
+
+        if (commandExecutorBridge.status !== CommandExecutorBridge.RUNNING) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo reiniciar el mapeo")
+            errorPopup.open()
+            return
+        }
+
+        waitingForResetStop = true
+        waitingForResetStart = false
+        pendingSaveAndExit = false
+        pendingSaveToDb = false
+
+        busyDialog.openWithMessage(qsTr("Reiniciando mapeo..."))
+
+        var okStop = commandExecutorBridge.stopMapping(false, "")
+        if (!okStop) {
+            waitingForResetStop = false
+            busyDialog.close()
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo detener el mapeo")
+            errorPopup.open()
+        }
+    }
+
     function handleBackNavigation() {
         if (!confirmBackNavigation) {
             return false
@@ -169,7 +199,10 @@ MapViewForm {
             return
         }
 
-        var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
+        var mapVizManager = userSession && userSession.rosManager && userSession.rosManager.robotManager
+                           ? userSession.rosManager.robotManager.mapVisualizationManager
+                           : null
+
         if (!mapVizManager) {
             return
         }
@@ -182,6 +215,7 @@ MapViewForm {
         followButton.checked = mapVizManager.followRobot
 
         // Enable manual control
+
         if (userSession.rosManager && userSession.rosManager.robotManager) {
             userSession.rosManager.robotManager.enableManualControl()
         }
@@ -452,7 +486,20 @@ MapViewForm {
         acceptText: qsTr("Resetear")
 
         onAccepted: {
-            // TODO: Reset map logic
+            beginResetMapping()
+        }
+    }
+
+    Connections {
+        target: (userSession && userSession.rosManager && userSession.rosManager.robotManager &&
+                 userSession.rosManager.robotManager.mapVisualizationManager)
+                  ? userSession.rosManager.robotManager.mapVisualizationManager
+                  : null
+
+        function onMapAvailableChanged() {
+            if(target.mapAvailable) {
+                target.fitToView()
+            }
         }
     }
 
@@ -460,7 +507,49 @@ MapViewForm {
         target: commandExecutorBridge
 
         function onStatusChanged() {
-            if(!waitingForMappingStop) {
+
+            // Handle reset stop
+
+            if (waitingForResetStop && commandExecutorBridge.status === CommandExecutorBridge.STOPPED) {
+                waitingForResetStop = false
+                waitingForResetStart = true
+
+                var mapViz = userSession && userSession.rosManager && userSession.rosManager.robotManager
+                             ? userSession.rosManager.robotManager.mapVisualizationManager
+                             : null
+                if (mapViz)
+                {
+                    mapViz.clearMap()
+                }
+
+                var okStart = commandExecutorBridge.startMapping()
+                if (!okStart) {
+                    waitingForResetStart = false
+                    busyDialog.close()
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar el mapeo")
+                    errorPopup.open()
+                }
+                return
+            }
+
+            if (waitingForResetStart && commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
+                waitingForResetStart = false
+                busyDialog.close()
+                return
+            }
+
+            if((waitingForResetStop || waitingForResetStart) && commandExecutorBridge.status === CommandExecutorBridge.ERROR) {
+                waitingForResetStop = false
+                waitingForResetStart = false
+                busyDialog.close()
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo reiniciar el mapeo")
+                errorPopup.open()
+                return
+            }
+
+            // Handle mapping stop
+
+            if (!waitingForMappingStop) {
                 return
             }
 

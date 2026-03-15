@@ -581,6 +581,30 @@ QString MapVisualizationManager::getMapPreviewPath(const QString& map_name)
   return ROBOGait::map::utils::getMapPreviewPath(map_name);
 }
 
+void MapVisualizationManager::clearMap()
+{
+  if (map_source_)
+  {
+    const auto map_data = map_source_->getMapData();
+    if (map_data)
+    {
+      map_data->reset();
+    }
+  }
+
+  if (map_layer_)
+  {
+    map_layer_->update();
+  }
+
+  if (map_layer_item_)
+  {
+    map_layer_item_->update();
+  }
+
+  updateAvailability();
+}
+
 void MapVisualizationManager::onFrameReady()
 {
   updateFollowRobotCamera();
