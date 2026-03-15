@@ -22,6 +22,8 @@
     <file alias="patient.svg">resources/Icons/patient.svg</file>
     <file alias="pen_to_square_regular.svg">resources/Icons/pen_to_square_regular.svg</file>
     <file alias="pencil_solid.svg">resources/Icons/pencil_solid.svg</file>
+    <file alias="pin_empty.svg">resources/Icons/pin_empty.svg</file>
+    <file alias="pin.svg">resources/Icons/pin.svg</file>
     <file alias="plus_solid.svg">resources/Icons/plus_solid.svg</file>
     <file alias="plus.svg">resources/Icons/plus.svg</file>
     <file alias="save_button.png">resources/Icons/save_button.png</file>

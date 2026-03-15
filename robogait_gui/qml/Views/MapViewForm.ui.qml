@@ -262,31 +262,56 @@ Rectangle {
             // Joystick Control Panel
             Rectangle {
                 id: joystickPanel
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.rightMargin: 16
-                anchors.bottomMargin: 16
+                anchors.right: !hasFloatPosition ? parent.right : undefined
+                anchors.bottom: !hasFloatPosition ? parent.bottom : undefined
+                anchors.rightMargin: !hasFloatPosition ? 21 : 0
+                anchors.bottomMargin: !hasFloatPosition ? 21 : 0
                 color: "#2c5f7c"
-                radius: 10
+                radius: 13
                 border.color: "#6aa3c8"
-                border.width: 2
+                border.width: 3
                 z: 50
                 visible: mapAvailable
                 opacity: robotPoseAvailable ? 1.0 : 0.4
 
-                property int padding: 10
+                property bool pinned: true
+                property bool hasFloatPosition: false
+                property real floatX: 0
+                property real floatY: 0
+                property int floatMargin: 10
+
+                x: hasFloatPosition ? floatX : 0
+                y: hasFloatPosition ? floatY : 0
+
+                property int padding: 13
                 implicitWidth: panelContent.implicitWidth + (padding * 2)
                 implicitHeight: panelContent.implicitHeight + (padding * 2)
+
+                DragHandler {
+                    target: joystickPanel
+                    enabled: !joystickPanel.pinned
+                    xAxis.minimum: joystickPanel.floatMargin
+                    xAxis.maximum: mapDisplayArea.width - joystickPanel.width - joystickPanel.floatMargin
+                    yAxis.minimum: joystickPanel.floatMargin
+                    yAxis.maximum: mapDisplayArea.height - joystickPanel.height - joystickPanel.floatMargin
+
+                    onActiveChanged: {
+                        if (!active) {
+                            joystickPanel.floatX = joystickPanel.x
+                            joystickPanel.floatY = joystickPanel.y
+                        }
+                    }
+                }
 
                 Column {
                     id: panelContent
                     anchors.fill: parent
                     anchors.margins: joystickPanel.padding
-                    spacing: 8
+                    spacing: 10
 
                     Rectangle {
                         width: joystick.width
-                        height: 28
+                        height: 36
                         color: "#1a3a4a"
                         radius: 6
                         visible: manualUnlocked
@@ -297,26 +322,26 @@ Rectangle {
                             text: qsTr("Lin: %1 | Ang: %2")
                                   .arg(linearValue.toFixed(2))
                                   .arg(angularValue.toFixed(2))
-                            font.pixelSize: 12
+                            font.pixelSize: 16
                             color: "#ffffff"
                             font.bold: true
                         }
                     }
 
                     Row {
-                        spacing: 12
+                        spacing: 16
 
                         Joystick {
                             id: joystick
-                            width: Math.min(200, mapDisplayArea.width * 0.2)
+                            width: Math.min(260, mapDisplayArea.width * 0.26)
                             height: width
-                            mouseAreaJoystick.enabled: manualUnlocked && robotPoseAvailable
+                            mouseAreaJoystick.enabled: manualUnlocked && robotPoseAvailable && joystickPanel.pinned
                         }
 
                         Button {
                             id: lockButton
-                            width: 36
-                            height: 36
+                            width: 47
+                            height: 47
                             anchors.verticalCenter: parent.verticalCenter
 
                             background: Rectangle {
@@ -337,6 +362,43 @@ Rectangle {
                                               ? qsTr("Bloquear joystick")
                                               : qsTr("Desbloquear joystick")
                         }
+                    }
+                }
+
+                Button {
+                    id: pinButton
+                    width: 39
+                    height: 39
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.margins: 6
+
+                    background: Rectangle {
+                        radius: width / 2
+                        color: "transparent"
+                    }
+
+                    contentItem: Image {
+                        anchors.centerIn: parent
+                        width: 25
+                        height: 25
+                        source: joystickPanel.pinned
+                                ? "qrc:/qmlresources/icons/pin.svg"
+                                : "qrc:/qmlresources/icons/pin_empty.svg"
+
+                        fillMode: Image.PreserveAspectFit
+                        smooth: true
+                        sourceSize.width: 25
+                        sourceSize.height: 25
+                    }
+
+                    onClicked: {
+                        if (joystickPanel.pinned) {
+                            joystickPanel.floatX = joystickPanel.x
+                            joystickPanel.floatY = joystickPanel.y
+                            joystickPanel.hasFloatPosition = true
+                        }
+                        joystickPanel.pinned = !joystickPanel.pinned
                     }
                 }
             }
