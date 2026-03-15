@@ -80,7 +80,10 @@ void CommandExecutorClient::setRobotContext(const ROBOGait::context::RobotContex
 
 void CommandExecutorClient::clearRobotContext()
 {
-  context_->clear();
+  if (context_)
+  {
+    context_->clear();
+  }
   cli_cmd_.reset();
   command_states_.clear();
   pending_stop_after_save_ = false;

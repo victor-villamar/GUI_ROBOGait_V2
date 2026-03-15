@@ -25,6 +25,13 @@ void MapLayer::update()
 {
   if (!map_data_ || !map_data_->isAvailable())
   {
+    if (!cached_image_.isNull())
+    {
+      QMutexLocker lock(&image_mutex_);
+      cached_image_ = QImage();
+      render_requested_ = true;
+    }
+    last_stamp_ = 0;
     return;
   }
 

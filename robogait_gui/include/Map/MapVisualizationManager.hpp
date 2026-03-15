@@ -231,6 +231,11 @@ public:
    */
   Q_INVOKABLE QString getMapPreviewPath(const QString& map_name);
 
+  /**
+   * @brief Clear the current map
+   */
+  Q_INVOKABLE void clearMap();
+
 private slots:
   void onFrameReady(); // Slot for handling frame readiness
 
