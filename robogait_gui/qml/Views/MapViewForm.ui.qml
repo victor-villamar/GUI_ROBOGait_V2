@@ -48,6 +48,8 @@ Rectangle {
     property real linearValue: 0.0
     property real angularValue: 0.0
 
+    property int mapContentMargin: 10
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 20
@@ -198,7 +200,7 @@ Rectangle {
             MapLayerItem {
                 id: mapLayerItem
                 anchors.fill: parent
-                anchors.margins: 10
+                anchors.margins: mapContentMargin
                 visible: mapAvailable
                 z: 1
 
@@ -215,7 +217,7 @@ Rectangle {
             RobotLayerItem {
                 id: robotLayerItem
                 anchors.fill: parent
-                anchors.margins: 10
+                anchors.margins: mapContentMargin
                 visible: mapAvailable
                 z: 2
 
@@ -232,7 +234,7 @@ Rectangle {
             LaserLayerItem {
                 id: laserLayerItem
                 anchors.fill: parent
-                anchors.margins: 10
+                anchors.margins: mapContentMargin
                 visible: mapAvailable && laserAvailable
                 z: 1.5
 
@@ -247,37 +249,16 @@ Rectangle {
             }
 
             // Placeholder when map is not available
-            Column {
-                anchors.centerIn: parent
-                spacing: 20
+            Rectangle {
+                id: emptyMapPlaceholder
+                anchors.fill: parent
+                anchors.margins: mapContentMargin
+                color: "#1a3a4a"
+                border.color: "#2c5f7c"
                 visible: !mapAvailable
-                z: 100
-
-                Image {
-                    source: "qrc:/qmlresources/icons/map.svg"
-                    width: 96
-                    height: 96
-                    fillMode: Image.PreserveAspectFit
-                    smooth: true
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                Text {
-                    text: qsTr("No hay mapa disponible")
-                    font.pixelSize: 20
-                    font.bold: true
-                    color: "#ffffff"
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                Text {
-                    text: qsTr("Asegúrese de:\n• El robot tiene SLAM/mapa activo\n• El robot publica en /map")
-                    font.pixelSize: 14
-                    color: "#aaaaaa"
-                    horizontalAlignment: Text.AlignHCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
+                z: 0
             }
+
             // Joystick Control Panel
             Rectangle {
                 id: joystickPanel
@@ -367,7 +348,10 @@ Rectangle {
             Layout.preferredHeight: 60
             color: "#2c5f7c"
             radius: 6
-            visible: mapAvailable
+
+            opacity: mapAvailable ? 1.0 : 0.5
+            enabled: mapAvailable
+            visible: true
 
             RowLayout {
                 anchors.fill: parent
