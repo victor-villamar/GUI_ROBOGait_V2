@@ -87,7 +87,9 @@ private:
   bool fit_done_;          /**< Fit done flag for the map item */
   bool is_panning_;        /**< Is panning flag for the map item */
   QPointF last_pan_pos_;   /**< Last pan position for the map item */
-  qreal pinch_start_zoom_; /**< Pinch start zoom for the map item */
+  bool is_pinching_;             /**< Is pinching flag for the map item */
+  qreal pinch_start_zoom_;       /**< Pinch start zoom for the map item */
+  qreal pinch_start_distance_;   /**< Pinch start distance for the map item */
 };
 
 } // namespace item

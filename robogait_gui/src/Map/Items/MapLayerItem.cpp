@@ -1,6 +1,7 @@
 #include <QDebug>
 #include <QGestureEvent>
 #include <QPinchGesture>
+#include <QLineF>
 #include <QSGTexture>
 #include <QSGTransformNode>
 
@@ -8,7 +9,14 @@
 
 using namespace ROBOGait::map::item;
 
-MapLayerItem::MapLayerItem(QQuickItem* parent) : QQuickItem(parent), last_image_key_(0), fit_done_(false), is_panning_(false), pinch_start_zoom_(1.0)
+MapLayerItem::MapLayerItem(QQuickItem* parent)
+  : QQuickItem(parent),
+    last_image_key_(0),
+    fit_done_(false),
+    is_panning_(false),
+    is_pinching_(false),
+    pinch_start_zoom_(1.0),
+    pinch_start_distance_(0.0)
 {
   setFlag(ItemHasContents, true);
   setAcceptedMouseButtons(Qt::AllButtons);
@@ -226,6 +234,86 @@ void MapLayerItem::touchEvent(QTouchEvent* event)
     return;
   }
 
+  if (!camera_)
+  {
+    QQuickItem::touchEvent(event);
+    return;
+  }
+
+  const auto points = event->points();
+  if (points.size() == 1)
+  {
+    is_pinching_ = false;
+    const QPointF pos = points.front().position();
+    switch (event->type())
+    {
+      case QEvent::TouchBegin:
+        is_panning_ = true;
+        last_pan_pos_ = pos;
+        event->accept();
+        return;
+      case QEvent::TouchUpdate:
+        if (is_panning_)
+        {
+          const QPointF delta = pos - last_pan_pos_;
+          last_pan_pos_ = pos;
+
+          const QPointF center = camera_->getViewCenter();
+          const double zoom = camera_->getZoom();
+          const QPointF new_center(center.x() - delta.x() / zoom, center.y() - delta.y() / zoom);
+          camera_->setViewCenter(new_center);
+          update();
+          if (sync_item_)
+          {
+            sync_item_->update();
+          }
+          event->accept();
+          return;
+        }
+        break;
+      case QEvent::TouchEnd:
+      case QEvent::TouchCancel:
+        is_panning_ = false;
+        event->accept();
+        return;
+      default:
+        break;
+    }
+  }
+  else if (points.size() >= 2)
+  {
+    is_panning_ = false;
+    const QLineF line(points[0].position(), points[1].position());
+    const qreal distance = line.length();
+    if (!is_pinching_ || event->type() == QEvent::TouchBegin)
+    {
+      pinch_start_distance_ = distance;
+      pinch_start_zoom_ = camera_->getZoom();
+      is_pinching_ = true;
+      event->accept();
+      return;
+    }
+
+    if (pinch_start_distance_ > 0.0)
+    {
+      const qreal scale = distance / pinch_start_distance_;
+      camera_->setZoom(pinch_start_zoom_ * scale);
+      emit zoomChanged();
+      update();
+      if (sync_item_)
+      {
+        sync_item_->update();
+      }
+      event->accept();
+      return;
+    }
+  }
+  else
+  {
+    is_panning_ = false;
+    is_pinching_ = false;
+  }
+
   QQuickItem::touchEvent(event);
 }
 
@@ -241,7 +329,7 @@ bool MapLayerItem::event(QEvent* event)
       {
         pinch_start_zoom_ = camera_->getZoom();
       }
-      const qreal scale = pinch_gesture->scaleFactor();
+      const qreal scale = pinch_gesture->totalScaleFactor();
       camera_->setZoom(pinch_start_zoom_ * scale);
       emit zoomChanged();
       update();
