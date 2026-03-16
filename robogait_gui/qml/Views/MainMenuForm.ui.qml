@@ -246,6 +246,11 @@ Item {
                 ? "<span style='color:#cce54d'>HAY MAPA ACTIVO</span>"
                 : "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY MAPA ACTIVO</span>"
 
+            readonly property string patientStatusRichText:
+                (userSession && userSession.currentPatient)
+                ? userSession.currentPatient.statusRichText
+                : "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY PACIENTE ACTIVO</span>"
+
             Text {
                 id: bottomStatusMap
                 font.pixelSize: 14
@@ -267,7 +272,7 @@ Item {
                 font.pixelSize: 14
                 font.bold: true
                 textFormat: Text.RichText
-                text: (userSession && userSession.currentPatient) ? userSession.currentPatient.statusRichText : "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY PACIENTE ACTIVO</span>"
+                text: bottomStatusRow.patientStatusRichText
             }
         }
 

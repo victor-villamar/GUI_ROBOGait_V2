@@ -18,7 +18,7 @@ QString Patient::getStatusRichText() const
 {
   if (isActive())
   {
-    return "<span style='color:#1aa31a'>SI</span><span style='color:#ffffff'> HAY PACIENTE ACTIVO</span>";
+    return "<span style='color:#cce54d'>HAY PACIENTE ACTIVO</span>";
   }
 
   return "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY PACIENTE ACTIVO</span>";

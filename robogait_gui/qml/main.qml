@@ -7,7 +7,7 @@ ApplicationWindow {
     height: 1080
     width: 1920
     visible: true
-    visibility: Window.Windowed
+    visibility: Window.Windowed // FullScreen
 
     title:   qsTr("Robogait")
     property bool keyboardVisible: inputPanelLoader.item ? inputPanelLoader.item.keyboardVisible : false
