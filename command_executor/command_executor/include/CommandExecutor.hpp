@@ -12,6 +12,7 @@
 
 #include <command_executor_msgs/msg/robot_status.hpp>
 #include <command_executor_msgs/srv/cmd.hpp>
+#include <command_executor_msgs/srv/get_map_data.hpp>
 
 #include "ProcessManager.hpp"
 #include "YamlLoader.hpp"
@@ -76,6 +77,15 @@ private:
                      std::shared_ptr<command_executor_msgs::srv::Cmd::Response> response);
 
   /**
+   * @brief Handle a get map data request
+   *
+   * @param request The get map data request
+   * @param response The get map data response
+   */
+  void handleGetMapData(const std::shared_ptr<command_executor_msgs::srv::GetMapData::Request>& request,
+                        std::shared_ptr<command_executor_msgs::srv::GetMapData::Response> response);
+
+  /**
    * @brief Main loop for processing commands
    */
   void mainLoop();
@@ -130,6 +140,7 @@ private:
   bool isDeleteCommand(const std::string& cmd, std::string& translated_cmd) const;
 
   rclcpp::Service<command_executor_msgs::srv::Cmd>::SharedPtr srv_cmd_;                    /**< Command service */
+  rclcpp::Service<command_executor_msgs::srv::GetMapData>::SharedPtr srv_get_map_data_;    /**< Get map data service */
   rclcpp::Publisher<command_executor_msgs::msg::RobotStatus>::SharedPtr pub_robot_status_; /**< Robot status publisher */
   rclcpp::TimerBase::SharedPtr timer_;                                                     /**< Timer */
 

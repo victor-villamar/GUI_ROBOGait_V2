@@ -12,6 +12,7 @@
 
 #include "CommandExecutor.hpp"
 #include "Define.hpp"
+#include "Functions.hpp"
 
 using namespace ROBOGait::command;
 
@@ -77,6 +78,53 @@ void CommandExecutor::handleCommand(const std::shared_ptr<command_executor_msgs:
   }
 
   response->success = ok;
+}
+
+void CommandExecutor::handleGetMapData(const std::shared_ptr<command_executor_msgs::srv::GetMapData::Request>& request,
+                                       std::shared_ptr<command_executor_msgs::srv::GetMapData::Response> response)
+{
+
+  const auto& map_path = request->map_path;
+  const auto& map_name = request->map_name;
+
+  if (map_path.empty())
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::handleGetMapData] Received empty map path");
+    response->success = false;
+    response->error_message = "Cannot get map data: map path is empty";
+    return;
+  }
+
+  if (map_name.empty())
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::handleGetMapData] Received empty map name");
+    response->success = false;
+    response->error_message = "Cannot get map data: map name is empty";
+    return;
+  }
+
+  const auto map_yaml_info = ROBOGait::functions::getMapYamlInfo(map_path, map_name);
+  if (!map_yaml_info)
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::handleGetMapData] Failed to get map YAML info for %s", map_name.c_str());
+    response->success = false;
+    response->error_message = "Cannot get map YAML info for map: " + map_name;
+    return;
+  }
+
+  const auto map_pgm_info = ROBOGait::functions::getMapPgmInfo(map_path, map_name);
+  if (!map_pgm_info)
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::handleGetMapData] Failed to get map PGM info for %s", map_name.c_str());
+    response->success = false;
+    response->error_message = "Cannot get map PGM info for map: " + map_name;
+    return;
+  }
+
+  response->yaml_content = *map_yaml_info;
+  response->pgm_content = *map_pgm_info;
+  response->success = true;
+  response->error_message = "";
 }
 
 void CommandExecutor::mainLoop()
@@ -169,6 +217,9 @@ bool CommandExecutor::createRosInterfaces()
   srv_cmd_ =
       create_service<command_executor_msgs::srv::Cmd>(S_CMD, std::bind(&CommandExecutor::handleCommand, this, std::placeholders::_1, std::placeholders::_2));
 
+  srv_get_map_data_ = create_service<command_executor_msgs::srv::GetMapData>(
+      S_GET_MAP_DATA, std::bind(&CommandExecutor::handleGetMapData, this, std::placeholders::_1, std::placeholders::_2));
+
   pub_robot_status_ = create_publisher<command_executor_msgs::msg::RobotStatus>(T_ROBOT_STATUS, QOS_BEST_EFFORT);
 
   timer_ = create_wall_timer(std::chrono::milliseconds(TIME_MAIN_LOOP), std::bind(&CommandExecutor::mainLoop, this)); // one-shot: false, autostart: true
@@ -176,6 +227,11 @@ bool CommandExecutor::createRosInterfaces()
   if (!srv_cmd_)
   {
     RCLCPP_ERROR(get_logger(), "[CommandExecutor::createRosInterfaces] Failed to create service");
+    return false;
+  }
+  if (!srv_get_map_data_)
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::createRosInterfaces] Failed to create get map data service");
     return false;
   }
   if (!pub_robot_status_)
