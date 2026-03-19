@@ -229,6 +229,16 @@ public:
   Q_INVOKABLE bool deletePatient(int patient_id);
 
   /**
+   * @brief Register a new experiment
+   *
+   * @param patient_name The patient first name
+   * @param patient_last_name The patient last name
+   * @param map_name The map name
+   * @return True if the registration was successful, false otherwise
+   */
+  Q_INVOKABLE bool registerExperiment(const QString& patient_name, const QString& patient_last_name, const QString& map_name);
+
+  /**
    * @brief List all maps
    *
    * @return A list of maps

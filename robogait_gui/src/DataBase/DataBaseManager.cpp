@@ -503,6 +503,46 @@ bool DataBaseManager::deletePatient(int patient_id)
   return true;
 }
 
+
+bool DataBaseManager::registerExperiment(const QString& patient_name, const QString& patient_last_name, const QString& map_name)
+{
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::registerExperiment] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return false;
+  }
+
+  if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::registerExperiment] Action not allowed for guest users";
+    setLastError("Accion no permitida para usuario invitado");
+    return false;
+  }
+
+  if (patient_name.trimmed().isEmpty() || patient_last_name.trimmed().isEmpty() || map_name.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::registerExperiment] Patient name, last name or map name is empty";
+    setLastError("Nombre del paciente, apellidos y mapa son obligatorios");
+    return false;
+  }
+
+  const auto result = experiment_repository_.insertExperiment(patient_name.trimmed(), patient_last_name.trimmed(), map_name.trimmed(), user_name_);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return false;
+  }
+
+  const int experiment_id = std::get<int>(result);
+
+  setLastError("");
+  qInfo() << "[DataBaseManager::registerExperiment] Experiment created successfully:" << experiment_id;
+  return true;
+}
+
 QVariantList DataBaseManager::listMaps()
 {
   QVariantList maps_list;
