@@ -13,6 +13,7 @@
 
 // Services
 #define S_CMD                       COMMAND_EXECUTOR"/cmd"
+#define S_GET_MAP_DATA              COMMAND_EXECUTOR"/get_map_data"
 
 // TF Frames
 #define TF_MAP_FRAME                "map"

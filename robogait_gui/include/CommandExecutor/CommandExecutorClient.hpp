@@ -6,10 +6,14 @@
 #include <unordered_map>
 
 #include <rclcpp/callback_group.hpp>
+#include <rclcpp/client.hpp>
 #include <rclcpp/node.hpp>
+#include <rclcpp/publisher.hpp>
 #include <rclcpp/timer.hpp>
 
 #include <command_executor_msgs/srv/cmd.hpp>
+#include <command_executor_msgs/srv/get_map_data.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include "Context/RobotContext.hpp"
 
@@ -135,6 +139,15 @@ public:
   bool deleteMap(const std::string& map_name);
 
   /**
+   * @brief Request the map data for a given map name
+   *
+   * @param map_name The name of the map to request data for
+   *
+   * @return true if the map data was requested successfully, false otherwise
+   */
+  bool requestMapData(const std::string& map_name);
+
+  /**
    * @brief Check if a ROS2 node is alive
    *
    * @param node_name The name of the ROS2 node
@@ -191,6 +204,17 @@ private:
   bool callCommandService(const std::string& cmd, bool execute);
 
   /**
+   * @brief Call the get map data service to retrieve YAML and PGM info for a map
+   *
+   * @param map_name The name of the map
+   * @param yaml_out Output parameter to hold the retrieved YAML info (if successful)
+   * @param pgm_out Output parameter to hold the retrieved PGM info (if successful)
+   *
+   * @return true if the service call was successful and data was retrieved, false otherwise
+   */
+  bool callGetMapDataService(const std::string& map_name, std::optional<std::string>& yaml_out, std::optional<std::vector<uint8_t>>& pgm_out);
+
+  /**
    * @brief Build a command string
    *
    * @param cmd The command to build
@@ -214,9 +238,11 @@ private:
    *
    * Use the robot context to resolve the service name with namespace or without
    *
+   * @param service_name The base service name to resolve
+   *
    * @return The resolved service name
    */
-  std::string resolveServiceName() const;
+  std::string resolveServiceName(const std::string& service_name) const;
 
   /**
    * @brief Rebuild the command service client
@@ -277,10 +303,21 @@ private:
    */
   std::string replacePlaceholders(std::string input, const std::unordered_map<std::string, std::string>& values) const;
 
-  rclcpp::Node* parent_node_;                                          /**< The parent ROS2 node */
-  rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedPtr cli_cmd_; /**< The command service client */
-  rclcpp::CallbackGroup::SharedPtr cb_group_;                          /**< The callback group for the command executor */
-  rclcpp::TimerBase::SharedPtr timer_health_;                          /**< The health timer */
+  /**
+   * @brief Publish map data once
+   *
+   * @param occupancy_grid The occupancy grid to publish
+   *
+   * @return true if the data was published successfully, false otherwise
+   */
+  bool publishMapDataOnce(const nav_msgs::msg::OccupancyGrid& occupancy_grid);
+
+  rclcpp::Node* parent_node_;                                                          /**< The parent ROS2 node */
+  rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedPtr cli_cmd_;                 /**< The command service client */
+  rclcpp::Client<command_executor_msgs::srv::GetMapData>::SharedPtr cli_get_map_data_; /**< The get map data service client */
+  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_map_data_;            /**< Publisher for map data */
+  rclcpp::CallbackGroup::SharedPtr cb_group_;                                          /**< The callback group for the command executor */
+  rclcpp::TimerBase::SharedPtr timer_health_;                                          /**< The health timer */
 
   std::optional<ROBOGait::context::RobotContext> context_; /**< The robot context */
 

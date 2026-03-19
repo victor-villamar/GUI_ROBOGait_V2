@@ -6,6 +6,7 @@
 #include <QDebug>
 
 #include "CommandExecutor/CommandExecutorClient.hpp"
+#include "Loader/MapFileLoader.hpp"
 #include "Loader/YamlLoader.hpp"
 #include "Map/Utils/Utils.hpp"
 #include "Ros/Define.hpp"
@@ -85,6 +86,8 @@ void CommandExecutorClient::clearRobotContext()
     context_->clear();
   }
   cli_cmd_.reset();
+  cli_get_map_data_.reset();
+  pub_map_data_.reset();
   command_states_.clear();
   pending_stop_after_save_ = false;
   map_saver_stop_requested_ = false;
@@ -200,6 +203,39 @@ bool CommandExecutorClient::deleteMap(const std::string& map_name)
 
   qInfo() << "[CommandExecutorClient::deleteMap] Successfully deleted map " << QString::fromStdString(map_name);
   return true;
+}
+
+bool CommandExecutorClient::requestMapData(const std::string& map_name)
+{
+  if (map_name.empty())
+  {
+    qCritical() << "[CommandExecutorClient::requestMapData] Map name is empty";
+    return false;
+  }
+
+  std::optional<std::string> yaml_info;
+  std::optional<std::vector<uint8_t>> pgm_info;
+
+  if (!callGetMapDataService(map_name, yaml_info, pgm_info))
+  {
+    qCritical() << "[CommandExecutorClient::requestMapData] Failed to call get map data service for map " << QString::fromStdString(map_name);
+    return false;
+  }
+
+  ROBOGait::loader::MapFileLoader map_loader;
+
+  auto occupancy_grid_opt = map_loader.loadMap(*yaml_info, *pgm_info);
+
+  if (!occupancy_grid_opt)
+  {
+    qCritical() << "[CommandExecutorClient::requestMapData] Failed to load map data for map " << QString::fromStdString(map_name);
+    return false;
+  }
+
+  auto occupancy_grid = occupancy_grid_opt.value();
+  occupancy_grid.header.frame_id = context_ ? context_->resolveFrame(std::string(TF_MAP_FRAME)) : std::string(TF_MAP_FRAME);
+
+  return publishMapDataOnce(occupancy_grid);
 }
 
 bool CommandExecutorClient::isNodeAlive(const std::string& node_name) const
@@ -357,6 +393,93 @@ bool CommandExecutorClient::callCommandService(const std::string& cmd, bool exec
   }
 }
 
+bool CommandExecutorClient::callGetMapDataService(const std::string& map_name, std::optional<std::string>& yaml_out,
+                                                  std::optional<std::vector<uint8_t>>& pgm_out)
+{
+  if (!initialized_)
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] CommandExecutorClient is not initialized";
+    return false;
+  }
+
+  if (!cli_get_map_data_)
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] GetMapData service client is not available (robot not selected?)";
+    return false;
+  }
+
+  if (map_name.empty())
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] Map name is empty";
+    return false;
+  }
+
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  if (!yaml_loader.isLoaded())
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] YAML loader is not loaded";
+    return false;
+  }
+
+  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
+
+  if (map_path.empty())
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] Map path is empty in YAML configuration";
+    return false;
+  }
+
+  const std::string safe_name = ROBOGait::map::utils::sanitizeMapName(map_name);
+
+  if (safe_name.empty())
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] Sanitized map name is empty";
+    return false;
+  }
+
+  const std::string full_map_directory = "$HOME" + map_path;
+
+  if (!cli_get_map_data_->wait_for_service(SERVICE_CALL_TIMEOUT))
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] GetMapData service is not available after waiting";
+    return false;
+  }
+
+  auto request = std::make_shared<command_executor_msgs::srv::GetMapData::Request>();
+  request->map_path = full_map_directory;
+  request->map_name = safe_name;
+
+  auto future = cli_get_map_data_->async_send_request(request);
+  std::future_status status = future.wait_for(SERVICE_CALL_TIMEOUT);
+
+  if (status == std::future_status::ready && future.valid())
+  {
+    auto response = future.get();
+    if (!response)
+    {
+      qCritical() << "[CommandExecutorClient::callGetMapDataService] Failed to get response from GetMapData service";
+      return false;
+    }
+
+    if (!response->success)
+    {
+      qCritical() << "[CommandExecutorClient::callGetMapDataService] GetMapData service responded with failure: "
+                  << QString::fromStdString(response->error_message);
+      return false;
+    }
+
+    yaml_out = response->yaml_content;
+    pgm_out = response->pgm_content;
+    return true;
+  }
+  else
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] Error calling GetMapData service";
+    return false;
+  }
+}
+
 std::string CommandExecutorClient::buildCommand(const std::string& cmd, const std::string& args)
 {
   if (args.empty())
@@ -379,9 +502,15 @@ bool CommandExecutorClient::validateCommandKey(const std::string& key) const
   return exist;
 }
 
-std::string CommandExecutorClient::resolveServiceName() const
+std::string CommandExecutorClient::resolveServiceName(const std::string& service_name) const
 {
-  const std::string base = std::string(S_CMD);
+  if (service_name.empty())
+  {
+    qCritical() << "[CommandExecutorClient::resolveServiceName] Service name is empty";
+    return service_name;
+  }
+
+  const std::string base = service_name;
 
   if (context_)
   {
@@ -410,12 +539,21 @@ bool CommandExecutorClient::rebuildClient()
     return false;
   }
 
-  const std::string service_name = resolveServiceName();
-  cli_cmd_ = parent_node_->create_client<command_executor_msgs::srv::Cmd>(service_name, QOS_CLIENTS, cb_group_);
+  cli_cmd_ = parent_node_->create_client<command_executor_msgs::srv::Cmd>(resolveServiceName(std::string(S_CMD)), QOS_CLIENTS, cb_group_);
 
   if (!cli_cmd_)
   {
     qCritical() << "[CommandExecutorClient::rebuildClient] Failed to create command client";
+    return false;
+  }
+
+  cli_get_map_data_ =
+      parent_node_->create_client<command_executor_msgs::srv::GetMapData>(resolveServiceName(std::string(S_GET_MAP_DATA)), QOS_CLIENTS, cb_group_);
+
+  if (!cli_get_map_data_)
+  {
+    qCritical() << "[CommandExecutorClient::rebuildClient] Failed to create get_map_data client";
+    cli_cmd_.reset();
     return false;
   }
 
@@ -739,4 +877,27 @@ std::string CommandExecutorClient::replacePlaceholders(std::string input, const 
   }
 
   return input;
+}
+
+bool CommandExecutorClient::publishMapDataOnce(const nav_msgs::msg::OccupancyGrid& occupancy_grid)
+{
+  if (!initialized_)
+  {
+    qCritical() << "[CommandExecutorClient::publishMapDataOnce] CommandExecutorClient is not initialized";
+    return false;
+  }
+
+  if (!pub_map_data_)
+  {
+    std::string topic_name = context_ ? context_->resolveTopic(std::string(T_MAP)) : std::string(T_MAP);
+    pub_map_data_ = parent_node_->create_publisher<nav_msgs::msg::OccupancyGrid>(topic_name, QOS_RELIABLE_LATCH);
+    if (!pub_map_data_)
+    {
+      qCritical() << "[CommandExecutorClient::publishMapDataOnce] Failed to create map data publisher";
+      return false;
+    }
+  }
+
+  pub_map_data_->publish(occupancy_grid);
+  return true;
 }
