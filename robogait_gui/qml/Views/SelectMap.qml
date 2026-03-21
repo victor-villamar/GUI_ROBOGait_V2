@@ -23,11 +23,10 @@ SelectMapForm {
                                                   : null
 
     mapsListView.model: mapsModel
-    selectedMapIndex: -1
+    selectedMapName: (userSession && userSession.currentMapName) ? userSession.currentMapName : ""
 
     function loadMaps() {
         mapsModel.clear()
-        selectedMapIndex = -1
 
         if (!dbManager) {
             return
@@ -41,6 +40,23 @@ SelectMapForm {
                 "map_name": name
             })
         }
+
+        if (selectedMapName && selectedMapName !== "")
+        {
+            var idx = -1
+            for (var j = 0; j < mapsModel.count; ++j) {
+                if (mapsModel.get(j).map_name === selectedMapName)
+                {
+                    idx = j
+                    break
+                }
+            }
+            mapsListView.currentIndex = idx
+        }
+        else
+        {
+            mapsListView.currentIndex = -1
+        }
     }
 
     StackView.onActivated: loadMaps()
@@ -48,7 +64,6 @@ SelectMapForm {
     onAddMapRequested: mapRegisterDialog.open()
 
     onMapClicked: function(mapIndex, mapNameValue) {
-        selectedMapIndex = mapIndex
         mapsListView.currentIndex = mapIndex
 
         if (!dbManager) {
@@ -158,7 +173,7 @@ SelectMapForm {
 
             if (mapDetailsDialog.visible && mapDetailsDialog.mapName === pendingDeleteMapName) {
                 mapDetailsDialog.close()
-                selectedMapIndex = -1
+                selectedMapName = ""
                 mapsListView.currentIndex = -1
             }
 

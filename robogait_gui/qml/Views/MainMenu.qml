@@ -41,7 +41,9 @@ MainMenuForm {
     }
 
     testArea.onClicked: {
-        showNotImplemented(qsTr("Prueba: en desarrollo."))
+        if (StackView.view) {
+            StackView.view.push(testMapViewPage)
+        }
     }
 
     Component {
@@ -57,5 +59,10 @@ MainMenuForm {
     Component {
         id: manualControlPage
         ManualControl { }
+    }
+
+    Component {
+        id: testMapViewPage
+        TestMapView { }
     }
 }
