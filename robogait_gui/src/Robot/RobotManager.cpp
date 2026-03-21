@@ -23,6 +23,8 @@ RobotManager::RobotManager() :
 
   manual_control_ = std::make_unique<ROBOGait::robot::control::ManualControl>();
   map_visualization_manager_ = nullptr;
+  robot_placement_controller_ = nullptr;
+  command_executor_bridge_ = nullptr;
 }
 
 RobotManager::~RobotManager()
@@ -267,6 +269,18 @@ ROBOGait::qml::executor::CommandExecutorBridge* RobotManager::getCommandExecutor
     command_executor_bridge_ = std::make_unique<ROBOGait::qml::executor::CommandExecutorBridge>();
   }
   return command_executor_bridge_.get();
+}
+
+ROBOGait::robot::RobotPlacementController* RobotManager::getRobotPlacementController()
+{
+  if (!robot_placement_controller_)
+  {
+    robot_placement_controller_ = std::make_unique<ROBOGait::robot::RobotPlacementController>();
+  }
+
+  robot_placement_controller_->setMapVisualizationManager(getMapVisualizationManager());
+
+  return robot_placement_controller_.get();
 }
 
 void RobotManager::enableManualControl()
