@@ -8,7 +8,7 @@
 
 using namespace ROBOGait::map::item;
 
-MapLayerItem::MapLayerItem(QQuickItem* parent) : QQuickItem(parent), last_image_key_(0), fit_done_(false), is_panning_(false), pinch_start_zoom_(1.0)
+MapLayerItem::MapLayerItem(QQuickItem* parent) : QQuickItem(parent), last_image_key_(0), fit_done_(false), is_panning_(false), panning_enabled_(true), pinch_start_zoom_(1.0)
 {
   setFlag(ItemHasContents, true);
   setAcceptedMouseButtons(Qt::AllButtons);
@@ -57,6 +57,22 @@ void MapLayerItem::setCamera(const std::shared_ptr<ROBOGait::map::rendering::Ren
 }
 
 void MapLayerItem::setSyncItem(QQuickItem* item) { sync_item_ = item; }
+
+bool MapLayerItem::isPanningEnabled() const { return panning_enabled_; }
+
+void MapLayerItem::setPanningEnabled(bool enabled)
+{
+  if (panning_enabled_ == enabled)
+  {
+    return;
+  }
+  panning_enabled_ = enabled;
+  if (!panning_enabled_)
+  {
+    is_panning_ = false;
+  }
+  emit panningEnabledChanged();
+}
 
 QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* data)
 {
@@ -166,6 +182,12 @@ void MapLayerItem::mousePressEvent(QMouseEvent* event)
     return;
   }
 
+  if (!panning_enabled_)
+  {
+    QQuickItem::mousePressEvent(event);
+    return;
+  }
+
   if (event->button() == Qt::MiddleButton || event->button() == Qt::LeftButton)
   {
     is_panning_ = true;
@@ -179,7 +201,7 @@ void MapLayerItem::mousePressEvent(QMouseEvent* event)
 
 void MapLayerItem::mouseMoveEvent(QMouseEvent* event)
 {
-  if (!event || !camera_ || !is_panning_)
+  if (!event || !camera_ || !is_panning_ || !panning_enabled_)
   {
     QQuickItem::mouseMoveEvent(event);
     return;
@@ -205,6 +227,12 @@ void MapLayerItem::mouseReleaseEvent(QMouseEvent* event)
   if (!event)
   {
     qWarning() << "[MapLayerItem::mouseReleaseEvent] Invalid event";
+    return;
+  }
+
+  if (!panning_enabled_)
+  {
+    QQuickItem::mouseReleaseEvent(event);
     return;
   }
 

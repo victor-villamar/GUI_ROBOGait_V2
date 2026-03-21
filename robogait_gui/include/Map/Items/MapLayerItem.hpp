@@ -25,8 +25,21 @@ class MapLayerItem : public QQuickItem
   Q_OBJECT
 
 public:
+  // clang-format off
+  Q_PROPERTY(bool isPanningEnabled
+             READ isPanningEnabled
+             WRITE setPanningEnabled
+             NOTIFY panningEnabledChanged)
+  // clang-format on
+
+  /**
+   * @brief Constructor for the MapLayerItem class
+   */
   explicit MapLayerItem(QQuickItem* parent = nullptr);
 
+  /**
+   * @brief Destructor for the MapLayerItem class
+   */
   ~MapLayerItem();
 
   /**
@@ -50,10 +63,30 @@ public:
    */
   void setCamera(const std::shared_ptr<ROBOGait::map::rendering::RenderCamera>& camera);
 
+  /**
+   * @brief Set the sync item for synchronizing with the QML scene
+   *
+   * @param item The sync item to set
+   */
   void setSyncItem(QQuickItem* item);
 
+  /**
+   * @brief Check if panning is enabled
+   *
+   * @return True if panning is enabled, false otherwise
+   */
+  bool isPanningEnabled() const;
+
+  /**
+   * @brief Enable or disable panning behavior
+   *
+   * @param enabled True to enable panning, false to disable
+   */
+  void setPanningEnabled(bool enabled);
+
 signals:
-  void zoomChanged(); // Emitted when the zoom level changes
+  void zoomChanged();           // Emitted when the zoom level changes
+  void panningEnabledChanged(); // Emitted when the panning enabled state changes
 
 protected:
   /**
@@ -86,6 +119,7 @@ private:
 
   bool fit_done_;          /**< Fit done flag for the map item */
   bool is_panning_;        /**< Is panning flag for the map item */
+  bool panning_enabled_;   /**< Enable/disable panning behavior */
   QPointF last_pan_pos_;   /**< Last pan position for the map item */
   qreal pinch_start_zoom_; /**< Pinch start zoom for the map item */
 };
