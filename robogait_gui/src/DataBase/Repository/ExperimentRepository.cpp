@@ -102,3 +102,75 @@ DbResult<int> ExperimentRepository::insertResult(int experiment_id, const std::o
 
   return last_id_query.value(0).toInt();
 }
+
+DbResultVoid ExperimentRepository::deleteExperimentByIdForUserName(int experiment_id, const QString& user_name)
+{
+  QSqlDatabase& db = getDataBase();
+
+  if (!db.transaction())
+  {
+    const auto error = db.lastError();
+    return makeFailure(DbErrorCode::TRANSACTION_FAILED, "Failed to start transaction", {}, error.driverText(), error.databaseText());
+  }
+
+  QSqlQuery delete_results_query(db);
+
+  // clang-format off
+  const QString delete_results_sql =
+      "DELETE FROM result "
+      "WHERE id_experiments = :experiment_id;";
+  // clang-format on
+
+  if (auto result = prepareQuery(delete_results_query, delete_results_sql); !statusOk(result))
+  {
+    db.rollback();
+    return result;
+  }
+
+  delete_results_query.bindValue(":experiment_id", experiment_id);
+
+  if (auto result = executeQuery(delete_results_query); !statusOk(result))
+  {
+    db.rollback();
+    return result;
+  }
+
+  QSqlQuery delete_experiment_query(db);
+
+  // clang-format off
+  const QString delete_experiment_sql =
+      "DELETE FROM experiments "
+      "WHERE id = :experiment_id "
+      "  AND id_user = (SELECT id FROM \"user\" WHERE username = :username);";
+  // clang-format on
+
+  if (auto result = prepareQuery(delete_experiment_query, delete_experiment_sql); !statusOk(result))
+  {
+    db.rollback();
+    return result;
+  }
+
+  delete_experiment_query.bindValue(":experiment_id", experiment_id);
+  delete_experiment_query.bindValue(":username", user_name);
+
+  if (auto result = executeQuery(delete_experiment_query); !statusOk(result))
+  {
+    db.rollback();
+    return result;
+  }
+
+  if (delete_experiment_query.numRowsAffected() == 0)
+  {
+    db.rollback();
+    return makeFailure(DbErrorCode::NOT_FOUND, "Experiment not found", delete_experiment_sql);
+  }
+
+  if (!db.commit())
+  {
+    const auto error = db.lastError();
+    db.rollback();
+    return makeFailure(DbErrorCode::TRANSACTION_FAILED, "Failed to commit transaction", {}, error.driverText(), error.databaseText());
+  }
+
+  return makeSuccess();
+}

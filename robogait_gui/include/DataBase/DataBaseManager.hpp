@@ -75,6 +75,10 @@ public:
   Q_PROPERTY(QString lastError
              READ getLastError
              NOTIFY lastErrorChanged)
+
+  Q_PROPERTY(int lastExperimentId
+             READ getLastExperimentId
+             NOTIFY lastExperimentIdChanged)
   // clang-format on
 
   /**
@@ -125,6 +129,13 @@ public:
    * @return The last error message
    */
   QString getLastError() const;
+
+  /**
+   * @brief Get the ID of the last experiment
+   *
+   * @return The ID of the last experiment
+   */
+  int getLastExperimentId() const;
 
   /**
    * @brief Open the database connection
@@ -239,6 +250,14 @@ public:
   Q_INVOKABLE bool registerExperiment(const QString& patient_name, const QString& patient_last_name, const QString& map_name);
 
   /**
+   * @brief Delete an experiment by ID
+   *
+   * @param experiment_id The experiment ID to delete
+   * @return True if deletion was successful, false otherwise
+   */
+  Q_INVOKABLE bool deleteExperiment(int experiment_id);
+
+  /**
    * @brief List all maps
    *
    * @return A list of maps
@@ -286,6 +305,7 @@ signals:
   void displayNameChanged();
   void userRoleChanged();
   void lastErrorChanged();
+  void lastExperimentIdChanged();
   void userLoggedOut(); // Signal for explicit logout events
 
 private:
@@ -339,6 +359,13 @@ private:
    */
   void setLastError(const QString& last_error);
 
+  /**
+   * @brief Set the last experiment ID
+   *
+   * @param experiment_id The experiment ID
+   */
+  void setLastExperimentId(int experiment_id);
+
 private:
   /**
    * @brief Private constructor for Singleton pattern
@@ -365,6 +392,7 @@ private:
   QString display_name_;      /**< Display name */
   QString user_role_;         /**< User role */
   QString last_error_;        /**< Last error message */
+  int last_experiment_id_;    /**< Last experiment ID */
 };
 
 } // namespace db
