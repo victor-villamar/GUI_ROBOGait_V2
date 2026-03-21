@@ -60,6 +60,8 @@
     <file alias="SelectMapForm.ui.qml">qml/Views/SelectMapForm.ui.qml</file>
     <file alias="SelectPatient.qml">qml/Views/SelectPatient.qml</file>
 	  <file alias="SelectPatientForm.ui.qml">qml/Views/SelectPatientForm.ui.qml</file>
+	  <file alias="TestMapView.qml">qml/Views/TestMapView.qml</file>
+	  <file alias="TestMapViewForm.ui.qml">qml/Views/TestMapViewForm.ui.qml</file>
 	  <file alias="UserSwitchPage.qml">qml/Views/UserSwitchPage.qml</file>
 	</qresource>
 </RCC>
