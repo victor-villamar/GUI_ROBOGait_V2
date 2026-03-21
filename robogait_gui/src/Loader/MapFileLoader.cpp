@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cctype>
 #include <charconv>
 #include <cmath>
@@ -116,6 +117,7 @@ bool MapFileLoader::parseYaml(const std::string& yaml_content, MapMetadata& meta
 
     const YAML::Node resolution_node = node["resolution"];
     const YAML::Node origin_node = node["origin"];
+    const YAML::Node mode_node = node["mode"];
 
     if (!resolution_node)
     {
@@ -144,6 +146,25 @@ bool MapFileLoader::parseYaml(const std::string& yaml_content, MapMetadata& meta
     if (const YAML::Node negate_node = node["negate"])
     {
       metadata_out.negate = negate_node.as<int>() != 0;
+    }
+
+    if (mode_node && mode_node.IsScalar())
+    {
+      std::string mode_value = mode_node.as<std::string>();
+      std::transform(mode_value.begin(), mode_value.end(), mode_value.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+      if (mode_value == "trinary")
+      {
+        metadata_out.mode = MapMetadata::MapMode::Trinary;
+      }
+      else if (mode_value == "raw")
+      {
+        metadata_out.mode = MapMetadata::MapMode::Raw;
+      }
+      else
+      {
+        metadata_out.mode = MapMetadata::MapMode::Scale;
+      }
     }
 
     if (const YAML::Node occupied_thresh_node = node["occupied_thresh"])
@@ -295,12 +316,89 @@ bool MapFileLoader::buildOccupancyGrid(const MapMetadata& metadata, const std::v
   occupancy_grid_out.info.origin.orientation.z = quaternion.z();
   occupancy_grid_out.info.origin.orientation.w = quaternion.w();
 
-  occupancy_grid_out.data.assign(expected_size, -1);
+  occupancy_grid_out.data.assign(expected_size, UNKNOWN_CELL_VALUE);
 
   const double inv_max_pixel_value = 1.0 / static_cast<double>(MAX_PIXEL_VALUE);
   const double occupied_threshold = metadata.occupied_thresh;
   const double free_threshold = metadata.free_thresh;
   const bool negate = metadata.negate;
+
+  if (metadata.mode == MapMetadata::MapMode::Trinary)
+  {
+    for (size_t y = 0; y < height; ++y)
+    {
+      const size_t src_y = height - 1 - y;
+      const size_t src_row = src_y * width;
+      const size_t dst_row = y * width;
+
+      for (size_t x = 0; x < width; ++x)
+      {
+        const uint8_t pixel_value = pixels[src_row + x];
+        int8_t cell = UNKNOWN_CELL_VALUE;
+
+        if (!negate)
+        {
+          if (pixel_value == 0)
+          {
+            cell = OCCUPIED_CELL_VALUE;
+          }
+          else if (pixel_value >= PARTIALLY_OCCUPIED_CELL_VALUE)
+          {
+            cell = FREE_CELL_VALUE;
+          }
+        }
+        else
+        {
+          if (pixel_value == 0)
+          {
+            cell = FREE_CELL_VALUE;
+          }
+          else if (pixel_value >= PARTIALLY_OCCUPIED_CELL_VALUE)
+          {
+            cell = OCCUPIED_CELL_VALUE;
+          }
+        }
+
+        occupancy_grid_out.data[dst_row + x] = cell;
+      }
+    }
+
+    return true;
+  }
+
+  if (metadata.mode == MapMetadata::MapMode::Raw)
+  {
+    for (size_t y = 0; y < height; ++y)
+    {
+      const size_t src_y = height - 1 - y;
+      const size_t src_row = src_y * width;
+      const size_t dst_row = y * width;
+
+      for (size_t x = 0; x < width; ++x)
+      {
+        const uint8_t pixel_value = pixels[src_row + x];
+        int8_t cell = UNKNOWN_CELL_VALUE;
+
+        if (pixel_value != MAX_PIXEL_VALUE)
+        {
+          int value = static_cast<int>(pixel_value);
+          if (value > OCCUPIED_CELL_VALUE)
+          {
+            value = OCCUPIED_CELL_VALUE;
+          }
+          if (negate)
+          {
+            value = OCCUPIED_CELL_VALUE - value;
+          }
+          cell = static_cast<int8_t>(value);
+        }
+
+        occupancy_grid_out.data[dst_row + x] = cell;
+      }
+    }
+
+    return true;
+  }
 
   for (size_t y = 0; y < height; ++y)
   {
