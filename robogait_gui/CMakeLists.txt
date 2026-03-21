@@ -50,6 +50,7 @@ set(HEADERS
     include/DataBase/DataBaseManager.hpp
     include/DataBase/DatabaseSchema.hpp
     include/DataBase/RoboGaitDb.hpp
+    include/Loader/MapFileLoader.hpp
     include/Loader/YamlLoader.hpp
     include/Map/Data/LaserScanData.hpp
     include/Map/Data/MapData.hpp
@@ -77,6 +78,7 @@ set(HEADERS
     include/Robot/ManualControl.hpp
     include/Robot/RobotDiscovery.hpp
     include/Robot/RobotManager.hpp
+    include/Robot/RobotPlacementController.hpp
     include/Ros/Define.hpp
     include/Ros/RosNodeManager.hpp
     include/Ros/TopicsName.hpp
@@ -100,6 +102,7 @@ set(SOURCES
     src/DataBase/DataBaseManager.cpp
     src/DataBase/DatabaseSchema.cpp
     src/DataBase/RoboGaitDb.cpp
+    src/Loader/MapFileLoader.cpp
     src/Loader/YamlLoader.cpp
     src/Map/Data/LaserScanData.cpp
     src/Map/Data/MapData.cpp
@@ -124,6 +127,7 @@ set(SOURCES
     src/Robot/ManualControl.cpp
     src/Robot/RobotDiscovery.cpp
     src/Robot/RobotManager.cpp
+    src/Robot/RobotPlacementController.cpp
     src/Ros/RosNodeManager.cpp
     src/Settings/DeveloperSettings.cpp
     src/User/Patient.cpp
