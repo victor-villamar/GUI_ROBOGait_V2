@@ -125,6 +125,8 @@ void CommandExecutor::handleGetMapData(const std::shared_ptr<command_executor_ms
   response->pgm_content = *map_pgm_info;
   response->success = true;
   response->error_message = "";
+
+  RCLCPP_INFO(get_logger(), "[CommandExecutor::handleGetMapData] Successfully retrieved map data for %s", map_name.c_str());
 }
 
 void CommandExecutor::mainLoop()
