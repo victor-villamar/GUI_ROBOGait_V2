@@ -38,6 +38,22 @@ bool CommandExecutorBridge::deleteMap(const QString& map_name)
   return ROBOGait::ros::executor::CommandExecutorClient::getInstance().deleteMap(map_name.trimmed().toStdString());
 }
 
+bool CommandExecutorBridge::requestMapData(const QString& map_name)
+{
+  return ROBOGait::ros::executor::CommandExecutorClient::getInstance().requestMapData(map_name.trimmed().toStdString());
+}
+
+
+bool CommandExecutorBridge::stopNavigation()
+{
+  return ROBOGait::ros::executor::CommandExecutorClient::getInstance().stopNavigation();
+}
+
+bool CommandExecutorBridge::startNavigation(const QString& map_name)
+{
+  return ROBOGait::ros::executor::CommandExecutorClient::getInstance().startNavigation(map_name.trimmed().toStdString());
+}
+
 void CommandExecutorBridge::onPoll() { syncFromClient(); }
 
 void CommandExecutorBridge::syncFromClient()

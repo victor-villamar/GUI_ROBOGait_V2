@@ -148,6 +148,22 @@ public:
   bool requestMapData(const std::string& map_name);
 
   /**
+   * @brief Start the navigation process
+   *
+   * @param map_name The name of the map to use for navigation
+   *
+   * @return true if the navigation process was started successfully, false otherwise
+   */
+  bool startNavigation(const std::string& map_name);
+
+  /**
+   * @brief Stop the navigation process
+   *
+   * @return true if the navigation process was stopped successfully, false otherwise
+   */
+  bool stopNavigation();
+
+  /**
    * @brief Check if a ROS2 node is alive
    *
    * @param node_name The name of the ROS2 node
@@ -332,6 +348,7 @@ private:
   static constexpr const char* KEY_CARTOGRAPHER = "cartographer"; /**< Key for the cartographer command */
   static constexpr const char* KEY_MAP_SAVER = "map_saver";       /**< Key for the map saver command */
   static constexpr const char* KEY_DELETE_MAP = "delete_map";     /**< Key for the delete map command */
+  static constexpr const char* KEY_NAVIGATION = "navigation";     /**< Key for the navigation command */
 
   static constexpr std::chrono::milliseconds HEALTH_CHECK_PERIOD = std::chrono::milliseconds(100);                 /**< Health check period */
   static constexpr std::chrono::seconds START_STOP_TIMEOUT = std::chrono::seconds(5);                              /**< Start/stop timeout */

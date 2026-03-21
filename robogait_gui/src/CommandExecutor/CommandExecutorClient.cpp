@@ -98,7 +98,7 @@ bool CommandExecutorClient::startMapping()
 {
   if (!validateCommandKey(KEY_CARTOGRAPHER))
   {
-    qCritical() << "[CommandExecutorClient::startMapping] Command key 'cartographer' is not valid";
+    qCritical() << "[CommandExecutorClient::startMapping] Command key" << KEY_CARTOGRAPHER << "is not valid";
     return false;
   }
 
@@ -176,7 +176,7 @@ bool CommandExecutorClient::deleteMap(const std::string& map_name)
 
   if (!validateCommandKey(KEY_DELETE_MAP))
   {
-    qCritical() << "[CommandExecutorClient::deleteMap] Command key 'delete_map' is not valid";
+    qCritical() << "[CommandExecutorClient::deleteMap] Command key" << KEY_DELETE_MAP << "is not valid";
     return false;
   }
 
@@ -238,6 +238,81 @@ bool CommandExecutorClient::requestMapData(const std::string& map_name)
   return publishMapDataOnce(occupancy_grid);
 }
 
+bool CommandExecutorClient::startNavigation(const std::string& map_name)
+{
+  if (map_name.empty())
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] Map name is empty";
+    return false;
+  }
+
+  std::string safe_name = ROBOGait::map::utils::sanitizeMapName(map_name);
+  if (safe_name.empty())
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] Sanitized map name is empty";
+    return false;
+  }
+
+  safe_name = safe_name + ".yaml";
+
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  if (!yaml_loader.isLoaded())
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] YAML loader is not loaded";
+    return false;
+  }
+
+  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
+
+  if (map_path.empty())
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] Map path is empty in YAML configuration";
+    return false;
+  }
+
+  if (!validateCommandKey(KEY_NAVIGATION))
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] Command key" << KEY_NAVIGATION << "is not valid";
+    return false;
+  }
+
+  const CommandExecutorClient::CommandInfo& cmd_info = commands_[KEY_NAVIGATION];
+  std::string args = cmd_info.append_args;
+
+  const std::unordered_map<std::string, std::string> vars = {
+      {"{map_path}", map_path},
+      {"{map_name}", safe_name},
+  };
+
+  args = replacePlaceholders(args, vars);
+
+  const std::string full_cmd = buildCommand(cmd_info.cmd, args);
+
+  const bool success = callCommandService(full_cmd, true);
+
+  if (!success)
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] Failed to start navigation";
+    return false;
+  }
+
+  setCommandState(KEY_NAVIGATION, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
+  startHealthTimer();
+  qInfo() << "[CommandExecutorClient::startNavigation] Successfully started navigation with map " << QString::fromStdString(map_name);
+  return true;
+}
+
+bool CommandExecutorClient::stopNavigation()
+{
+  if (getCommandStatus(KEY_NAVIGATION) == CommandExecutorClient::CommandStatus::IDLE)
+  {
+    return true;
+  }
+
+  return stopCommand(KEY_NAVIGATION);
+}
+
 bool CommandExecutorClient::isNodeAlive(const std::string& node_name) const
 {
   if (!parent_node_)
@@ -259,35 +334,39 @@ bool CommandExecutorClient::isNodeAlive(const std::string& node_name) const
     return false;
   }
 
+  std::string expected_name = node_name;
+  if (!expected_name.empty() && expected_name.front() == '/')
+  {
+    expected_name.erase(0, 1);
+  }
+
+  bool require_namespace = false;
   std::string target_ns = "/";
   if (context_ && context_->usesNamespace())
   {
     const QString ns = context_->topicNamespace();
-
-    if (ns.isEmpty())
+    if (!ns.isEmpty())
     {
-      qCritical() << "[CommandExecutorClient::isNodeAlive] Context namespace is empty";
-      return false;
+      require_namespace = true;
+      target_ns = ns.toStdString();
     }
-
-    target_ns = ns.toStdString();
   }
 
   const auto nodes_with_ns = graph->get_node_names_and_namespaces();
 
   for (const auto& [name, ns] : nodes_with_ns)
   {
-    if (name != node_name)
+    if (name != expected_name)
     {
       continue;
     }
 
-    if (!context_ || !context_->usesNamespace())
+    if (!require_namespace)
     {
       return true;
     }
 
-    if (ns == target_ns)
+    if (ns == target_ns || ns.empty() || ns == "/")
     {
       return true;
     }
@@ -296,10 +375,25 @@ bool CommandExecutorClient::isNodeAlive(const std::string& node_name) const
   return false;
 }
 
-CommandExecutorClient::CommandStatus CommandExecutorClient::getActiveCommandStatus() const { return getCommandStatus(KEY_CARTOGRAPHER); }
+CommandExecutorClient::CommandStatus CommandExecutorClient::getActiveCommandStatus() const
+{
+  const auto nav_status = getCommandStatus(KEY_NAVIGATION);
+  if (nav_status != CommandExecutorClient::CommandStatus::IDLE)
+  {
+    return nav_status;
+  }
+
+  return getCommandStatus(KEY_CARTOGRAPHER);
+}
 
 std::string CommandExecutorClient::getActiveCommandKey() const
 {
+  const auto nav_status = getCommandStatus(KEY_NAVIGATION);
+  if (nav_status != CommandExecutorClient::CommandStatus::IDLE)
+  {
+    return std::string(KEY_NAVIGATION);
+  }
+
   return getCommandStatus(KEY_CARTOGRAPHER) == CommandExecutorClient::CommandStatus::IDLE ? std::string() : std::string(KEY_CARTOGRAPHER);
 }
 
@@ -595,7 +689,7 @@ bool CommandExecutorClient::saveMap(const std::string& map_name)
 
   if (!validateCommandKey(KEY_MAP_SAVER))
   {
-    qCritical() << "[CommandExecutorClient::saveMap] Command key 'map_saver' is not valid";
+    qCritical() << "[CommandExecutorClient::saveMap] Command key" << KEY_MAP_SAVER << "is not valid";
     return false;
   }
 

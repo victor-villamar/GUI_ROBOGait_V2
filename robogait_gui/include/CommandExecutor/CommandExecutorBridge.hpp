@@ -88,6 +88,31 @@ public:
    */
   Q_INVOKABLE bool deleteMap(const QString& map_name);
 
+  /**
+   * @brief Request the map data for a given map name
+   *
+   * @param map_name The name of the map to request data for
+   *
+   * @return true if the map data was requested successfully, false otherwise
+   */
+  Q_INVOKABLE bool requestMapData(const QString& map_name);
+
+  /**
+   * @brief Start the navigation process
+   *
+   * @param map_name The name of the map to use for navigation
+   *
+   * @return true if the navigation process was started successfully, false otherwise
+   */
+  Q_INVOKABLE bool startNavigation(const QString& map_name);
+
+  /**
+   * @brief Stop the navigation process
+   *
+   * @return true if the navigation process was stopped successfully, false otherwise
+   */
+  Q_INVOKABLE bool stopNavigation();
+
 signals:
   void statusChanged(); // Emitted when the status changes
 
