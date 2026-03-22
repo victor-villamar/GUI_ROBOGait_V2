@@ -6,6 +6,7 @@
 #include <QDebug>
 
 #include "CommandExecutor/CommandExecutorClient.hpp"
+#include "Loader/MapFileLoader.hpp"
 #include "Loader/YamlLoader.hpp"
 #include "Map/Utils/Utils.hpp"
 #include "Ros/Define.hpp"
@@ -85,6 +86,9 @@ void CommandExecutorClient::clearRobotContext()
     context_->clear();
   }
   cli_cmd_.reset();
+  cli_get_map_data_.reset();
+  cli_global_localization_.reset();
+  pub_map_data_.reset();
   command_states_.clear();
   pending_stop_after_save_ = false;
   map_saver_stop_requested_ = false;
@@ -95,7 +99,7 @@ bool CommandExecutorClient::startMapping()
 {
   if (!validateCommandKey(KEY_CARTOGRAPHER))
   {
-    qCritical() << "[CommandExecutorClient::startMapping] Command key 'cartographer' is not valid";
+    qCritical() << "[CommandExecutorClient::startMapping] Command key" << KEY_CARTOGRAPHER << "is not valid";
     return false;
   }
 
@@ -103,19 +107,18 @@ bool CommandExecutorClient::startMapping()
 
   const std::string full_cmd = buildCommand(cmd_info.cmd, cmd_info.append_args);
 
-  const bool success = callCommandService(full_cmd, true);
+  pending_stop_after_save_ = false;
+  map_saver_stop_requested_ = false;
 
-  if (!success)
+  CommandRequestContext context{CommandRequestType::StartMapping, std::string(KEY_CARTOGRAPHER), full_cmd, std::string()};
+
+  const bool sent = callCommandServiceAsync(full_cmd, true, context);
+
+  if (!sent)
   {
     qCritical() << "[CommandExecutorClient::startMapping] Failed to initialize mapping";
     return false;
   }
-
-  pending_stop_after_save_ = false;
-  map_saver_stop_requested_ = false;
-  setCommandState(KEY_CARTOGRAPHER, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
-  startHealthTimer();
-  qInfo() << "[CommandExecutorClient::startMapping] Successfully initialized mapping";
 
   return true;
 }
@@ -173,7 +176,7 @@ bool CommandExecutorClient::deleteMap(const std::string& map_name)
 
   if (!validateCommandKey(KEY_DELETE_MAP))
   {
-    qCritical() << "[CommandExecutorClient::deleteMap] Command key 'delete_map' is not valid";
+    qCritical() << "[CommandExecutorClient::deleteMap] Command key" << KEY_DELETE_MAP << "is not valid";
     return false;
   }
 
@@ -190,15 +193,162 @@ bool CommandExecutorClient::deleteMap(const std::string& map_name)
 
   const std::string full_cmd = buildCommand(cmd_info.cmd, args);
 
-  const bool success = callCommandService(full_cmd, true);
+  CommandRequestContext context{CommandRequestType::DeleteMap, std::string(KEY_DELETE_MAP), full_cmd, map_name};
 
-  if (!success)
+  const bool sent = callCommandServiceAsync(full_cmd, true, context);
+
+  if (!sent)
   {
     qCritical() << "[CommandExecutorClient::deleteMap] Failed to delete map";
     return false;
   }
 
-  qInfo() << "[CommandExecutorClient::deleteMap] Successfully deleted map " << QString::fromStdString(map_name);
+  return true;
+}
+
+bool CommandExecutorClient::requestMapData(const std::string& map_name)
+{
+  if (map_name.empty())
+  {
+    qCritical() << "[CommandExecutorClient::requestMapData] Map name is empty";
+    return false;
+  }
+
+  std::optional<std::string> yaml_info;
+  std::optional<std::vector<uint8_t>> pgm_info;
+
+  if (!callGetMapDataService(map_name, yaml_info, pgm_info))
+  {
+    qCritical() << "[CommandExecutorClient::requestMapData] Failed to call get map data service for map " << QString::fromStdString(map_name);
+    return false;
+  }
+
+  ROBOGait::loader::MapFileLoader map_loader;
+
+  auto occupancy_grid_opt = map_loader.loadMap(*yaml_info, *pgm_info);
+
+  if (!occupancy_grid_opt)
+  {
+    qCritical() << "[CommandExecutorClient::requestMapData] Failed to load map data for map " << QString::fromStdString(map_name);
+    return false;
+  }
+
+  auto occupancy_grid = occupancy_grid_opt.value();
+  occupancy_grid.header.frame_id = context_ ? context_->resolveFrame(std::string(TF_MAP_FRAME)) : std::string(TF_MAP_FRAME);
+
+  return publishMapDataOnce(occupancy_grid);
+}
+
+bool CommandExecutorClient::startNavigation(const std::string& map_name)
+{
+  if (map_name.empty())
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] Map name is empty";
+    return false;
+  }
+
+  std::string safe_name = ROBOGait::map::utils::sanitizeMapName(map_name);
+  if (safe_name.empty())
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] Sanitized map name is empty";
+    return false;
+  }
+
+  safe_name = safe_name + ".yaml";
+
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  if (!yaml_loader.isLoaded())
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] YAML loader is not loaded";
+    return false;
+  }
+
+  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
+
+  if (map_path.empty())
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] Map path is empty in YAML configuration";
+    return false;
+  }
+
+  if (!validateCommandKey(KEY_NAVIGATION))
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] Command key" << KEY_NAVIGATION << "is not valid";
+    return false;
+  }
+
+  const CommandExecutorClient::CommandInfo& cmd_info = commands_[KEY_NAVIGATION];
+  std::string args = cmd_info.append_args;
+
+  const std::unordered_map<std::string, std::string> vars = {
+      {"{map_path}", map_path},
+      {"{map_name}", safe_name},
+  };
+
+  args = replacePlaceholders(args, vars);
+
+  const std::string full_cmd = buildCommand(cmd_info.cmd, args);
+
+  CommandRequestContext context{CommandRequestType::StartNavigation, std::string(KEY_NAVIGATION), full_cmd, map_name};
+
+  const bool sent = callCommandServiceAsync(full_cmd, true, context);
+
+  if (!sent)
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] Failed to start navigation";
+    return false;
+  }
+
+  return true;
+}
+
+bool CommandExecutorClient::stopNavigation()
+{
+  if (getCommandStatus(KEY_NAVIGATION) == CommandExecutorClient::CommandStatus::IDLE)
+  {
+    return true;
+  }
+
+  return stopCommand(KEY_NAVIGATION);
+}
+
+bool CommandExecutorClient::reinitializeGlobalLocalization()
+{
+  if (!initialized_)
+  {
+    qCritical() << "[CommandExecutorClient::reinitializeGlobalLocalization] CommandExecutorClient is not initialized";
+    notifyRequestResult(false);
+    return false;
+  }
+
+  if (!cli_global_localization_)
+  {
+    qCritical() << "[CommandExecutorClient::reinitializeGlobalLocalization] Global localization client is not available";
+    notifyRequestResult(false);
+    return false;
+  }
+
+  if (!cli_global_localization_->wait_for_service(SERVICE_CALL_TIMEOUT))
+  {
+    qCritical() << "[CommandExecutorClient::reinitializeGlobalLocalization] Service is not available after waiting";
+    notifyRequestResult(false);
+    return false;
+  }
+
+  auto request = std::make_shared<std_srvs::srv::Empty::Request>();
+
+  cli_global_localization_->async_send_request(request,
+                                               [this](rclcpp::Client<std_srvs::srv::Empty>::SharedFuture future)
+                                               {
+                                                 bool ok = false;
+
+                                                 auto response = future.get();
+                                                 ok = static_cast<bool>(response);
+
+                                                 handleGlobalLocalizationResult(ok);
+                                               });
+
   return true;
 }
 
@@ -223,35 +373,39 @@ bool CommandExecutorClient::isNodeAlive(const std::string& node_name) const
     return false;
   }
 
+  std::string expected_name = node_name;
+  if (!expected_name.empty() && expected_name.front() == '/')
+  {
+    expected_name.erase(0, 1);
+  }
+
+  bool require_namespace = false;
   std::string target_ns = "/";
   if (context_ && context_->usesNamespace())
   {
     const QString ns = context_->topicNamespace();
-
-    if (ns.isEmpty())
+    if (!ns.isEmpty())
     {
-      qCritical() << "[CommandExecutorClient::isNodeAlive] Context namespace is empty";
-      return false;
+      require_namespace = true;
+      target_ns = ns.toStdString();
     }
-
-    target_ns = ns.toStdString();
   }
 
   const auto nodes_with_ns = graph->get_node_names_and_namespaces();
 
   for (const auto& [name, ns] : nodes_with_ns)
   {
-    if (name != node_name)
+    if (name != expected_name)
     {
       continue;
     }
 
-    if (!context_ || !context_->usesNamespace())
+    if (!require_namespace)
     {
       return true;
     }
 
-    if (ns == target_ns)
+    if (ns == target_ns || ns.empty() || ns == "/")
     {
       return true;
     }
@@ -260,11 +414,48 @@ bool CommandExecutorClient::isNodeAlive(const std::string& node_name) const
   return false;
 }
 
-CommandExecutorClient::CommandStatus CommandExecutorClient::getActiveCommandStatus() const { return getCommandStatus(KEY_CARTOGRAPHER); }
+CommandExecutorClient::CommandStatus CommandExecutorClient::getActiveCommandStatus() const
+{
+  const auto nav_status = getCommandStatus(KEY_NAVIGATION);
+  if (isCommandActive(nav_status))
+  {
+    return nav_status;
+  }
+
+  const auto cart_status = getCommandStatus(KEY_CARTOGRAPHER);
+  if (isCommandActive(cart_status))
+  {
+    return cart_status;
+  }
+
+  if (cart_status != CommandExecutorClient::CommandStatus::IDLE)
+  {
+    return cart_status;
+  }
+
+  if (nav_status == CommandExecutorClient::CommandStatus::ERROR)
+  {
+    return nav_status;
+  }
+
+  return nav_status;
+}
 
 std::string CommandExecutorClient::getActiveCommandKey() const
 {
-  return getCommandStatus(KEY_CARTOGRAPHER) == CommandExecutorClient::CommandStatus::IDLE ? std::string() : std::string(KEY_CARTOGRAPHER);
+  const auto nav_status = getCommandStatus(KEY_NAVIGATION);
+  if (isCommandActive(nav_status))
+  {
+    return std::string(KEY_NAVIGATION);
+  }
+
+  const auto cart_status = getCommandStatus(KEY_CARTOGRAPHER);
+  if (isCommandActive(cart_status))
+  {
+    return std::string(KEY_CARTOGRAPHER);
+  }
+
+  return std::string();
 }
 
 CommandExecutorClient::CommandStatus CommandExecutorClient::getCommandStatus(const std::string& key) const
@@ -277,6 +468,8 @@ CommandExecutorClient::CommandStatus CommandExecutorClient::getCommandStatus(con
 
   return it->second.status;
 }
+
+void CommandExecutorClient::setRequestCallback(const std::function<void(bool)>& callback) { request_callback_ = callback; }
 
 bool CommandExecutorClient::loadCommands()
 {
@@ -312,23 +505,26 @@ bool CommandExecutorClient::loadCommands()
   return !commands_.empty();
 }
 
-bool CommandExecutorClient::callCommandService(const std::string& cmd, bool execute)
+bool CommandExecutorClient::callCommandServiceAsync(const std::string& cmd, bool execute, const CommandRequestContext& context)
 {
   if (!initialized_)
   {
-    qCritical() << "[CommandExecutorClient::callCommandService] CommandExecutorClient is not initialized";
+    qCritical() << "[CommandExecutorClient::callCommandServiceAsync] CommandExecutorClient is not initialized";
+    handleCommandResponse(context, false);
     return false;
   }
 
   if (!cli_cmd_)
   {
-    qCritical() << "[CommandExecutorClient::callCommandService] Command client is not available (robot not selected?)";
+    qCritical() << "[CommandExecutorClient::callCommandServiceAsync] Command client is not available (robot not selected?)";
+    handleCommandResponse(context, false);
     return false;
   }
 
   if (!cli_cmd_->wait_for_service(SERVICE_CALL_TIMEOUT))
   {
-    qCritical() << "[CommandExecutorClient::callCommandService] Command service is not available after waiting";
+    qCritical() << "[CommandExecutorClient::callCommandServiceAsync] Command service is not available after waiting";
+    handleCommandResponse(context, false);
     return false;
   }
 
@@ -336,7 +532,206 @@ bool CommandExecutorClient::callCommandService(const std::string& cmd, bool exec
   request->cmd = cmd;
   request->execute = execute;
 
-  auto future = cli_cmd_->async_send_request(request);
+  const auto ctx = context;
+  cli_cmd_->async_send_request(request,
+                               [this, ctx](rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedFuture future)
+                               {
+                                 bool ok = false;
+                                 auto response = future.get();
+                                 if (!response)
+                                 {
+                                   qCritical() << "[CommandExecutorClient::callCommandServiceAsync] Failed to get response from command service";
+                                   ok = false;
+                                 }
+
+                                 ok = response->success;
+
+                                 handleCommandResponse(ctx, ok);
+                               });
+
+  return true;
+}
+
+void CommandExecutorClient::handleCommandResponse(const CommandRequestContext& context, bool success)
+{
+  switch (context.type)
+  {
+    case CommandRequestType::StartMapping:
+      handleStartMappingResult(success, context.full_cmd);
+      break;
+    case CommandRequestType::DeleteMap:
+      handleDeleteMapResult(success, context.map_name);
+      break;
+    case CommandRequestType::StartNavigation:
+      handleStartNavigationResult(success, context.full_cmd, context.map_name);
+      break;
+    case CommandRequestType::SaveMap:
+      handleSaveMapResult(success, context.full_cmd);
+      break;
+    case CommandRequestType::StopCommand:
+      handleStopCommandResult(success, context.command_key, context.full_cmd);
+      break;
+    default:
+      notifyRequestResult(success);
+      break;
+  }
+}
+
+void CommandExecutorClient::handleStartMappingResult(bool success, const std::string& full_cmd)
+{
+  if (!success)
+  {
+    qCritical() << "[CommandExecutorClient::startMapping] Failed to initialize mapping";
+    setCommandState(KEY_CARTOGRAPHER, CommandExecutorClient::CommandStatus::ERROR, full_cmd);
+    notifyRequestResult(false);
+    return;
+  }
+
+  setCommandState(KEY_CARTOGRAPHER, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
+  startHealthTimer();
+  qInfo() << "[CommandExecutorClient::startMapping] Successfully initialized mapping";
+  notifyRequestResult(true);
+}
+
+void CommandExecutorClient::handleDeleteMapResult(bool success, const std::string& map_name)
+{
+  if (!success)
+  {
+    qCritical() << "[CommandExecutorClient::deleteMap] Failed to delete map";
+    notifyRequestResult(false);
+    return;
+  }
+
+  qInfo() << "[CommandExecutorClient::deleteMap] Successfully deleted map " << QString::fromStdString(map_name);
+  notifyRequestResult(true);
+}
+
+void CommandExecutorClient::handleStartNavigationResult(bool success, const std::string& full_cmd, const std::string& map_name)
+{
+  if (!success)
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] Failed to start navigation";
+    setCommandState(KEY_NAVIGATION, CommandExecutorClient::CommandStatus::ERROR, full_cmd);
+    notifyRequestResult(false);
+    return;
+  }
+
+  setCommandState(KEY_NAVIGATION, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
+  startHealthTimer();
+  qInfo() << "[CommandExecutorClient::startNavigation] Successfully started navigation with map " << QString::fromStdString(map_name);
+  notifyRequestResult(true);
+}
+
+void CommandExecutorClient::handleSaveMapResult(bool success, const std::string& full_cmd)
+{
+  if (!success)
+  {
+    qCritical() << "[CommandExecutorClient::saveMap] Failed to save map";
+    setCommandState(KEY_MAP_SAVER, CommandExecutorClient::CommandStatus::ERROR, full_cmd);
+    notifyRequestResult(false);
+    return;
+  }
+
+  setCommandState(KEY_MAP_SAVER, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
+  startHealthTimer();
+  qInfo() << "[CommandExecutorClient::saveMap] Successfully saved map";
+  notifyRequestResult(true);
+}
+
+void CommandExecutorClient::handleStopCommandResult(bool success, const std::string& key, const std::string& full_cmd)
+{
+  if (!success)
+  {
+    qCritical() << "[CommandExecutorClient::stopCommand] Failed to stop command for key: " << QString::fromStdString(key);
+    setCommandState(key, CommandExecutorClient::CommandStatus::ERROR, full_cmd);
+    notifyRequestResult(false);
+    return;
+  }
+
+  setCommandState(key, CommandExecutorClient::CommandStatus::STOPPING, full_cmd);
+  startHealthTimer();
+  notifyRequestResult(true);
+}
+
+void CommandExecutorClient::handleGlobalLocalizationResult(bool success)
+{
+  if (!success)
+  {
+    qCritical() << "[CommandExecutorClient::reinitializeGlobalLocalization] Failed to call global localization service";
+    notifyRequestResult(false);
+    return;
+  }
+
+  qInfo() << "[CommandExecutorClient::reinitializeGlobalLocalization] Global localization request sent";
+  notifyRequestResult(true);
+}
+
+void CommandExecutorClient::notifyRequestResult(bool success)
+{
+  if (request_callback_)
+  {
+    request_callback_(success);
+  }
+}
+
+bool CommandExecutorClient::callGetMapDataService(const std::string& map_name, std::optional<std::string>& yaml_out,
+                                                  std::optional<std::vector<uint8_t>>& pgm_out)
+{
+  if (!initialized_)
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] CommandExecutorClient is not initialized";
+    return false;
+  }
+
+  if (!cli_get_map_data_)
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] GetMapData service client is not available (robot not selected?)";
+    return false;
+  }
+
+  if (map_name.empty())
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] Map name is empty";
+    return false;
+  }
+
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  if (!yaml_loader.isLoaded())
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] YAML loader is not loaded";
+    return false;
+  }
+
+  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
+
+  if (map_path.empty())
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] Map path is empty in YAML configuration";
+    return false;
+  }
+
+  const std::string safe_name = ROBOGait::map::utils::sanitizeMapName(map_name);
+
+  if (safe_name.empty())
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] Sanitized map name is empty";
+    return false;
+  }
+
+  const std::string full_map_directory = "$HOME" + map_path;
+
+  if (!cli_get_map_data_->wait_for_service(SERVICE_CALL_TIMEOUT))
+  {
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] GetMapData service is not available after waiting";
+    return false;
+  }
+
+  auto request = std::make_shared<command_executor_msgs::srv::GetMapData::Request>();
+  request->map_path = full_map_directory;
+  request->map_name = safe_name;
+
+  auto future = cli_get_map_data_->async_send_request(request);
   std::future_status status = future.wait_for(SERVICE_CALL_TIMEOUT);
 
   if (status == std::future_status::ready && future.valid())
@@ -344,15 +739,24 @@ bool CommandExecutorClient::callCommandService(const std::string& cmd, bool exec
     auto response = future.get();
     if (!response)
     {
-      qCritical() << "[CommandExecutorClient::callCommandService] Failed to get response from command service";
+      qCritical() << "[CommandExecutorClient::callGetMapDataService] Failed to get response from GetMapData service";
       return false;
     }
 
-    return response->success;
+    if (!response->success)
+    {
+      qCritical() << "[CommandExecutorClient::callGetMapDataService] GetMapData service responded with failure: "
+                  << QString::fromStdString(response->error_message);
+      return false;
+    }
+
+    yaml_out = response->yaml_content;
+    pgm_out = response->pgm_content;
+    return true;
   }
   else
   {
-    qCritical() << "[CommandExecutorClient::callCommandService] Error calling command service";
+    qCritical() << "[CommandExecutorClient::callGetMapDataService] Error calling GetMapData service";
     return false;
   }
 }
@@ -379,9 +783,15 @@ bool CommandExecutorClient::validateCommandKey(const std::string& key) const
   return exist;
 }
 
-std::string CommandExecutorClient::resolveServiceName() const
+std::string CommandExecutorClient::resolveServiceName(const std::string& service_name) const
 {
-  const std::string base = std::string(S_CMD);
+  if (service_name.empty())
+  {
+    qCritical() << "[CommandExecutorClient::resolveServiceName] Service name is empty";
+    return service_name;
+  }
+
+  const std::string base = service_name;
 
   if (context_)
   {
@@ -410,12 +820,32 @@ bool CommandExecutorClient::rebuildClient()
     return false;
   }
 
-  const std::string service_name = resolveServiceName();
-  cli_cmd_ = parent_node_->create_client<command_executor_msgs::srv::Cmd>(service_name, QOS_CLIENTS, cb_group_);
+  cli_cmd_ = parent_node_->create_client<command_executor_msgs::srv::Cmd>(resolveServiceName(std::string(S_CMD)), QOS_CLIENTS, cb_group_);
 
   if (!cli_cmd_)
   {
     qCritical() << "[CommandExecutorClient::rebuildClient] Failed to create command client";
+    return false;
+  }
+
+  cli_get_map_data_ =
+      parent_node_->create_client<command_executor_msgs::srv::GetMapData>(resolveServiceName(std::string(S_GET_MAP_DATA)), QOS_CLIENTS, cb_group_);
+
+  if (!cli_get_map_data_)
+  {
+    qCritical() << "[CommandExecutorClient::rebuildClient] Failed to create get_map_data client";
+    cli_cmd_.reset();
+    return false;
+  }
+
+  cli_global_localization_ =
+      parent_node_->create_client<std_srvs::srv::Empty>(resolveServiceName(std::string(S_REINITIALIZE_GLOBAL_LOCALIZATION)), QOS_CLIENTS, cb_group_);
+
+  if (!cli_global_localization_)
+  {
+    qCritical() << "[CommandExecutorClient::rebuildClient] Failed to create global localization client";
+    cli_cmd_.reset();
+    cli_get_map_data_.reset();
     return false;
   }
 
@@ -457,7 +887,7 @@ bool CommandExecutorClient::saveMap(const std::string& map_name)
 
   if (!validateCommandKey(KEY_MAP_SAVER))
   {
-    qCritical() << "[CommandExecutorClient::saveMap] Command key 'map_saver' is not valid";
+    qCritical() << "[CommandExecutorClient::saveMap] Command key" << KEY_MAP_SAVER << "is not valid";
     return false;
   }
 
@@ -477,17 +907,16 @@ bool CommandExecutorClient::saveMap(const std::string& map_name)
 
   const std::string full_cmd = buildCommand(cmd_info.cmd, args);
 
-  const bool success = callCommandService(full_cmd, true);
+  CommandRequestContext context{CommandRequestType::SaveMap, std::string(KEY_MAP_SAVER), full_cmd, std::string()};
 
-  if (!success)
+  const bool sent = callCommandServiceAsync(full_cmd, true, context);
+
+  if (!sent)
   {
     qCritical() << "[CommandExecutorClient::saveMap] Failed to save map";
     return false;
   }
 
-  setCommandState(KEY_MAP_SAVER, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
-  startHealthTimer();
-  qInfo() << "[CommandExecutorClient::saveMap] Successfully saved map";
   return true;
 }
 
@@ -519,16 +948,17 @@ bool CommandExecutorClient::stopCommand(const std::string& key)
     return false;
   }
 
-  const bool success = callCommandService(full_cmd, false);
-  if (!success)
+  CommandRequestContext context{CommandRequestType::StopCommand, key, full_cmd, std::string()};
+
+  const bool sent = callCommandServiceAsync(full_cmd, false, context);
+
+  if (!sent)
   {
     qCritical() << "[CommandExecutorClient::stopCommand] Failed to stop command for key: " << QString::fromStdString(key);
     setCommandState(key, CommandExecutorClient::CommandStatus::ERROR, full_cmd);
     return false;
   }
 
-  setCommandState(key, CommandExecutorClient::CommandStatus::STOPPING, full_cmd);
-  startHealthTimer();
   return true;
 }
 
@@ -545,6 +975,12 @@ void CommandExecutorClient::setCommandState(const std::string& key, CommandExecu
     state.status = status;
     state.timestamp = std::chrono::steady_clock::now();
   }
+}
+
+bool CommandExecutorClient::isCommandActive(CommandExecutorClient::CommandStatus status) const
+{
+  return status == CommandExecutorClient::CommandStatus::STARTING || status == CommandExecutorClient::CommandStatus::RUNNING ||
+         status == CommandExecutorClient::CommandStatus::STOPPING;
 }
 
 void CommandExecutorClient::startHealthTimer()
@@ -739,4 +1175,27 @@ std::string CommandExecutorClient::replacePlaceholders(std::string input, const 
   }
 
   return input;
+}
+
+bool CommandExecutorClient::publishMapDataOnce(const nav_msgs::msg::OccupancyGrid& occupancy_grid)
+{
+  if (!initialized_)
+  {
+    qCritical() << "[CommandExecutorClient::publishMapDataOnce] CommandExecutorClient is not initialized";
+    return false;
+  }
+
+  if (!pub_map_data_)
+  {
+    std::string topic_name = context_ ? context_->resolveTopic(std::string(T_MAP)) : std::string(T_MAP);
+    pub_map_data_ = parent_node_->create_publisher<nav_msgs::msg::OccupancyGrid>(topic_name, QOS_RELIABLE_LATCH);
+    if (!pub_map_data_)
+    {
+      qCritical() << "[CommandExecutorClient::publishMapDataOnce] Failed to create map data publisher";
+      return false;
+    }
+  }
+
+  pub_map_data_->publish(occupancy_grid);
+  return true;
 }

@@ -18,6 +18,5 @@ ros2:
 # Map Rendering Configuration
 map:
   robot_size: 0.32 # turtlebot3 waffle
-  image_path: ".local/robogait/maps/"
-  map_path:   "/maps/"
-  
+  image_path: ".local/robogait/maps/" # local path where map images are stored
+  map_path:   "/maps/" # path used in service calls (relative to the robot's home directory)

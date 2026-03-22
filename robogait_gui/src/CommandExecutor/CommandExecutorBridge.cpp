@@ -1,5 +1,7 @@
 #include <string>
 
+#include <QMetaObject>
+
 #include "CommandExecutor/CommandExecutorBridge.hpp"
 
 using namespace ROBOGait::qml::executor;
@@ -20,6 +22,16 @@ CommandExecutorBridge::CommandExecutorBridge(QObject* parent) :
   poll_timer_.start();
 
   syncFromClient();
+
+  auto& client = ROBOGait::ros::executor::CommandExecutorClient::getInstance();
+
+  // clang-format off
+  client.setRequestCallback([this](bool success) {
+    QMetaObject::invokeMethod(this,
+                              [this, success]() { emit requestFinished(success); },
+                              Qt::QueuedConnection);
+  });
+  // clang-format on
 }
 
 int CommandExecutorBridge::getStatus() const { return status_; }
@@ -36,6 +48,23 @@ bool CommandExecutorBridge::stopMapping(bool save_map, const QString& map_name)
 bool CommandExecutorBridge::deleteMap(const QString& map_name)
 {
   return ROBOGait::ros::executor::CommandExecutorClient::getInstance().deleteMap(map_name.trimmed().toStdString());
+}
+
+bool CommandExecutorBridge::requestMapData(const QString& map_name)
+{
+  return ROBOGait::ros::executor::CommandExecutorClient::getInstance().requestMapData(map_name.trimmed().toStdString());
+}
+
+bool CommandExecutorBridge::stopNavigation() { return ROBOGait::ros::executor::CommandExecutorClient::getInstance().stopNavigation(); }
+
+bool CommandExecutorBridge::startNavigation(const QString& map_name)
+{
+  return ROBOGait::ros::executor::CommandExecutorClient::getInstance().startNavigation(map_name.trimmed().toStdString());
+}
+
+bool CommandExecutorBridge::reinitializeGlobalLocalization()
+{
+  return ROBOGait::ros::executor::CommandExecutorClient::getInstance().reinitializeGlobalLocalization();
 }
 
 void CommandExecutorBridge::onPoll() { syncFromClient(); }

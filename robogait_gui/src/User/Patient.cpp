@@ -18,7 +18,8 @@ QString Patient::getStatusRichText() const
 {
   if (isActive())
   {
-    return "<span style='color:#cce54d'>HAY PACIENTE ACTIVO</span>";
+    const QString display = display_name_.isEmpty() ? (last_name_ + ", " + name_).trimmed() : display_name_;
+    return "<span style='color:#cce54d'>PACIENTE: " + display + "</span>";
   }
 
   return "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY PACIENTE ACTIVO</span>";

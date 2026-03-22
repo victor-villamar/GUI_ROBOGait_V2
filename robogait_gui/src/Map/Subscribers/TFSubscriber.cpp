@@ -10,7 +10,7 @@
 
 using namespace ROBOGait::map::subscribers;
 
-TFSubscriber::TFSubscriber() : robot_pose_data_(nullptr), map_frame_(""), robot_frame_(""), active_(false), warn_logged_(false) {}
+TFSubscriber::TFSubscriber() : robot_pose_data_(nullptr), map_frame_(""), robot_frame_(""), active_(false), warn_logged_(false), paused_(false) {}
 
 TFSubscriber::~TFSubscriber() { stop(); }
 
@@ -100,8 +100,16 @@ void TFSubscriber::stop()
 
 bool TFSubscriber::isActive() const { return active_; }
 
+void TFSubscriber::setPaused(bool paused) { paused_ = paused; }
+
+
 void TFSubscriber::updatePoseFromTF()
 {
+  if (paused_)
+  {
+    return;
+  }
+
   if (!tf_buffer_ || !robot_pose_data_)
   {
     return;

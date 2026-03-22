@@ -68,6 +68,17 @@ void RobotPoseSource::stop()
   active_ = false;
 }
 
+void RobotPoseSource::setPaused(bool paused)
+{
+  if (!tf_subscriber_)
+  {
+    std::cerr << "[RobotPoseSource::setPaused] TF subscriber is null" << std::endl;
+    return;
+  }
+
+  tf_subscriber_->setPaused(paused);
+}
+
 bool RobotPoseSource::isActive() const { return active_; }
 
 bool RobotPoseSource::isAvailable() const { return robot_pose_data_ && robot_pose_data_->isAvailable(); }

@@ -6,10 +6,15 @@
 #include <unordered_map>
 
 #include <rclcpp/callback_group.hpp>
+#include <rclcpp/client.hpp>
 #include <rclcpp/node.hpp>
+#include <rclcpp/publisher.hpp>
 #include <rclcpp/timer.hpp>
 
 #include <command_executor_msgs/srv/cmd.hpp>
+#include <command_executor_msgs/srv/get_map_data.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
+#include <std_srvs/srv/empty.hpp>
 
 #include "Context/RobotContext.hpp"
 
@@ -135,6 +140,37 @@ public:
   bool deleteMap(const std::string& map_name);
 
   /**
+   * @brief Request the map data for a given map name
+   *
+   * @param map_name The name of the map to request data for
+   *
+   * @return true if the map data was requested successfully, false otherwise
+   */
+  bool requestMapData(const std::string& map_name);
+
+  /**
+   * @brief Start the navigation process
+   *
+   * @param map_name The name of the map to use for navigation
+   *
+   * @return true if the navigation process was started successfully, false otherwise
+   */
+  bool startNavigation(const std::string& map_name);
+
+  /**
+   * @brief Stop the navigation process
+   *
+   * @return true if the navigation process was stopped successfully, false otherwise
+   */
+  bool stopNavigation();
+
+  /** @brief Reinitialize the global localization
+   *
+   * @return true if the global localization was reinitialized successfully, false otherwise
+   */
+  bool reinitializeGlobalLocalization();
+
+  /**
    * @brief Check if a ROS2 node is alive
    *
    * @param node_name The name of the ROS2 node
@@ -166,11 +202,48 @@ public:
    */
   CommandStatus getCommandStatus(const std::string& key) const;
 
+  /**
+   * @brief Set callback invoked when a command service request completes.
+   */
+  void setRequestCallback(const std::function<void(bool)>& callback);
+
 private:
+  /**
+   * @brief Enum to represent the type of a command request, used for routing the handling of command service responses
+   */
+  enum class CommandRequestType
+  {
+    StartMapping,    /**< Start mapping command */
+    DeleteMap,       /**< Delete map command */
+    StartNavigation, /**< Start navigation command */
+    SaveMap,         /**< Save map command */
+    StopCommand      /**< Stop command request, used for any command stop request and routes to same handling logic */
+  };
+
+  /**
+   * @brief Struct to hold the context of a command request, used to route the handling of command service responses
+   *
+   * @param type The type of the command request
+   * @param command_key The key of the command associated with the request (if applicable)
+   * @param full_cmd The full command string that was sent in the request (if applicable)
+   * @param map_name The name of the map associated with the request (if applicable)
+   */
+  struct CommandRequestContext
+  {
+    CommandRequestType type;
+    std::string command_key;
+    std::string full_cmd;
+    std::string map_name;
+  };
+
   /**
    * @brief Constructor of the CommandExecutorClient class
    */
   CommandExecutorClient();
+
+  /**
+   * @brief Destructor of the CommandExecutorClient class
+   */
   ~CommandExecutorClient() = default;
 
   /**
@@ -185,10 +258,86 @@ private:
    *
    * @param cmd The command to call
    * @param execute Whether to execute the command
+   * @param context Metadata to route completion handling
    *
    * @return true if the service call was successful, false otherwise
    */
-  bool callCommandService(const std::string& cmd, bool execute);
+  bool callCommandServiceAsync(const std::string& cmd, bool execute, const CommandRequestContext& context);
+
+  /**
+   * @brief Handle the response from a command service request
+   *
+   * @param context The context of the command request, used to determine how to handle the response
+   * @param success Whether the command service request was successful
+   */
+  void handleCommandResponse(const CommandRequestContext& context, bool success);
+
+  /**
+   * @brief Handle the result of a start mapping command
+   *
+   * @param success Whether the command was successful
+   * @param full_cmd The full command string
+   */
+  void handleStartMappingResult(bool success, const std::string& full_cmd);
+
+  /**
+   * @brief Handle the result of a delete map command
+   *
+   * @param success Whether the command was successful
+   * @param map_name The name of the map that was attempted to be deleted
+   */
+  void handleDeleteMapResult(bool success, const std::string& map_name);
+
+  /**
+   * @brief Handle the result of a start navigation command
+   *
+   * @param success Whether the command was successful
+   * @param full_cmd The full command string
+   * @param map_name The name of the map that was attempted to be used for navigation
+   */
+  void handleStartNavigationResult(bool success, const std::string& full_cmd, const std::string& map_name);
+
+  /**
+   * @brief Handle the result of a save map command
+   *
+   * @param success Whether the command was successful
+   * @param full_cmd The full command string
+   */
+  void handleSaveMapResult(bool success, const std::string& full_cmd);
+
+  /**
+   * @brief Handle the result of a stop command
+   *
+   * @param success Whether the command was successful
+   * @param key The key of the command that was attempted to be stopped
+   * @param full_cmd The full command string
+   */
+  void handleStopCommandResult(bool success, const std::string& key, const std::string& full_cmd);
+
+  /**
+   * @brief Handle the result of a global localization command
+   *
+   * @param success Whether the command was successful
+   */
+  void handleGlobalLocalizationResult(bool success);
+
+  /**
+   * @brief Notify the result of a command service request through the callback
+   *
+   * @param success Whether the command service request was successful
+   */
+  void notifyRequestResult(bool success);
+
+  /**
+   * @brief Call the get map data service to retrieve YAML and PGM info for a map
+   *
+   * @param map_name The name of the map
+   * @param yaml_out Output parameter to hold the retrieved YAML info (if successful)
+   * @param pgm_out Output parameter to hold the retrieved PGM info (if successful)
+   *
+   * @return true if the service call was successful and data was retrieved, false otherwise
+   */
+  bool callGetMapDataService(const std::string& map_name, std::optional<std::string>& yaml_out, std::optional<std::vector<uint8_t>>& pgm_out);
 
   /**
    * @brief Build a command string
@@ -214,9 +363,11 @@ private:
    *
    * Use the robot context to resolve the service name with namespace or without
    *
+   * @param service_name The base service name to resolve
+   *
    * @return The resolved service name
    */
-  std::string resolveServiceName() const;
+  std::string resolveServiceName(const std::string& service_name) const;
 
   /**
    * @brief Rebuild the command service client
@@ -253,6 +404,11 @@ private:
   void setCommandState(const std::string& key, CommandStatus status, const std::string& full_cmd = std::string());
 
   /**
+   * @brief Check if a command status is considered active.
+   */
+  bool isCommandActive(CommandStatus status) const;
+
+  /**
    * @brief Start the health timer
    */
   void startHealthTimer();
@@ -277,10 +433,24 @@ private:
    */
   std::string replacePlaceholders(std::string input, const std::unordered_map<std::string, std::string>& values) const;
 
-  rclcpp::Node* parent_node_;                                          /**< The parent ROS2 node */
-  rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedPtr cli_cmd_; /**< The command service client */
-  rclcpp::CallbackGroup::SharedPtr cb_group_;                          /**< The callback group for the command executor */
-  rclcpp::TimerBase::SharedPtr timer_health_;                          /**< The health timer */
+  /**
+   * @brief Publish map data once
+   *
+   * @param occupancy_grid The occupancy grid to publish
+   *
+   * @return true if the data was published successfully, false otherwise
+   */
+  bool publishMapDataOnce(const nav_msgs::msg::OccupancyGrid& occupancy_grid);
+
+  rclcpp::Node* parent_node_;                                                          /**< The parent ROS2 node */
+  rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedPtr cli_cmd_;                 /**< The command service client */
+  rclcpp::Client<command_executor_msgs::srv::GetMapData>::SharedPtr cli_get_map_data_; /**< The get map data service client */
+  rclcpp::Client<std_srvs::srv::Empty>::SharedPtr cli_global_localization_;            /**< Global localization service client */
+  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_map_data_;            /**< Publisher for map data */
+  rclcpp::CallbackGroup::SharedPtr cb_group_;                                          /**< The callback group for the command executor */
+  rclcpp::TimerBase::SharedPtr timer_health_;                                          /**< The health timer */
+
+  std::function<void(bool)> request_callback_; /**< Callback to notify the result of command service requests */
 
   std::optional<ROBOGait::context::RobotContext> context_; /**< The robot context */
 
@@ -295,6 +465,7 @@ private:
   static constexpr const char* KEY_CARTOGRAPHER = "cartographer"; /**< Key for the cartographer command */
   static constexpr const char* KEY_MAP_SAVER = "map_saver";       /**< Key for the map saver command */
   static constexpr const char* KEY_DELETE_MAP = "delete_map";     /**< Key for the delete map command */
+  static constexpr const char* KEY_NAVIGATION = "navigation";     /**< Key for the navigation command */
 
   static constexpr std::chrono::milliseconds HEALTH_CHECK_PERIOD = std::chrono::milliseconds(100);                 /**< Health check period */
   static constexpr std::chrono::seconds START_STOP_TIMEOUT = std::chrono::seconds(5);                              /**< Start/stop timeout */

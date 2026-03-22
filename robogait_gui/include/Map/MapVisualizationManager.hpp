@@ -3,7 +3,9 @@
 #include <memory>
 
 #include <QObject>
+#include <QPointF>
 #include <QPointer>
+#include <QVariantMap>
 
 #include <rclcpp/node.hpp>
 
@@ -171,6 +173,42 @@ public:
   void setFollowRobot(bool follow_robot);
 
   /**
+   * @brief Convert screen coordinates to map coordinates
+   *
+   * @param screen_point Point in screen coordinates
+   * @param map_point Output parameter for point in map coordinates
+   *
+   * @return true if conversion was successful, false otherwise
+   */
+  bool screenToMap(const QPointF& screen_point, QPointF& map_point) const;
+
+  /**
+   * @brief Set the robot's pose manually for visualization
+   *
+   * @param x X coordinate of the robot in map frame (meters)
+   * @param y Y coordinate of the robot in map frame (meters)
+   * @param theta Orientation of the robot in radians (0 = facing right, positive counter-clockwise)
+   */
+  void setManualRobotPose(double x, double y, double theta);
+
+  /**
+   * @brief Get the current robot pose from the TF stream
+   *
+   * @return QVariantMap with keys x, y, theta, available
+   */
+  Q_INVOKABLE QVariantMap getRobotPose() const;
+
+  /**
+   * @brief Check if a given map point is inside the map boundaries
+   *
+   * @param x X coordinate of the point in map frame (meters)
+   * @param y Y coordinate of the point in map frame (meters)
+   *
+   * @return true if the point is inside the map, false otherwise
+   */
+  bool isMapPointInside(double x, double y) const;
+
+  /**
    * @brief Activate subscriptions for data sources
    */
   Q_INVOKABLE void activateSubscriptions();
@@ -179,6 +217,11 @@ public:
    * @brief Destroy subscriptions for data sources
    */
   Q_INVOKABLE void destroySubscriptions();
+
+  /**
+   * @brief Enable or disable TF-based robot pose updates
+   */
+  Q_INVOKABLE void setRobotPoseUpdatesEnabled(bool enabled);
 
   /**
    * @brief Register MapLayerItem created in QML

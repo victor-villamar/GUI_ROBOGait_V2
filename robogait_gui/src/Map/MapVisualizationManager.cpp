@@ -2,6 +2,7 @@
 #include <QPointF>
 #include <QRectF>
 #include <QtGlobal>
+#include <algorithm>
 #include <cmath>
 
 #include "Context/RobotContext.hpp"
@@ -190,6 +191,131 @@ void MapVisualizationManager::setFollowRobot(bool follow_robot)
   }
 }
 
+bool MapVisualizationManager::screenToMap(const QPointF& screen_point, QPointF& map_point) const
+{
+  if (!map_layer_ || !render_camera_ || !render_scene_)
+  {
+    qCritical() << "[MapVisualizationManager::screenToMap] Cannot convert screen to map coordinates because render layers or camera are not available";
+    return false;
+  }
+
+  const auto map_data = map_layer_->getMapData();
+  if (!map_data || !map_data->isAvailable())
+  {
+    qCritical() << "[MapVisualizationManager::screenToMap] Cannot convert screen to map coordinates because map data is not available";
+    return false;
+  }
+
+  bool invertible = false;
+  const QMatrix4x4 inv_transform = render_camera_->getMatrix().inverted(&invertible);
+  if (!invertible)
+  {
+    qCritical() << "[MapVisualizationManager::screenToMap] Cannot convert screen to map coordinates because camera transform is not invertible";
+    return false;
+  }
+
+  const QVector4D screen_vec(screen_point.x(), screen_point.y(), 0.0f, 1.0f);
+  const QVector4D world_vec = inv_transform * screen_vec;
+
+  map_point = QPointF(world_vec.x(), world_vec.y());
+  return true;
+}
+
+void MapVisualizationManager::setManualRobotPose(double x, double y, double theta)
+{
+  if (!pose_source_)
+  {
+    qCritical() << "[MapVisualizationManager::setManualRobotPose] Pose source not available";
+    return;
+  }
+
+  auto robot_pose_data = pose_source_->getRobotPoseData();
+  if (!robot_pose_data)
+  {
+    qCritical() << "[MapVisualizationManager::setManualRobotPose] Robot pose data not available";
+    return;
+  }
+
+  ROBOGait::map::data::RobotPoseData::RobotPoseMetadata metadata;
+  metadata.x = x;
+  metadata.y = y;
+  metadata.theta = theta;
+  robot_pose_data->setPose(metadata);
+
+  updateAvailability();
+
+  if (robot_layer_item_)
+  {
+    robot_layer_item_->update();
+  }
+}
+
+QVariantMap MapVisualizationManager::getRobotPose() const
+{
+  QVariantMap pose;
+  pose["available"] = false;
+
+  if (!pose_source_)
+  {
+    qCritical() << "[MapVisualizationManager::getRobotPose] Pose source not available";
+    return pose;
+  }
+
+  const auto robot_pose_data = pose_source_->getRobotPoseData();
+  if (!robot_pose_data || !robot_pose_data->isAvailable())
+  {
+    return pose;
+  }
+
+  const auto metadata = robot_pose_data->getMetadata();
+  pose["x"] = metadata.x;
+  pose["y"] = metadata.y;
+  pose["theta"] = metadata.theta;
+  pose["available"] = true;
+  return pose;
+}
+
+
+bool MapVisualizationManager::isMapPointInside(double x, double y) const
+{
+  if (!map_layer_)
+  {
+    qCritical() << "[MapVisualizationManager::isMapPointInside] Map layer not available";
+    return false;
+  }
+
+  if (!map_layer_->getMapData())
+  {
+    qCritical() << "[MapVisualizationManager::isMapPointInside] Map data not available";
+    return false;
+  }
+
+  const auto map_metadata = map_layer_->getMapData()->getMetadata();
+  const double width_m = static_cast<double>(map_metadata.width) * map_metadata.resolution;
+  const double height_m = static_cast<double>(map_metadata.height) * map_metadata.resolution;
+
+  if (width_m <= 0.0 || height_m <= 0.0)
+  {
+    qCritical() << "[MapVisualizationManager::isMapPointInside] Invalid map dimensions";
+    return false;
+  }
+
+  const double origin_x = map_metadata.origin_x;
+  const double origin_y = map_metadata.origin_y;
+  const double theta = map_metadata.origin_theta;
+
+  const double cos_t = std::cos(theta);
+  const double sin_t = std::sin(theta);
+
+  const double dx = x - origin_x;
+  const double dy = y - origin_y;
+
+  const double local_x = cos_t * dx + sin_t * dy;
+  const double local_y = -sin_t * dx + cos_t * dy;
+
+  return (local_x >= 0.0 && local_x <= width_m && local_y >= 0.0 && local_y <= height_m);
+}
+
 void MapVisualizationManager::activateSubscriptions()
 {
   if (!is_initialized_)
@@ -322,17 +448,18 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
     return;
   }
 
-  if (!robot_layer_item_)
-  {
-    qWarning() << "[MapVisualizationManager::registerMapLayerItem] Robot layer item not registered yet, MapLayerItem will be registered without sync item "
-                  "until RobotLayerItem is registered";
-    return;
-  }
-
   map_layer_item_->setRenderScene(render_scene_);
   map_layer_item_->setRenderer(map_layer_);
   map_layer_item_->setCamera(render_camera_);
-  map_layer_item_->setSyncItem(robot_layer_item_);
+
+  if (robot_layer_item_)
+  {
+    map_layer_item_->setSyncItem(robot_layer_item_);
+  }
+  else
+  {
+    qWarning() << "[MapVisualizationManager::registerMapLayerItem] Robot layer item not registered yet, MapLayerItem will be registered without sync item";
+  }
 
   // clang-format off
   connect(map_layer_item_,
@@ -344,6 +471,17 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
 
   qInfo() << "[MapVisualizationManager::registerMapLayerItem] Item registered";
 }
+
+void MapVisualizationManager::setRobotPoseUpdatesEnabled(bool enabled)
+{
+  if (!pose_source_)
+  {
+    return;
+  }
+
+  pose_source_->setPaused(!enabled);
+}
+
 
 void MapVisualizationManager::registerRobotLayerItem(QObject* item)
 {
@@ -389,6 +527,12 @@ void MapVisualizationManager::registerRobotLayerItem(QObject* item)
   robot_layer_item_->setRenderScene(render_scene_);
   robot_layer_item_->setRenderer(robot_layer_);
   robot_layer_item_->setCamera(render_camera_);
+
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(robot_layer_item_);
+    map_layer_item_->update();
+  }
 
   qInfo() << "[MapVisualizationManager::registerRobotLayerItem] Item registered";
 }
@@ -511,9 +655,24 @@ void MapVisualizationManager::fitToView()
   }
 
   const double origin_x = metadata.origin_x;
-  const double origin_y = -(metadata.origin_y + height_m);
+  const double origin_y = metadata.origin_y;
+  const double theta = metadata.origin_theta;
+  const double cos_t = std::cos(theta);
+  const double sin_t = std::sin(theta);
 
-  const QRectF map_rect(origin_x, origin_y, width_m, height_m);
+  auto mapPoint = [&](double x, double y) { return QPointF(origin_x + cos_t * x - sin_t * y, origin_y + sin_t * x + cos_t * y); };
+
+  const QPointF p0 = mapPoint(0.0, 0.0);
+  const QPointF p1 = mapPoint(width_m, 0.0);
+  const QPointF p2 = mapPoint(0.0, height_m);
+  const QPointF p3 = mapPoint(width_m, height_m);
+
+  const double min_x = std::min({p0.x(), p1.x(), p2.x(), p3.x()});
+  const double max_x = std::max({p0.x(), p1.x(), p2.x(), p3.x()});
+  const double min_y = std::min({p0.y(), p1.y(), p2.y(), p3.y()});
+  const double max_y = std::max({p0.y(), p1.y(), p2.y(), p3.y()});
+
+  const QRectF map_rect(QPointF(min_x, min_y), QPointF(max_x, max_y));
   render_camera_->fitToRect(map_rect);
 
   emit zoomLevelChanged();
@@ -798,7 +957,7 @@ void MapVisualizationManager::updateFollowRobotCamera()
   }
 
   const auto pose = robot_layer_->getInterpolatedPose();
-  render_camera_->setViewCenter(QPointF(pose.x, -pose.y));
+  render_camera_->setViewCenter(QPointF(pose.x, pose.y));
   if (map_layer_item_)
   {
     map_layer_item_->update();

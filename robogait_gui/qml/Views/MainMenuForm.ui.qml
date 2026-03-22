@@ -243,7 +243,7 @@ Item {
 
             readonly property string mapStatusRichText:
                 (userSession && userSession.hasMapAssigned)
-                ? "<span style='color:#cce54d'>HAY MAPA ACTIVO</span>"
+                ? ("<span style='color:#cce54d'>MAPA: " + userSession.currentMapName + "</span>")
                 : "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY MAPA ACTIVO</span>"
 
             readonly property string patientStatusRichText:
@@ -252,11 +252,11 @@ Item {
                 : "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY PACIENTE ACTIVO</span>"
 
             Text {
-                id: bottomStatusMap
+                id: bottomStatusPatient
                 font.pixelSize: 14
                 font.bold: true
                 textFormat: Text.RichText
-                text: bottomStatusRow.mapStatusRichText
+                text: bottomStatusRow.patientStatusRichText
             }
 
             Text {
@@ -264,15 +264,15 @@ Item {
                 color: "#ffffff"
                 font.pixelSize: 14
                 font.bold: true
-                text: qsTr(" – ")
+                text: qsTr(" | ")
             }
 
             Text {
-                id: bottomStatusPatient
+                id: bottomStatusMap
                 font.pixelSize: 14
                 font.bold: true
                 textFormat: Text.RichText
-                text: bottomStatusRow.patientStatusRichText
+                text: bottomStatusRow.mapStatusRichText
             }
         }
 

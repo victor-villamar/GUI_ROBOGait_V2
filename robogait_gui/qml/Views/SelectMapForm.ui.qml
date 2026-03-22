@@ -8,7 +8,7 @@ Item {
     property alias addMapButton: addMapButton
     property alias mapsListView: mapsListView
     property alias mapsScrollView: mapsScrollView
-    property int selectedMapIndex: -1
+    property string selectedMapName: ""
 
     signal addMapRequested()
     signal mapClicked(int mapIndex, string mapName)
@@ -93,7 +93,7 @@ Item {
                     width: parent.width
                     height: 60
                     radius: 15
-                    color: index === root.selectedMapIndex ? "#aed2ea" : "#ffffff"
+                    color: map_name === root.selectedMapName ? "#aed2ea" : "#ffffff"
                     border.color: "#cccccc"
 
                     Text {
