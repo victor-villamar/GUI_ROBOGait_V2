@@ -115,7 +115,9 @@ public:
   Q_INVOKABLE void setPositionFromScreenCoordinates(double screen_x, double screen_y);
 
   /**
-   * @brief Set the robot's orientation in degrees
+   * @brief Set the robot's orientation in radians
+   *
+   * Receives orientation in degrees and converts it to radians internally
    *
    * @param degrees Orientation in degrees (0 = facing right, positive counter-clockwise)
    */

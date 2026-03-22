@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "CommandExecutor/CommandExecutorClient.hpp"
+#include "Map/Utils/Utils.hpp"
 #include "Robot/RobotManager.hpp"
 #include "Ros/Define.hpp"
 #include "Ros/TopicsName.hpp"
@@ -154,7 +155,7 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
 
 void RobotManager::clearSelection()
 {
-  const QString topic_name = buildTopicName(QString::fromUtf8(T_CMD_VEL));
+  pub_pose_initialize_.reset();
 
   if (use_topic_filter_)
   {
@@ -316,6 +317,46 @@ void RobotManager::disableManualControl()
   manual_control_->destroyPublisher();
 
   qInfo() << "[RobotManager::disableManualControl] Manual control disabled";
+}
+
+void RobotManager::publishInitialPose(double x, double y, double theta)
+{
+  if (!parent_node_)
+  {
+    qCritical() << "[RobotManager::publishInitialPose] Parent node is not set";
+    return;
+  }
+
+  if (selected_robot_namespace_.isEmpty())
+  {
+    qCritical() << "[RobotManager::publishInitialPose] No robot selected";
+    return;
+  }
+
+  if (!pub_pose_initialize_)
+  {
+    const QString topic_name = buildTopicName(QString::fromUtf8(T_POSE_INITIALIZE));
+    pub_pose_initialize_ = parent_node_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(topic_name.toStdString(), QOS_RELIABLE_LATCH);
+  }
+
+  auto msg = geometry_msgs::msg::PoseWithCovarianceStamped();
+
+  QString frame_id = buildTopicName("/" + QString::fromUtf8(TF_MAP_FRAME));
+
+  msg.header.frame_id = frame_id.toStdString();
+  msg.header.stamp = parent_node_->now();
+
+  msg.pose.pose.position.x = x;
+  msg.pose.pose.position.y = y;
+  msg.pose.pose.position.z = 0.0;
+  msg.pose.pose.orientation = ROBOGait::map::utils::createQuaternionFromYaw(theta);
+
+  msg.pose.covariance.fill(0.0);
+  msg.pose.covariance[0] = 0.05;  // Variance in x (50cm)
+  msg.pose.covariance[7] = 0.05;  // Variance in y (50cm)
+  msg.pose.covariance[35] = 0.15; // Variance in yaw (15 degrees)
+
+  pub_pose_initialize_->publish(msg);
 }
 
 void RobotManager::startMonitoring()
