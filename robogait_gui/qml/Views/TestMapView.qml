@@ -373,6 +373,28 @@ TestMapViewForm {
                 maybeFinalizeExit()
             }
         }
+
+        function onRequestFinished(success) {
+            if (success) {
+                return
+            }
+
+            if (waitingForNavigationStart) {
+                waitingForNavigationStart = false
+                busyDialog.close()
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación")
+                errorPopup.open()
+                return
+            }
+
+            if (exiting) {
+                exiting = false
+                busyDialog.close()
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo detener la navegación")
+                errorPopup.open()
+            }
+        }
+
     }
 
 

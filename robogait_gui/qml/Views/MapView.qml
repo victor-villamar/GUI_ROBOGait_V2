@@ -579,5 +579,33 @@ MapViewForm {
                 errorPopup.open()
             }
         }
+
+        function onRequestFinished(success) {
+            if (success) {
+                return
+            }
+
+            if (waitingForResetStop || waitingForResetStart) {
+                waitingForResetStop = false
+                waitingForResetStart = false
+                busyDialog.close()
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo reiniciar el mapeo")
+                errorPopup.open()
+                return
+            }
+
+            if (waitingForMappingStop) {
+                var wasSaving = pendingSaveToDb
+                waitingForMappingStop = false
+                pendingSaveAndExit = false
+                pendingSaveToDb = false
+                busyDialog.close()
+                errorPopup.errorRectangleTextError.text = wasSaving
+                    ? qsTr("Error: No se pudo guardar el mapa.")
+                    : qsTr("Error: No se pudo detener el mapeo.")
+                errorPopup.open()
+            }
+        }
+
     }
 }

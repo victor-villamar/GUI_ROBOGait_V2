@@ -17,6 +17,7 @@ SelectMapForm {
     property string pendingMapDescription: ""
     property string pendingDeleteMapName: ""
     property bool waitingForMappingStart: false
+    property bool waitingForDeleteMap: false
 
     readonly property var commandExecutorBridge : (userSession && userSession.rosManager && userSession.rosManager.robotManager)
                                                   ? userSession.rosManager.robotManager.commandExecutorBridge
@@ -144,9 +145,11 @@ SelectMapForm {
                 return
             }
 
+            waitingForDeleteMap = true
             var okRemote = commandExecutorBridge.deleteMap(pendingDeleteMapName)
             if(!okRemote)
             {
+                waitingForDeleteMap = false
                 errorPopup.errorRectangleTextError.text = qsTr("Advertencia: No se pudo borrar el mapa en el robot")
                 errorPopup.open()
                 return
@@ -212,6 +215,26 @@ SelectMapForm {
                 busyDialog.close()
                 errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la creación del mapa")
                 errorPopup.open()
+            }
+        }
+
+        function onRequestFinished(success) {
+            if (waitingForMappingStart) {
+                if (!success) {
+                    waitingForMappingStart = false
+                    busyDialog.close()
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la creación del mapa")
+                    errorPopup.open()
+                }
+                return
+            }
+
+            if (waitingForDeleteMap) {
+                if (!success) {
+                    errorPopup.errorRectangleTextError.text = qsTr("Advertencia: No se pudo borrar el mapa en el robot")
+                    errorPopup.open()
+                }
+                waitingForDeleteMap = false
             }
         }
     }
