@@ -248,6 +248,16 @@ TestMapViewForm {
             return
         }
 
+        var rm = (userSession && userSession.rosManager) ? userSession.rosManager.robotManager : null
+        if (!rm) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
+            errorPopup.open()
+            return
+        }
+
+        var pos = placementController.position
+        rm.publishInitialPose(pos.x, pos.y, placementController.theta)
+
         step = stepNavigation
     }
 
