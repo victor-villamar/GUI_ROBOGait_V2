@@ -27,13 +27,17 @@ Rectangle {
     signal confirmPlacementRequested()
     signal confirmOrientationRequested()
     signal backOrientationRequested()
+    signal autoLocalizationRequested()
 
     property bool mapAvailable: false
     property int mapContentMargin: 10
     property bool placementEnabled: false
+    property bool orientationEnabled: false
+    property bool orientationOverride: false
     property var placementController: (userSession.rosManager && userSession.rosManager.robotManager)
                                       ? userSession.rosManager.robotManager.robotPlacementController
                                       : null
+    property bool showRobotPose: false
 
     ColumnLayout {
         anchors.fill: parent
@@ -104,7 +108,7 @@ Rectangle {
                 id: robotLayerItem
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
-                visible: mapAvailable && placementController && placementController.hasPosition
+                visible: showRobotPose
                 z: 2
 
                 Component.onCompleted: {
@@ -116,6 +120,9 @@ Rectangle {
                     }
                 }
             }
+
+
+
 
             MapLayerItem {
                 id: mapLayerItem
@@ -149,18 +156,21 @@ Rectangle {
                 }
             }
 
+
+
             Rectangle {
                 id: rotationPanel
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.rightMargin: 21
                 anchors.bottomMargin: 21
-                color: "#2c5f7c"
+                color: orientationEnabled ? "#2c5f7c" : "#3b4a55"
                 radius: 13
-                border.color: "#6aa3c8"
+                border.color: orientationEnabled ? "#6aa3c8" : "#5f707d"
                 border.width: 3
                 z: 50
                 visible: mapAvailable && isOrientationStep && placementController && placementController.hasPosition
+                opacity: orientationEnabled ? 1.0 : 0.6
 
                 property int padding: 13
                 property real wheelSize: Math.min(240, Math.min(parent.width, parent.height) * 0.32)
@@ -177,7 +187,7 @@ Rectangle {
                     Rectangle {
                         width: rotationPanel.wheelSize
                         height: 36
-                        color: "#1a3a4a"
+                        color: orientationEnabled ? "#1a3a4a" : "#2e3a43"
                         radius: 6
                         opacity: 0.9
 
@@ -201,7 +211,7 @@ Rectangle {
 
                         function updateOrientationFromPoint(px, py) 
                         {
-                            if (!placementController || !placementController.hasPosition) 
+                            if (!placementController || !placementController.hasPosition || !orientationEnabled)
                             {
                                 return
                             }
@@ -225,7 +235,7 @@ Rectangle {
                             anchors.fill: parent
                             radius: width / 2
                             color: "transparent"
-                            border.color: "#ffffff"
+                            border.color: orientationEnabled ? "#ffffff" : "#9aa8b1"
                             border.width: 2
                         }
 
@@ -241,7 +251,7 @@ Rectangle {
                             onPaint: {
                                 var ctx = getContext("2d")
                                 ctx.clearRect(0, 0, width, height)
-                                ctx.fillStyle = "#ffffff"
+                                ctx.fillStyle = orientationEnabled ? "#ffffff" : "#9aa8b1"
                                 var cx = width / 2
                                 var headY = 0
                                 var headW = width * 0.7
@@ -262,6 +272,7 @@ Rectangle {
 
                         MultiPointTouchArea {
                             anchors.fill: parent
+                            enabled: orientationEnabled
                             minimumTouchPoints: 1
                             maximumTouchPoints: 1
                             onTouchUpdated: {
@@ -314,55 +325,94 @@ Rectangle {
             radius: 6
             visible: !isNavigationStep
 
-            RowLayout {
+            Item {
+                id: bottomBarContent
                 anchors.fill: parent
                 anchors.margins: 8
-                spacing: 10
 
-                Button {
-                    id: enablePlacementButton
-                    Layout.preferredWidth: 200
-                    Layout.preferredHeight: 44
-                    checkable: true
-                    checked: placementEnabled
+                Row {
+                    id: placementButtons
+                    spacing: 10
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
                     visible: isPositionStep
 
-                    background: Rectangle {
-                        radius: 6
-                        color: enablePlacementButton.checked ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
-                        border.width: 1
+                    Button {
+                        id: enablePlacementButton
+                        width: 200
+                        height: 44
+                        checkable: true
+                        checked: placementEnabled
+
+                        background: Rectangle {
+                            radius: 6
+                            color: enablePlacementButton.checked ? "#1a3a4a" : "#3a7fa0"
+                            border.color: "#ffffff"
+                            border.width: 1
+                        }
+
+                        contentItem: Text {
+                            text: qsTr("HABILITAR COLOCACIÓN")
+                            color: "#ffffff"
+                            font.pixelSize: 14
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: placementEnabled = !placementEnabled
                     }
 
-                    contentItem: Text {
-                        text: qsTr("HABILITAR COLOCACIÓN")
-                        color: "#ffffff"
-                        font.pixelSize: 14
-                        font.bold: true
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
+                    Button {
+                        id: clearPlacementButton
+                        width: 140
+                        height: 44
+                        enabled: isPositionStep && placementEnabled && placementController && placementController.hasPosition
+                        opacity: enabled ? 1.0 : 0.4
 
-                    onClicked: placementEnabled = !placementEnabled
+                        background: Rectangle {
+                            radius: 6
+                            color: clearPlacementButton.pressed ? "#1a3a4a" : "#3a7fa0"
+                            border.color: "#ffffff"
+                            border.width: 1
+                        }
+
+                        contentItem: Text {
+                            text: qsTr("BORRAR")
+                            color: "#ffffff"
+                            font.pixelSize: 14
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: {
+                            if (placementController) {
+                                placementController.clear()
+                            }
+                        }
+                    }
                 }
 
                 Button {
-                    id: clearPlacementButton
-                    Layout.preferredWidth: 140
-                    Layout.preferredHeight: 44
+                    id: autoLocalizationButton
+                    width: 200
+                    height: 44
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
                     visible: isPositionStep
-                    enabled: isPositionStep && placementEnabled && placementController && placementController.hasPosition
-                    opacity: enabled ? 1.0 : 0.4
+                    enabled: isPositionStep
+                    opacity: enabled ? 1.0 : 1.0
 
                     background: Rectangle {
                         radius: 6
-                        color: clearPlacementButton.pressed ? "#1a3a4a" : "#3a7fa0"
+                        color: autoLocalizationButton.pressed ? "#1a3a4a" : "#3a7fa0"
                         border.color: "#ffffff"
                         border.width: 1
                     }
 
                     contentItem: Text {
-                        text: qsTr("BORRAR")
+                        text: qsTr("AUTOLOCALIZAR")
                         color: "#ffffff"
                         font.pixelSize: 14
                         font.bold: true
@@ -371,17 +421,57 @@ Rectangle {
                     }
 
                     onClicked: {
+                        autoLocalizationRequested()
+                    }
+                }
+
+
+                Button {
+                    id: enableOrientationButton
+                    width: 210
+                    height: 44
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: isOrientationStep
+                    enabled: true
+                    background: Rectangle {
+                        radius: 6
+                        color: orientationEnabled ? "#1a3a4a" : "#3a7fa0"
+                        border.color: "#ffffff"
+                        border.width: 1
+                    }
+
+                    contentItem: Text {
+                        text: qsTr("HABILITAR ORIENTACIÓN")
+                        color: "#ffffff"
+                        font.pixelSize: 14
+                        font.bold: true
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    onClicked: {
+                        if (orientationEnabled) {
+                            orientationEnabled = false
+                            return
+                        }
+
+                        orientationEnabled = true
+                        orientationOverride = true
                         if (placementController) {
-                            placementController.clear()
+                            placementController.setOrientationDegrees(0)
                         }
                     }
                 }
 
                 Button {
                     id: backOrientationButton
-                    Layout.preferredWidth: 140
-                    Layout.preferredHeight: 44
+                    width: 140
+                    height: 44
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
                     visible: isOrientationStep
+                    enabled: true
 
                     background: Rectangle {
                         radius: 6
@@ -404,15 +494,15 @@ Rectangle {
                     }
                 }
 
-                Item { Layout.fillWidth: true }
-
                 Button {
                     id: confirmPlacementButton
-                    Layout.preferredWidth: 160
-                    Layout.preferredHeight: 44
+                    width: 160
+                    height: 44
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
                     visible: isPositionStep || isOrientationStep
                     enabled: isPositionStep ? (placementController && placementController.hasPosition)
-                                              : (isOrientationStep && placementController && placementController.hasOrientation)
+                                              : (isOrientationStep && (placementController && placementController.hasOrientation))
                     opacity: enabled ? 1.0 : 0.4
 
                     background: Rectangle {
@@ -441,6 +531,7 @@ Rectangle {
                 }
             }
         }
+
         Rectangle {
             id: navigationBar
             Layout.fillWidth: true

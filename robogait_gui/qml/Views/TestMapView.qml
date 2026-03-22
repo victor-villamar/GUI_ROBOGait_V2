@@ -16,6 +16,19 @@ TestMapViewForm {
 
     property bool waitingForNavigationStart: false
 
+    property bool autoLocalizationActive: false
+    property bool autoLocalizationWaitingForNav: false
+    property bool autoLocalizationWaitingForService: false
+    property bool autoLocalizationCompleted: false
+    property bool autoLocalizationServiceDone: false
+    property bool autoLocalizationSpinDone: false
+    property int autoLocalizationSpinMs: 30000
+    property real autoLocalizationAngularSpeed: 0.75
+
+    readonly property var manualControl: (userSession && userSession.rosManager && userSession.rosManager.robotManager)
+                                            ? userSession.rosManager.robotManager.manualControl
+                                            : null
+
     readonly property int stepPosition: 0
     readonly property int stepOrientation: 1
     readonly property int stepNavigation: 2
@@ -32,9 +45,197 @@ TestMapViewForm {
                   ? userSession.rosManager.robotManager.mapVisualizationManager.mapAvailable
                   : false
 
+    showRobotPose: mapAvailable && ((placementController && placementController.hasPosition) || autoLocalizationCompleted || autoLocalizationActive)
+
     onStepChanged: {
         if (step !== stepPosition) {
             placementEnabled = false
+        syncRobotPoseUpdates()
+        }
+
+        if (step !== stepOrientation) {
+            orientationEnabled = false
+            orientationOverride = false
+        }
+
+    }
+
+    onPlacementEnabledChanged: {
+        if (placementEnabled) {
+            autoLocalizationCompleted = false
+            autoLocalizationActive = false
+            autoLocalizationWaitingForNav = false
+            autoLocalizationWaitingForService = false
+            autoLocalizationServiceDone = false
+            autoLocalizationSpinDone = false
+            orientationEnabled = false
+            orientationOverride = false
+
+            if (placementController) {
+                placementController.clear()
+            }
+        }
+
+    }
+
+    function syncRobotPoseUpdates() {
+        var mapVizManager = userSession && userSession.rosManager && userSession.rosManager.robotManager
+                           ? userSession.rosManager.robotManager.mapVisualizationManager
+                           : null
+        if (!mapVizManager) {
+            return
+        }
+
+        var enableUpdates = (step === stepNavigation) || autoLocalizationActive
+        mapVizManager.setRobotPoseUpdatesEnabled(enableUpdates)
+    }
+
+    function startAutoLocalizationSpin() {
+        if (!manualControl || !userSession || !userSession.rosManager || !userSession.rosManager.robotManager) {
+            return
+        }
+
+        userSession.rosManager.robotManager.enableManualControl()
+        autoLocalizationSpinTimer.start()
+        autoLocalizationStopTimer.start()
+    }
+
+    function stopAutoLocalizationSpin() {
+        if (autoLocalizationSpinTimer.running) {
+            autoLocalizationSpinTimer.stop()
+        }
+
+        if (autoLocalizationStopTimer.running) {
+            autoLocalizationStopTimer.stop()
+        }
+
+        if (manualControl) {
+            manualControl.stopRobot()
+        }
+
+        if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
+            userSession.rosManager.robotManager.disableManualControl()
+        }
+    }
+
+    function failAutoLocalization(messageText) {
+        autoLocalizationActive = false
+        autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForService = false
+        autoLocalizationCompleted = false
+        autoLocalizationServiceDone = false
+        autoLocalizationSpinDone = false
+        stopAutoLocalizationSpin()
+        busyDialog.close()
+        syncRobotPoseUpdates()
+
+        if (messageText) {
+            errorPopup.errorRectangleTextError.text = messageText
+            errorPopup.open()
+        }
+    }
+
+    function saveAutoLocalizationPose() {
+        if (!placementController) {
+            return false
+        }
+
+        var mapVizManager = userSession && userSession.rosManager && userSession.rosManager.robotManager
+                           ? userSession.rosManager.robotManager.mapVisualizationManager
+                           : null
+        if (!mapVizManager) {
+            return false
+        }
+
+        var pose = mapVizManager.getRobotPose()
+        if (!pose || !pose.available) {
+            return false
+        }
+
+        placementController.position = Qt.point(pose.x, pose.y)
+        placementController.theta = pose.theta
+        return true
+    }
+
+    function finalizeAutoLocalization() {
+        autoLocalizationActive = false
+        autoLocalizationWaitingForService = false
+        autoLocalizationWaitingForNav = false
+
+        if (!saveAutoLocalizationPose()) {
+            failAutoLocalization(qsTr("Error: No se pudo obtener la posición"))
+            return
+        }
+
+        autoLocalizationCompleted = true
+        placementEnabled = false
+        syncRobotPoseUpdates()
+    }
+
+    function triggerGlobalLocalization() {
+        if (!commandExecutorBridge) {
+            failAutoLocalization(qsTr("Error: No hay conexión con el robot"))
+            return
+        }
+
+        autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForService = true
+
+        var okService = commandExecutorBridge.reinitializeGlobalLocalization()
+        if (!okService) {
+            autoLocalizationWaitingForService = false
+            failAutoLocalization(qsTr("Error: No se pudo iniciar la autolocalización"))
+            return
+        }
+
+        startAutoLocalizationSpin()
+    }
+
+    function beginAutoLocalization() {
+        if (autoLocalizationActive) {
+            return
+        }
+
+        if (!commandExecutorBridge) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
+            errorPopup.open()
+            return
+        }
+
+        var mapName = (userSession.currentMapName || "").trim()
+        if (mapName === "") {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No hay mapa seleccionado")
+            errorPopup.open()
+            return
+        }
+
+        autoLocalizationCompleted = false
+        autoLocalizationActive = true
+        syncRobotPoseUpdates()
+        autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForService = false
+        autoLocalizationServiceDone = false
+        autoLocalizationSpinDone = false
+        busyDialog.openWithMessage(qsTr("Iniciando autolocalización..."))
+
+        if (commandExecutorBridge.activeCommandKey === "navigation") {
+            if (commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
+                triggerGlobalLocalization()
+                return
+            }
+
+            if (commandExecutorBridge.status === CommandExecutorBridge.STARTING) {
+                autoLocalizationWaitingForNav = true
+                return
+            }
+        }
+
+        autoLocalizationWaitingForNav = true
+        var okStart = commandExecutorBridge.startNavigation(mapName)
+        if (!okStart) {
+            autoLocalizationWaitingForNav = false
+            failAutoLocalization(qsTr("Error: No se pudo iniciar la navegación"))
+            return
         }
     }
 
@@ -124,6 +325,7 @@ TestMapViewForm {
 
         if (mapVizManager) {
             mapVizManager.activateSubscriptions()
+            syncRobotPoseUpdates()
         }
 
         if (!dbManager || !userSession) {
@@ -186,15 +388,39 @@ TestMapViewForm {
         }
     }
 
+    onAutoLocalizationRequested: {
+        if (step !== stepPosition) {
+            return
+        }
+
+        autoLocalizationConfirmDialog.openWithMessage(
+                    qsTr("Antes de autolocalizarse, asegúrese de que el robot esté en un espacio libre de obstáculos. Durante la autolocalización el robot realizará movimientos."))
+    }
+
 
     onConfirmPlacementRequested: {
         if (step !== stepPosition) {
             return
         }
 
+        if (autoLocalizationActive) {
+            return
+        }
+
+        if (autoLocalizationCompleted) {
+            placementEnabled = false
+        syncRobotPoseUpdates()
+            orientationEnabled = false
+            orientationOverride = false
+            step = stepOrientation
+            return
+        }
+
         if (!placementController || !placementController.hasPosition) {
             return
         }
+
+        autoLocalizationCompleted = false
 
         if (!commandExecutorBridge) {
             errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
@@ -212,10 +438,10 @@ TestMapViewForm {
         if (commandExecutorBridge.activeCommandKey === "navigation") {
             if (commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
                 placementEnabled = false
+        syncRobotPoseUpdates()
+                orientationEnabled = false
+            orientationOverride = false
                 step = stepOrientation
-                if (placementController && !placementController.hasOrientation) {
-                    placementController.setOrientationDegrees(0)
-                }
                 return
             }
 
@@ -244,19 +470,25 @@ TestMapViewForm {
             return
         }
 
-        if (!placementController || !placementController.hasOrientation) {
+        if (!placementController) {
             return
         }
 
-        var rm = (userSession && userSession.rosManager) ? userSession.rosManager.robotManager : null
-        if (!rm) {
-            errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
-            errorPopup.open()
+        if (!placementController.hasOrientation) {
             return
         }
 
-        var pos = placementController.position
-        rm.publishInitialPose(pos.x, pos.y, placementController.theta)
+        if (orientationOverride) {
+            var rm = (userSession && userSession.rosManager) ? userSession.rosManager.robotManager : null
+            if (!rm) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
+                errorPopup.open()
+                return
+            }
+
+            var pos = placementController.position
+            rm.publishInitialPose(pos.x, pos.y, placementController.theta)
+        }
 
         step = stepNavigation
     }
@@ -270,6 +502,9 @@ TestMapViewForm {
             placementController.clear()
         }
 
+        orientationEnabled = false
+        orientationOverride = false
+        autoLocalizationCompleted = false
         step = stepPosition
     }
 
@@ -322,6 +557,8 @@ TestMapViewForm {
     }
 
     Component.onDestruction: {
+        stopAutoLocalizationSpin()
+
         if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
             var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
             if (mapVizManager) {
@@ -350,18 +587,37 @@ TestMapViewForm {
         ignoreUnknownSignals: true
 
         function onStatusChanged() {
-            if (waitingForNavigationStart) {
+            if (autoLocalizationWaitingForNav)
+            {
                 if (commandExecutorBridge.activeCommandKey === "navigation"
-                    && commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
+                    && commandExecutorBridge.status === CommandExecutorBridge.RUNNING)
+                {
+                    triggerGlobalLocalization()
+                }
+                else if (commandExecutorBridge.activeCommandKey === "navigation"
+                           && commandExecutorBridge.status === CommandExecutorBridge.ERROR)
+                {
+                    autoLocalizationWaitingForNav = false
+                    failAutoLocalization(qsTr("Error: No se pudo iniciar la navegación"))
+                }
+            }
+
+            if (waitingForNavigationStart)
+            {
+                if (commandExecutorBridge.activeCommandKey === "navigation"
+                    && commandExecutorBridge.status === CommandExecutorBridge.RUNNING)
+                {
                     waitingForNavigationStart = false
                     busyDialog.close()
                     placementEnabled = false
+                    syncRobotPoseUpdates()
+                    orientationEnabled = false
+                    orientationOverride = false
                     step = stepOrientation
-                    if (placementController && !placementController.hasOrientation) {
-                        placementController.setOrientationDegrees(0)
-                    }
-                } else if (commandExecutorBridge.activeCommandKey === "navigation"
-                           && commandExecutorBridge.status === CommandExecutorBridge.ERROR) {
+                }
+                else if (commandExecutorBridge.activeCommandKey === "navigation"
+                           && commandExecutorBridge.status === CommandExecutorBridge.ERROR)
+                {
                     waitingForNavigationStart = false
                     busyDialog.close()
                     errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación")
@@ -375,11 +631,39 @@ TestMapViewForm {
         }
 
         function onRequestFinished(success) {
-            if (success) {
+            if (autoLocalizationWaitingForService)
+            {
+                autoLocalizationWaitingForService = false
+
+                if (!success)
+                {
+                    failAutoLocalization(qsTr("Error: No se pudo iniciar la autolocalización"))
+                    return
+                }
+
+                autoLocalizationServiceDone = true
+                busyDialog.close()
+                if (autoLocalizationSpinDone)
+                {
+                    finalizeAutoLocalization()
+                }
                 return
             }
 
-            if (waitingForNavigationStart) {
+            if (autoLocalizationWaitingForNav && !success)
+            {
+                autoLocalizationWaitingForNav = false
+                failAutoLocalization(qsTr("Error: No se pudo iniciar la navegación"))
+                return
+            }
+
+            if (success)
+            {
+                return
+            }
+
+            if (waitingForNavigationStart)
+            {
                 waitingForNavigationStart = false
                 busyDialog.close()
                 errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación")
@@ -387,7 +671,8 @@ TestMapViewForm {
                 return
             }
 
-            if (exiting) {
+            if (exiting)
+            {
                 exiting = false
                 busyDialog.close()
                 errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo detener la navegación")
@@ -397,6 +682,42 @@ TestMapViewForm {
 
     }
 
+
+    ConfirmationDialog {
+        id: autoLocalizationConfirmDialog
+        acceptText: qsTr("Iniciar")
+        holdToAccept: true
+
+        onAccepted: {
+            beginAutoLocalization()
+        }
+    }
+
+    Timer {
+        id: autoLocalizationSpinTimer
+        interval: 100
+        repeat: true
+        running: false
+        onTriggered: {
+            if (manualControl) {
+                manualControl.updateVelocity(0.0, autoLocalizationAngularSpeed)
+            }
+        }
+    }
+
+    Timer {
+        id: autoLocalizationStopTimer
+        interval: autoLocalizationSpinMs
+        repeat: false
+        running: false
+        onTriggered: {
+            stopAutoLocalizationSpin()
+            autoLocalizationSpinDone = true
+            if (autoLocalizationServiceDone) {
+                finalizeAutoLocalization()
+            }
+        }
+    }
 
     BusyDialog {
         id: busyDialog
