@@ -250,6 +250,32 @@ void MapVisualizationManager::setManualRobotPose(double x, double y, double thet
   }
 }
 
+QVariantMap MapVisualizationManager::getRobotPose() const
+{
+  QVariantMap pose;
+  pose["available"] = false;
+
+  if (!pose_source_)
+  {
+    qCritical() << "[MapVisualizationManager::getRobotPose] Pose source not available";
+    return pose;
+  }
+
+  const auto robot_pose_data = pose_source_->getRobotPoseData();
+  if (!robot_pose_data || !robot_pose_data->isAvailable())
+  {
+    return pose;
+  }
+
+  const auto metadata = robot_pose_data->getMetadata();
+  pose["x"] = metadata.x;
+  pose["y"] = metadata.y;
+  pose["theta"] = metadata.theta;
+  pose["available"] = true;
+  return pose;
+}
+
+
 bool MapVisualizationManager::isMapPointInside(double x, double y) const
 {
   if (!map_layer_)
@@ -445,6 +471,17 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
 
   qInfo() << "[MapVisualizationManager::registerMapLayerItem] Item registered";
 }
+
+void MapVisualizationManager::setRobotPoseUpdatesEnabled(bool enabled)
+{
+  if (!pose_source_)
+  {
+    return;
+  }
+
+  pose_source_->setPaused(!enabled);
+}
+
 
 void MapVisualizationManager::registerRobotLayerItem(QObject* item)
 {

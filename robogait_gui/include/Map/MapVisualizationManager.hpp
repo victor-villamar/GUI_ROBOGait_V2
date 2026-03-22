@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QPointF>
 #include <QPointer>
+#include <QVariantMap>
 
 #include <rclcpp/node.hpp>
 
@@ -191,6 +192,13 @@ public:
   void setManualRobotPose(double x, double y, double theta);
 
   /**
+   * @brief Get the current robot pose from the TF stream
+   *
+   * @return QVariantMap with keys x, y, theta, available
+   */
+  Q_INVOKABLE QVariantMap getRobotPose() const;
+
+  /**
    * @brief Check if a given map point is inside the map boundaries
    *
    * @param x X coordinate of the point in map frame (meters)
@@ -209,6 +217,11 @@ public:
    * @brief Destroy subscriptions for data sources
    */
   Q_INVOKABLE void destroySubscriptions();
+
+  /**
+   * @brief Enable or disable TF-based robot pose updates
+   */
+  Q_INVOKABLE void setRobotPoseUpdatesEnabled(bool enabled);
 
   /**
    * @brief Register MapLayerItem created in QML

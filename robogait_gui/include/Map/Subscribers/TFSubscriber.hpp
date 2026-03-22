@@ -69,6 +69,13 @@ public:
   void stop();
 
   /**
+   * @brief Pause or resume pose updates without stopping the subscriber
+   *
+   * @param paused True to pause updates, false to resume
+   */
+  void setPaused(bool paused);
+
+  /**
    * @brief Check if the TF subscriber is active
    *
    * @return true if active, false otherwise
@@ -91,6 +98,7 @@ private:
   std::string robot_frame_;
   bool active_;
   bool warn_logged_;
+  bool paused_;
 
   std::optional<ROBOGait::context::RobotContext> context_;
 };

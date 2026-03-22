@@ -42,6 +42,11 @@ public:
   void start() override;
   void stop() override;
 
+  /**
+   * @brief Pause or resume TF pose updates without resetting pose data
+   */
+  void setPaused(bool paused);
+
   bool isActive() const override;
   bool isAvailable() const override;
 
