@@ -87,6 +87,7 @@ void CommandExecutorClient::clearRobotContext()
   }
   cli_cmd_.reset();
   cli_get_map_data_.reset();
+  cli_global_localization_.reset();
   pub_map_data_.reset();
   command_states_.clear();
   pending_stop_after_save_ = false;
@@ -310,6 +311,45 @@ bool CommandExecutorClient::stopNavigation()
   }
 
   return stopCommand(KEY_NAVIGATION);
+}
+
+bool CommandExecutorClient::reinitializeGlobalLocalization()
+{
+  if (!initialized_)
+  {
+    qCritical() << "[CommandExecutorClient::reinitializeGlobalLocalization] CommandExecutorClient is not initialized";
+    notifyRequestResult(false);
+    return false;
+  }
+
+  if (!cli_global_localization_)
+  {
+    qCritical() << "[CommandExecutorClient::reinitializeGlobalLocalization] Global localization client is not available";
+    notifyRequestResult(false);
+    return false;
+  }
+
+  if (!cli_global_localization_->wait_for_service(SERVICE_CALL_TIMEOUT))
+  {
+    qCritical() << "[CommandExecutorClient::reinitializeGlobalLocalization] Service is not available after waiting";
+    notifyRequestResult(false);
+    return false;
+  }
+
+  auto request = std::make_shared<std_srvs::srv::Empty::Request>();
+
+  cli_global_localization_->async_send_request(request,
+                                               [this](rclcpp::Client<std_srvs::srv::Empty>::SharedFuture future)
+                                               {
+                                                 bool ok = false;
+
+                                                 auto response = future.get();
+                                                 ok = static_cast<bool>(response);
+
+                                                 handleGlobalLocalizationResult(ok);
+                                               });
+
+  return true;
 }
 
 bool CommandExecutorClient::isNodeAlive(const std::string& node_name) const
@@ -613,6 +653,19 @@ void CommandExecutorClient::handleStopCommandResult(bool success, const std::str
   notifyRequestResult(true);
 }
 
+void CommandExecutorClient::handleGlobalLocalizationResult(bool success)
+{
+  if (!success)
+  {
+    qCritical() << "[CommandExecutorClient::reinitializeGlobalLocalization] Failed to call global localization service";
+    notifyRequestResult(false);
+    return;
+  }
+
+  qInfo() << "[CommandExecutorClient::reinitializeGlobalLocalization] Global localization request sent";
+  notifyRequestResult(true);
+}
+
 void CommandExecutorClient::notifyRequestResult(bool success)
 {
   if (request_callback_)
@@ -782,6 +835,17 @@ bool CommandExecutorClient::rebuildClient()
   {
     qCritical() << "[CommandExecutorClient::rebuildClient] Failed to create get_map_data client";
     cli_cmd_.reset();
+    return false;
+  }
+
+  cli_global_localization_ =
+      parent_node_->create_client<std_srvs::srv::Empty>(resolveServiceName(std::string(S_REINITIALIZE_GLOBAL_LOCALIZATION)), QOS_CLIENTS, cb_group_);
+
+  if (!cli_global_localization_)
+  {
+    qCritical() << "[CommandExecutorClient::rebuildClient] Failed to create global localization client";
+    cli_cmd_.reset();
+    cli_get_map_data_.reset();
     return false;
   }
 

@@ -62,6 +62,11 @@ bool CommandExecutorBridge::startNavigation(const QString& map_name)
   return ROBOGait::ros::executor::CommandExecutorClient::getInstance().startNavigation(map_name.trimmed().toStdString());
 }
 
+bool CommandExecutorBridge::reinitializeGlobalLocalization()
+{
+  return ROBOGait::ros::executor::CommandExecutorClient::getInstance().reinitializeGlobalLocalization();
+}
+
 void CommandExecutorBridge::onPoll() { syncFromClient(); }
 
 void CommandExecutorBridge::syncFromClient()

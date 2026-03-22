@@ -14,6 +14,7 @@
 #include <command_executor_msgs/srv/cmd.hpp>
 #include <command_executor_msgs/srv/get_map_data.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
+#include <std_srvs/srv/empty.hpp>
 
 #include "Context/RobotContext.hpp"
 
@@ -163,6 +164,12 @@ public:
    */
   bool stopNavigation();
 
+  /** @brief Reinitialize the global localization
+   *
+   * @return true if the global localization was reinitialized successfully, false otherwise
+   */
+  bool reinitializeGlobalLocalization();
+
   /**
    * @brief Check if a ROS2 node is alive
    *
@@ -308,6 +315,13 @@ private:
   void handleStopCommandResult(bool success, const std::string& key, const std::string& full_cmd);
 
   /**
+   * @brief Handle the result of a global localization command
+   *
+   * @param success Whether the command was successful
+   */
+  void handleGlobalLocalizationResult(bool success);
+
+  /**
    * @brief Notify the result of a command service request through the callback
    *
    * @param success Whether the command service request was successful
@@ -431,6 +445,7 @@ private:
   rclcpp::Node* parent_node_;                                                          /**< The parent ROS2 node */
   rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedPtr cli_cmd_;                 /**< The command service client */
   rclcpp::Client<command_executor_msgs::srv::GetMapData>::SharedPtr cli_get_map_data_; /**< The get map data service client */
+  rclcpp::Client<std_srvs::srv::Empty>::SharedPtr cli_global_localization_;            /**< Global localization service client */
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_map_data_;            /**< Publisher for map data */
   rclcpp::CallbackGroup::SharedPtr cb_group_;                                          /**< The callback group for the command executor */
   rclcpp::TimerBase::SharedPtr timer_health_;                                          /**< The health timer */

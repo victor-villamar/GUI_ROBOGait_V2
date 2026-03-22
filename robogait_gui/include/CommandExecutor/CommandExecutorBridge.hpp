@@ -113,8 +113,14 @@ public:
    */
   Q_INVOKABLE bool stopNavigation();
 
+  /** @brief Reinitialize the global localization
+   *
+   * @return true if the global localization was reinitialized successfully, false otherwise
+   */
+  Q_INVOKABLE bool reinitializeGlobalLocalization();
+
 signals:
-  void statusChanged(); // Emitted when the status changes
+  void statusChanged();               // Emitted when the status changes
   void requestFinished(bool success); // Emitted when a command request finishes
 
 private slots:
