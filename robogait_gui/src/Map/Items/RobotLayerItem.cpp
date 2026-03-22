@@ -185,8 +185,8 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
   }
 
   const float cx = static_cast<float>(pose.x);
-  const float cy = static_cast<float>(-pose.y); // Match ROS -> Qt Y flip
-  const double yaw = -pose.yaw;                 // Match ROS -> Qt rotation
+  const float cy = static_cast<float>(pose.y);
+  const double yaw = pose.yaw;
 
   QMatrix4x4 robot_matrix;
   robot_matrix.translate(cx, cy);

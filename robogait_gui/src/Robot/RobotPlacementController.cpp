@@ -79,8 +79,7 @@ void RobotPlacementController::setPositionFromScreenCoordinates(double screen_x,
     return;
   }
 
-  const QPointF ros_point(map_point.x(), -map_point.y());
-  setPosition(ros_point);
+  setPosition(map_point);
 }
 
 void RobotPlacementController::setOrientationDegrees(double degrees) { setTheta(qDegreesToRadians(degrees)); }

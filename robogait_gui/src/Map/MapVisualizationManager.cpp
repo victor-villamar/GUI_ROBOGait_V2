@@ -2,6 +2,7 @@
 #include <QPointF>
 #include <QRectF>
 #include <QtGlobal>
+#include <algorithm>
 #include <cmath>
 
 #include "Context/RobotContext.hpp"
@@ -274,10 +275,19 @@ bool MapVisualizationManager::isMapPointInside(double x, double y) const
   }
 
   const double origin_x = map_metadata.origin_x;
-  const double origin_y = -(map_metadata.origin_y + height_m); // Invert Y axis because map origin is bottom-left
-  const QRectF map_rect(origin_x, origin_y, width_m, height_m);
+  const double origin_y = map_metadata.origin_y;
+  const double theta = map_metadata.origin_theta;
 
-  return map_rect.contains(QPointF(x, y));
+  const double cos_t = std::cos(theta);
+  const double sin_t = std::sin(theta);
+
+  const double dx = x - origin_x;
+  const double dy = y - origin_y;
+
+  const double local_x = cos_t * dx + sin_t * dy;
+  const double local_y = -sin_t * dx + cos_t * dy;
+
+  return (local_x >= 0.0 && local_x <= width_m && local_y >= 0.0 && local_y <= height_m);
 }
 
 void MapVisualizationManager::activateSubscriptions()
@@ -608,9 +618,24 @@ void MapVisualizationManager::fitToView()
   }
 
   const double origin_x = metadata.origin_x;
-  const double origin_y = -(metadata.origin_y + height_m);
+  const double origin_y = metadata.origin_y;
+  const double theta = metadata.origin_theta;
+  const double cos_t = std::cos(theta);
+  const double sin_t = std::sin(theta);
 
-  const QRectF map_rect(origin_x, origin_y, width_m, height_m);
+  auto mapPoint = [&](double x, double y) { return QPointF(origin_x + cos_t * x - sin_t * y, origin_y + sin_t * x + cos_t * y); };
+
+  const QPointF p0 = mapPoint(0.0, 0.0);
+  const QPointF p1 = mapPoint(width_m, 0.0);
+  const QPointF p2 = mapPoint(0.0, height_m);
+  const QPointF p3 = mapPoint(width_m, height_m);
+
+  const double min_x = std::min({p0.x(), p1.x(), p2.x(), p3.x()});
+  const double max_x = std::max({p0.x(), p1.x(), p2.x(), p3.x()});
+  const double min_y = std::min({p0.y(), p1.y(), p2.y(), p3.y()});
+  const double max_y = std::max({p0.y(), p1.y(), p2.y(), p3.y()});
+
+  const QRectF map_rect(QPointF(min_x, min_y), QPointF(max_x, max_y));
   render_camera_->fitToRect(map_rect);
 
   emit zoomLevelChanged();
@@ -895,7 +920,7 @@ void MapVisualizationManager::updateFollowRobotCamera()
   }
 
   const auto pose = robot_layer_->getInterpolatedPose();
-  render_camera_->setViewCenter(QPointF(pose.x, -pose.y));
+  render_camera_->setViewCenter(QPointF(pose.x, pose.y));
   if (map_layer_item_)
   {
     map_layer_item_->update();

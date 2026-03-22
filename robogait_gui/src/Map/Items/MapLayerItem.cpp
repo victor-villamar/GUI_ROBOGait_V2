@@ -1,4 +1,7 @@
 #include <QDebug>
+#include <algorithm>
+#include <cmath>
+#include <QtMath>
 #include <QGestureEvent>
 #include <QPinchGesture>
 #include <QSGTexture>
@@ -97,15 +100,24 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
     return nullptr;
   }
 
+  auto* map_transform_node = dynamic_cast<QSGTransformNode*>(transform_node->firstChild());
+  if (!map_transform_node)
+  {
+    delete transform_node;
+    transform_node = new QSGTransformNode();
+    map_transform_node = new QSGTransformNode();
+    transform_node->appendChildNode(map_transform_node);
+  }
+
   QSGSimpleTextureNode* node = nullptr;
-  if (!transform_node->firstChild())
+  if (!map_transform_node->firstChild())
   {
     node = new QSGSimpleTextureNode();
-    transform_node->appendChildNode(node);
+    map_transform_node->appendChildNode(node);
   }
   else
   {
-    node = static_cast<QSGSimpleTextureNode*>(transform_node->firstChild());
+    node = static_cast<QSGSimpleTextureNode*>(map_transform_node->firstChild());
   }
 
   const qint64 key = image.cacheKey();
@@ -121,16 +133,50 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
   }
 
   QRectF map_rect(0, 0, image.width(), image.height());
+  QMatrix4x4 map_matrix;
+  map_matrix.setToIdentity();
+
   if (map_render_->getMapData())
   {
     auto metadata = map_render_->getMapData()->getMetadata();
     const double width_m = static_cast<double>(metadata.width) * metadata.resolution;
     const double height_m = static_cast<double>(metadata.height) * metadata.resolution;
-    const double origin_x = metadata.origin_x;
-    const double origin_y = -(metadata.origin_y + height_m);
-    map_rect = QRectF(origin_x, origin_y, width_m, height_m);
 
-    if (camera_ && !fit_done_ && width_m > 0.0 && height_m > 0.0)
+    if (width_m > 0.0 && height_m > 0.0)
+    {
+      node->setRect(0.0, 0.0, width_m, height_m);
+
+      const double origin_x = metadata.origin_x;
+      const double origin_y = metadata.origin_y;
+      const double theta = metadata.origin_theta;
+      const double cos_t = std::cos(theta);
+      const double sin_t = std::sin(theta);
+
+      auto mapPoint = [&](double x, double y) {
+        return QPointF(origin_x + cos_t * x - sin_t * y, origin_y + sin_t * x + cos_t * y);
+      };
+
+      const QPointF p0 = mapPoint(0.0, 0.0);
+      const QPointF p1 = mapPoint(width_m, 0.0);
+      const QPointF p2 = mapPoint(0.0, height_m);
+      const QPointF p3 = mapPoint(width_m, height_m);
+
+      const double min_x = std::min({p0.x(), p1.x(), p2.x(), p3.x()});
+      const double max_x = std::max({p0.x(), p1.x(), p2.x(), p3.x()});
+      const double min_y = std::min({p0.y(), p1.y(), p2.y(), p3.y()});
+      const double max_y = std::max({p0.y(), p1.y(), p2.y(), p3.y()});
+
+      map_rect = QRectF(QPointF(min_x, min_y), QPointF(max_x, max_y));
+
+      map_matrix.translate(origin_x, origin_y);
+      map_matrix.rotate(qRadiansToDegrees(theta), 0.0f, 0.0f, 1.0f);
+    }
+    else
+    {
+      node->setRect(map_rect);
+    }
+
+    if (camera_ && !fit_done_ && map_rect.width() > 0.0 && map_rect.height() > 0.0)
     {
       camera_->fitToRect(map_rect);
       fit_done_ = true;
@@ -141,8 +187,12 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
       }
     }
   }
+  else
+  {
+    node->setRect(map_rect);
+  }
 
-  node->setRect(map_rect);
+  map_transform_node->setMatrix(map_matrix);
 
   if (camera_)
   {
