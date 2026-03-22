@@ -29,6 +29,14 @@ double getYaw(const geometry_msgs::msg::Quaternion& quaternion)
   return yaw;
 }
 
+geometry_msgs::msg::Quaternion createQuaternionFromYaw(double yaw)
+{
+  tf2::Quaternion tf_quat;
+  tf_quat.setRPY(0.0, 0.0, yaw);
+
+  return tf2::toMsg(tf_quat);
+}
+
 double rad2deg(double radians) { return radians * RAD2DEG; }
 
 double deg2rad(double degrees) { return degrees * DEG2RAD; }
