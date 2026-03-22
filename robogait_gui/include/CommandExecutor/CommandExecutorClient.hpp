@@ -295,6 +295,11 @@ private:
   void setCommandState(const std::string& key, CommandStatus status, const std::string& full_cmd = std::string());
 
   /**
+   * @brief Check if a command status is considered active.
+   */
+  bool isCommandActive(CommandStatus status) const;
+
+  /**
    * @brief Start the health timer
    */
   void startHealthTimer();

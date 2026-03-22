@@ -378,23 +378,45 @@ bool CommandExecutorClient::isNodeAlive(const std::string& node_name) const
 CommandExecutorClient::CommandStatus CommandExecutorClient::getActiveCommandStatus() const
 {
   const auto nav_status = getCommandStatus(KEY_NAVIGATION);
-  if (nav_status != CommandExecutorClient::CommandStatus::IDLE)
+  if (isCommandActive(nav_status))
   {
     return nav_status;
   }
 
-  return getCommandStatus(KEY_CARTOGRAPHER);
+  const auto cart_status = getCommandStatus(KEY_CARTOGRAPHER);
+  if (isCommandActive(cart_status))
+  {
+    return cart_status;
+  }
+
+  if (cart_status != CommandExecutorClient::CommandStatus::IDLE)
+  {
+    return cart_status;
+  }
+
+  if (nav_status == CommandExecutorClient::CommandStatus::ERROR)
+  {
+    return nav_status;
+  }
+
+  return nav_status;
 }
 
 std::string CommandExecutorClient::getActiveCommandKey() const
 {
   const auto nav_status = getCommandStatus(KEY_NAVIGATION);
-  if (nav_status != CommandExecutorClient::CommandStatus::IDLE)
+  if (isCommandActive(nav_status))
   {
     return std::string(KEY_NAVIGATION);
   }
 
-  return getCommandStatus(KEY_CARTOGRAPHER) == CommandExecutorClient::CommandStatus::IDLE ? std::string() : std::string(KEY_CARTOGRAPHER);
+  const auto cart_status = getCommandStatus(KEY_CARTOGRAPHER);
+  if (isCommandActive(cart_status))
+  {
+    return std::string(KEY_CARTOGRAPHER);
+  }
+
+  return std::string();
 }
 
 CommandExecutorClient::CommandStatus CommandExecutorClient::getCommandStatus(const std::string& key) const
@@ -777,6 +799,12 @@ void CommandExecutorClient::setCommandState(const std::string& key, CommandExecu
     state.status = status;
     state.timestamp = std::chrono::steady_clock::now();
   }
+}
+
+bool CommandExecutorClient::isCommandActive(CommandExecutorClient::CommandStatus status) const
+{
+  return status == CommandExecutorClient::CommandStatus::STARTING || status == CommandExecutorClient::CommandStatus::RUNNING ||
+         status == CommandExecutorClient::CommandStatus::STOPPING;
 }
 
 void CommandExecutorClient::startHealthTimer()
