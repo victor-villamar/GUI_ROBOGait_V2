@@ -6,7 +6,7 @@ cartographer:
 map_saver:
   name: "map_saver"
   cmd: "ros2 run nav2_map_server map_saver_cli"
-  append_args: "-t {map_topic} -f $HOME{map_path}{map_name}" # map file path
+  append_args: "-t {map_topic} -f $HOME{map_path}{map_name} --occ 0.65 --free 0.196" # map file path
 
 delete_map:
   name: "delete_map"
