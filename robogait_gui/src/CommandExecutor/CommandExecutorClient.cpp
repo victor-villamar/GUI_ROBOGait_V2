@@ -106,19 +106,18 @@ bool CommandExecutorClient::startMapping()
 
   const std::string full_cmd = buildCommand(cmd_info.cmd, cmd_info.append_args);
 
-  const bool success = callCommandService(full_cmd, true);
+  pending_stop_after_save_ = false;
+  map_saver_stop_requested_ = false;
 
-  if (!success)
+  CommandRequestContext context{CommandRequestType::StartMapping, std::string(KEY_CARTOGRAPHER), full_cmd, std::string()};
+
+  const bool sent = callCommandServiceAsync(full_cmd, true, context);
+
+  if (!sent)
   {
     qCritical() << "[CommandExecutorClient::startMapping] Failed to initialize mapping";
     return false;
   }
-
-  pending_stop_after_save_ = false;
-  map_saver_stop_requested_ = false;
-  setCommandState(KEY_CARTOGRAPHER, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
-  startHealthTimer();
-  qInfo() << "[CommandExecutorClient::startMapping] Successfully initialized mapping";
 
   return true;
 }
@@ -193,15 +192,16 @@ bool CommandExecutorClient::deleteMap(const std::string& map_name)
 
   const std::string full_cmd = buildCommand(cmd_info.cmd, args);
 
-  const bool success = callCommandService(full_cmd, true);
+  CommandRequestContext context{CommandRequestType::DeleteMap, std::string(KEY_DELETE_MAP), full_cmd, map_name};
 
-  if (!success)
+  const bool sent = callCommandServiceAsync(full_cmd, true, context);
+
+  if (!sent)
   {
     qCritical() << "[CommandExecutorClient::deleteMap] Failed to delete map";
     return false;
   }
 
-  qInfo() << "[CommandExecutorClient::deleteMap] Successfully deleted map " << QString::fromStdString(map_name);
   return true;
 }
 
@@ -289,17 +289,16 @@ bool CommandExecutorClient::startNavigation(const std::string& map_name)
 
   const std::string full_cmd = buildCommand(cmd_info.cmd, args);
 
-  const bool success = callCommandService(full_cmd, true);
+  CommandRequestContext context{CommandRequestType::StartNavigation, std::string(KEY_NAVIGATION), full_cmd, map_name};
 
-  if (!success)
+  const bool sent = callCommandServiceAsync(full_cmd, true, context);
+
+  if (!sent)
   {
     qCritical() << "[CommandExecutorClient::startNavigation] Failed to start navigation";
     return false;
   }
 
-  setCommandState(KEY_NAVIGATION, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
-  startHealthTimer();
-  qInfo() << "[CommandExecutorClient::startNavigation] Successfully started navigation with map " << QString::fromStdString(map_name);
   return true;
 }
 
@@ -430,6 +429,8 @@ CommandExecutorClient::CommandStatus CommandExecutorClient::getCommandStatus(con
   return it->second.status;
 }
 
+void CommandExecutorClient::setRequestCallback(const std::function<void(bool)>& callback) { request_callback_ = callback; }
+
 bool CommandExecutorClient::loadCommands()
 {
 
@@ -464,23 +465,26 @@ bool CommandExecutorClient::loadCommands()
   return !commands_.empty();
 }
 
-bool CommandExecutorClient::callCommandService(const std::string& cmd, bool execute)
+bool CommandExecutorClient::callCommandServiceAsync(const std::string& cmd, bool execute, const CommandRequestContext& context)
 {
   if (!initialized_)
   {
-    qCritical() << "[CommandExecutorClient::callCommandService] CommandExecutorClient is not initialized";
+    qCritical() << "[CommandExecutorClient::callCommandServiceAsync] CommandExecutorClient is not initialized";
+    handleCommandResponse(context, false);
     return false;
   }
 
   if (!cli_cmd_)
   {
-    qCritical() << "[CommandExecutorClient::callCommandService] Command client is not available (robot not selected?)";
+    qCritical() << "[CommandExecutorClient::callCommandServiceAsync] Command client is not available (robot not selected?)";
+    handleCommandResponse(context, false);
     return false;
   }
 
   if (!cli_cmd_->wait_for_service(SERVICE_CALL_TIMEOUT))
   {
-    qCritical() << "[CommandExecutorClient::callCommandService] Command service is not available after waiting";
+    qCritical() << "[CommandExecutorClient::callCommandServiceAsync] Command service is not available after waiting";
+    handleCommandResponse(context, false);
     return false;
   }
 
@@ -488,24 +492,132 @@ bool CommandExecutorClient::callCommandService(const std::string& cmd, bool exec
   request->cmd = cmd;
   request->execute = execute;
 
-  auto future = cli_cmd_->async_send_request(request);
-  std::future_status status = future.wait_for(SERVICE_CALL_TIMEOUT);
+  const auto ctx = context;
+  cli_cmd_->async_send_request(request,
+                               [this, ctx](rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedFuture future)
+                               {
+                                 bool ok = false;
+                                 auto response = future.get();
+                                 if (!response)
+                                 {
+                                   qCritical() << "[CommandExecutorClient::callCommandServiceAsync] Failed to get response from command service";
+                                   ok = false;
+                                 }
 
-  if (status == std::future_status::ready && future.valid())
+                                 ok = response->success;
+
+                                 handleCommandResponse(ctx, ok);
+                               });
+
+  return true;
+}
+
+void CommandExecutorClient::handleCommandResponse(const CommandRequestContext& context, bool success)
+{
+  switch (context.type)
   {
-    auto response = future.get();
-    if (!response)
-    {
-      qCritical() << "[CommandExecutorClient::callCommandService] Failed to get response from command service";
-      return false;
-    }
-
-    return response->success;
+    case CommandRequestType::StartMapping:
+      handleStartMappingResult(success, context.full_cmd);
+      break;
+    case CommandRequestType::DeleteMap:
+      handleDeleteMapResult(success, context.map_name);
+      break;
+    case CommandRequestType::StartNavigation:
+      handleStartNavigationResult(success, context.full_cmd, context.map_name);
+      break;
+    case CommandRequestType::SaveMap:
+      handleSaveMapResult(success, context.full_cmd);
+      break;
+    case CommandRequestType::StopCommand:
+      handleStopCommandResult(success, context.command_key, context.full_cmd);
+      break;
+    default:
+      notifyRequestResult(success);
+      break;
   }
-  else
+}
+
+void CommandExecutorClient::handleStartMappingResult(bool success, const std::string& full_cmd)
+{
+  if (!success)
   {
-    qCritical() << "[CommandExecutorClient::callCommandService] Error calling command service";
-    return false;
+    qCritical() << "[CommandExecutorClient::startMapping] Failed to initialize mapping";
+    setCommandState(KEY_CARTOGRAPHER, CommandExecutorClient::CommandStatus::ERROR, full_cmd);
+    notifyRequestResult(false);
+    return;
+  }
+
+  setCommandState(KEY_CARTOGRAPHER, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
+  startHealthTimer();
+  qInfo() << "[CommandExecutorClient::startMapping] Successfully initialized mapping";
+  notifyRequestResult(true);
+}
+
+void CommandExecutorClient::handleDeleteMapResult(bool success, const std::string& map_name)
+{
+  if (!success)
+  {
+    qCritical() << "[CommandExecutorClient::deleteMap] Failed to delete map";
+    notifyRequestResult(false);
+    return;
+  }
+
+  qInfo() << "[CommandExecutorClient::deleteMap] Successfully deleted map " << QString::fromStdString(map_name);
+  notifyRequestResult(true);
+}
+
+void CommandExecutorClient::handleStartNavigationResult(bool success, const std::string& full_cmd, const std::string& map_name)
+{
+  if (!success)
+  {
+    qCritical() << "[CommandExecutorClient::startNavigation] Failed to start navigation";
+    setCommandState(KEY_NAVIGATION, CommandExecutorClient::CommandStatus::ERROR, full_cmd);
+    notifyRequestResult(false);
+    return;
+  }
+
+  setCommandState(KEY_NAVIGATION, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
+  startHealthTimer();
+  qInfo() << "[CommandExecutorClient::startNavigation] Successfully started navigation with map " << QString::fromStdString(map_name);
+  notifyRequestResult(true);
+}
+
+void CommandExecutorClient::handleSaveMapResult(bool success, const std::string& full_cmd)
+{
+  if (!success)
+  {
+    qCritical() << "[CommandExecutorClient::saveMap] Failed to save map";
+    setCommandState(KEY_MAP_SAVER, CommandExecutorClient::CommandStatus::ERROR, full_cmd);
+    notifyRequestResult(false);
+    return;
+  }
+
+  setCommandState(KEY_MAP_SAVER, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
+  startHealthTimer();
+  qInfo() << "[CommandExecutorClient::saveMap] Successfully saved map";
+  notifyRequestResult(true);
+}
+
+void CommandExecutorClient::handleStopCommandResult(bool success, const std::string& key, const std::string& full_cmd)
+{
+  if (!success)
+  {
+    qCritical() << "[CommandExecutorClient::stopCommand] Failed to stop command for key: " << QString::fromStdString(key);
+    setCommandState(key, CommandExecutorClient::CommandStatus::ERROR, full_cmd);
+    notifyRequestResult(false);
+    return;
+  }
+
+  setCommandState(key, CommandExecutorClient::CommandStatus::STOPPING, full_cmd);
+  startHealthTimer();
+  notifyRequestResult(true);
+}
+
+void CommandExecutorClient::notifyRequestResult(bool success)
+{
+  if (request_callback_)
+  {
+    request_callback_(success);
   }
 }
 
@@ -731,17 +843,16 @@ bool CommandExecutorClient::saveMap(const std::string& map_name)
 
   const std::string full_cmd = buildCommand(cmd_info.cmd, args);
 
-  const bool success = callCommandService(full_cmd, true);
+  CommandRequestContext context{CommandRequestType::SaveMap, std::string(KEY_MAP_SAVER), full_cmd, std::string()};
 
-  if (!success)
+  const bool sent = callCommandServiceAsync(full_cmd, true, context);
+
+  if (!sent)
   {
     qCritical() << "[CommandExecutorClient::saveMap] Failed to save map";
     return false;
   }
 
-  setCommandState(KEY_MAP_SAVER, CommandExecutorClient::CommandStatus::STARTING, full_cmd);
-  startHealthTimer();
-  qInfo() << "[CommandExecutorClient::saveMap] Successfully saved map";
   return true;
 }
 
@@ -773,16 +884,17 @@ bool CommandExecutorClient::stopCommand(const std::string& key)
     return false;
   }
 
-  const bool success = callCommandService(full_cmd, false);
-  if (!success)
+  CommandRequestContext context{CommandRequestType::StopCommand, key, full_cmd, std::string()};
+
+  const bool sent = callCommandServiceAsync(full_cmd, false, context);
+
+  if (!sent)
   {
     qCritical() << "[CommandExecutorClient::stopCommand] Failed to stop command for key: " << QString::fromStdString(key);
     setCommandState(key, CommandExecutorClient::CommandStatus::ERROR, full_cmd);
     return false;
   }
 
-  setCommandState(key, CommandExecutorClient::CommandStatus::STOPPING, full_cmd);
-  startHealthTimer();
   return true;
 }
 

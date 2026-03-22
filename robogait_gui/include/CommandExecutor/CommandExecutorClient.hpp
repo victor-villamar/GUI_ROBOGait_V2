@@ -195,11 +195,48 @@ public:
    */
   CommandStatus getCommandStatus(const std::string& key) const;
 
+  /**
+   * @brief Set callback invoked when a command service request completes.
+   */
+  void setRequestCallback(const std::function<void(bool)>& callback);
+
 private:
+  /**
+   * @brief Enum to represent the type of a command request, used for routing the handling of command service responses
+   */
+  enum class CommandRequestType
+  {
+    StartMapping,    /**< Start mapping command */
+    DeleteMap,       /**< Delete map command */
+    StartNavigation, /**< Start navigation command */
+    SaveMap,         /**< Save map command */
+    StopCommand      /**< Stop command request, used for any command stop request and routes to same handling logic */
+  };
+
+  /**
+   * @brief Struct to hold the context of a command request, used to route the handling of command service responses
+   *
+   * @param type The type of the command request
+   * @param command_key The key of the command associated with the request (if applicable)
+   * @param full_cmd The full command string that was sent in the request (if applicable)
+   * @param map_name The name of the map associated with the request (if applicable)
+   */
+  struct CommandRequestContext
+  {
+    CommandRequestType type;
+    std::string command_key;
+    std::string full_cmd;
+    std::string map_name;
+  };
+
   /**
    * @brief Constructor of the CommandExecutorClient class
    */
   CommandExecutorClient();
+
+  /**
+   * @brief Destructor of the CommandExecutorClient class
+   */
   ~CommandExecutorClient() = default;
 
   /**
@@ -214,10 +251,68 @@ private:
    *
    * @param cmd The command to call
    * @param execute Whether to execute the command
+   * @param context Metadata to route completion handling
    *
    * @return true if the service call was successful, false otherwise
    */
-  bool callCommandService(const std::string& cmd, bool execute);
+  bool callCommandServiceAsync(const std::string& cmd, bool execute, const CommandRequestContext& context);
+
+  /**
+   * @brief Handle the response from a command service request
+   *
+   * @param context The context of the command request, used to determine how to handle the response
+   * @param success Whether the command service request was successful
+   */
+  void handleCommandResponse(const CommandRequestContext& context, bool success);
+
+  /**
+   * @brief Handle the result of a start mapping command
+   *
+   * @param success Whether the command was successful
+   * @param full_cmd The full command string
+   */
+  void handleStartMappingResult(bool success, const std::string& full_cmd);
+
+  /**
+   * @brief Handle the result of a delete map command
+   *
+   * @param success Whether the command was successful
+   * @param map_name The name of the map that was attempted to be deleted
+   */
+  void handleDeleteMapResult(bool success, const std::string& map_name);
+
+  /**
+   * @brief Handle the result of a start navigation command
+   *
+   * @param success Whether the command was successful
+   * @param full_cmd The full command string
+   * @param map_name The name of the map that was attempted to be used for navigation
+   */
+  void handleStartNavigationResult(bool success, const std::string& full_cmd, const std::string& map_name);
+
+  /**
+   * @brief Handle the result of a save map command
+   *
+   * @param success Whether the command was successful
+   * @param full_cmd The full command string
+   */
+  void handleSaveMapResult(bool success, const std::string& full_cmd);
+
+  /**
+   * @brief Handle the result of a stop command
+   *
+   * @param success Whether the command was successful
+   * @param key The key of the command that was attempted to be stopped
+   * @param full_cmd The full command string
+   */
+  void handleStopCommandResult(bool success, const std::string& key, const std::string& full_cmd);
+
+  /**
+   * @brief Notify the result of a command service request through the callback
+   *
+   * @param success Whether the command service request was successful
+   */
+  void notifyRequestResult(bool success);
 
   /**
    * @brief Call the get map data service to retrieve YAML and PGM info for a map
@@ -339,6 +434,8 @@ private:
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_map_data_;            /**< Publisher for map data */
   rclcpp::CallbackGroup::SharedPtr cb_group_;                                          /**< The callback group for the command executor */
   rclcpp::TimerBase::SharedPtr timer_health_;                                          /**< The health timer */
+
+  std::function<void(bool)> request_callback_; /**< Callback to notify the result of command service requests */
 
   std::optional<ROBOGait::context::RobotContext> context_; /**< The robot context */
 

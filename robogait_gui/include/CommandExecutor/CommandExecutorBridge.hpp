@@ -115,6 +115,7 @@ public:
 
 signals:
   void statusChanged(); // Emitted when the status changes
+  void requestFinished(bool success); // Emitted when a command request finishes
 
 private slots:
   void onPoll(); // Polling slot to update the status
