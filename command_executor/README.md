@@ -38,7 +38,7 @@ Este módulo tiene las siguientes responsabilidades.
 
 * Creación de los servicios de ROS expuestos a la interfaz y la publicación constante del status del robot como hearthbeat &rarr; **CommandExecutor**
 
->[!INFO]
+>[!NOTE]
 >
 >Unicamente se permiten comando con `ros2`. Hay casos especiales donde se ha mapeado comandos especiales como `rm` para tener el control total de lo que se realiza y no permitir comportamientos no esperados
 
