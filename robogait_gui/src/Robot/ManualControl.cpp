@@ -1,12 +1,15 @@
 #include <QDebug>
 
+#include <rclcpp/create_timer.hpp>
+
 #include "Robot/ManualControl.hpp"
 #include "Ros/Define.hpp"
 #include "Ros/TopicsName.hpp"
 
 using namespace ROBOGait::robot::control;
 
-ManualControl::ManualControl() : parent_node_(nullptr), pub_cmd_vel_(nullptr), topic_name_(""), linear_velocity_(0.0), angular_velocity_(0.0)
+ManualControl::ManualControl() :
+    parent_node_(nullptr), pub_cmd_vel_(nullptr), timer_cmd_vel_(nullptr), topic_name_(""), linear_velocity_(0.0), angular_velocity_(0.0), timer_active_(false)
 {
   qInfo() << "[ManualControl::ManualControl] Manual control created";
 }
@@ -22,6 +25,11 @@ void ManualControl::setROSNode(rclcpp::Node* node)
   }
 
   parent_node_ = node;
+
+  // Create timer for publishing velocity commands
+  timer_cmd_vel_ = parent_node_->create_wall_timer(std::chrono::milliseconds(TIME_TO_PUBLISH_CMD_VEL),
+                                                   std::bind(&ManualControl::publishVelocity, this)); // one-shot: false, autostart: false
+  timer_cmd_vel_->cancel();
 }
 
 void ManualControl::setTopicName(const QString& topic_name)
@@ -43,6 +51,12 @@ void ManualControl::setTopicName(const QString& topic_name)
 
 void ManualControl::destroyPublisher()
 {
+  if (timer_cmd_vel_)
+  {
+    timer_cmd_vel_->cancel();
+    timer_active_ = false;
+  }
+
   if (pub_cmd_vel_)
   {
     qInfo() << "[ManualControl::destroyPublisher] Destroying publisher";
@@ -70,7 +84,11 @@ void ManualControl::updateVelocity(double linear, double angular)
     changed = true;
   }
 
-  publishVelocity(linear, angular);
+  if (timer_cmd_vel_ && !timer_active_)
+  {
+    timer_cmd_vel_->reset();
+    timer_active_ = true;
+  }
 
   if (changed)
   {
@@ -108,7 +126,7 @@ void ManualControl::ensurePublisherCreated()
   pub_cmd_vel_ = parent_node_->create_publisher<geometry_msgs::msg::Twist>(topic_name_.toStdString(), QOS_RELIABLE);
 }
 
-void ManualControl::publishVelocity(double linear, double angular)
+void ManualControl::publishVelocity()
 {
   ensurePublisherCreated();
 
@@ -120,12 +138,12 @@ void ManualControl::publishVelocity(double linear, double angular)
 
   // Create Twist message
   auto twist_msg = geometry_msgs::msg::Twist();
-  twist_msg.linear.x = linear;
+  twist_msg.linear.x = linear_velocity_;
   twist_msg.linear.y = 0.0;
   twist_msg.linear.z = 0.0;
   twist_msg.angular.x = 0.0;
   twist_msg.angular.y = 0.0;
-  twist_msg.angular.z = angular;
+  twist_msg.angular.z = angular_velocity_;
 
   // Publish message
   pub_cmd_vel_->publish(twist_msg);
