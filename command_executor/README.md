@@ -71,9 +71,9 @@ Este módulo esta dividido en dos:
 
     * GetMapData &rarr; Permite obtener los datos raw del mapa creado durante el mape.
 
-    >[!WARNING]
-    >
-    >Es necesario la creacion de la carpetas maps en el robot. Ya que es en ese directorio donde se guardaran los mapa creados durante el mapeo mediante el nodo `map_saver_cli`. Debe encontranse en `$HOME/maps/`
+>[!WARNING]
+>
+>Es necesario la creacion de la carpetas maps en el robot. Ya que es en ese directorio donde se guardaran los mapa creados durante el mapeo mediante el nodo `map_saver_cli`. Debe encontranse en `$HOME/maps/`
 
 <!-- DEPENDENCIAS -->
 ## Dependencias
