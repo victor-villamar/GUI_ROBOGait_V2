@@ -98,6 +98,15 @@ Page {
                         font.capitalization: Font.AllUppercase
                         font.bold: true
                         font.pointSize: 22
+
+                        contentItem: Text {
+                            text: loginButton.text
+                            font: loginButton.font
+                            color: "#ffffff"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
                         background: Rectangle {
                             radius: 10
                             color: "#aed2ea"

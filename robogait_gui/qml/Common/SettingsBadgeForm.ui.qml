@@ -21,6 +21,8 @@ Item {
         icon.source: "qrc:/qmlresources/icons/config.svg"
         icon.width: 32
         icon.height: 28
+        icon.color: "#ffffff"
+        palette.buttonText: "#ffffff"
         
         background: Rectangle {
             color: settingsButton.pressed ? "#a9cfe8" : settingsButton.hovered ? "#a9cfe8" : "transparent"

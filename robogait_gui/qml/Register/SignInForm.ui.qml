@@ -100,6 +100,84 @@ Page {
                         width: formColumn.width
                         height: 50
                         model: [ "Doctor", "Manager" ]
+                        currentIndex: 0
+
+                        background: Rectangle {
+                            color: "#333333"
+                            border.color: "#ffffff"
+                            border.width: 1
+                        }
+
+                        Component.onCompleted: {
+                            if(currentIndex < 0 && count  > 0)
+                            {
+                                currentIndex = 0
+                            }
+                        }
+
+                        onCountChanged: {
+                            if (currentIndex < 0 && count > 0)
+                            {
+                                currentIndex = 0
+                            }
+                        }
+
+                        contentItem: Text {
+                            text: roleCombo.displayText.length  > 0
+                                  ? roleCombo.currentText
+                                  : (roleCombo.count > 0 ? roleCombo.textAt(0) : "")
+                            color: "#ffffff"
+                            font.pointSize: 20
+                            leftPadding: 12
+                            rightPadding: 32
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideRight
+                        }
+
+                        indicator: Text {
+                            text: "▼"
+                            color: "#ffffff"
+                            font.pixelSize: 10
+                            anchors.right: parent.right
+                            anchors.rightMargin: 12
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        popup: Popup {
+                            y: roleCombo.height - 1
+                            width: roleCombo.width
+                            padding: 0
+
+                            contentItem: ListView {
+                                implicitHeight: contentHeight
+                                model: roleCombo.popup.visible ? roleCombo.delegateModel : null
+
+                                delegate: ItemDelegate {
+                                    width: roleCombo.width
+                                    height: 44
+
+                                    contentItem: Text {
+                                        text: modelData
+                                        color: "#ffffff"
+                                        font.pointSize: 16
+                                        leftPadding: 12
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+
+                                    background: Rectangle {
+                                        color: highlighted ? "#4a4a4a" : "#333333"
+                                        border.color: "#ffffff"
+                                        border.width: 1
+                                    }
+                                }
+                            }
+
+                            background: Rectangle {
+                                color: "#333333"
+                                border.color: "#ffffff"
+                                border.width: 1
+                            }
+                        }
                     }
 
                     TextField {
@@ -142,6 +220,15 @@ Page {
                         font.capitalization: Font.AllUppercase
                         font.bold: true
                         font.pointSize: 20
+
+                        contentItem: Text {
+                            text: signInButton.text
+                            font: signInButton.font
+                            color: "#ffffff"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
                         background: Rectangle {
                             radius: 10
                             color: "#aed2ea"

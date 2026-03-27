@@ -98,6 +98,15 @@ Page {
                         font.capitalization: Font.AllUppercase
                         font.bold: true
                         font.pointSize: 18
+
+                        contentItem: Text {
+                            text: guestButton.text
+                            font: guestButton.font
+                            color: "#ffffff"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
                         background: Rectangle {
                             radius: 10
                             color: "#aed2ea"
