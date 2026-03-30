@@ -195,6 +195,7 @@ double UiSizingSettings::effectivePixelDensityPxPerMm(double provided_density) c
   if (pixel_density_override_px_per_mm_ > 0.0)
   {
     density = pixel_density_override_px_per_mm_;
+    return density;
   }
   else if (density <= 0.0)
   {

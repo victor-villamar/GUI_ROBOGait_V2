@@ -7,13 +7,13 @@ ui:
   combo_height: 17.0
   dropdown_height: 17.0
   list_item_height: 17.0
-  badge_height: 17.0
-  badge_menu_item_height: 17.0
-  icon_button_size: 17.0
+  badge_height: 14.0
+  badge_menu_item_height: 14.0
+  icon_button_size: 14.0
   icon_glyph_size: 12.0
-  tab_height: 17.0
-  checkbox_height: 17.0
-  checkbox_indicator_size: 12.0
+  tab_height: 14.0
+  checkbox_height: 14.0
+  checkbox_indicator_size: 10.0
   spinbox_button_size: 10.0
   pixel_density_override_px_per_mm: 0.0   # 0 = auto
   min_pixel_density_px_per_mm: 2.5
