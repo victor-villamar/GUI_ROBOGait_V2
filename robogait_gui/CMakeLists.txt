@@ -75,7 +75,6 @@ set(HEADERS
     include/Map/Subscribers/TFSubscriber.hpp
     include/Map/Utils/Utils.hpp
     include/Map/MapVisualizationManager.hpp
-    include/Settings/DeveloperSettings.hpp
     include/Robot/ManualControl.hpp
     include/Robot/RobotDiscovery.hpp
     include/Robot/RobotManager.hpp
@@ -83,6 +82,8 @@ set(HEADERS
     include/Ros/Define.hpp
     include/Ros/RosNodeManager.hpp
     include/Ros/TopicsName.hpp
+    include/Settings/DeveloperSettings.hpp
+    include/Settings/UiSizingSettings.hpp
     include/User/Patient.hpp
     include/User/UserSession.hpp
 )
@@ -131,6 +132,7 @@ set(SOURCES
     src/Robot/RobotPlacementController.cpp
     src/Ros/RosNodeManager.cpp
     src/Settings/DeveloperSettings.cpp
+    src/Settings/UiSizingSettings.cpp
     src/User/Patient.cpp
     src/User/UserSession.cpp
     src/main.cpp

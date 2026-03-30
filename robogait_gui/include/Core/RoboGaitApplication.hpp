@@ -10,6 +10,7 @@
 #include "DataBase/DataBaseManager.hpp"
 #include "Ros/RosNodeManager.hpp"
 #include "Settings/DeveloperSettings.hpp"
+#include "Settings/UiSizingSettings.hpp"
 #include "User/UserSession.hpp"
 
 namespace ROBOGait
@@ -90,6 +91,12 @@ public:
    * @return Pointer to DeveloperSettings
    */
   ROBOGait::settings::DeveloperSettings* developerSettings();
+
+  /**
+   * @brief Get the UI sizing settings singleton instance
+   * @return Pointer to UiSizingSettings
+   */
+  ROBOGait::settings::UiSizingSettings* uiSizingSettings();
 
   /**
    * @brief Get the QML application engine

@@ -108,6 +108,10 @@ bool RoboGaitApplication::initialize()
   auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
   developer_settings.initializeDefaults();
 
+  // Initialize UiSizingSettings singleton
+  auto& ui_sizing_settings = ROBOGait::settings::UiSizingSettings::getInstance();
+  ui_sizing_settings.initializeDefaults();
+
   // Create ROS node manager
   ros_node_manager_ = std::make_unique<ROBOGait::ros::manager::RosNodeManager>();
 
@@ -176,6 +180,8 @@ ROBOGait::db::DataBaseManager* RoboGaitApplication::databaseManager() { return &
 ROBOGait::session::UserSession* RoboGaitApplication::userSession() { return user_session_.get(); }
 
 ROBOGait::settings::DeveloperSettings* RoboGaitApplication::developerSettings() { return &ROBOGait::settings::DeveloperSettings::getInstance(); }
+
+ROBOGait::settings::UiSizingSettings* RoboGaitApplication::uiSizingSettings() { return &ROBOGait::settings::UiSizingSettings::getInstance(); }
 
 QQmlApplicationEngine* RoboGaitApplication::qmlEngine() { return qml_app_engine_; }
 
@@ -251,6 +257,7 @@ void RoboGaitApplication::setupQmlContext()
   qml_app_engine_->rootContext()->setContextProperty("userSession", user_session_.get());
   qml_app_engine_->rootContext()->setContextProperty("dbManager", databaseManager());
   qml_app_engine_->rootContext()->setContextProperty("developerSettings", developerSettings());
+  qml_app_engine_->rootContext()->setContextProperty("uiSizingSettings", uiSizingSettings());
 
   qInfo() << "[RoboGaitApplication::setupQmlContext] QML context properties set";
 }
