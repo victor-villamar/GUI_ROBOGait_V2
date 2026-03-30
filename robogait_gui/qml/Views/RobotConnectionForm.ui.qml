@@ -176,6 +176,9 @@ Item {
                         height: 180
                         running: true
                         topPadding: 20
+                        palette.highlight: "#ffffff"
+                        palette.text: "#ffffff"
+                        palette.buttonText: "#ffffff"
                         visible: userSession.rosManager.robotDiscovery.state === RobotDiscovery.SCANNING
                     }
 

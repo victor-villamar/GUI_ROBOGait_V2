@@ -68,6 +68,9 @@ Dialog {
                     height: 180
                     running: true
                     anchors.horizontalCenter: parent.horizontalCenter
+                    palette.highlight: "#ffffff"
+                    palette.text: "#ffffff"
+                    palette.buttonText: "#ffffff"
                 }
             }
         }

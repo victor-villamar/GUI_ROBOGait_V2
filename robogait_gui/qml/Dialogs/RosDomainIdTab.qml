@@ -88,6 +88,10 @@ Item {
                     enabled: root.enabled
                     width: 160
                     height: root.spinboxHeightPx
+                    palette.base: "#ffffff"
+                    palette.text: "#045671"
+                    palette.button: "#a9cfe8"
+                    palette.buttonText: "#045671"
 
                     onValueChanged: {
                         if (!userSession || !userSession.isAuthenticated) {
