@@ -17,9 +17,9 @@ Page {
     readonly property bool editingActive: usernameField.activeFocus || passwordField.activeFocus
     readonly property bool compactInputsMode: editingActive || root.keyboardSafeArea > 0 || Qt.inputMethod.visible
     readonly property bool hasVerticalScroll: flick.contentHeight > flick.height + 1
-    readonly property real dropdownHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.dropdownHeight, Screen.pixelDensity) : 50
-    readonly property real inputHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, Screen.pixelDensity) : 50
-    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, Screen.pixelDensity) : 50
+    readonly property real dropdownHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.dropdownHeight, 0) : 50
+    readonly property real inputHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, 0) : 50
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 50
 
     Rectangle {
         anchors.fill: parent

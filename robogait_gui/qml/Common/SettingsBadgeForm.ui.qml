@@ -5,8 +5,8 @@ import QtQuick.Window 2.15
 Item {
     id: root
     
-    readonly property real iconButtonPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconButtonSize, Screen.pixelDensity) : 56
-    readonly property real iconGlyphPx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, Screen.pixelDensity) : 32
+    readonly property real iconButtonPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconButtonSize, 0) : 56
+    readonly property real iconGlyphPx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, 0) : 32
 
     width: Math.round(iconButtonPx)
     height: Math.round(iconButtonPx)

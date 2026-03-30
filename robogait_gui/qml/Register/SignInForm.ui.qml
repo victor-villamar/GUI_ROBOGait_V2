@@ -20,10 +20,10 @@ Page {
     property int contentCenterOffset: 0
     property real formContentHeight: formColumn.implicitHeight
     readonly property bool hasVerticalScroll: flick.contentHeight > flick.height + 1
-    readonly property real dropdownHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.dropdownHeight, Screen.pixelDensity) : 50
-    readonly property real inputHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, Screen.pixelDensity) : 50
-    readonly property real comboHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.comboHeight, Screen.pixelDensity) : 50
-    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, Screen.pixelDensity) : 50
+    readonly property real dropdownHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.dropdownHeight, 0) : 50
+    readonly property real inputHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, 0) : 50
+    readonly property real comboHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.comboHeight, 0) : 50
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 50
 
     Rectangle {
         anchors.fill: parent

@@ -14,8 +14,8 @@ Item {
     property int selectedRobotIndex: -1
     property int pendingRobotIndex: -1
     property string selectedRobotNamespace: ""
-    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, Screen.pixelDensity) : 52
-    readonly property real listItemHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.listItemHeight, Screen.pixelDensity) : 52
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 52
+    readonly property real listItemHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.listItemHeight, 0) : 52
 
 
     Rectangle {

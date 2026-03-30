@@ -23,7 +23,7 @@ Dialog {
     property string acceptText: qsTr("Aceptar")
     property bool holdToAccept: true
     property int acceptHoldMs: 900
-    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, Screen.pixelDensity) : 44
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 44
 
     function reposition()
     {

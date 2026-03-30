@@ -15,6 +15,9 @@ ui:
   checkbox_height: 17.0
   checkbox_indicator_size: 12.0
   spinbox_button_size: 10.0
+  pixel_density_override_px_per_mm: 0.0   # 0 = auto
+  min_pixel_density_px_per_mm: 2.5
+  max_pixel_density_px_per_mm: 5.5
   calibration_factor: 1.0
   min_interactive_px: 44.0
   max_interactive_px: 96.0

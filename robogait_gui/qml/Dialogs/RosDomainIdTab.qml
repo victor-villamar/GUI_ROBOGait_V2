@@ -7,9 +7,9 @@ Item {
     id: root
 
     enabled: userSession && userSession.role === "manager" && userSession.isAuthenticated
-    readonly property real spinboxButtonPx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.spinboxButtonSize, Screen.pixelDensity) : 20
+    readonly property real spinboxButtonPx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.spinboxButtonSize, 0) : 20
     readonly property real spinboxButtonMargin: Math.max(2, Math.round(spinboxButtonPx * 0.2))
-    readonly property real spinboxBaseHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, Screen.pixelDensity) : 70
+    readonly property real spinboxBaseHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, 0) : 70
     readonly property real spinboxMinHeightPx: Math.round(spinboxButtonPx * 2 + spinboxButtonMargin * 2 + 8)
     readonly property real spinboxHeightPx: Math.max(spinboxBaseHeightPx, spinboxMinHeightPx)
     readonly property real spinboxNumberFontPx: Math.max(16, Math.round(spinboxHeightPx * 0.4))

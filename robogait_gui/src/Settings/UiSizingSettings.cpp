@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <QDebug>
 #include <QGuiApplication>
 #include <QScreen>
@@ -75,7 +77,7 @@ double UiSizingSettings::px(double value, double pixel_density_px_per_mm) const
     return 0.0;
   }
 
-  const double density = (pixel_density_px_per_mm > 0.0) ? pixel_density_px_per_mm : fallbackPixelDensityPxPerMm();
+  const double density = effectivePixelDensityPxPerMm(pixel_density_px_per_mm);
   return value * density * calibration_factor_;
 }
 
@@ -122,11 +124,31 @@ void UiSizingSettings::initializeDefaults()
     std::swap(max_interactive_px_, min_interactive_px_);
   }
 
+  pixel_density_override_px_per_mm_ =
+      std::max(0.0, yaml_loader.getValue<double>("ui.pixel_density_override_px_per_mm", DEFAULT_PIXEL_DENSITY_OVERRIDE_PX_PER_MM));
+
+  min_pixel_density_px_per_mm_ = sanitizePositive(yaml_loader.getValue<double>("ui.min_pixel_density_px_per_mm", DEFAULT_MIN_PIXEL_DENSITY_PX_PER_MM),
+                                                  DEFAULT_MIN_PIXEL_DENSITY_PX_PER_MM);
+
+  max_pixel_density_px_per_mm_ = sanitizePositive(yaml_loader.getValue<double>("ui.max_pixel_density_px_per_mm", DEFAULT_MAX_PIXEL_DENSITY_PX_PER_MM),
+                                                  DEFAULT_MAX_PIXEL_DENSITY_PX_PER_MM);
+
+  if (max_pixel_density_px_per_mm_ < min_pixel_density_px_per_mm_)
+  {
+    qWarning() << "[UiSizingSettings::initializeDefaults] max_pixel_density_px_per_mm < min_pixel_density_px_per_mm, swapping";
+    std::swap(max_pixel_density_px_per_mm_, min_pixel_density_px_per_mm_);
+  }
+
   emit sizingChanged();
 }
 
 UiSizingSettings::UiSizingSettings() :
-    calibration_factor_(DEFAULT_CALIBRATION_FACTOR), min_interactive_px_(DEFAULT_MIN_INTERACTIVE_PX), max_interactive_px_(DEFAULT_MAX_INTERACTIVE_PX)
+    calibration_factor_(DEFAULT_CALIBRATION_FACTOR),
+    min_interactive_px_(DEFAULT_MIN_INTERACTIVE_PX),
+    max_interactive_px_(DEFAULT_MAX_INTERACTIVE_PX),
+    pixel_density_override_px_per_mm_(DEFAULT_PIXEL_DENSITY_OVERRIDE_PX_PER_MM),
+    min_pixel_density_px_per_mm_(DEFAULT_MIN_PIXEL_DENSITY_PX_PER_MM),
+    max_pixel_density_px_per_mm_(DEFAULT_MAX_PIXEL_DENSITY_PX_PER_MM)
 {
   qInfo() << "[UiSizingSettings::UiSizingSettings] UiSizingSettings created";
 }
@@ -148,4 +170,29 @@ double UiSizingSettings::fallbackPixelDensityPxPerMm() const
   }
 
   return dpi / MILLIMETERS_PER_INCH;
+}
+
+double UiSizingSettings::effectivePixelDensityPxPerMm(double provided_density) const
+{
+  double density = provided_density;
+
+  if (pixel_density_override_px_per_mm_ > 0.0)
+  {
+    density = pixel_density_override_px_per_mm_;
+  }
+  else if (density <= 0.0)
+  {
+    density = fallbackPixelDensityPxPerMm();
+  }
+
+  if (min_pixel_density_px_per_mm_ > 0.0)
+  {
+    density = std::max(density, min_pixel_density_px_per_mm_);
+  }
+  if (max_pixel_density_px_per_mm_ > 0.0)
+  {
+    density = std::min(density, max_pixel_density_px_per_mm_);
+  }
+
+  return density;
 }

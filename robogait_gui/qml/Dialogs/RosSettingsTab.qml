@@ -7,8 +7,8 @@ Item {
     id: root
 
     enabled: userSession && userSession.role === "manager" && userSession.isAuthenticated
-    readonly property real checkboxHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.checkboxHeight, Screen.pixelDensity) : 44
-    readonly property real checkboxIndicatorPx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.checkboxIndicatorSize, Screen.pixelDensity) : 20
+    readonly property real checkboxHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.checkboxHeight, 0) : 44
+    readonly property real checkboxIndicatorPx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.checkboxIndicatorSize, 0) : 20
 
     implicitWidth: contentLayout.childrenRect.width + 40
     implicitHeight: contentLayout.childrenRect.height + 40

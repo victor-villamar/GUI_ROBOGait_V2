@@ -21,9 +21,9 @@ Item {
                                : ((userSession && userSession.role === "guest") ? qsTr("Invitado")
                                                                                 : (dbManager ? dbManager.userName : ""))
 
-    readonly property real badgeHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.badgeHeight, Screen.pixelDensity) : 56
-    readonly property real badgeMenuItemHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.badgeMenuItemHeight, Screen.pixelDensity) : 44
-    readonly property real iconGlyphPxRaw: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, Screen.pixelDensity) : 34
+    readonly property real badgeHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.badgeHeight, 0) : 56
+    readonly property real badgeMenuItemHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.badgeMenuItemHeight, 0) : 44
+    readonly property real iconGlyphPxRaw: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, 0) : 34
     readonly property real badgeIconPx: Math.min(iconGlyphPxRaw, badgeHeightPx - 16)
 
     property int badgeWidth: Math.max(userRow.implicitWidth + 20, 140)

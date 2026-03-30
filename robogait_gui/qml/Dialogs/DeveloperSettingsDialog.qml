@@ -25,8 +25,8 @@ Dialog {
     y: parent ? Math.round((parent.height - height) / 2) : 0
     
     enabled: userSession && userSession.role === "manager"
-    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, Screen.pixelDensity) : 52
-    readonly property real tabHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.tabHeight, Screen.pixelDensity) : 44
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 52
+    readonly property real tabHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.tabHeight, 0) : 44
     
     function reposition()
     {

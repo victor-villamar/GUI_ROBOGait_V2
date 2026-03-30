@@ -6,7 +6,7 @@ Item {
     id: root
 
     property string currentMode: "login"
-    property real controlHeight: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.dropdownHeight, Screen.pixelDensity) : 50
+    property real controlHeight: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.dropdownHeight, 0) : 50
     property real popupItemHeight: controlHeight
     property int fontPixelSize: 26
     property color textColor: "#ffffff"

@@ -300,14 +300,29 @@ private:
    */
   double fallbackPixelDensityPxPerMm() const;
 
-  UiSizingValues values_;     /**< Struct to hold UI sizing values loaded from YAML configuration */
-  double calibration_factor_; /**< The calibration factor for scaling UI elements */
-  double min_interactive_px_; /**< The minimum interactive pixel value */
-  double max_interactive_px_; /**< The maximum interactive pixel value */
+  /**
+   * @brief Get the effective pixel density in pixels per millimeter
+   *
+   * @param provided_density Optional provided density from UI (<=0 uses fallback)
+   *
+   * @return The effective pixel density after override and clamping
+   */
+  double effectivePixelDensityPxPerMm(double provided_density) const;
 
-  static constexpr double DEFAULT_CALIBRATION_FACTOR = 1.0;  /**< Default calibration factor for scaling UI elements */
-  static constexpr double DEFAULT_MIN_INTERACTIVE_PX = 44.0; /**< Default minimum interactive pixel value */
-  static constexpr double DEFAULT_MAX_INTERACTIVE_PX = 96.0; /**< Default maximum interactive pixel value */
+  UiSizingValues values_;                   /**< Struct to hold UI sizing values loaded from YAML configuration */
+  double calibration_factor_;               /**< The calibration factor for scaling UI elements */
+  double min_interactive_px_;               /**< The minimum interactive pixel value */
+  double max_interactive_px_;               /**< The maximum interactive pixel value */
+  double pixel_density_override_px_per_mm_; /**< Override pixel density in px/mm (0 = auto) */
+  double min_pixel_density_px_per_mm_;      /**< Minimum pixel density clamp in px/mm */
+  double max_pixel_density_px_per_mm_;      /**< Maximum pixel density clamp in px/mm */
+
+  static constexpr double DEFAULT_CALIBRATION_FACTOR = 1.0;               /**< Default calibration factor for scaling UI elements */
+  static constexpr double DEFAULT_MIN_INTERACTIVE_PX = 44.0;              /**< Default minimum interactive pixel value */
+  static constexpr double DEFAULT_MAX_INTERACTIVE_PX = 96.0;              /**< Default maximum interactive pixel value */
+  static constexpr double DEFAULT_PIXEL_DENSITY_OVERRIDE_PX_PER_MM = 0.0; /**< Default pixel density override (0 = auto) */
+  static constexpr double DEFAULT_MIN_PIXEL_DENSITY_PX_PER_MM = 2.5;      /**< Default minimum pixel density clamp */
+  static constexpr double DEFAULT_MAX_PIXEL_DENSITY_PX_PER_MM = 5.5;      /**< Default maximum pixel density clamp */
 
   static constexpr double DEFAULT_FALLBACK_DENSITY_PX_PER_MM = 3.779527559; /**< Default fallback pixel density in pixels per millimeter (96 DPI) */
   static constexpr double MILLIMETERS_PER_INCH = 25.4;                      /**< Number of millimeters in an inch, used for pixel density calculations */
