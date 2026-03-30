@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
 
 Dialog {
     id: root
@@ -22,6 +23,7 @@ Dialog {
     property string acceptText: qsTr("Aceptar")
     property bool holdToAccept: true
     property int acceptHoldMs: 900
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, Screen.pixelDensity) : 44
 
     function reposition()
     {
@@ -83,7 +85,7 @@ Dialog {
         Button {
             id: cancelButton
             width: (footerRow.width - footerRow.padding * 2 - footerRow.spacing) / 2
-            height: 44
+            height: root.buttonHeightPx
             text: qsTr("Cancelar")
 
             background: Rectangle {
@@ -112,7 +114,7 @@ Dialog {
         Button {
             id: acceptButton
             width: (footerRow.width - footerRow.padding * 2 - footerRow.spacing) / 2
-            height: 44
+            height: root.buttonHeightPx
             text: root.acceptText
 
             property real holdProgress: 0

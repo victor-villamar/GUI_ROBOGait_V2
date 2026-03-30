@@ -20,10 +20,10 @@ Page {
     property int contentCenterOffset: 0
     property real formContentHeight: formColumn.implicitHeight
     readonly property bool hasVerticalScroll: flick.contentHeight > flick.height + 1
-    readonly property real authModeHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.authModeHeight, Screen.pixelDensity) : 50
+    readonly property real dropdownHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.dropdownHeight, Screen.pixelDensity) : 50
     readonly property real inputHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, Screen.pixelDensity) : 50
     readonly property real comboHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.comboHeight, Screen.pixelDensity) : 50
-    readonly property real actionButtonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.actionButtonHeight, Screen.pixelDensity) : 50
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, Screen.pixelDensity) : 50
 
     Rectangle {
         anchors.fill: parent
@@ -68,8 +68,8 @@ Page {
                     AuthModeDropdown {
                         id: authModeDropdown
                         width: formColumn.width
-                        height: root.authModeHeightPx
-                        controlHeight: root.authModeHeightPx
+                        height: root.dropdownHeightPx
+                        controlHeight: root.dropdownHeightPx
                         currentMode: "sign_in"
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
@@ -239,7 +239,7 @@ Page {
                     Button {
                         id: signInButton
                         width: formColumn.width
-                        height: root.actionButtonHeightPx
+                        height: root.buttonHeightPx
                         text: qsTr("Crear cuenta")
                         font.capitalization: Font.AllUppercase
                         font.bold: true

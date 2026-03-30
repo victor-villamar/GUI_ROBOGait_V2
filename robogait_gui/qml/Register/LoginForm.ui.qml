@@ -17,9 +17,9 @@ Page {
     readonly property bool editingActive: usernameField.activeFocus || passwordField.activeFocus
     readonly property bool compactInputsMode: editingActive || root.keyboardSafeArea > 0 || Qt.inputMethod.visible
     readonly property bool hasVerticalScroll: flick.contentHeight > flick.height + 1
-    readonly property real authModeHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.authModeHeight, Screen.pixelDensity) : 50
+    readonly property real dropdownHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.dropdownHeight, Screen.pixelDensity) : 50
     readonly property real inputHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, Screen.pixelDensity) : 50
-    readonly property real actionButtonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.actionButtonHeight, Screen.pixelDensity) : 50
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, Screen.pixelDensity) : 50
 
     Rectangle {
         anchors.fill: parent
@@ -85,8 +85,8 @@ Page {
                     AuthModeDropdown {
                         id: authModeDropdown
                         width: formColumn.width
-                        height: root.authModeHeightPx
-                        controlHeight: root.authModeHeightPx
+                        height: root.dropdownHeightPx
+                        controlHeight: root.dropdownHeightPx
                         currentMode: "login"
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
@@ -125,7 +125,7 @@ Page {
                     Button {
                         id: loginButton
                         width: formColumn.width
-                        height: root.actionButtonHeightPx
+                        height: root.buttonHeightPx
                         text: qsTr("Iniciar sesión")
                         font.capitalization: Font.AllUppercase
                         font.bold: true

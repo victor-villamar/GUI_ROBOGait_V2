@@ -1,11 +1,18 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 6.0
+import QtQuick.Window 2.15
 
 Item {
     id: root
 
     enabled: userSession && userSession.role === "manager" && userSession.isAuthenticated
+    readonly property real spinboxButtonPx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.spinboxButtonSize, Screen.pixelDensity) : 20
+    readonly property real spinboxButtonMargin: Math.max(2, Math.round(spinboxButtonPx * 0.2))
+    readonly property real spinboxBaseHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, Screen.pixelDensity) : 70
+    readonly property real spinboxMinHeightPx: Math.round(spinboxButtonPx * 2 + spinboxButtonMargin * 2 + 8)
+    readonly property real spinboxHeightPx: Math.max(spinboxBaseHeightPx, spinboxMinHeightPx)
+    readonly property real spinboxNumberFontPx: Math.max(16, Math.round(spinboxHeightPx * 0.4))
 
     implicitWidth: contentLayout.childrenRect.width + 40
     implicitHeight: contentLayout.childrenRect.height + 40
@@ -80,7 +87,7 @@ Item {
                     editable: true
                     enabled: root.enabled
                     width: 160
-                    height: 70
+                    height: root.spinboxHeightPx
 
                     onValueChanged: {
                         if (!userSession || !userSession.isAuthenticated) {
@@ -94,57 +101,59 @@ Item {
 
                     contentItem: TextInput {
                         text: domainSpinBox.textFromValue(domainSpinBox.value, domainSpinBox.locale)
-                        font: domainSpinBox.font
+                        font.pixelSize: root.spinboxNumberFontPx
+                        font.family: domainSpinBox.font.family
+                        font.bold: domainSpinBox.font.bold
                         color: "#045671"
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         readOnly: !domainSpinBox.editable
                         validator: IntValidator { bottom: domainSpinBox.from; top: domainSpinBox.to }
                         anchors.fill: parent
-                        anchors.rightMargin: 28
+                        anchors.rightMargin: root.spinboxButtonPx + root.spinboxButtonMargin * 2
                     }
 
                     up.indicator: Rectangle {
-                        implicitWidth: 20
-                        implicitHeight: 20
+                        implicitWidth: root.spinboxButtonPx
+                        implicitHeight: root.spinboxButtonPx
                         color: "#a9cfe8"
                         border.color: "#045671"
                         border.width: 1
-                        radius: 3
+                        radius: Math.round(root.spinboxButtonPx * 0.2)
                         anchors.right: parent.right
-                        anchors.rightMargin: 4
+                        anchors.rightMargin: root.spinboxButtonMargin
                         anchors.top: parent.top
-                        anchors.topMargin: 4
+                        anchors.topMargin: root.spinboxButtonMargin
                         Text {
                             anchors.centerIn: parent
                             text: "▲"
                             color: "#045671"
-                            font.pixelSize: 12
+                            font.pixelSize: Math.round(root.spinboxButtonPx * 0.6)
                         }
                     }
 
                     down.indicator: Rectangle {
-                        implicitWidth: 20
-                        implicitHeight: 20
+                        implicitWidth: root.spinboxButtonPx
+                        implicitHeight: root.spinboxButtonPx
                         color: "#a9cfe8"
                         border.color: "#045671"
                         border.width: 1
-                        radius: 3
+                        radius: Math.round(root.spinboxButtonPx * 0.2)
                         anchors.right: parent.right
-                        anchors.rightMargin: 4
+                        anchors.rightMargin: root.spinboxButtonMargin
                         anchors.bottom: parent.bottom
-                        anchors.bottomMargin: 4
+                        anchors.bottomMargin: root.spinboxButtonMargin
                         Text {
                             anchors.centerIn: parent
                             text: "▼"
                             color: "#045671"
-                            font.pixelSize: 12
+                            font.pixelSize: Math.round(root.spinboxButtonPx * 0.6)
                         }
                     }
 
                     background: Rectangle {
                         implicitWidth: 160
-                        implicitHeight: 48
+                        implicitHeight: root.spinboxHeightPx
                         radius: 6
                         color: "#ffffff"
                         border.color: "#045671"

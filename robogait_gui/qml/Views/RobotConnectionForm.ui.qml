@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
 import RobotDiscovery 1.0
 
 import "qrc:/Dialogs"
@@ -13,6 +14,8 @@ Item {
     property int selectedRobotIndex: -1
     property int pendingRobotIndex: -1
     property string selectedRobotNamespace: ""
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, Screen.pixelDensity) : 52
+    readonly property real listItemHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.listItemHeight, Screen.pixelDensity) : 52
 
 
     Rectangle {
@@ -114,7 +117,7 @@ Item {
             // Search button
             Button {
                 id: buttonSearchRobot
-                height: 52
+                height: root.buttonHeightPx
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: !root.showDiscoveryPanel
@@ -237,7 +240,7 @@ Item {
                                     onItemRemoved: robotsGrid.recalcMaxWidth()
                                     delegate: Rectangle {
                                         id: robotItem
-                                        height: 52
+                                        height: root.listItemHeightPx
                                         radius: 14
 
                                         property bool selected: root.pendingRobotIndex === index
