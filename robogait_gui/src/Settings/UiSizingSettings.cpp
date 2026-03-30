@@ -7,19 +7,60 @@
 
 using namespace ROBOGait::settings;
 
+struct FieldMapping
+{
+  const char* yaml_key_;
+  double UiSizingSettings::UiSizingValues::* member_;
+  double default_value_;
+};
+
+static constexpr FieldMapping FIELD_MAPPINGS[] = {
+    {"ui.button_height", &UiSizingSettings::UiSizingValues::button_height_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+    {"ui.input_height", &UiSizingSettings::UiSizingValues::input_height_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+    {"ui.combo_height", &UiSizingSettings::UiSizingValues::combo_height_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+    {"ui.dropdown_height", &UiSizingSettings::UiSizingValues::dropdown_height_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+    {"ui.list_item_height", &UiSizingSettings::UiSizingValues::list_item_height_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+    {"ui.badge_height", &UiSizingSettings::UiSizingValues::badge_height_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+    {"ui.badge_menu_item_height", &UiSizingSettings::UiSizingValues::badge_menu_item_height_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+    {"ui.icon_button_size", &UiSizingSettings::UiSizingValues::icon_button_size_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+    {"ui.icon_glyph_size", &UiSizingSettings::UiSizingValues::icon_glyph_size_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+    {"ui.tab_height", &UiSizingSettings::UiSizingValues::tab_height_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+    {"ui.checkbox_height", &UiSizingSettings::UiSizingValues::checkbox_height_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+    {"ui.checkbox_indicator_size", &UiSizingSettings::UiSizingValues::checkbox_indicator_size_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+    {"ui.spinbox_button_size", &UiSizingSettings::UiSizingValues::spinbox_button_size_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+};
+
 UiSizingSettings& UiSizingSettings::getInstance()
 {
   static UiSizingSettings instance;
   return instance;
 }
 
-double UiSizingSettings::getAuthModeHeight() const { return auth_mode_height_; }
+double UiSizingSettings::getButtonHeight() const { return values_.button_height_; }
 
-double UiSizingSettings::getInputHeight() const { return input_height_; }
+double UiSizingSettings::getInputHeight() const { return values_.input_height_; }
 
-double UiSizingSettings::getComboHeight() const { return combo_height_; }
+double UiSizingSettings::getComboHeight() const { return values_.combo_height_; }
 
-double UiSizingSettings::getActionButtonHeight() const { return action_button_height_; }
+double UiSizingSettings::getDropdownHeight() const { return values_.dropdown_height_; }
+
+double UiSizingSettings::getListItemHeight() const { return values_.list_item_height_; }
+
+double UiSizingSettings::getBadgeHeight() const { return values_.badge_height_; }
+
+double UiSizingSettings::getBadgeMenuItemHeight() const { return values_.badge_menu_item_height_; }
+
+double UiSizingSettings::getIconButtonSize() const { return values_.icon_button_size_; }
+
+double UiSizingSettings::getIconGlyphSize() const { return values_.icon_glyph_size_; }
+
+double UiSizingSettings::getTabHeight() const { return values_.tab_height_; }
+
+double UiSizingSettings::getCheckboxHeight() const { return values_.checkbox_height_; }
+
+double UiSizingSettings::getCheckboxIndicatorSize() const { return values_.checkbox_indicator_size_; }
+
+double UiSizingSettings::getSpinboxButtonSize() const { return values_.spinbox_button_size_; }
 
 double UiSizingSettings::getCalibrationFactor() const { return calibration_factor_; }
 
@@ -59,47 +100,33 @@ void UiSizingSettings::initializeDefaults()
 
   if (!yaml_loader.isLoaded())
   {
-    qWarning() << "[UiSizingSettings::initializeDefaults] YAML configuration not loaded, using defaults";
+    qWarning() << "[UiSizingSettings::initializeDefaults] YAML configuration not loaded, using constructor defaults";
     return;
   }
 
-  auth_mode_height_ = sanitizePositive(yaml_loader.getValue<double>("ui.register.auth_mode_height", DEFAULT_AUTH_MODE_HEIGHT), DEFAULT_AUTH_MODE_HEIGHT);
+  for (const auto& mapping : FIELD_MAPPINGS)
+  {
+    const double raw = yaml_loader.getValue<double>(mapping.yaml_key_, mapping.default_value_);
+    values_.*(mapping.member_) = sanitizePositive(raw, mapping.default_value_);
+  }
 
-  input_height_ = sanitizePositive(yaml_loader.getValue<double>("ui.register.input_height", DEFAULT_INPUT_HEIGHT), DEFAULT_INPUT_HEIGHT);
+  calibration_factor_ = sanitizePositive(yaml_loader.getValue<double>("ui.calibration_factor", DEFAULT_CALIBRATION_FACTOR), DEFAULT_CALIBRATION_FACTOR);
 
-  combo_height_ = sanitizePositive(yaml_loader.getValue<double>("ui.register.combo_height", DEFAULT_COMBO_HEIGHT), DEFAULT_COMBO_HEIGHT);
+  min_interactive_px_ = sanitizePositive(yaml_loader.getValue<double>("ui.min_interactive_px", DEFAULT_MIN_INTERACTIVE_PX), DEFAULT_MIN_INTERACTIVE_PX);
 
-  action_button_height_ =
-      sanitizePositive(yaml_loader.getValue<double>("ui.register.action_button_height", DEFAULT_ACTION_BUTTON_HEIGHT), DEFAULT_ACTION_BUTTON_HEIGHT);
-
-  calibration_factor_ =
-      sanitizePositive(yaml_loader.getValue<double>("ui.register.calibration_factor", DEFAULT_CALIBRATION_FACTOR), DEFAULT_CALIBRATION_FACTOR);
-
-  min_interactive_px_ =
-      sanitizePositive(yaml_loader.getValue<double>("ui.register.min_interactive_px", DEFAULT_MIN_INTERACTIVE_PX), DEFAULT_MIN_INTERACTIVE_PX);
-
-  max_interactive_px_ =
-      sanitizePositive(yaml_loader.getValue<double>("ui.register.max_interactive_px", DEFAULT_MAX_INTERACTIVE_PX), DEFAULT_MAX_INTERACTIVE_PX);
+  max_interactive_px_ = sanitizePositive(yaml_loader.getValue<double>("ui.max_interactive_px", DEFAULT_MAX_INTERACTIVE_PX), DEFAULT_MAX_INTERACTIVE_PX);
 
   if (max_interactive_px_ < min_interactive_px_)
   {
     qWarning() << "[UiSizingSettings::initializeDefaults] max_interactive_px < min_interactive_px, swapping";
-    const double tmp = max_interactive_px_;
-    max_interactive_px_ = min_interactive_px_;
-    min_interactive_px_ = tmp;
+    std::swap(max_interactive_px_, min_interactive_px_);
   }
 
   emit sizingChanged();
 }
 
 UiSizingSettings::UiSizingSettings() :
-    auth_mode_height_(DEFAULT_AUTH_MODE_HEIGHT),
-    input_height_(DEFAULT_INPUT_HEIGHT),
-    combo_height_(DEFAULT_COMBO_HEIGHT),
-    action_button_height_(DEFAULT_ACTION_BUTTON_HEIGHT),
-    calibration_factor_(DEFAULT_CALIBRATION_FACTOR),
-    min_interactive_px_(DEFAULT_MIN_INTERACTIVE_PX),
-    max_interactive_px_(DEFAULT_MAX_INTERACTIVE_PX)
+    calibration_factor_(DEFAULT_CALIBRATION_FACTOR), min_interactive_px_(DEFAULT_MIN_INTERACTIVE_PX), max_interactive_px_(DEFAULT_MAX_INTERACTIVE_PX)
 {
   qInfo() << "[UiSizingSettings::UiSizingSettings] UiSizingSettings created";
 }
