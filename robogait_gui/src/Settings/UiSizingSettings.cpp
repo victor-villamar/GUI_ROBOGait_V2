@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 
 #include <QDebug>
 #include <QGuiApplication>
@@ -139,6 +140,18 @@ void UiSizingSettings::initializeDefaults()
     std::swap(max_pixel_density_px_per_mm_, min_pixel_density_px_per_mm_);
   }
 
+  reference_diagonal_inch_ =
+      sanitizePositive(yaml_loader.getValue<double>("ui.reference_diagonal_inch", DEFAULT_REFERENCE_DIAGONAL_INCH), DEFAULT_REFERENCE_DIAGONAL_INCH);
+
+  min_scale_ = sanitizePositive(yaml_loader.getValue<double>("ui.min_scale", DEFAULT_MIN_SCALE), DEFAULT_MIN_SCALE);
+  max_scale_ = sanitizePositive(yaml_loader.getValue<double>("ui.max_scale", DEFAULT_MAX_SCALE), DEFAULT_MAX_SCALE);
+
+  if (max_scale_ < min_scale_)
+  {
+    qWarning() << "[UiSizingSettings::initializeDefaults] max_scale < min_scale, swapping";
+    std::swap(max_scale_, min_scale_);
+  }
+
   emit sizingChanged();
 }
 
@@ -148,7 +161,10 @@ UiSizingSettings::UiSizingSettings() :
     max_interactive_px_(DEFAULT_MAX_INTERACTIVE_PX),
     pixel_density_override_px_per_mm_(DEFAULT_PIXEL_DENSITY_OVERRIDE_PX_PER_MM),
     min_pixel_density_px_per_mm_(DEFAULT_MIN_PIXEL_DENSITY_PX_PER_MM),
-    max_pixel_density_px_per_mm_(DEFAULT_MAX_PIXEL_DENSITY_PX_PER_MM)
+    max_pixel_density_px_per_mm_(DEFAULT_MAX_PIXEL_DENSITY_PX_PER_MM),
+    reference_diagonal_inch_(DEFAULT_REFERENCE_DIAGONAL_INCH),
+    min_scale_(DEFAULT_MIN_SCALE),
+    max_scale_(DEFAULT_MAX_SCALE)
 {
   qInfo() << "[UiSizingSettings::UiSizingSettings] UiSizingSettings created";
 }
@@ -194,5 +210,39 @@ double UiSizingSettings::effectivePixelDensityPxPerMm(double provided_density) c
     density = std::min(density, max_pixel_density_px_per_mm_);
   }
 
+  const double diagonal_inch = screenDiagonalInches();
+  if (diagonal_inch > 0.0 && reference_diagonal_inch_ > 0.0)
+  {
+    double scale = diagonal_inch / reference_diagonal_inch_;
+    if (min_scale_ > 0.0)
+    {
+      scale = std::max(scale, min_scale_);
+    }
+    if (max_scale_ > 0.0)
+    {
+      scale = std::min(scale, max_scale_);
+    }
+    density *= scale;
+  }
+
   return density;
+}
+
+double UiSizingSettings::screenDiagonalInches() const
+{
+  QScreen* screen = QGuiApplication::primaryScreen();
+  if (!screen)
+  {
+    return 0.0;
+  }
+
+  const QSizeF size_mm = screen->physicalSize();
+  if (size_mm.width() <= 0.0 || size_mm.height() <= 0.0)
+  {
+    return 0.0;
+  }
+
+  const double width_in = size_mm.width() / MILLIMETERS_PER_INCH;
+  const double height_in = size_mm.height() / MILLIMETERS_PER_INCH;
+  return std::sqrt(width_in * width_in + height_in * height_in);
 }

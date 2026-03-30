@@ -309,6 +309,13 @@ private:
    */
   double effectivePixelDensityPxPerMm(double provided_density) const;
 
+  /**
+   * @brief Get the physical screen diagonal in inches
+   *
+   * @return Screen diagonal in inches, or 0 if unavailable
+   */
+  double screenDiagonalInches() const;
+
   UiSizingValues values_;                   /**< Struct to hold UI sizing values loaded from YAML configuration */
   double calibration_factor_;               /**< The calibration factor for scaling UI elements */
   double min_interactive_px_;               /**< The minimum interactive pixel value */
@@ -316,6 +323,9 @@ private:
   double pixel_density_override_px_per_mm_; /**< Override pixel density in px/mm (0 = auto) */
   double min_pixel_density_px_per_mm_;      /**< Minimum pixel density clamp in px/mm */
   double max_pixel_density_px_per_mm_;      /**< Maximum pixel density clamp in px/mm */
+  double reference_diagonal_inch_;          /**< Reference screen diagonal in inches for scaling */
+  double min_scale_;                        /**< Minimum scale factor for screen size */
+  double max_scale_;                        /**< Maximum scale factor for screen size */
 
   static constexpr double DEFAULT_CALIBRATION_FACTOR = 1.0;               /**< Default calibration factor for scaling UI elements */
   static constexpr double DEFAULT_MIN_INTERACTIVE_PX = 44.0;              /**< Default minimum interactive pixel value */
@@ -323,6 +333,9 @@ private:
   static constexpr double DEFAULT_PIXEL_DENSITY_OVERRIDE_PX_PER_MM = 0.0; /**< Default pixel density override (0 = auto) */
   static constexpr double DEFAULT_MIN_PIXEL_DENSITY_PX_PER_MM = 2.5;      /**< Default minimum pixel density clamp */
   static constexpr double DEFAULT_MAX_PIXEL_DENSITY_PX_PER_MM = 5.5;      /**< Default maximum pixel density clamp */
+  static constexpr double DEFAULT_REFERENCE_DIAGONAL_INCH = 13.0;         /**< Default reference screen diagonal in inches */
+  static constexpr double DEFAULT_MIN_SCALE = 0.85;                       /**< Default minimum scale factor */
+  static constexpr double DEFAULT_MAX_SCALE = 1.15;                       /**< Default maximum scale factor */
 
   static constexpr double DEFAULT_FALLBACK_DENSITY_PX_PER_MM = 3.779527559; /**< Default fallback pixel density in pixels per millimeter (96 DPI) */
   static constexpr double MILLIMETERS_PER_INCH = 25.4;                      /**< Number of millimeters in an inch, used for pixel density calculations */
