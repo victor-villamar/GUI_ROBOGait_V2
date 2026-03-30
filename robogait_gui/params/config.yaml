@@ -1,5 +1,16 @@
 # ROBOGait Configuration File
 
+# Ui Configuration
+ui:
+  register:
+    auth_mode_height: 17.0
+    input_height: 17.0
+    combo_height: 17.0
+    action_button_height: 17.0
+    calibration_factor: 1.0
+    min_interactive_px: 44.0
+    max_interactive_px: 96.0
+
 # Node Configuration
 node:
   namespace: "RoboGait_GUI"
