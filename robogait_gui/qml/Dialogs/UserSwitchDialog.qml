@@ -16,7 +16,7 @@ Dialog {
         color: "#A0505050"
     }
 
-    width: parent ? Math.min(700, parent.width * 0.90) : 700
+    width: parent ? Math.min(900, parent.width * 0.96) : 900
     height: keyboardHelper.computedHeight
 
     x: parent ? Math.round((parent.width - width) / 2) : 0
@@ -25,7 +25,7 @@ Dialog {
     KeyboardAwareHelper {
         id: keyboardHelper
         target: root
-        maxDialogHeight: parent ? Math.min(760, parent.height * 0.90) : 760
+        maxDialogHeight: parent ? Math.min(980, parent.height * 0.96) : 980
     }
 
     onOpened: forceActiveFocus()

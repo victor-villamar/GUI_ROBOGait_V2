@@ -4,10 +4,12 @@ import "qrc:/Common"
 RegisterPageForm {
     id: registerPage
     state: "register_page_login"
-    property real keyboardSafeArea: {
+    keyboardSafeArea: {
         var win = Qt.application.activeWindow
         return win && win.keyboardVisible ? win.keyboardHeight : 0
     }
+    property int defaultIdleTimeoutMs: 10000
+    property int signInIdleTimeoutMs: 60000
     property int baseCenterOffset: -80
     property int topPadding: 20
     property int keyboardPadding: 12
@@ -56,7 +58,7 @@ RegisterPageForm {
 
     Timer {
         id: idleTimer
-        interval: 10000
+        interval: registerPage.state === "register_page_sign_in" ? registerPage.signInIdleTimeoutMs : registerPage.defaultIdleTimeoutMs
         repeat: false
         onTriggered: {
             if (!applicationFlow || !applicationFlow.mystackview) {

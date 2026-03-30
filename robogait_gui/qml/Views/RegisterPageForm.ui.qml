@@ -9,11 +9,13 @@ Item {
     property alias signInPage: signInPage
     property alias guestPage: guestPage
     property int contentCenterOffset: 0
+    property real keyboardSafeArea: 0
 
     Login {
         id: loginPage
         anchors.fill: parent
         contentCenterOffset: root.contentCenterOffset
+        keyboardSafeArea: root.keyboardSafeArea
     }
 
     SignIn {
@@ -22,6 +24,7 @@ Item {
         visible: false
         enabled: false
         contentCenterOffset: root.contentCenterOffset
+        keyboardSafeArea: root.keyboardSafeArea
     }
 
     Guest {
@@ -30,5 +33,6 @@ Item {
         visible: false
         enabled: false
         contentCenterOffset: root.contentCenterOffset
+        keyboardSafeArea: root.keyboardSafeArea
     }
 }

@@ -6,12 +6,14 @@ Item {
     id: root
 
     signal userSwitched()
+    property real keyboardSafeArea: 0
 
     state: "login"
 
     Login {
         id: loginPage
         anchors.fill: parent
+        keyboardSafeArea: root.keyboardSafeArea
 
         onGoToRegister: root.state = "sign_in"
         onGoToGuest: root.state = "guest"
@@ -21,6 +23,7 @@ Item {
     SignIn {
         id: signInPage
         anchors.fill: parent
+        keyboardSafeArea: root.keyboardSafeArea
         visible: false
         enabled: false
 
@@ -31,6 +34,7 @@ Item {
     Guest {
         id: guestPage
         anchors.fill: parent
+        keyboardSafeArea: root.keyboardSafeArea
         visible: false
         enabled: false
 

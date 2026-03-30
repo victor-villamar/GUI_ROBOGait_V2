@@ -1,10 +1,13 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
 
 Item {
     id: root
 
     property string currentMode: "login"
+    property real controlHeight: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.authModeHeight, Screen.pixelDensity) : 50
+    property real popupItemHeight: controlHeight
     property int fontPixelSize: 26
     property color textColor: "#ffffff"
     property bool open: popup.opened
@@ -13,7 +16,7 @@ Item {
     signal modeSelected(string mode)
 
     implicitWidth: labelRow.implicitWidth
-    implicitHeight: Math.max(labelText.implicitHeight, 34)
+    implicitHeight: Math.max(controlHeight, Math.max(labelText.implicitHeight, 34))
 
     function labelForMode(mode) {
         switch (mode) {
@@ -74,7 +77,7 @@ Item {
     Row {
         id: labelRow
         anchors.centerIn: parent
-        height: Math.max(labelText.implicitHeight, arrowImage.height)
+        height: root.controlHeight
         spacing: 10
 
         Text {
@@ -153,7 +156,7 @@ Item {
                     property var dropdownRoot: root
                     property string modeValue: modelData
                     width: popup.width
-                    height: 44
+                    height: root.popupItemHeight
                     color: itemArea.pressed ? "#00C8FF" : "transparent"
 
                     Text {
