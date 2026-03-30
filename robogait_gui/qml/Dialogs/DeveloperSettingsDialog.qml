@@ -130,6 +130,12 @@ Dialog {
             anchors.margins: 20
             spacing: 14
 
+            Rectangle {
+                Layout.fillWidth: true
+                height: 12
+                color: "transparent"
+            }
+
             TabBar {
                 id: settingsTabBar
                 Layout.fillWidth: true

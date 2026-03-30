@@ -117,6 +117,7 @@ Item {
             // Search button
             Button {
                 id: buttonSearchRobot
+                width: 220
                 height: root.buttonHeightPx
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -197,8 +198,7 @@ Item {
                         height: Math.min(robotsGrid.implicitHeight + 20, parent.height - 60)
                         anchors.horizontalCenter: parent.horizontalCenter
                         color: "transparent"
-                        border.color: "#ffffff"
-                        border.width: 1
+                        border.width: 0
                         radius: 6
                         clip: true
                         visible: userSession.rosManager.robotDiscovery.state === RobotDiscovery.ROBOTS_FOUND
