@@ -82,6 +82,10 @@ public:
              READ getSpinboxButtonSize
              NOTIFY sizingChanged)
 
+  Q_PROPERTY(double joystickStickSize
+             READ getJoystickStickSize
+             NOTIFY sizingChanged)
+
   Q_PROPERTY(double calibrationFactor
              READ getCalibrationFactor
              NOTIFY sizingChanged)
@@ -187,6 +191,13 @@ public:
   double getSpinboxButtonSize() const;
 
   /**
+   * @brief Get the size for joystick stick
+   *
+   * @return Size in millimeters
+   */
+  double getJoystickStickSize() const;
+
+  /**
    * @brief Get the calibration factor
    *
    * @return Calibration factor
@@ -252,6 +263,7 @@ public:
    * @param checkbox_height_ The height for checkbox UI elements
    * @param checkbox_indicator_size_ The size for checkbox indicators
    * @param spinbox_button_size_ The size for spinbox buttons
+   * @param joystick_stick_size_ The size for joystick stick
    */
   struct UiSizingValues
   {
@@ -268,6 +280,7 @@ public:
     double checkbox_height_ = DEFAULT_COMPONENT_HEIGHT;
     double checkbox_indicator_size_ = DEFAULT_COMPONENT_HEIGHT;
     double spinbox_button_size_ = DEFAULT_COMPONENT_HEIGHT;
+    double joystick_stick_size_ = DEFAULT_COMPONENT_HEIGHT;
   };
 
   static constexpr double DEFAULT_COMPONENT_HEIGHT = 12.0; /**< Default component height in millimeters */

@@ -31,6 +31,7 @@ static constexpr FieldMapping FIELD_MAPPINGS[] = {
     {"ui.checkbox_height", &UiSizingSettings::UiSizingValues::checkbox_height_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
     {"ui.checkbox_indicator_size", &UiSizingSettings::UiSizingValues::checkbox_indicator_size_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
     {"ui.spinbox_button_size", &UiSizingSettings::UiSizingValues::spinbox_button_size_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
+    {"ui.joystick_stick_size", &UiSizingSettings::UiSizingValues::joystick_stick_size_, UiSizingSettings::DEFAULT_COMPONENT_HEIGHT},
 };
 
 UiSizingSettings& UiSizingSettings::getInstance()
@@ -64,6 +65,8 @@ double UiSizingSettings::getCheckboxHeight() const { return values_.checkbox_hei
 double UiSizingSettings::getCheckboxIndicatorSize() const { return values_.checkbox_indicator_size_; }
 
 double UiSizingSettings::getSpinboxButtonSize() const { return values_.spinbox_button_size_; }
+
+double UiSizingSettings::getJoystickStickSize() const { return values_.joystick_stick_size_; }
 
 double UiSizingSettings::getCalibrationFactor() const { return calibration_factor_; }
 
