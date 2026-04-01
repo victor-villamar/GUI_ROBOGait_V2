@@ -49,6 +49,10 @@ Rectangle {
     property real angularValue: 0.0
 
     property int mapContentMargin: 10
+    property real iconButtonSizePx: 0
+    property real iconGlyphSizePx: 0
+    property real buttonHeightPx: 0
+    property real joystickAreaSizePx: 0
 
     ColumnLayout {
         anchors.fill: parent
@@ -58,7 +62,7 @@ Rectangle {
         // Header
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 60
+            Layout.preferredHeight: Math.max(60, root.iconButtonSizePx + 20)
             color: "#2c5f7c"
             radius: 8
 
@@ -79,8 +83,9 @@ Rectangle {
 
                 Button {
                     id: infoButton
-                    Layout.preferredWidth: 50
-                    Layout.preferredHeight: 40
+                    Layout.preferredWidth: root.iconButtonSizePx
+                    Layout.preferredHeight: root.iconButtonSizePx
+                    Layout.alignment: Qt.AlignVCenter
 
                     background: Rectangle {
                         radius: width / 2
@@ -89,6 +94,9 @@ Rectangle {
 
                     contentItem: Image {
                         source: "qrc:/qmlresources/icons/circle_info_solid.svg"
+                        width: root.iconGlyphSizePx
+                        height: root.iconGlyphSizePx
+                        anchors.centerIn: parent
                         fillMode: Image.PreserveAspectFit
                         smooth: true
                     }
@@ -333,15 +341,15 @@ Rectangle {
 
                         Joystick {
                             id: joystick
-                            width: Math.min(260, mapDisplayArea.width * 0.26)
+                            width: joystickAreaSizePx > 0 ? joystickAreaSizePx : Math.min(260, mapDisplayArea.width * 0.26)
                             height: width
                             mouseAreaJoystick.enabled: manualUnlocked && robotPoseAvailable && joystickPanel.pinned
                         }
 
                         Button {
                             id: lockButton
-                            width: 47
-                            height: 47
+                            width: root.iconButtonSizePx
+                            height: root.iconButtonSizePx
                             anchors.verticalCenter: parent.verticalCenter
 
                             background: Rectangle {
@@ -353,6 +361,9 @@ Rectangle {
                                 source: manualUnlocked
                                         ? "qrc:/qmlresources/icons/unlock.svg"
                                         : "qrc:/qmlresources/icons/lock.svg"
+                                width: root.iconGlyphSizePx
+                                height: root.iconGlyphSizePx
+                                anchors.centerIn: parent
                                 fillMode: Image.PreserveAspectFit
                                 smooth: true
                             }
@@ -367,8 +378,8 @@ Rectangle {
 
                 Button {
                     id: pinButton
-                    width: 39
-                    height: 39
+                    width: root.iconButtonSizePx
+                    height: root.iconButtonSizePx
                     anchors.top: parent.top
                     anchors.right: parent.right
                     anchors.margins: 6
@@ -380,16 +391,14 @@ Rectangle {
 
                     contentItem: Image {
                         anchors.centerIn: parent
-                        width: 25
-                        height: 25
+                        width: root.iconGlyphSizePx
+                        height: root.iconGlyphSizePx
                         source: joystickPanel.pinned
                                 ? "qrc:/qmlresources/icons/pin.svg"
                                 : "qrc:/qmlresources/icons/pin_empty.svg"
 
                         fillMode: Image.PreserveAspectFit
                         smooth: true
-                        sourceSize.width: 25
-                        sourceSize.height: 25
                     }
 
                     onClicked: {
@@ -407,7 +416,7 @@ Rectangle {
         // Zoom Controls
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 60
+            Layout.preferredHeight: Math.max(60, Math.max(root.iconButtonSizePx, root.buttonHeightPx) + 16)
             color: "#2c5f7c"
             radius: 6
 
@@ -422,8 +431,9 @@ Rectangle {
 
                 Button {
                     id: zoomOutButton
-                    Layout.preferredWidth: 50
-                    Layout.preferredHeight: 44
+                    Layout.preferredWidth: root.iconButtonSizePx
+                    Layout.preferredHeight: root.iconButtonSizePx
+                    Layout.alignment: Qt.AlignVCenter
 
                     background: Rectangle {
                         radius: 6
@@ -434,6 +444,9 @@ Rectangle {
 
                     contentItem: Image {
                         source: "qrc:/qmlresources/icons/minus.svg"
+                        width: root.iconGlyphSizePx
+                        height: root.iconGlyphSizePx
+                        anchors.centerIn: parent
                         fillMode: Image.PreserveAspectFit
                         smooth: true
                     }
@@ -444,8 +457,9 @@ Rectangle {
 
                 Button {
                     id: zoomInButton
-                    Layout.preferredWidth: 50
-                    Layout.preferredHeight: 44
+                    Layout.preferredWidth: root.iconButtonSizePx
+                    Layout.preferredHeight: root.iconButtonSizePx
+                    Layout.alignment: Qt.AlignVCenter
 
                     background: Rectangle {
                         radius: 6
@@ -456,6 +470,9 @@ Rectangle {
 
                     contentItem: Image {
                         source: "qrc:/qmlresources/icons/plus.svg"
+                        width: root.iconGlyphSizePx
+                        height: root.iconGlyphSizePx
+                        anchors.centerIn: parent
                         fillMode: Image.PreserveAspectFit
                         smooth: true
                     }
@@ -466,8 +483,9 @@ Rectangle {
 
                 Button {
                     id: fitButton
-                    Layout.preferredWidth: 50
-                    Layout.preferredHeight: 44
+                    Layout.preferredWidth: root.iconButtonSizePx
+                    Layout.preferredHeight: root.iconButtonSizePx
+                    Layout.alignment: Qt.AlignVCenter
 
                     background: Rectangle {
                         radius: 6
@@ -478,6 +496,9 @@ Rectangle {
 
                     contentItem: Image {
                         source: "qrc:/qmlresources/icons/center_to_fit.svg"
+                        width: root.iconGlyphSizePx
+                        height: root.iconGlyphSizePx
+                        anchors.centerIn: parent
                         fillMode: Image.PreserveAspectFit
                         smooth: true
                     }
@@ -488,9 +509,10 @@ Rectangle {
 
                 Button {
                     id: followButton
-                    Layout.preferredWidth: 50
-                    Layout.preferredHeight: 44
+                    Layout.preferredWidth: root.iconButtonSizePx
+                    Layout.preferredHeight: root.iconButtonSizePx
                     checkable: true
+                    Layout.alignment: Qt.AlignVCenter
 
                     background: Rectangle {
                         radius: 6
@@ -501,6 +523,9 @@ Rectangle {
 
                     contentItem: Image {
                         source: "qrc:/qmlresources/icons/center_view.svg"
+                        width: root.iconGlyphSizePx
+                        height: root.iconGlyphSizePx
+                        anchors.centerIn: parent
                         fillMode: Image.PreserveAspectFit
                         smooth: true
                     }
@@ -515,11 +540,13 @@ Rectangle {
                     id: saveResetRow
                     spacing: 12
                     Layout.alignment: Qt.AlignHCenter
+                    Layout.fillHeight: true
 
                     Button {
                         id: saveMapButton
                         Layout.preferredWidth: 110
-                        Layout.preferredHeight: 36
+                        Layout.preferredHeight: root.buttonHeightPx
+                        Layout.alignment: Qt.AlignVCenter
 
                         background: Rectangle {
                             radius: 6
@@ -541,7 +568,8 @@ Rectangle {
                     Button {
                         id: resetMapButton
                         Layout.preferredWidth: 110
-                        Layout.preferredHeight: 36
+                        Layout.preferredHeight: root.buttonHeightPx
+                        Layout.alignment: Qt.AlignVCenter
 
                         background: Rectangle {
                             radius: 6

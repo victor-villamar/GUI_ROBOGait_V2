@@ -30,6 +30,9 @@ Dialog {
     }
 
     signal createMapRequested(string name, string location, string description)
+    readonly property real inputHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, 0) : 40
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 40
+    readonly property real textAreaHeightPx: Math.round(inputHeightPx * 3)
 
     function resetForm() {
         nameField.text = ""
@@ -105,7 +108,7 @@ Dialog {
                 TextField {
                     id: nameField
                     width: parent.width
-                    height: 40
+                    height: root.inputHeightPx
                     color: "#000000"
                     font.pointSize: 15
                     verticalAlignment: TextInput.AlignVCenter
@@ -123,7 +126,7 @@ Dialog {
                 TextField {
                     id: locationField
                     width: parent.width
-                    height: 40
+                    height: root.inputHeightPx
                     color: "#000000"
                     font.pointSize: 15
                     verticalAlignment: TextInput.AlignVCenter
@@ -141,7 +144,7 @@ Dialog {
                 TextArea {
                     id: descriptionField
                     width: parent.width
-                    height: 120
+                    height: root.textAreaHeightPx
                     color: "#000000"
                     font.pointSize: 15
                     wrapMode: TextEdit.Wrap
@@ -152,6 +155,12 @@ Dialog {
                         color: "#FFFFFF"
                         border.color: "#CCCCCC"
                     }
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: 12
+                    color: "transparent"
                 }
 
                 Item {
@@ -166,7 +175,7 @@ Dialog {
                         Button {
                             id: createButton
                             width: 215
-                            height: 40
+                            height: root.buttonHeightPx
 
                             background: Rectangle {
                                 radius: 10
@@ -210,7 +219,7 @@ Dialog {
                         Button {
                             id: cancelButton
                             width: 215
-                            height: 40
+                            height: root.buttonHeightPx
 
                             background: Rectangle {
                                 radius: 10

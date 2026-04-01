@@ -6,6 +6,16 @@ import "qrc:/Dialogs"
 
 MapViewForm {
     id: root
+    readonly property real computedIconButtonSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconButtonSize, 0) : 50
+    readonly property real computedIconGlyphSizePx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, 0) : 25
+    readonly property real computedButtonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 36
+    readonly property real computedJoystickStickSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.joystickStickSize, 0) : 34
+    readonly property real computedJoystickAreaSizePx: computedJoystickStickSizePx * 4
+
+    iconButtonSizePx: computedIconButtonSizePx
+    iconGlyphSizePx: computedIconGlyphSizePx
+    buttonHeightPx: computedButtonHeightPx
+    joystickAreaSizePx: computedJoystickAreaSizePx
 
     property real maxLinearVelocity: 0.22
     property bool confirmBackNavigation: false
@@ -379,7 +389,7 @@ MapViewForm {
                 Button {
                     id: saveButton
                     width: 120
-                    height: 32
+                    height: root.buttonHeightPx
                     text: qsTr("Guardar")
 
                     background: Rectangle {
@@ -407,7 +417,7 @@ MapViewForm {
                 Button {
                     id: noSaveButton
                     width: 120
-                    height: 32
+                    height: root.buttonHeightPx
                     text: qsTr("No Guardar")
 
                     background: Rectangle {
@@ -435,7 +445,7 @@ MapViewForm {
                 Button {
                     id: cancelButton
                     width: 120
-                    height: 32
+                    height: root.buttonHeightPx
                     text: qsTr("Cancelar")
 
                     background: Rectangle {
