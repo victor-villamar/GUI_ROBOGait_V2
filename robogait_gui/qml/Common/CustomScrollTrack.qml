@@ -25,13 +25,15 @@ Item {
     readonly property real viewportTop: ready ? sectionTop - flickable.contentY : 0
     readonly property real viewportBottom: ready ? sectionBottom - flickable.contentY : 0
     readonly property real viewportSpan: Math.max(0, viewportBottom - viewportTop)
+    readonly property real viewportOffset: Math.max(0, viewportTop)
+    readonly property real availableHeight: Math.max(0, flickable.height - viewportOffset)
     readonly property real clampedRatio: ready ? Math.max(0.0, Math.min(1.0, flickable.visibleArea.heightRatio)) : 0
     readonly property real clampedPos: ready ? Math.max(0.0, Math.min(1.0, flickable.visibleArea.yPosition)) : 0
 
     visible: trackVisible && ready
     z: 20
     width: trackWidth
-    height: ready ? Math.max(minTrackHeight, Math.min(flickable.height, viewportSpan)) : 0
+    height: ready ? Math.max(minTrackHeight, Math.min(availableHeight, viewportSpan)) : 0
 
     x: ready ? Math.max(
                    flickable.x + edgeMargin,
@@ -41,7 +43,7 @@ Item {
                    )
                ) : 0
 
-    y: ready ? flickable.y + Math.max(0, Math.min(flickable.height - minTrackHeight, viewportTop)) : 0
+    y: ready ? flickable.y + Math.max(0, Math.min(flickable.height - height, viewportTop)) : 0
 
     Rectangle {
         anchors.fill: parent
