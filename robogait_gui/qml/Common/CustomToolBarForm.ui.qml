@@ -90,10 +90,3 @@ Item {
         }
     }
 }
-
-
-/*##^##
-Designer {
-    D{i:0;autoSize:true;formeditorZoom:1.1;height:480;width:640}D{i:2}D{i:5}D{i:8}D{i:1}
-}
-##^##*/

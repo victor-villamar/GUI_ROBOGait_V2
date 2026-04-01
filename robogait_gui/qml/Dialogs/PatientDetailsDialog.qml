@@ -23,6 +23,7 @@ Dialog {
     property int patientId: -1
     property string patientDisplay: ""
     property var details: ({})
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 44
 
     signal acceptedSelection(int patientId, string display)
 
@@ -157,7 +158,7 @@ Dialog {
             Button {
                 id: acceptButton
                 width: 180
-                height: 44
+                height: root.buttonHeightPx
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
                 padding: 0
