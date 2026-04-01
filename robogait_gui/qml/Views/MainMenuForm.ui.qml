@@ -18,6 +18,8 @@ Item {
     readonly property bool isGuest: (dbManager && dbManager.userRole === "guest")
 
     readonly property bool canStartTest: (!isGuest && userSession && userSession.hasMapAssigned && userSession.hasPatientAssigned)
+    property real iconButtonSizePx: 37
+    property real iconGlyphSizePx: 37
 
 	    Rectangle {
 	        anchors.fill: parent
@@ -214,8 +216,8 @@ Item {
 
         Button {
             id: infoButton
-            width: 37
-            height: 37
+            width: root.iconButtonSizePx
+            height: root.iconButtonSizePx
             anchors.verticalCenter: explain.verticalCenter
             anchors.left: explain.right
             anchors.leftMargin: 10
@@ -227,6 +229,9 @@ Item {
 
             contentItem: Image {
                 source: "qrc:/qmlresources/icons/circle_info_solid.svg"
+                width: root.iconGlyphSizePx
+                height: root.iconGlyphSizePx
+                anchors.centerIn: parent
                 fillMode: Image.PreserveAspectFit
                 smooth: true
             }

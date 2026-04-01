@@ -26,7 +26,7 @@ Dialog {
     KeyboardAwareHelper {
         id: keyboardHelper
         target: root
-        maxDialogHeight: parent ? parent.height * 0.90 : 720
+        maxDialogHeight: parent ? Math.min(820, parent.height * 0.90) : 820
     }
 
     signal patientRegistered()
