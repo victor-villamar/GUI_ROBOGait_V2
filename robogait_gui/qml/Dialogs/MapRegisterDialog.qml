@@ -33,6 +33,11 @@ Dialog {
     readonly property real inputHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, 0) : 40
     readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 40
     readonly property real textAreaHeightPx: Math.round(inputHeightPx * 3)
+    readonly property bool hasVerticalScroll: flick.contentHeight > flick.height + 1
+    readonly property real scrollTrackWidth: 10
+    readonly property real scrollTrackGap: 6
+    readonly property real scrollTrackEdgeMargin: 2
+    readonly property real scrollTrackReserve: scrollTrackWidth + scrollTrackGap + scrollTrackEdgeMargin
 
     function resetForm() {
         nameField.text = ""
@@ -80,167 +85,203 @@ Dialog {
             onClicked: root.close()
         }
 
-        ScrollView {
-            id: scroll
+        Flickable {
+            id: flick
             z: 1
             anchors.fill: parent
             anchors.margins: 16
             clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            flickableDirection: Flickable.VerticalFlick
+            interactive: root.hasVerticalScroll
+            contentWidth: width
+            contentHeight: content.implicitHeight
 
-            Column {
-                id: formColumn
-                width: Math.min(450, scroll.width - 32)
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: parent.top
-                anchors.topMargin: Math.max(20, Math.round((scroll.height - formColumn.implicitHeight) / 2))
-                spacing: 15
-                padding: 20
-
-                Text {
-                    text: qsTr("DATOS DEL MAPA")
-                    color: "#ffffff"
-                    font.pixelSize: 40
-                    horizontalAlignment: Text.AlignHCenter
-                    width: parent.width
-                    padding: 10
+            onContentHeightChanged: {
+                if (!root.hasVerticalScroll) {
+                    contentY = 0
                 }
+            }
+            onHeightChanged: {
+                if (!root.hasVerticalScroll) {
+                    contentY = 0
+                }
+            }
 
-                TextField {
-                    id: nameField
-                    width: parent.width
-                    height: root.inputHeightPx
-                    color: "#000000"
-                    font.pointSize: 15
-                    verticalAlignment: TextInput.AlignVCenter
-                    leftPadding: 10
-                    rightPadding: 10
-                    placeholderText: qsTr("Nombre del mapa")
+            Item {
+                id: content
+                width: flick.width
+                implicitHeight: Math.max(formColumn.implicitHeight, flick.height)
 
-                    background: Rectangle {
-                        radius: 10
-                        color: "#FFFFFF"
-                        border.color: "#CCCCCC"
+                Column {
+                    id: formColumn
+                    width: Math.min(450, Math.max(0, content.width - 32 - root.scrollTrackReserve))
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.top
+                    anchors.topMargin: Math.max(20, Math.round((flick.height - formColumn.implicitHeight) / 2))
+                    spacing: 15
+                    leftPadding: 20
+                    rightPadding: 20
+                    topPadding: 20
+                    bottomPadding: 20
+                    readonly property real innerWidth: Math.max(0, width - leftPadding - rightPadding)
+
+                    Text {
+                        text: qsTr("DATOS DEL MAPA")
+                        color: "#ffffff"
+                        font.pixelSize: 40
+                        horizontalAlignment: Text.AlignHCenter
+                        width: formColumn.innerWidth
+                        padding: 10
                     }
-                }
 
-                TextField {
-                    id: locationField
-                    width: parent.width
-                    height: root.inputHeightPx
-                    color: "#000000"
-                    font.pointSize: 15
-                    verticalAlignment: TextInput.AlignVCenter
-                    leftPadding: 10
-                    rightPadding: 10
-                    placeholderText: qsTr("Localización del mapa")
+                    TextField {
+                        id: nameField
+                        width: formColumn.innerWidth
+                        height: root.inputHeightPx
+                        color: "#000000"
+                        font.pointSize: 15
+                        verticalAlignment: TextInput.AlignVCenter
+                        leftPadding: 10
+                        rightPadding: 10
+                        placeholderText: qsTr("Nombre del mapa")
 
-                    background: Rectangle {
-                        radius: 10
-                        color: "#FFFFFF"
-                        border.color: "#CCCCCC"
-                    }
-                }
-
-                TextArea {
-                    id: descriptionField
-                    width: parent.width
-                    height: root.textAreaHeightPx
-                    color: "#000000"
-                    font.pointSize: 15
-                    wrapMode: TextEdit.Wrap
-                    placeholderText: qsTr("Descripción")
-
-                    background: Rectangle {
-                        radius: 10
-                        color: "#FFFFFF"
-                        border.color: "#CCCCCC"
-                    }
-                }
-
-                Rectangle {
-                    width: parent.width
-                    height: 12
-                    color: "transparent"
-                }
-
-                Item {
-                    width: parent.width
-                    height: buttonsRow.implicitHeight
-
-                    Row {
-                        id: buttonsRow
-                        spacing: 20
-                        anchors.horizontalCenter: parent.horizontalCenter
-
-                        Button {
-                            id: createButton
-                            width: 215
-                            height: root.buttonHeightPx
-
-                            background: Rectangle {
-                                radius: 10
-                                color: "#aed2ea"
-                                border.color: "#aed2ea"
-                            }
-
-                            contentItem: Label {
-                                text: qsTr("HACER MAPA")
-                                color: "#ffffff"
-                                font.bold: true
-                                font.pixelSize: 19
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-
-                            onClicked: {
-                                var nameTrim = nameField.text.trim()
-                                var locationTrim = locationField.text.trim()
-                                var descriptionTrim = descriptionField.text.trim()
-
-                                if (nameTrim === "" ||
-                                    locationTrim === "" ||
-                                    descriptionTrim === "") {
-                                    errorPopup.errorRectangleTextError.text = qsTr("Error: Has dejado campos vacíos")
-                                    errorPopup.open()
-                                    return
-                                }
-
-                                if (dbManager && dbManager.mapExists(nameTrim)) {
-                                    errorPopup.errorRectangleTextError.text = qsTr("Error: El mapa ya existe. Introduzca otro nombre.")
-                                    errorPopup.open()
-                                    return
-                                }
-
-                                root.close()
-                                root.createMapRequested(nameTrim, locationTrim, descriptionTrim)
-                            }
+                        background: Rectangle {
+                            radius: 10
+                            color: "#FFFFFF"
+                            border.color: "#CCCCCC"
                         }
+                    }
 
-                        Button {
-                            id: cancelButton
-                            width: 215
-                            height: root.buttonHeightPx
+                    TextField {
+                        id: locationField
+                        width: formColumn.innerWidth
+                        height: root.inputHeightPx
+                        color: "#000000"
+                        font.pointSize: 15
+                        verticalAlignment: TextInput.AlignVCenter
+                        leftPadding: 10
+                        rightPadding: 10
+                        placeholderText: qsTr("Localización del mapa")
 
-                            background: Rectangle {
-                                radius: 10
-                                color: "#aed2ea"
-                                border.color: "#aed2ea"
+                        background: Rectangle {
+                            radius: 10
+                            color: "#FFFFFF"
+                            border.color: "#CCCCCC"
+                        }
+                    }
+
+                    TextArea {
+                        id: descriptionField
+                        width: formColumn.innerWidth
+                        height: root.textAreaHeightPx
+                        color: "#000000"
+                        font.pointSize: 15
+                        wrapMode: TextEdit.Wrap
+                        placeholderText: qsTr("Descripción")
+
+                        background: Rectangle {
+                            radius: 10
+                            color: "#FFFFFF"
+                            border.color: "#CCCCCC"
+                        }
+                    }
+
+                    Rectangle {
+                        width: formColumn.innerWidth
+                        height: 12
+                        color: "transparent"
+                    }
+
+                    Item {
+                        width: formColumn.innerWidth
+                        height: buttonsRow.implicitHeight
+
+                        Row {
+                            id: buttonsRow
+                            spacing: 20
+                            anchors.horizontalCenter: parent.horizontalCenter
+
+                            Button {
+                                id: createButton
+                                width: 215
+                                height: root.buttonHeightPx
+
+                                background: Rectangle {
+                                    radius: 10
+                                    color: "#aed2ea"
+                                    border.color: "#aed2ea"
+                                }
+
+                                contentItem: Label {
+                                    text: qsTr("HACER MAPA")
+                                    color: "#ffffff"
+                                    font.bold: true
+                                    font.pixelSize: 19
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+
+                                onClicked: {
+                                    var nameTrim = nameField.text.trim()
+                                    var locationTrim = locationField.text.trim()
+                                    var descriptionTrim = descriptionField.text.trim()
+
+                                    if (nameTrim === "" ||
+                                        locationTrim === "" ||
+                                        descriptionTrim === "") {
+                                        errorPopup.errorRectangleTextError.text = qsTr("Error: Has dejado campos vacíos")
+                                        errorPopup.open()
+                                        return
+                                    }
+
+                                    if (dbManager && dbManager.mapExists(nameTrim)) {
+                                        errorPopup.errorRectangleTextError.text = qsTr("Error: El mapa ya existe. Introduzca otro nombre.")
+                                        errorPopup.open()
+                                        return
+                                    }
+
+                                    root.close()
+                                    root.createMapRequested(nameTrim, locationTrim, descriptionTrim)
+                                }
                             }
 
-                            contentItem: Label {
-                                text: qsTr("CANCELAR")
-                                color: "#ffffff"
-                                font.bold: true
-                                font.pixelSize: 19
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
+                            Button {
+                                id: cancelButton
+                                width: 215
+                                height: root.buttonHeightPx
 
-                            onClicked: root.close()
+                                background: Rectangle {
+                                    radius: 10
+                                    color: "#aed2ea"
+                                    border.color: "#aed2ea"
+                                }
+
+                                contentItem: Label {
+                                    text: qsTr("CANCELAR")
+                                    color: "#ffffff"
+                                    font.bold: true
+                                    font.pixelSize: 19
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+
+                                onClicked: root.close()
+                            }
                         }
                     }
                 }
             }
+        }
+
+        CustomScrollTrack {
+            flickable: flick
+            formColumn: formColumn
+            startItem: nameField
+            trackWidth: root.scrollTrackWidth
+            gapFromForm: root.scrollTrackGap
+            edgeMargin: root.scrollTrackEdgeMargin
+            trackVisible: root.hasVerticalScroll
         }
 
         ErrorRectangle {
