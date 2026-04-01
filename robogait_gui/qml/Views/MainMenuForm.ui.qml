@@ -207,7 +207,7 @@ Item {
             color: "#ffffff"
             text: qsTr("Bienvenido a la aplicación de ROBOGait. Para comenzar, seleccione un mapa y un paciente. Puede acceder al control manual desde esta pantalla. Para más detalles, presione el botón de información.")
             wrapMode: Text.Wrap
-            font.pixelSize: 16
+            font.pixelSize: 22
             horizontalAlignment: Text.AlignHCenter
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
@@ -258,7 +258,7 @@ Item {
 
             Text {
                 id: bottomStatusPatient
-                font.pixelSize: 14
+                font.pixelSize: 20
                 font.bold: true
                 textFormat: Text.RichText
                 text: bottomStatusRow.patientStatusRichText
@@ -267,14 +267,14 @@ Item {
             Text {
                 id: bottomStatusDash
                 color: "#ffffff"
-                font.pixelSize: 14
+                font.pixelSize: 20
                 font.bold: true
                 text: qsTr(" | ")
             }
 
             Text {
                 id: bottomStatusMap
-                font.pixelSize: 14
+                font.pixelSize: 20
                 font.bold: true
                 textFormat: Text.RichText
                 text: bottomStatusRow.mapStatusRichText

@@ -85,9 +85,10 @@ Dialog {
         Rectangle {
             id: detailsCard
             width: parent.width - 32
-            height: Math.min(250, parent.height - header.height - footer.height - 64)
+            height: Math.min(250, parent.height - header.height - footer.height - detailsSpacer.height - 64)
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.top: header.bottom
+            anchors.topMargin: 12
             color: "#e9e9e9"
             radius: 12
             border.color: "#235c87"
@@ -143,6 +144,15 @@ Dialog {
                     wrapMode: Text.WordWrap
                 }
             }
+        }
+
+        Rectangle {
+            id: detailsSpacer
+            height: 12
+            width: detailsCard.width
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: detailsCard.bottom
+            color: "transparent"
         }
 
         Item {
