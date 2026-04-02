@@ -63,6 +63,7 @@ Item {
             id: rightBadges
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenterOffset: 20
             anchors.rightMargin: 10
             spacing: 10
 

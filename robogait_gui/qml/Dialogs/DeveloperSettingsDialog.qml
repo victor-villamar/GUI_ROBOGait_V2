@@ -132,7 +132,7 @@ Dialog {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 12
+                height: 10
                 color: "transparent"
             }
 
@@ -192,6 +192,12 @@ Dialog {
                         verticalAlignment: Text.AlignVCenter
                     }
                 }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                height: 10
+                color: "transparent"
             }
 
             StackLayout {

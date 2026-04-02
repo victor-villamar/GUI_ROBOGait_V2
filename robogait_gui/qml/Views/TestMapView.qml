@@ -8,6 +8,16 @@ import "qrc:/Views"
 TestMapViewForm {
 
     id: root
+    readonly property real computedIconButtonSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconButtonSize, 0) : 50
+    readonly property real computedIconGlyphSizePx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, 0) : 25
+    readonly property real computedButtonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 44
+    readonly property real computedJoystickStickSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.joystickStickSize, 0) : 34
+    readonly property real computedWheelSizePx: computedJoystickStickSizePx * 4
+
+    iconButtonSizePx: computedIconButtonSizePx
+    iconGlyphSizePx: computedIconGlyphSizePx
+    buttonHeightPx: computedButtonHeightPx
+    wheelSizePx: computedWheelSizePx
 
     property int experimentId: -1
     property bool experimentRegistered: false
@@ -562,6 +572,8 @@ TestMapViewForm {
         if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
             var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
             if (mapVizManager) {
+                // Ensure pose updates are re-enabled when leaving the test view
+                mapVizManager.setRobotPoseUpdatesEnabled(true)
                 mapVizManager.destroySubscriptions()
             }
         }

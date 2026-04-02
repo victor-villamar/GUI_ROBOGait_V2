@@ -48,6 +48,7 @@ Item {
 		                        width: 110
 		                        height: 90
 		                        anchors.bottom: parent.bottom
+		                        anchors.bottomMargin: -20
 		                        anchors.horizontalCenter: parent.horizontalCenter
 		                        source: "qrc:/qmlresources/logos/upm.png"
 		                        fillMode: Image.PreserveAspectFit
@@ -65,6 +66,7 @@ Item {
 		                        width: 110
 		                        height: 90
 		                        anchors.bottom: parent.bottom
+		                        anchors.bottomMargin: -20
 		                        anchors.horizontalCenter: parent.horizontalCenter
 		                        source: "qrc:/qmlresources/logos/car.png"
 		                        fillMode: Image.PreserveAspectFit
@@ -86,6 +88,7 @@ Item {
 		                        width: 110
 		                        height: 90
 		                        anchors.bottom: parent.bottom
+		                        anchors.bottomMargin: -20
 		                        anchors.horizontalCenter: parent.horizontalCenter
 		                        source: "qrc:/qmlresources/logos/etsidi.png"
 		                        fillMode: Image.PreserveAspectFit
