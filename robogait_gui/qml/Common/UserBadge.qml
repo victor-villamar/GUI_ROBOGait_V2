@@ -10,6 +10,7 @@ Item {
 
     signal disconnectRobotRequested()
     signal changeUserRequested()
+    signal appExitRequested()
 
     property bool dropDownOpen: false
     property bool loggedIn: userSession ? userSession.isAuthenticated : false
@@ -30,11 +31,14 @@ Item {
     property int segmentHeight: Math.round(badgeMenuItemHeightPx)
     property int segmentPadding: 16
     property int dividerSize: 2
+    property int segmentCount: root.robotConnected ? 4 : 3
+    property int dividerCount: segmentCount - 1
     property int segmentWidth: Math.max(
                                  120,
                                  disconnectText.implicitWidth + root.segmentPadding * 2,
                                  changeUserText.implicitWidth + root.segmentPadding * 2,
-                                 logoutText.implicitWidth + root.segmentPadding * 2
+                                 logoutText.implicitWidth + root.segmentPadding * 2,
+                                 appExitText.implicitWidth + root.segmentPadding * 2
                                )
     property int menuWidth: Math.max(root.badgeWidth, root.segmentWidth)
 
@@ -149,7 +153,7 @@ Item {
         z: 3
         width: root.menuWidth
         height: root.dropDownOpen
-              ? (root.segmentHeight * (root.robotConnected ? 3 : 2) + root.dividerSize * (root.robotConnected ? 2 : 1))
+              ? (root.segmentHeight * root.segmentCount + root.dividerSize * root.dividerCount)
               : 0
         opacity: root.dropDownOpen ? 1 : 0
         radius: 14
@@ -276,6 +280,39 @@ Item {
                             msg += "\n\n" + qsTr("Se cerrará la conexión con %1.").arg(root.robotDisplayName)
                         }
                         logoutDialog.openWithMessage(msg)
+                    }
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: root.dividerSize
+                color: "#045671"
+                opacity: 0.35
+            }
+
+            Rectangle {
+                id: appExitSegment
+                width: parent.width
+                height: root.segmentHeight
+                color: appExitArea.pressed ? "#00C8FF" : "transparent"
+
+                Text {
+                    id: appExitText
+                    anchors.centerIn: parent
+                    text: qsTr("Cerrar aplicación")
+                    color: "#045671"
+                    font.pixelSize: 12
+                    font.bold: true
+                }
+
+                MouseArea {
+                    id: appExitArea
+                    anchors.fill: parent
+                    onPressed: root.restartAutoCloseTimer()
+                    onClicked: {
+                        root.dropDownOpen = false
+                        root.appExitRequested()
                     }
                 }
             }

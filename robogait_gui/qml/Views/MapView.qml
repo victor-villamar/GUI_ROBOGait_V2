@@ -8,12 +8,14 @@ MapViewForm {
     id: root
     readonly property real computedIconButtonSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconButtonSize, 0) : 50
     readonly property real computedIconGlyphSizePx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, 0) : 25
+    readonly property real computedHeaderTopInsetPx: uiSizingSettings ? uiSizingSettings.px(3.0, 0) : 12
     readonly property real computedButtonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 36
     readonly property real computedJoystickStickSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.joystickStickSize, 0) : 34
     readonly property real computedJoystickAreaSizePx: computedJoystickStickSizePx * 4
 
     iconButtonSizePx: computedIconButtonSizePx
     iconGlyphSizePx: computedIconGlyphSizePx
+    headerTopInsetPx: computedHeaderTopInsetPx
     buttonHeightPx: computedButtonHeightPx
     joystickAreaSizePx: computedJoystickAreaSizePx
 
@@ -27,6 +29,9 @@ MapViewForm {
     property bool pendingSaveToDb: false
     property bool waitingForResetStop: false
     property bool waitingForResetStart: false
+    property bool pendingQuit: false
+
+    signal appExitFinished()
 
     // Bind to MapVisualizationManager properties
     mapAvailable: (userSession.rosManager &&
@@ -164,10 +169,22 @@ MapViewForm {
         if(!okStop) {
             waitingForMappingStop = false
             pendingSaveAndExit = false
+            pendingQuit = false
             busyDialog.close()
             errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo detener el mapeo")
             errorPopup.open()
         }
+    }
+
+    function requestAppExit() {
+        if (!commandExecutorBridge || commandExecutorBridge.status !== CommandExecutorBridge.RUNNING) {
+            appExitFinished()
+            return true
+        }
+
+        pendingQuit = true
+        beginStopWithoutSave(false)
+        return true
     }
 
     function beginResetMapping() {
@@ -567,6 +584,12 @@ MapViewForm {
                 waitingForMappingStop = false
                 busyDialog.close()
 
+                if (pendingQuit) {
+                    pendingQuit = false
+                    appExitFinished()
+                    return
+                }
+
                 if (pendingSaveAndExit) {
                     pendingSaveAndExit = false
                     if (pendingSaveToDb) {
@@ -582,6 +605,7 @@ MapViewForm {
                 waitingForMappingStop = false
                 pendingSaveAndExit = false
                 pendingSaveToDb = false
+                pendingQuit = false
                 busyDialog.close()
                 errorPopup.errorRectangleTextError.text = wasSaving
                     ? qsTr("Error: No se pudo guardar el mapa.")
@@ -609,6 +633,7 @@ MapViewForm {
                 waitingForMappingStop = false
                 pendingSaveAndExit = false
                 pendingSaveToDb = false
+                pendingQuit = false
                 busyDialog.close()
                 errorPopup.errorRectangleTextError.text = wasSaving
                     ? qsTr("Error: No se pudo guardar el mapa.")

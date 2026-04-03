@@ -10,12 +10,14 @@ TestMapViewForm {
     id: root
     readonly property real computedIconButtonSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconButtonSize, 0) : 50
     readonly property real computedIconGlyphSizePx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, 0) : 25
+    readonly property real computedHeaderTopInsetPx: uiSizingSettings ? uiSizingSettings.px(3.0, 0) : 12
     readonly property real computedButtonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 44
     readonly property real computedJoystickStickSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.joystickStickSize, 0) : 34
     readonly property real computedWheelSizePx: computedJoystickStickSizePx * 4
 
     iconButtonSizePx: computedIconButtonSizePx
     iconGlyphSizePx: computedIconGlyphSizePx
+    headerTopInsetPx: computedHeaderTopInsetPx
     buttonHeightPx: computedButtonHeightPx
     wheelSizePx: computedWheelSizePx
 
@@ -23,6 +25,9 @@ TestMapViewForm {
     property bool experimentRegistered: false
 
     property bool exiting: false
+    property bool exitAndQuit: false
+
+    signal appExitFinished()
 
     property bool waitingForNavigationStart: false
 
@@ -267,6 +272,7 @@ TestMapViewForm {
             if (!okStop) {
                 busyDialog.close()
                 exiting = false
+                exitAndQuit = false
                 errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo detener la navegación")
                 errorPopup.open()
                 return
@@ -302,6 +308,11 @@ TestMapViewForm {
         exiting = false
         busyDialog.close()
 
+        if (manualControl) {
+            manualControl.updateVelocity(0.0, 0.0)
+            manualControl.stopRobot()
+        }
+
         if (placementController) {
             placementController.clear()
         }
@@ -319,11 +330,23 @@ TestMapViewForm {
             experimentId = -1
         }
 
+        if (exitAndQuit) {
+            exitAndQuit = false
+            appExitFinished()
+            return
+        }
+
         if (StackView.view) {
             while (StackView.view.depth > 3) {
                 StackView.view.pop()
             }
         }
+    }
+
+    function requestAppExit() {
+        exitAndQuit = true
+        beginExit()
+        return true
     }
 
     Component.onCompleted: {

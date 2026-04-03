@@ -51,12 +51,14 @@ Rectangle {
     property int mapContentMargin: 10
     property real iconButtonSizePx: 0
     property real iconGlyphSizePx: 0
+    property real headerTopInsetPx: 0
     property real buttonHeightPx: 0
     property real joystickAreaSizePx: 0
 
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 20
+        anchors.topMargin: 20 + headerTopInsetPx
         spacing: 15
 
         // Header
@@ -70,6 +72,11 @@ Rectangle {
                 anchors.fill: parent
                 anchors.margins: 10
                 spacing: 15
+
+                Item {
+                    Layout.preferredWidth: root.iconButtonSizePx
+                    Layout.preferredHeight: root.iconButtonSizePx
+                }
 
                 Text {
                     Layout.fillWidth: true
