@@ -73,6 +73,13 @@ ApplicationFlowForm {
         }
     }
 
+    function stopActiveProcessesForUserSwitch() {
+        var currentItem = mystackview.currentItem
+        if (currentItem && currentItem.handleUserSwitch && typeof currentItem.handleUserSwitch === "function") {
+            currentItem.handleUserSwitch()
+        }
+    }
+
     Connections {
         target: home
         ignoreUnknownSignals: true
@@ -190,6 +197,7 @@ ApplicationFlowForm {
             }
 
             if (dbManager.userRole === "guest") {
+                applicationFlow.stopActiveProcessesForUserSwitch()
                 while (mystackview.depth > 3) {
                     mystackview.pop()
                 }

@@ -375,6 +375,22 @@ TestMapViewForm {
         return true
     }
 
+    function handleUserSwitch() {
+        stopAutoLocalizationSpin()
+        autoLocalizationActive = false
+        autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForService = false
+        autoLocalizationServiceDone = false
+        autoLocalizationSpinDone = false
+        waitingForNavigationStart = false
+
+        if (busyDialog.visible) {
+            busyDialog.close()
+        }
+
+        beginExit()
+    }
+
     Component.onCompleted: {
         busyDialog.openWithMessage(qsTr("Cargando mapa..."))
 

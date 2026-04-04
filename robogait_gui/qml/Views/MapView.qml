@@ -187,6 +187,31 @@ MapViewForm {
         return true
     }
 
+    function handleUserSwitch() {
+        if (commandExecutorBridge && commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
+            commandExecutorBridge.stopMapping(false, "")
+        }
+
+        if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
+            var manualControl = userSession.rosManager.robotManager.manualControl
+            if (manualControl) {
+                manualControl.updateVelocity(0.0, 0.0)
+                manualControl.stopRobot()
+            }
+        }
+
+        waitingForResetStop = false
+        waitingForResetStart = false
+        waitingForMappingStop = false
+        pendingSaveAndExit = false
+        pendingSaveToDb = false
+        pendingQuit = false
+
+        if (busyDialog.visible) {
+            busyDialog.close()
+        }
+    }
+
     function beginResetMapping() {
 
         if (commandExecutorBridge.status !== CommandExecutorBridge.RUNNING) {
