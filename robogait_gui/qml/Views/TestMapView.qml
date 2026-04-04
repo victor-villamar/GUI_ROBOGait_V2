@@ -150,6 +150,32 @@ TestMapViewForm {
         }
     }
 
+    function emergencyStop() {
+        stopAutoLocalizationSpin()
+
+        waitingForNavigationStart = false
+        autoLocalizationActive = false
+        autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForService = false
+        autoLocalizationCompleted = false
+        autoLocalizationServiceDone = false
+        autoLocalizationSpinDone = false
+        syncRobotPoseUpdates()
+
+        if (autoLocalizationConfirmDialog.visible) {
+            autoLocalizationConfirmDialog.close()
+        }
+
+        if (busyDialog.visible) {
+            busyDialog.close()
+        }
+
+        if (manualControl) {
+            manualControl.updateVelocity(0.0, 0.0)
+            manualControl.stopRobot()
+        }
+    }
+
     function saveAutoLocalizationPose() {
         if (!placementController) {
             return false
@@ -604,6 +630,10 @@ TestMapViewForm {
 
     infoButton.onClicked: {
         infoDialog.open()
+    }
+
+    emergencyButton.onClicked: {
+        emergencyStop()
     }
 
     ConfirmationDialog {

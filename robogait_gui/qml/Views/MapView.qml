@@ -211,6 +211,32 @@ MapViewForm {
         }
     }
 
+    function emergencyStop() {
+        if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
+            var manualControl = userSession.rosManager.robotManager.manualControl
+            if (manualControl) {
+                manualControl.updateVelocity(0.0, 0.0)
+                manualControl.stopRobot()
+            }
+        }
+
+        var hadOperation = waitingForResetStop || waitingForResetStart || waitingForMappingStop
+        waitingForResetStop = false
+        waitingForResetStart = false
+        waitingForMappingStop = false
+        pendingSaveAndExit = false
+        pendingSaveToDb = false
+        pendingQuit = false
+
+        if (busyDialog.visible) {
+            busyDialog.close()
+        }
+
+        if (hadOperation && commandExecutorBridge && commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
+            commandExecutorBridge.stopMapping(false, "")
+        }
+    }
+
     function handleBackNavigation() {
         if (!confirmBackNavigation) {
             return false
@@ -262,6 +288,10 @@ MapViewForm {
     // Info button
     infoButton.onClicked: {
         infoDialog.open()
+    }
+
+    emergencyButton.onClicked: {
+        emergencyStop()
     }
 
     lockButton.onClicked: {

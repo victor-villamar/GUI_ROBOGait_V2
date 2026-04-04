@@ -11,6 +11,7 @@ Rectangle {
     color: "#518bb7"
 
     property alias infoButton: infoButton
+    property alias emergencyButton: emergencyButton
     property alias infoDialog: infoDialog
     property alias joystick: joystick
     property alias lockButton: lockButton
@@ -54,6 +55,7 @@ Rectangle {
     property real headerTopInsetPx: 0
     property real buttonHeightPx: 0
     property real joystickAreaSizePx: 0
+    property real headerButtonSpacing: 8
 
     ColumnLayout {
         anchors.fill: parent
@@ -74,8 +76,48 @@ Rectangle {
                 spacing: 15
 
                 Item {
+                    Layout.preferredWidth: 10
+                    Layout.preferredHeight: root.iconButtonSizePx
+                }
+
+                Button {
+                    id: infoButton
                     Layout.preferredWidth: root.iconButtonSizePx
                     Layout.preferredHeight: root.iconButtonSizePx
+                    Layout.alignment: Qt.AlignVCenter
+                    padding: 0
+                    leftPadding: 0
+                    rightPadding: 0
+                    topPadding: 0
+                    bottomPadding: 0
+
+                    background: Rectangle {
+                        radius: width / 2
+                        color: "transparent"
+                    }
+
+                    contentItem: Item {
+                        anchors.fill: parent
+
+                        Image {
+                            source: "qrc:/qmlresources/icons/circle_info_solid.svg"
+                            width: root.iconGlyphSizePx
+                            height: root.iconGlyphSizePx
+                            anchors.centerIn: parent
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                        }
+                    }
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 150
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+
+                    onPressed: scale = 1.2
+                    onReleased: scale = 1.0
                 }
 
                 Text {
@@ -89,34 +131,38 @@ Rectangle {
                 }
 
                 Button {
-                    id: infoButton
+                    id: emergencyButton
                     Layout.preferredWidth: root.iconButtonSizePx
                     Layout.preferredHeight: root.iconButtonSizePx
                     Layout.alignment: Qt.AlignVCenter
+                    padding: 0
+                    leftPadding: 0
+                    rightPadding: 0
+                    topPadding: 0
+                    bottomPadding: 0
 
                     background: Rectangle {
                         radius: width / 2
                         color: "transparent"
                     }
 
-                    contentItem: Image {
-                        source: "qrc:/qmlresources/icons/circle_info_solid.svg"
-                        width: root.iconGlyphSizePx
-                        height: root.iconGlyphSizePx
-                        anchors.centerIn: parent
-                        fillMode: Image.PreserveAspectFit
-                        smooth: true
-                    }
+                    contentItem: Item {
+                        anchors.fill: parent
 
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 150
-                            easing.type: Easing.OutQuad
+                        Image {
+                            source: "qrc:/qmlresources/icons/emergency_stop.svg"
+                            width: root.iconGlyphSizePx
+                            height: root.iconGlyphSizePx
+                            anchors.centerIn: parent
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
                         }
                     }
+                }
 
-                    onPressed: scale = 1.2
-                    onReleased: scale = 1.0
+                Item {
+                    Layout.preferredWidth: 10
+                    Layout.preferredHeight: root.iconButtonSizePx
                 }
             }
         }
