@@ -9,6 +9,7 @@
     <file alias="circle_question.svg">resources/Icons/circle_question.svg</file>
     <file alias="circle_user_regular.svg">resources/Icons/circle_user_regular.svg</file>
     <file alias="draw_pencil.png">resources/Icons/draw_pencil.png</file>
+    <file alias="emergency_stop.svg">resources/Icons/emergency_stop.svg</file>
     <file alias="config.svg">resources/Icons/config.svg</file>
     <file alias="eraser_solid.svg">resources/Icons/eraser_solid.svg</file>
     <file alias="file_arrow_down_solid.svg">resources/Icons/file_arrow_down_solid.svg</file>
@@ -27,6 +28,7 @@
     <file alias="plus_solid.svg">resources/Icons/plus_solid.svg</file>
     <file alias="plus.svg">resources/Icons/plus.svg</file>
     <file alias="save_button.png">resources/Icons/save_button.png</file>
+    <file alias="shutdown.svg">resources/Icons/shutdown.svg</file>
     <file alias="stop_light.png">resources/Icons/stop_light.png</file>
     <file alias="stop.png">resources/Icons/stop.png</file>
     <file alias="trash_solid.svg">resources/Icons/trash_solid.svg</file>

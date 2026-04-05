@@ -13,14 +13,19 @@ Item {
                                   ? userSession.currentPatient.displayName
                                   : qsTr("Paciente")
 
+    readonly property real badgeHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.badgeHeight, 0) : 56
+    readonly property real badgeMenuItemHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.badgeMenuItemHeight, 0) : 44
+    readonly property real iconGlyphPxRaw: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, 0) : 34
+    readonly property real badgeIconPx: Math.min(iconGlyphPxRaw, badgeHeightPx - 16)
+
     property int badgeWidth: Math.max(patientRow.implicitWidth + 20, 140)
-    property int segmentHeight: 44
+    property int segmentHeight: Math.round(badgeMenuItemHeightPx)
     property int segmentPadding: 16
     property int dividerSize: 2
     property int segmentWidth: Math.max(120, diagnosticsText.implicitWidth + root.segmentPadding * 2)
     property int menuWidth: Math.max(root.badgeWidth, root.segmentWidth)
 
-    implicitHeight: 56
+    implicitHeight: Math.round(badgeHeightPx)
     implicitWidth: badgeWidth
 
     visible: patientAssigned
@@ -50,9 +55,9 @@ Item {
     Rectangle {
         id: patientLabelRect
         z: 3
-        height: 56
+        height: root.implicitHeight
         width: root.badgeWidth
-        radius: 18
+        radius: Math.round(height * 0.32)
         color: "#a9cfe8"
         border.color: "#ffffff"
         border.width: 2
@@ -67,20 +72,20 @@ Item {
             spacing: 12
 
             Item {
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 34
-                Layout.minimumWidth: 34
-                Layout.minimumHeight: 34
-                Layout.maximumWidth: 34
-                Layout.maximumHeight: 34
+                Layout.preferredWidth: root.badgeIconPx
+                Layout.preferredHeight: root.badgeIconPx
+                Layout.minimumWidth: root.badgeIconPx
+                Layout.minimumHeight: root.badgeIconPx
+                Layout.maximumWidth: root.badgeIconPx
+                Layout.maximumHeight: root.badgeIconPx
                 Layout.leftMargin: 1
                 Layout.alignment: Qt.AlignVCenter
 
                 Image {
                     anchors.fill: parent
                     source: "qrc:/qmlresources/icons/patient.svg"
-                    sourceSize.width: 40
-                    sourceSize.height: 40
+                    sourceSize.width: root.badgeIconPx
+                    sourceSize.height: root.badgeIconPx
                     fillMode: Image.PreserveAspectFit
                     smooth: true
                 }
@@ -98,12 +103,12 @@ Item {
             }
 
             Item {
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 34
-                Layout.minimumWidth: 34
-                Layout.minimumHeight: 34
-                Layout.maximumWidth: 34
-                Layout.maximumHeight: 34
+                Layout.preferredWidth: root.badgeIconPx
+                Layout.preferredHeight: root.badgeIconPx
+                Layout.minimumWidth: root.badgeIconPx
+                Layout.minimumHeight: root.badgeIconPx
+                Layout.maximumWidth: root.badgeIconPx
+                Layout.maximumHeight: root.badgeIconPx
                 Layout.alignment: Qt.AlignVCenter
                 visible: false
             }

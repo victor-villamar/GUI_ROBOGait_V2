@@ -22,6 +22,35 @@ ApplicationFlowForm {
         applicationFlow.state = "register_page"
     }
 
+    property bool pendingQuitRequest: false
+
+    function showShutdownDialog() {
+        if (shutdownTimer.running) {
+            shutdownTimer.stop()
+        }
+        shutdownDialog.openWithMessage(qsTr("Cerrando aplicación..."))
+        shutdownTimer.start()
+    }
+
+    function safeQuit() {
+        if (pendingQuitRequest) {
+            return
+        }
+
+        pendingQuitRequest = true
+
+        var currentItem = mystackview.currentItem
+        if (currentItem && currentItem.requestAppExit && typeof currentItem.requestAppExit === "function") {
+            var handled = currentItem.requestAppExit()
+            if (handled === true) {
+                return
+            }
+        }
+
+        pendingQuitRequest = false
+        showShutdownDialog()
+    }
+
     function backButton()
     {
         var currentItem = mystackview.currentItem
@@ -44,6 +73,36 @@ ApplicationFlowForm {
         }
     }
 
+    function stopActiveProcessesForUserSwitch() {
+        var currentItem = mystackview.currentItem
+        if (currentItem && currentItem.handleUserSwitch && typeof currentItem.handleUserSwitch === "function") {
+            currentItem.handleUserSwitch()
+        }
+    }
+
+    Connections {
+        target: home
+        ignoreUnknownSignals: true
+
+        function onAppExitRequested() {
+            applicationFlow.safeQuit()
+        }
+    }
+
+    Connections {
+        target: mystackview.currentItem
+        ignoreUnknownSignals: true
+
+        function onAppExitFinished() {
+            if (!applicationFlow.pendingQuitRequest) {
+                return
+            }
+
+            applicationFlow.pendingQuitRequest = false
+            applicationFlow.showShutdownDialog()
+        }
+    }
+
     Connections {
         target: applicationFlow.state === "register_page" ? mystackview.currentItem : null
         ignoreUnknownSignals: true
@@ -52,6 +111,21 @@ ApplicationFlowForm {
             mystackview.replace(robot_connection)
             applicationFlow.state = "robot_connection"
         }
+
+        function onAppExitRequested() {
+            applicationFlow.safeQuit()
+        }
+    }
+
+    BusyDialog {
+        id: shutdownDialog
+    }
+
+    Timer {
+        id: shutdownTimer
+        interval: 3000
+        repeat: false
+        onTriggered: Qt.quit()
     }
 
     Connections {
@@ -74,6 +148,10 @@ ApplicationFlowForm {
             if (applicationFlow.userSwitchDialog) {
                 applicationFlow.userSwitchDialog.open()
             }
+        }
+
+        function onAppExitRequested() {
+            applicationFlow.safeQuit()
         }
     }
 
@@ -119,6 +197,7 @@ ApplicationFlowForm {
             }
 
             if (dbManager.userRole === "guest") {
+                applicationFlow.stopActiveProcessesForUserSwitch()
                 while (mystackview.depth > 3) {
                     mystackview.pop()
                 }
@@ -138,10 +217,12 @@ ApplicationFlowForm {
                 title.enabled: false
                 showRobotBadge: false
                 showUserBadge: false
+                visible: false
+                height: 0
             }
             PropertyChanges {
                 target: mystackview
-                anchors.top: toolbar.bottom
+                anchors.top: parent.top
                 anchors.bottom: parent.bottom
             }
         },
@@ -155,10 +236,12 @@ ApplicationFlowForm {
                 target: toolbar
                 showRobotBadge: false
                 showUserBadge: false
+                visible: false
+                height: 0
             }
             PropertyChanges {
                 target: mystackview
-                anchors.top: toolbar.bottom
+                anchors.top: parent.top
                 anchors.bottom: parent.bottom
             }
         },
@@ -172,6 +255,8 @@ ApplicationFlowForm {
                 target: toolbar
                 showRobotBadge: true
                 showUserBadge: true
+                visible: true
+                height: 70
             }
             PropertyChanges {
                 target: mystackview
@@ -189,6 +274,8 @@ ApplicationFlowForm {
                 target: toolbar
                 showRobotBadge: true
                 showUserBadge: true
+                visible: true
+                height: 70
             }
             PropertyChanges { 
                 target: mystackview

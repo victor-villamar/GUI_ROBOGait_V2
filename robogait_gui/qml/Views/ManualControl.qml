@@ -3,6 +3,16 @@ import QtQuick.Controls 2.15
 
 ManualControlForm {
     id: root
+
+    readonly property real computedIconButtonSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconButtonSize, 0) : 37
+    readonly property real computedIconGlyphSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconGlyphSize, 0) : 37
+    readonly property real computedJoystickStickSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.joystickStickSize, 0) : 34
+    readonly property real computedJoystickAreaSizePx: computedJoystickStickSizePx * 4
+
+    iconButtonSizePx: computedIconButtonSizePx
+    iconGlyphSizePx: computedIconGlyphSizePx
+    joystickAreaSizePx: computedJoystickAreaSizePx
+
     property real maxLinearVelocity: 0.22
     linearValue: (userSession.rosManager && userSession.rosManager.robotManager && userSession.rosManager.robotManager.manualControl)
                  ? userSession.rosManager.robotManager.manualControl.linearVelocity

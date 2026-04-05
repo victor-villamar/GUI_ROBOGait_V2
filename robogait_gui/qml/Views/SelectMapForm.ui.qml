@@ -9,6 +9,10 @@ Item {
     property alias mapsListView: mapsListView
     property alias mapsScrollView: mapsScrollView
     property string selectedMapName: ""
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 60
+    readonly property real listItemHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.listItemHeight, 0) : 60
+    readonly property real iconGlyphPx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, 0) : 25
+    readonly property real iconButtonPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconButtonSize, 0) : 44
 
     signal addMapRequested()
     signal mapClicked(int mapIndex, string mapName)
@@ -33,7 +37,7 @@ Item {
     Button {
         id: addMapButton
         width: mapsScrollView.width
-        height: 60
+        height: root.buttonHeightPx
         anchors.top: titleText.bottom
         anchors.topMargin: 30
         anchors.horizontalCenter: parent.horizontalCenter
@@ -56,8 +60,8 @@ Item {
 
             Image {
                 source: "qrc:/qmlresources/icons/plus_solid.svg"
-                sourceSize.width: 25
-                sourceSize.height: 25
+                sourceSize.width: root.iconGlyphPx
+                sourceSize.height: root.iconGlyphPx
                 fillMode: Image.PreserveAspectFit
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
@@ -83,15 +87,16 @@ Item {
             currentIndex: -1
             anchors.fill: parent
             clip: true
+            spacing: 10
 
             delegate: Item {
                 width: mapsListView.width
-                height: 70
+                height: root.listItemHeightPx
 
                 Rectangle {
                     id: rowRect
                     width: parent.width
-                    height: 60
+                    height: root.listItemHeightPx
                     radius: 15
                     color: map_name === root.selectedMapName ? "#aed2ea" : "#ffffff"
                     border.color: "#cccccc"
@@ -110,6 +115,8 @@ Item {
 
                     Button {
                         id: deleteMapButton
+                        width: root.iconButtonPx
+                        height: root.iconButtonPx
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right
                         anchors.rightMargin: 20
@@ -118,8 +125,8 @@ Item {
 
                         contentItem: Image {
                             source: "qrc:/qmlresources/icons/trash_solid.svg"
-                            sourceSize.width: 25
-                            sourceSize.height: 25
+                            sourceSize.width: root.iconGlyphPx
+                            sourceSize.height: root.iconGlyphPx
                             fillMode: Image.PreserveAspectFit
                         }
 

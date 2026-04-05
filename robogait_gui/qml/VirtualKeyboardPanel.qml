@@ -7,7 +7,7 @@ Item {
     id: root
     parent: Overlay.overlay
     z: 1000
-    clip: true
+    clip: false
 
     property real keyboardScale: 0.6
     readonly property bool keyboardVisible: Qt.inputMethod.visible

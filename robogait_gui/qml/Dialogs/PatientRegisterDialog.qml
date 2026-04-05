@@ -26,10 +26,18 @@ Dialog {
     KeyboardAwareHelper {
         id: keyboardHelper
         target: root
-        maxDialogHeight: parent ? Math.min(610, parent.height * 0.90) : 610
+        maxDialogHeight: parent ? Math.min(820, parent.height * 0.90) : 820
     }
 
     signal patientRegistered()
+    readonly property real inputHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, 0) : 40
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 44
+    readonly property real textAreaHeightPx: Math.round(inputHeightPx * 3)
+    readonly property bool hasVerticalScroll: flick.contentHeight > flick.height + 1
+    readonly property real scrollTrackWidth: 10
+    readonly property real scrollTrackGap: 6
+    readonly property real scrollTrackEdgeMargin: 2
+    readonly property real scrollTrackReserve: scrollTrackWidth + scrollTrackGap + scrollTrackEdgeMargin
 
     function resetForm()
     {
@@ -81,196 +89,232 @@ Dialog {
             onClicked: root.close()
         }
 
-        ScrollView {
-            id: scroll
+        Flickable {
+            id: flick
             z: 1
             anchors.fill: parent
             anchors.margins: 16
             clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            flickableDirection: Flickable.VerticalFlick
+            interactive: root.hasVerticalScroll
+            contentWidth: width
+            contentHeight: content.implicitHeight
 
-            Column {
-            id: formColumn
-            width: Math.min(450, scroll.width - 32)
-            anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 15
-            padding: 20
-
-            Text {
-                text: qsTr("Registrar paciente")
-                color: "#ffffff"
-                font.pixelSize: 40
-                horizontalAlignment: Text.AlignHCenter
-                anchors.horizontalCenter: parent.horizontalCenter
-                padding: 10
+            onContentHeightChanged: {
+                if (!root.hasVerticalScroll) {
+                    contentY = 0
+                }
             }
-
-            TextField {
-                id: nameField
-                width: parent.width
-                height: 40
-                color: "#000000"
-                font.pointSize: 15
-                verticalAlignment: TextInput.AlignVCenter
-                leftPadding: 10
-                rightPadding: 10
-                placeholderText: qsTr("Nombre")
-
-                background: Rectangle {
-                    radius: 10
-                    color: "#FFFFFF"
-                    border.color: "#CCCCCC"
+            onHeightChanged: {
+                if (!root.hasVerticalScroll) {
+                    contentY = 0
                 }
             }
 
-            TextField {
-                id: lastNameField
-                width: parent.width
-                height: 40
-                color: "#000000"
-                font.pointSize: 15
-                verticalAlignment: TextInput.AlignVCenter
-                leftPadding: 10
-                rightPadding: 10
-                placeholderText: qsTr("Apellidos")
+            Item {
+                id: content
+                width: flick.width
+                implicitHeight: Math.max(formColumn.implicitHeight, flick.height)
 
-                background: Rectangle {
-                    radius: 10
-                    color: "#FFFFFF"
-                    border.color: "#CCCCCC"
-                }
-            }
+                Column {
+                    id: formColumn
+                    width: Math.min(450, Math.max(0, content.width - 32 - root.scrollTrackReserve))
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 15
+                    leftPadding: 20
+                    rightPadding: 20
+                    topPadding: 20
+                    bottomPadding: 20
+                    readonly property real innerWidth: Math.max(0, width - leftPadding - rightPadding)
 
-            TextField {
-                id: ageField
-                width: parent.width
-                height: 40
-                color: "#000000"
-                font.pointSize: 15
-                verticalAlignment: TextInput.AlignVCenter
-                leftPadding: 10
-                rightPadding: 10
-                placeholderText: qsTr("Edad (años)")
-
-                background: Rectangle {
-                    radius: 10
-                    color: "#FFFFFF"
-                    border.color: "#CCCCCC"
-                }
-            }
-
-            TextField {
-                id: weightField
-                width: parent.width
-                height: 40
-                color: "#000000"
-                font.pointSize: 15
-                verticalAlignment: TextInput.AlignVCenter
-                leftPadding: 10
-                rightPadding: 10
-                placeholderText: qsTr("Peso (Kg)")
-
-                background: Rectangle {
-                    radius: 10
-                    color: "#FFFFFF"
-                    border.color: "#CCCCCC"
-                }
-            }
-
-            TextField {
-                id: heightField
-                width: parent.width
-                height: 40
-                color: "#000000"
-                font.pointSize: 15
-                verticalAlignment: TextInput.AlignVCenter
-                leftPadding: 10
-                rightPadding: 10
-                placeholderText: qsTr("Altura (cm)")
-
-                background: Rectangle {
-                    radius: 10
-                    color: "#FFFFFF"
-                    border.color: "#CCCCCC"
-                }
-            }
-
-            TextArea {
-                id: descriptionField
-                width: parent.width
-                height: 120
-                color: "#000000"
-                font.pointSize: 15
-                wrapMode: TextEdit.Wrap
-                placeholderText: qsTr("Descripción")
-
-                background: Rectangle {
-                    radius: 10
-                    color: "#FFFFFF"
-                    border.color: "#CCCCCC"
-                }
-            }
-
-            Button {
-                id: addButton
-                width: 240
-                height: 44
-                anchors.horizontalCenter: parent.horizontalCenter
-
-                background: Rectangle {
-                    radius: 10
-                    color: "#aed2ea"
-                    border.color: "#aed2ea"
-                }
-
-                contentItem: Label {
-                    text: qsTr("AÑADIR")
-                    color: "#ffffff"
-                    font.bold: true
-                    font.pixelSize: 20
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-
-                onClicked: {
-                    if (!dbManager) {
-                        return
+                    Text {
+                        text: qsTr("Registrar paciente")
+                        color: "#ffffff"
+                        font.pixelSize: 40
+                        horizontalAlignment: Text.AlignHCenter
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        padding: 10
                     }
 
-                    var age = parseInt(ageField.text)
-                    var weight = parseFloat(weightField.text)
-                    var height = parseFloat(heightField.text)
+                    TextField {
+                        id: nameField
+                        width: formColumn.innerWidth
+                        height: root.inputHeightPx
+                        color: "#000000"
+                        font.pointSize: 15
+                        verticalAlignment: TextInput.AlignVCenter
+                        leftPadding: 10
+                        rightPadding: 10
+                        placeholderText: qsTr("Nombre")
 
-                    if (!nameField.text || !lastNameField.text) {
-                        errorPopup.errorRectangleTextError.text = qsTr("Error: Has dejado campos vacíos")
-                        errorPopup.open()
-                        return
+                        background: Rectangle {
+                            radius: 10
+                            color: "#FFFFFF"
+                            border.color: "#CCCCCC"
+                        }
                     }
 
-                    if (isNaN(age) || isNaN(weight) || isNaN(height)) {
-                        errorPopup.errorRectangleTextError.text = qsTr("Error: Edad, peso y altura deben ser números válidos")
-                        errorPopup.open()
-                        return
+                    TextField {
+                        id: lastNameField
+                        width: formColumn.innerWidth
+                        height: root.inputHeightPx
+                        color: "#000000"
+                        font.pointSize: 15
+                        verticalAlignment: TextInput.AlignVCenter
+                        leftPadding: 10
+                        rightPadding: 10
+                        placeholderText: qsTr("Apellidos")
+
+                        background: Rectangle {
+                            radius: 10
+                            color: "#FFFFFF"
+                            border.color: "#CCCCCC"
+                        }
                     }
 
-                    var ok = dbManager.registerPatient(
-                                nameField.text,
-                                lastNameField.text,
-                                age,
-                                weight,
-                                height,
-                                descriptionField.text)
+                    TextField {
+                        id: ageField
+                        width: formColumn.innerWidth
+                        height: root.inputHeightPx
+                        color: "#000000"
+                        font.pointSize: 15
+                        verticalAlignment: TextInput.AlignVCenter
+                        leftPadding: 10
+                        rightPadding: 10
+                        placeholderText: qsTr("Edad (años)")
 
-                    if (!ok) {
-                        errorPopup.errorRectangleTextError.text = qsTr("Error: %1").arg(dbManager.lastError)
-                        errorPopup.open()
-                        return
+                        background: Rectangle {
+                            radius: 10
+                            color: "#FFFFFF"
+                            border.color: "#CCCCCC"
+                        }
                     }
 
-                    root.close()
-                    root.patientRegistered()
+                    TextField {
+                        id: weightField
+                        width: formColumn.innerWidth
+                        height: root.inputHeightPx
+                        color: "#000000"
+                        font.pointSize: 15
+                        verticalAlignment: TextInput.AlignVCenter
+                        leftPadding: 10
+                        rightPadding: 10
+                        placeholderText: qsTr("Peso (Kg)")
+
+                        background: Rectangle {
+                            radius: 10
+                            color: "#FFFFFF"
+                            border.color: "#CCCCCC"
+                        }
+                    }
+
+                    TextField {
+                        id: heightField
+                        width: formColumn.innerWidth
+                        height: root.inputHeightPx
+                        color: "#000000"
+                        font.pointSize: 15
+                        verticalAlignment: TextInput.AlignVCenter
+                        leftPadding: 10
+                        rightPadding: 10
+                        placeholderText: qsTr("Altura (cm)")
+
+                        background: Rectangle {
+                            radius: 10
+                            color: "#FFFFFF"
+                            border.color: "#CCCCCC"
+                        }
+                    }
+
+                    TextArea {
+                        id: descriptionField
+                        width: formColumn.innerWidth
+                        height: root.textAreaHeightPx
+                        color: "#000000"
+                        font.pointSize: 15
+                        wrapMode: TextEdit.Wrap
+                        placeholderText: qsTr("Descripción")
+
+                        background: Rectangle {
+                            radius: 10
+                            color: "#FFFFFF"
+                            border.color: "#CCCCCC"
+                        }
+                    }
+
+                    Button {
+                        id: addButton
+                        width: 240
+                        height: root.buttonHeightPx
+                        anchors.horizontalCenter: parent.horizontalCenter
+
+                        background: Rectangle {
+                            radius: 10
+                            color: "#aed2ea"
+                            border.color: "#aed2ea"
+                        }
+
+                        contentItem: Label {
+                            text: qsTr("AÑADIR")
+                            color: "#ffffff"
+                            font.bold: true
+                            font.pixelSize: 20
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: {
+                            if (!dbManager) {
+                                return
+                            }
+
+                            var age = parseInt(ageField.text)
+                            var weight = parseFloat(weightField.text)
+                            var height = parseFloat(heightField.text)
+
+                            if (!nameField.text || !lastNameField.text) {
+                                errorPopup.errorRectangleTextError.text = qsTr("Error: Has dejado campos vacíos")
+                                errorPopup.open()
+                                return
+                            }
+
+                            if (isNaN(age) || isNaN(weight) || isNaN(height)) {
+                                errorPopup.errorRectangleTextError.text = qsTr("Error: Edad, peso y altura deben ser números válidos")
+                                errorPopup.open()
+                                return
+                            }
+
+                            var ok = dbManager.registerPatient(
+                                        nameField.text,
+                                        lastNameField.text,
+                                        age,
+                                        weight,
+                                        height,
+                                        descriptionField.text)
+
+                            if (!ok) {
+                                errorPopup.errorRectangleTextError.text = qsTr("Error: %1").arg(dbManager.lastError)
+                                errorPopup.open()
+                                return
+                            }
+
+                            root.close()
+                            root.patientRegistered()
+                        }
+                    }
                 }
             }
-            }
+        }
+
+        CustomScrollTrack {
+            flickable: flick
+            formColumn: formColumn
+            startItem: nameField
+            trackWidth: root.scrollTrackWidth
+            gapFromForm: root.scrollTrackGap
+            edgeMargin: root.scrollTrackEdgeMargin
+            trackVisible: root.hasVerticalScroll
         }
 
         ErrorRectangle {

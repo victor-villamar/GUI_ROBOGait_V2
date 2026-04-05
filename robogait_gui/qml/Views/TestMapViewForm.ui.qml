@@ -10,6 +10,7 @@ Rectangle {
     color: "#518bb7"
 
     property alias infoButton: infoButton
+    property alias emergencyButton: emergencyButton
     property alias infoDialog: infoDialog
     property alias mapLayerItem: mapLayerItem
     property alias robotLayerItem: robotLayerItem
@@ -23,6 +24,12 @@ Rectangle {
     readonly property bool isPositionStep: step === 0
     readonly property bool isOrientationStep: step === 1
     readonly property bool isNavigationStep: step === 2
+    property real iconButtonSizePx: 0
+    property real iconGlyphSizePx: 0
+    property real headerTopInsetPx: 0
+    property real buttonHeightPx: 0
+    property real wheelSizePx: 0
+    property real headerButtonSpacing: 8
 
     signal confirmPlacementRequested()
     signal confirmOrientationRequested()
@@ -42,11 +49,12 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 20
+        anchors.topMargin: 20 + headerTopInsetPx
         spacing: 15
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 60
+            Layout.preferredHeight: Math.max(60, root.iconButtonSizePx + 20)
             color: "#2c5f7c"
             radius: 8
 
@@ -54,6 +62,51 @@ Rectangle {
                 anchors.fill: parent
                 anchors.margins: 10
                 spacing: 15
+
+                Item {
+                    Layout.preferredWidth: 10
+                    Layout.preferredHeight: root.iconButtonSizePx
+                }
+
+                Button {
+                    id: infoButton
+                    Layout.preferredWidth: root.iconButtonSizePx
+                    Layout.preferredHeight: root.iconButtonSizePx
+                    Layout.alignment: Qt.AlignVCenter
+                    padding: 0
+                    leftPadding: 0
+                    rightPadding: 0
+                    topPadding: 0
+                    bottomPadding: 0
+
+                    background: Rectangle {
+                        radius: width / 2
+                        color: "transparent"
+                    }
+
+                    contentItem: Item {
+                        anchors.fill: parent
+
+                        Image {
+                            source: "qrc:/qmlresources/icons/circle_info_solid.svg"
+                            width: root.iconGlyphSizePx
+                            height: root.iconGlyphSizePx
+                            anchors.centerIn: parent
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                        }
+                    }
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 150
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+
+                    onPressed: scale = 1.2
+                    onReleased: scale = 1.0
+                }
 
                 Text {
                     Layout.fillWidth: true
@@ -66,30 +119,38 @@ Rectangle {
                 }
 
                 Button {
-                    id: infoButton
-                    Layout.preferredWidth: 50
-                    Layout.preferredHeight: 40
+                    id: emergencyButton
+                    Layout.preferredWidth: root.iconButtonSizePx
+                    Layout.preferredHeight: root.iconButtonSizePx
+                    Layout.alignment: Qt.AlignVCenter
+                    padding: 0
+                    leftPadding: 0
+                    rightPadding: 0
+                    topPadding: 0
+                    bottomPadding: 0
 
                     background: Rectangle {
                         radius: width / 2
                         color: "transparent"
                     }
 
-                    contentItem: Image {
-                        source: "qrc:/qmlresources/icons/circle_info_solid.svg"
-                        fillMode: Image.PreserveAspectFit
-                        smooth: true
-                    }
+                    contentItem: Item {
+                        anchors.fill: parent
 
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 150
-                            easing.type: Easing.OutQuad
+                        Image {
+                            source: "qrc:/qmlresources/icons/emergency_stop.svg"
+                            width: root.iconGlyphSizePx
+                            height: root.iconGlyphSizePx
+                            anchors.centerIn: parent
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
                         }
                     }
+                }
 
-                    onPressed: scale = 1.2
-                    onReleased: scale = 1.0
+                Item {
+                    Layout.preferredWidth: 10
+                    Layout.preferredHeight: root.iconButtonSizePx
                 }
             }
         }
@@ -173,7 +234,8 @@ Rectangle {
                 opacity: orientationEnabled ? 1.0 : 0.6
 
                 property int padding: 13
-                property real wheelSize: Math.min(240, Math.min(parent.width, parent.height) * 0.32)
+                property real wheelSize: wheelSizePx > 0 ? wheelSizePx
+                                                       : Math.min(240, Math.min(parent.width, parent.height) * 0.32)
 
                 implicitWidth: panelContent.implicitWidth + (padding * 2)
                 implicitHeight: panelContent.implicitHeight + (padding * 2)
@@ -241,8 +303,8 @@ Rectangle {
 
                         Canvas {
                             id: directionMarker
-                            width: 28
-                            height: 28
+                            width: rotationPanel.wheelSize / 4
+                            height: width
                             x: (rotationOverlay.width / 2) + radius * Math.cos(rotationOverlay.orientationRad) - width / 2
                             y: (rotationOverlay.height / 2) - radius * Math.sin(rotationOverlay.orientationRad) - height / 2
                             rotation: 90 - rotationOverlay.degrees
@@ -320,7 +382,7 @@ Rectangle {
         Rectangle {
             id: bottomBar
             Layout.fillWidth: true
-            Layout.preferredHeight: 60
+            Layout.preferredHeight: Math.max(60, root.buttonHeightPx + 16)
             color: "#2c5f7c"
             radius: 6
             visible: !isNavigationStep
@@ -337,10 +399,10 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: isPositionStep
 
-                    Button {
-                        id: enablePlacementButton
-                        width: 200
-                        height: 44
+                Button {
+                    id: enablePlacementButton
+                    width: 200
+                    height: root.buttonHeightPx
                         checkable: true
                         checked: placementEnabled
 
@@ -363,10 +425,10 @@ Rectangle {
                         onClicked: placementEnabled = !placementEnabled
                     }
 
-                    Button {
-                        id: clearPlacementButton
-                        width: 140
-                        height: 44
+                Button {
+                    id: clearPlacementButton
+                    width: 140
+                    height: root.buttonHeightPx
                         enabled: isPositionStep && placementEnabled && placementController && placementController.hasPosition
                         opacity: enabled ? 1.0 : 0.4
 
@@ -397,7 +459,7 @@ Rectangle {
                 Button {
                     id: autoLocalizationButton
                     width: 200
-                    height: 44
+                    height: root.buttonHeightPx
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
                     visible: isPositionStep
@@ -429,7 +491,7 @@ Rectangle {
                 Button {
                     id: enableOrientationButton
                     width: 210
-                    height: 44
+                    height: root.buttonHeightPx
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
                     visible: isOrientationStep
@@ -467,7 +529,7 @@ Rectangle {
                 Button {
                     id: backOrientationButton
                     width: 140
-                    height: 44
+                    height: root.buttonHeightPx
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     visible: isOrientationStep
@@ -497,7 +559,7 @@ Rectangle {
                 Button {
                     id: confirmPlacementButton
                     width: 160
-                    height: 44
+                    height: root.buttonHeightPx
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     visible: isPositionStep || isOrientationStep
@@ -535,7 +597,7 @@ Rectangle {
         Rectangle {
             id: navigationBar
             Layout.fillWidth: true
-            Layout.preferredHeight: 60
+            Layout.preferredHeight: Math.max(60, root.iconButtonSizePx + 16)
             color: "#2c5f7c"
             radius: 6
             visible: isNavigationStep
@@ -549,8 +611,9 @@ Rectangle {
 
                 Button {
                     id: zoomOutButton
-                    Layout.preferredWidth: 50
-                    Layout.preferredHeight: 44
+                    Layout.preferredWidth: root.iconButtonSizePx
+                    Layout.preferredHeight: root.iconButtonSizePx
+                    Layout.alignment: Qt.AlignVCenter
 
                     background: Rectangle {
                         radius: 6
@@ -561,6 +624,9 @@ Rectangle {
 
                     contentItem: Image {
                         source: "qrc:/qmlresources/icons/minus.svg"
+                        width: root.iconGlyphSizePx
+                        height: root.iconGlyphSizePx
+                        anchors.centerIn: parent
                         fillMode: Image.PreserveAspectFit
                         smooth: true
                     }
@@ -568,8 +634,9 @@ Rectangle {
 
                 Button {
                     id: zoomInButton
-                    Layout.preferredWidth: 50
-                    Layout.preferredHeight: 44
+                    Layout.preferredWidth: root.iconButtonSizePx
+                    Layout.preferredHeight: root.iconButtonSizePx
+                    Layout.alignment: Qt.AlignVCenter
 
                     background: Rectangle {
                         radius: 6
@@ -580,6 +647,9 @@ Rectangle {
 
                     contentItem: Image {
                         source: "qrc:/qmlresources/icons/plus.svg"
+                        width: root.iconGlyphSizePx
+                        height: root.iconGlyphSizePx
+                        anchors.centerIn: parent
                         fillMode: Image.PreserveAspectFit
                         smooth: true
                     }
@@ -587,8 +657,9 @@ Rectangle {
 
                 Button {
                     id: fitButton
-                    Layout.preferredWidth: 50
-                    Layout.preferredHeight: 44
+                    Layout.preferredWidth: root.iconButtonSizePx
+                    Layout.preferredHeight: root.iconButtonSizePx
+                    Layout.alignment: Qt.AlignVCenter
 
                     background: Rectangle {
                         radius: 6
@@ -599,6 +670,9 @@ Rectangle {
 
                     contentItem: Image {
                         source: "qrc:/qmlresources/icons/center_to_fit.svg"
+                        width: root.iconGlyphSizePx
+                        height: root.iconGlyphSizePx
+                        anchors.centerIn: parent
                         fillMode: Image.PreserveAspectFit
                         smooth: true
                     }
@@ -606,8 +680,9 @@ Rectangle {
 
                 Button {
                     id: followButton
-                    Layout.preferredWidth: 50
-                    Layout.preferredHeight: 44
+                    Layout.preferredWidth: root.iconButtonSizePx
+                    Layout.preferredHeight: root.iconButtonSizePx
+                    Layout.alignment: Qt.AlignVCenter
                     checkable: true
 
                     background: Rectangle {
@@ -619,6 +694,9 @@ Rectangle {
 
                     contentItem: Image {
                         source: "qrc:/qmlresources/icons/center_view.svg"
+                        width: root.iconGlyphSizePx
+                        height: root.iconGlyphSizePx
+                        anchors.centerIn: parent
                         fillMode: Image.PreserveAspectFit
                         smooth: true
                     }

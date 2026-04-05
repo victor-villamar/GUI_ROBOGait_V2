@@ -8,11 +8,26 @@ import "qrc:/Views"
 TestMapViewForm {
 
     id: root
+    readonly property real computedIconButtonSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconButtonSize, 0) : 50
+    readonly property real computedIconGlyphSizePx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, 0) : 25
+    readonly property real computedHeaderTopInsetPx: uiSizingSettings ? uiSizingSettings.px(3.0, 0) : 12
+    readonly property real computedButtonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 44
+    readonly property real computedJoystickStickSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.joystickStickSize, 0) : 34
+    readonly property real computedWheelSizePx: computedJoystickStickSizePx * 4
+
+    iconButtonSizePx: computedIconButtonSizePx
+    iconGlyphSizePx: computedIconGlyphSizePx
+    headerTopInsetPx: computedHeaderTopInsetPx
+    buttonHeightPx: computedButtonHeightPx
+    wheelSizePx: computedWheelSizePx
 
     property int experimentId: -1
     property bool experimentRegistered: false
 
     property bool exiting: false
+    property bool exitAndQuit: false
+
+    signal appExitFinished()
 
     property bool waitingForNavigationStart: false
 
@@ -132,6 +147,32 @@ TestMapViewForm {
         if (messageText) {
             errorPopup.errorRectangleTextError.text = messageText
             errorPopup.open()
+        }
+    }
+
+    function emergencyStop() {
+        stopAutoLocalizationSpin()
+
+        waitingForNavigationStart = false
+        autoLocalizationActive = false
+        autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForService = false
+        autoLocalizationCompleted = false
+        autoLocalizationServiceDone = false
+        autoLocalizationSpinDone = false
+        syncRobotPoseUpdates()
+
+        if (autoLocalizationConfirmDialog.visible) {
+            autoLocalizationConfirmDialog.close()
+        }
+
+        if (busyDialog.visible) {
+            busyDialog.close()
+        }
+
+        if (manualControl) {
+            manualControl.updateVelocity(0.0, 0.0)
+            manualControl.stopRobot()
         }
     }
 
@@ -257,6 +298,7 @@ TestMapViewForm {
             if (!okStop) {
                 busyDialog.close()
                 exiting = false
+                exitAndQuit = false
                 errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo detener la navegación")
                 errorPopup.open()
                 return
@@ -292,6 +334,11 @@ TestMapViewForm {
         exiting = false
         busyDialog.close()
 
+        if (manualControl) {
+            manualControl.updateVelocity(0.0, 0.0)
+            manualControl.stopRobot()
+        }
+
         if (placementController) {
             placementController.clear()
         }
@@ -309,11 +356,39 @@ TestMapViewForm {
             experimentId = -1
         }
 
+        if (exitAndQuit) {
+            exitAndQuit = false
+            appExitFinished()
+            return
+        }
+
         if (StackView.view) {
             while (StackView.view.depth > 3) {
                 StackView.view.pop()
             }
         }
+    }
+
+    function requestAppExit() {
+        exitAndQuit = true
+        beginExit()
+        return true
+    }
+
+    function handleUserSwitch() {
+        stopAutoLocalizationSpin()
+        autoLocalizationActive = false
+        autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForService = false
+        autoLocalizationServiceDone = false
+        autoLocalizationSpinDone = false
+        waitingForNavigationStart = false
+
+        if (busyDialog.visible) {
+            busyDialog.close()
+        }
+
+        beginExit()
     }
 
     Component.onCompleted: {
@@ -562,6 +637,8 @@ TestMapViewForm {
         if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
             var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
             if (mapVizManager) {
+                // Ensure pose updates are re-enabled when leaving the test view
+                mapVizManager.setRobotPoseUpdatesEnabled(true)
                 mapVizManager.destroySubscriptions()
             }
         }
@@ -569,6 +646,10 @@ TestMapViewForm {
 
     infoButton.onClicked: {
         infoDialog.open()
+    }
+
+    emergencyButton.onClicked: {
+        emergencyStop()
     }
 
     ConfirmationDialog {

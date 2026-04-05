@@ -1,11 +1,14 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 6.0
+import QtQuick.Window 2.15
 
 Item {
     id: root
 
     enabled: userSession && userSession.role === "manager" && userSession.isAuthenticated
+    readonly property real checkboxHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.checkboxHeight, 0) : 44
+    readonly property real checkboxIndicatorPx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.checkboxIndicatorSize, 0) : 20
 
     implicitWidth: contentLayout.childrenRect.width + 40
     implicitHeight: contentLayout.childrenRect.height + 40
@@ -82,16 +85,17 @@ Item {
                     id: namespaceCheckbox
                     text: qsTr("Usar descubrimiento por namespace")
                     width: parent.width
+                    height: root.checkboxHeightPx
                     
                     enabled: root.enabled
                     checked: developerSettings ? developerSettings.useNamespaceDiscovery : true
 
                     indicator: Rectangle {
-                        implicitWidth: 20
-                        implicitHeight: 20
+                        implicitWidth: root.checkboxIndicatorPx
+                        implicitHeight: root.checkboxIndicatorPx
                         x: namespaceCheckbox.leftPadding
                         y: parent.height / 2 - height / 2
-                        radius: 4
+                        radius: Math.round(root.checkboxIndicatorPx * 0.2)
                         border.color: "#045671"
                         border.width: 2
                         color: "#ffffff"
@@ -100,7 +104,7 @@ Item {
                             anchors.centerIn: parent
                             text: "✓"
                             color: "#000000"
-                            font.pixelSize: 14
+                            font.pixelSize: Math.round(root.checkboxIndicatorPx * 0.7)
                             font.bold: true
                             visible: namespaceCheckbox.checked
                         }
@@ -171,16 +175,17 @@ Item {
                     id: topicFilterCheckbox
                     text: qsTr("Usar descubrimiento filtrado por tópico")
                     width: parent.width
+                    height: root.checkboxHeightPx
 
                     enabled: root.enabled
                     checked: developerSettings ? developerSettings.useTopicFilter : true
 
                     indicator: Rectangle {
-                        implicitWidth: 20
-                        implicitHeight: 20
+                        implicitWidth: root.checkboxIndicatorPx
+                        implicitHeight: root.checkboxIndicatorPx
                         x: topicFilterCheckbox.leftPadding
                         y: parent.height / 2 - height / 2
-                        radius: 4
+                        radius: Math.round(root.checkboxIndicatorPx * 0.2)
                         border.color: "#045671"
                         border.width: 2
                         color: "#ffffff"
@@ -189,7 +194,7 @@ Item {
                             anchors.centerIn: parent
                             text: "✓"
                             color: "#000000"
-                            font.pixelSize: 14
+                            font.pixelSize: Math.round(root.checkboxIndicatorPx * 0.7)
                             font.bold: true
                             visible: topicFilterCheckbox.checked
                         }

@@ -59,6 +59,9 @@ void ManualControl::destroyPublisher()
 
   if (pub_cmd_vel_)
   {
+    linear_velocity_ = 0.0;
+    angular_velocity_ = 0.0;
+    publishVelocity();
     qInfo() << "[ManualControl::destroyPublisher] Destroying publisher";
     pub_cmd_vel_.reset();
   }

@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 6.0
+import QtQuick.Window 2.15
 
 import "qrc:/Dialogs"
 
@@ -9,6 +10,7 @@ Item {
 
     signal disconnectRobotRequested()
     signal changeUserRequested()
+    signal appExitRequested()
 
     property bool dropDownOpen: false
     property bool loggedIn: userSession ? userSession.isAuthenticated : false
@@ -20,19 +22,27 @@ Item {
                                : ((userSession && userSession.role === "guest") ? qsTr("Invitado")
                                                                                 : (dbManager ? dbManager.userName : ""))
 
+    readonly property real badgeHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.badgeHeight, 0) : 56
+    readonly property real badgeMenuItemHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.badgeMenuItemHeight, 0) : 44
+    readonly property real iconGlyphPxRaw: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, 0) : 34
+    readonly property real badgeIconPx: Math.min(iconGlyphPxRaw, badgeHeightPx - 16)
+
     property int badgeWidth: Math.max(userRow.implicitWidth + 20, 140)
-    property int segmentHeight: 44
+    property int segmentHeight: Math.round(badgeMenuItemHeightPx)
     property int segmentPadding: 16
     property int dividerSize: 2
+    property int segmentCount: root.robotConnected ? 4 : 3
+    property int dividerCount: segmentCount - 1
     property int segmentWidth: Math.max(
                                  120,
                                  disconnectText.implicitWidth + root.segmentPadding * 2,
                                  changeUserText.implicitWidth + root.segmentPadding * 2,
-                                 logoutText.implicitWidth + root.segmentPadding * 2
+                                 logoutText.implicitWidth + root.segmentPadding * 2,
+                                 appExitText.implicitWidth + root.segmentPadding * 2
                                )
     property int menuWidth: Math.max(root.badgeWidth, root.segmentWidth)
 
-    implicitHeight: 56
+    implicitHeight: Math.round(badgeHeightPx)
     implicitWidth: badgeWidth
 
     visible: loggedIn
@@ -62,9 +72,9 @@ Item {
     Rectangle {
         id: userLabelRect
         z: 3
-        height: 56
+        height: root.implicitHeight
         width: root.badgeWidth
-        radius: 18
+        radius: Math.round(height * 0.32)
         color: "#a9cfe8"
         border.color: "#ffffff"
         border.width: 2
@@ -79,20 +89,20 @@ Item {
             spacing: 12
 
             Item {
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 34
-                Layout.minimumWidth: 34
-                Layout.minimumHeight: 34
-                Layout.maximumWidth: 34
-                Layout.maximumHeight: 34
+                Layout.preferredWidth: root.badgeIconPx
+                Layout.preferredHeight: root.badgeIconPx
+                Layout.minimumWidth: root.badgeIconPx
+                Layout.minimumHeight: root.badgeIconPx
+                Layout.maximumWidth: root.badgeIconPx
+                Layout.maximumHeight: root.badgeIconPx
                 Layout.leftMargin: 1
                 Layout.alignment: Qt.AlignVCenter
 
                 Image {
                     anchors.fill: parent
                     source: "qrc:/qmlresources/icons/circle_user_regular.svg"
-                    sourceSize.width: 34
-                    sourceSize.height: 34
+                    sourceSize.width: root.badgeIconPx
+                    sourceSize.height: root.badgeIconPx
                     fillMode: Image.PreserveAspectFit
                     smooth: true
                 }
@@ -110,12 +120,12 @@ Item {
             }
 
             Item {
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 34
-                Layout.minimumWidth: 34
-                Layout.minimumHeight: 34
-                Layout.maximumWidth: 34
-                Layout.maximumHeight: 34
+                Layout.preferredWidth: root.badgeIconPx
+                Layout.preferredHeight: root.badgeIconPx
+                Layout.minimumWidth: root.badgeIconPx
+                Layout.minimumHeight: root.badgeIconPx
+                Layout.maximumWidth: root.badgeIconPx
+                Layout.maximumHeight: root.badgeIconPx
                 Layout.alignment: Qt.AlignVCenter
                 visible: false
             }
@@ -143,7 +153,7 @@ Item {
         z: 3
         width: root.menuWidth
         height: root.dropDownOpen
-              ? (root.segmentHeight * (root.robotConnected ? 3 : 2) + root.dividerSize * (root.robotConnected ? 2 : 1))
+              ? (root.segmentHeight * root.segmentCount + root.dividerSize * root.dividerCount)
               : 0
         opacity: root.dropDownOpen ? 1 : 0
         radius: 14
@@ -270,6 +280,39 @@ Item {
                             msg += "\n\n" + qsTr("Se cerrará la conexión con %1.").arg(root.robotDisplayName)
                         }
                         logoutDialog.openWithMessage(msg)
+                    }
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: root.dividerSize
+                color: "#045671"
+                opacity: 0.35
+            }
+
+            Rectangle {
+                id: appExitSegment
+                width: parent.width
+                height: root.segmentHeight
+                color: appExitArea.pressed ? "#00C8FF" : "transparent"
+
+                Text {
+                    id: appExitText
+                    anchors.centerIn: parent
+                    text: qsTr("Cerrar aplicación")
+                    color: "#045671"
+                    font.pixelSize: 12
+                    font.bold: true
+                }
+
+                MouseArea {
+                    id: appExitArea
+                    anchors.fill: parent
+                    onPressed: root.restartAutoCloseTimer()
+                    onClicked: {
+                        root.dropDownOpen = false
+                        root.appExitRequested()
                     }
                 }
             }
