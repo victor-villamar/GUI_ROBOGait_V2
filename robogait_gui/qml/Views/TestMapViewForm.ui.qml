@@ -37,6 +37,7 @@ Rectangle {
     signal autoLocalizationRequested()
 
     property bool mapAvailable: false
+    property bool particleCloudAvailable: false
     property int mapContentMargin: 10
     property bool placementEnabled: false
     property bool orientationEnabled: false
@@ -45,6 +46,7 @@ Rectangle {
                                       ? userSession.rosManager.robotManager.robotPlacementController
                                       : null
     property bool showRobotPose: false
+    property bool showParticleCloud: false
 
     ColumnLayout {
         anchors.fill: parent
@@ -217,7 +219,22 @@ Rectangle {
                 }
             }
 
+            ParticleCloudLayerItem {
+                id: particleCloudLayerItem
+                anchors.fill: parent
+                anchors.margins: mapContentMargin
+                visible: mapAvailable && particleCloudAvailable && showParticleCloud
+                z: 1.4
 
+                Component.onCompleted: {
+                    if (userSession.rosManager &&
+                        userSession.rosManager.robotManager &&
+                        userSession.rosManager.robotManager.mapVisualizationManager)
+                    {
+                        userSession.rosManager.robotManager.mapVisualizationManager.registerParticleCloudLayerItem(particleCloudLayerItem)
+                    }
+                }
+            }
 
             Rectangle {
                 id: rotationPanel

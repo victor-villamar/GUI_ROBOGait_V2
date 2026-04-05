@@ -60,12 +60,23 @@ TestMapViewForm {
                   ? userSession.rosManager.robotManager.mapVisualizationManager.mapAvailable
                   : false
 
+    particleCloudAvailable: (userSession.rosManager &&
+                             userSession.rosManager.robotManager &&
+                             userSession.rosManager.robotManager.mapVisualizationManager)
+                            ? userSession.rosManager.robotManager.mapVisualizationManager.particleCloudAvailable
+                            : false
+
+    showParticleCloud: step === stepPosition
+
     showRobotPose: mapAvailable && ((placementController && placementController.hasPosition) || autoLocalizationCompleted || autoLocalizationActive)
 
     onStepChanged: {
+        if (step === stepPosition) {
+            resetParticleCloudData()
+        }
         if (step !== stepPosition) {
             placementEnabled = false
-        syncRobotPoseUpdates()
+            syncRobotPoseUpdates()
         }
 
         if (step !== stepOrientation) {
@@ -103,6 +114,17 @@ TestMapViewForm {
 
         var enableUpdates = (step === stepNavigation) || autoLocalizationActive
         mapVizManager.setRobotPoseUpdatesEnabled(enableUpdates)
+    }
+
+    function resetParticleCloudData() {
+        var mapVizManager = userSession && userSession.rosManager && userSession.rosManager.robotManager
+                           ? userSession.rosManager.robotManager.mapVisualizationManager
+                           : null
+        if (!mapVizManager) {
+            return
+        }
+
+        mapVizManager.resetParticleCloud()
     }
 
     function startAutoLocalizationSpin() {
@@ -401,6 +423,9 @@ TestMapViewForm {
         if (mapVizManager) {
             mapVizManager.activateSubscriptions()
             syncRobotPoseUpdates()
+            if (step === stepPosition) {
+                resetParticleCloudData()
+            }
         }
 
         if (!dbManager || !userSession) {
