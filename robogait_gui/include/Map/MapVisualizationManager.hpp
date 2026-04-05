@@ -11,14 +11,17 @@
 
 #include "Map/Items/LaserLayerItem.hpp"
 #include "Map/Items/MapLayerItem.hpp"
+#include "Map/Items/ParticleCloudLayerItem.hpp"
 #include "Map/Items/RobotLayerItem.hpp"
 #include "Map/Layer/LaserLayer.hpp"
 #include "Map/Layer/MapLayer.hpp"
+#include "Map/Layer/ParticleCloudLayer.hpp"
 #include "Map/Layer/RobotLayer.hpp"
 #include "Map/Rendering/RenderCamera.hpp"
 #include "Map/Rendering/RenderScene.hpp"
 #include "Map/Source/LaserSource.hpp"
 #include "Map/Source/MapSource.hpp"
+#include "Map/Source/ParticleCloudSource.hpp"
 #include "Map/Source/RobotPoseSource.hpp"
 
 namespace ROBOGait
@@ -51,6 +54,10 @@ class MapVisualizationManager : public QObject
   Q_PROPERTY(bool laserAvailable
              READ isLaserAvailable
              NOTIFY laserAvailableChanged)
+
+  Q_PROPERTY(bool particleCloudAvailable
+             READ isParticleCloudAvailable
+             NOTIFY particleCloudAvailableChanged)
 
   Q_PROPERTY(double zoomLevel
              READ getZoomLevel
@@ -129,6 +136,13 @@ public:
    * @return true if laser data has been received
    */
   bool isLaserAvailable() const;
+
+  /**
+   * @brief Check if particle cloud data is available
+   *
+   * @return true if particle cloud has been received
+   */
+  bool isParticleCloudAvailable() const;
 
   /**
    * @brief Get current zoom level
@@ -245,6 +259,13 @@ public:
   Q_INVOKABLE void registerLaserLayerItem(QObject* item);
 
   /**
+   * @brief Register ParticleCloudLayerItem created in QML
+   *
+   * @param item Pointer to ParticleCloudLayerItem created in QML
+   */
+  Q_INVOKABLE void registerParticleCloudLayerItem(QObject* item);
+
+  /**
    * @brief Zoom in for GPU rendering camera
    */
   Q_INVOKABLE void zoomIn();
@@ -279,18 +300,24 @@ public:
    */
   Q_INVOKABLE void clearMap();
 
+  /**
+   * @brief Clear the current particle cloud
+   */
+  Q_INVOKABLE void resetParticleCloud();
+
 private slots:
   void onFrameReady(); // Slot for handling frame readiness
 
 signals:
-  void isInitializedChanged();      // Emitted when initialization state changes
-  void mapAvailableChanged();       // Emitted when map availability changes
-  void robotPoseAvailableChanged(); // Emitted when robot pose availability changes
-  void laserAvailableChanged();     // Emitted when laser availability changes
-  void zoomLevelChanged();          // Emitted when zoom level changes
-  void mapResolutionChanged();      // Emitted when map resolution changes
-  void scaleChanged();              // Emitted when scale changes
-  void followRobotChanged();        // Emitted when follow mode changes
+  void isInitializedChanged();          // Emitted when initialization state changes
+  void mapAvailableChanged();           // Emitted when map availability changes
+  void robotPoseAvailableChanged();     // Emitted when robot pose availability changes
+  void laserAvailableChanged();         // Emitted when laser availability changes
+  void particleCloudAvailableChanged(); // Emitted when particle cloud availability changes
+  void zoomLevelChanged();              // Emitted when zoom level changes
+  void mapResolutionChanged();          // Emitted when map resolution changes
+  void scaleChanged();                  // Emitted when scale changes
+  void followRobotChanged();            // Emitted when follow mode changes
 
 private:
   /**
@@ -325,31 +352,35 @@ private:
 
   rclcpp::Node* parent_node_; /**< Parent ROS node pointer */
 
-  std::shared_ptr<ROBOGait::map::rendering::RenderScene> render_scene_;   /**< Render scene  */
-  std::shared_ptr<ROBOGait::map::rendering::RenderCamera> render_camera_; /**< Shared camera for layers */
-  std::shared_ptr<ROBOGait::map::layer::MapLayer> map_layer_;             /**< Map layer renderer */
-  std::shared_ptr<ROBOGait::map::layer::RobotLayer> robot_layer_;         /**< Robot layer renderer */
-  std::shared_ptr<ROBOGait::map::layer::LaserLayer> laser_layer_;         /**< Laser layer renderer */
-  QPointer<ROBOGait::map::item::MapLayerItem> map_layer_item_;            /**< Map layer item */
-  QPointer<ROBOGait::map::item::RobotLayerItem> robot_layer_item_;        /**< Robot layer item */
-  QPointer<ROBOGait::map::item::LaserLayerItem> laser_layer_item_;        /**< Laser layer item */
+  std::shared_ptr<ROBOGait::map::rendering::RenderScene> render_scene_;       /**< Render scene  */
+  std::shared_ptr<ROBOGait::map::rendering::RenderCamera> render_camera_;     /**< Shared camera for layers */
+  std::shared_ptr<ROBOGait::map::layer::MapLayer> map_layer_;                 /**< Map layer renderer */
+  std::shared_ptr<ROBOGait::map::layer::RobotLayer> robot_layer_;             /**< Robot layer renderer */
+  std::shared_ptr<ROBOGait::map::layer::LaserLayer> laser_layer_;             /**< Laser layer renderer */
+  std::shared_ptr<ROBOGait::map::layer::ParticleCloudLayer> particle_layer_;  /**< Particle cloud layer renderer */
+  QPointer<ROBOGait::map::item::MapLayerItem> map_layer_item_;                /**< Map layer item */
+  QPointer<ROBOGait::map::item::RobotLayerItem> robot_layer_item_;            /**< Robot layer item */
+  QPointer<ROBOGait::map::item::LaserLayerItem> laser_layer_item_;            /**< Laser layer item */
+  QPointer<ROBOGait::map::item::ParticleCloudLayerItem> particle_layer_item_; /**< Particle cloud layer item */
 
-  std::shared_ptr<ROBOGait::map::source::MapSource> map_source_;        /**< Map source */
-  std::shared_ptr<ROBOGait::map::source::RobotPoseSource> pose_source_; /**< Robot pose source */
-  std::shared_ptr<ROBOGait::map::source::LaserSource> laser_source_;    /**< Laser source */
+  std::shared_ptr<ROBOGait::map::source::MapSource> map_source_;                /**< Map source */
+  std::shared_ptr<ROBOGait::map::source::RobotPoseSource> pose_source_;         /**< Robot pose source */
+  std::shared_ptr<ROBOGait::map::source::LaserSource> laser_source_;            /**< Laser source */
+  std::shared_ptr<ROBOGait::map::source::ParticleCloudSource> particle_source_; /**< Particle cloud source */
 
-  QString selected_robot_namespace_; /**< Selected robot namespace */
-  bool use_namespace_discovery_;     /**< Use namespace-based topic discovery */
-  bool is_initialized_;              /**< Initialization flag */
-  bool subscriptions_active_;        /**< Subscriptions active flag */
-  bool map_available_cache_;         /**< Cached map availability state */
-  bool robot_pose_available_cache_;  /**< Cached robot pose availability state */
-  bool laser_available_cache_;       /**< Cached laser availability state */
-  double map_resolution_cache_;      /**< Cached map resolution (meters per pixel) */
-  double scale_meters_cache_;        /**< Cached scale bar meters value */
-  int scale_pixels_cache_;           /**< Cached scale bar pixel length */
-  double robot_size_;                /**< Robot diameter used for rendering (meters) */
-  bool follow_robot_;                /**< Whether the camera follows the robot */
+  QString selected_robot_namespace_;    /**< Selected robot namespace */
+  bool use_namespace_discovery_;        /**< Use namespace-based topic discovery */
+  bool is_initialized_;                 /**< Initialization flag */
+  bool subscriptions_active_;           /**< Subscriptions active flag */
+  bool map_available_cache_;            /**< Cached map availability state */
+  bool robot_pose_available_cache_;     /**< Cached robot pose availability state */
+  bool laser_available_cache_;          /**< Cached laser availability state */
+  bool particle_cloud_available_cache_; /**< Cached particle cloud availability state */
+  double map_resolution_cache_;         /**< Cached map resolution (meters per pixel) */
+  double scale_meters_cache_;           /**< Cached scale bar meters value */
+  int scale_pixels_cache_;              /**< Cached scale bar pixel length */
+  double robot_size_;                   /**< Robot diameter used for rendering (meters) */
+  bool follow_robot_;                   /**< Whether the camera follows the robot */
 };
 
 } // namespace manager
