@@ -14,6 +14,7 @@ find_package(yaml-cpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(map_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
@@ -55,23 +56,28 @@ set(HEADERS
     include/Loader/YamlLoader.hpp
     include/Map/Data/LaserScanData.hpp
     include/Map/Data/MapData.hpp
+    include/Map/Data/ParticleCloudData.hpp
     include/Map/Data/RobotPoseData.hpp
     include/Map/Items/LaserLayerItem.hpp
     include/Map/Items/MapLayerItem.hpp
+    include/Map/Items/ParticleCloudLayerItem.hpp
     include/Map/Items/RobotLayerItem.hpp
-    include/Map/Layer/LayerInterface.hpp
     include/Map/Layer/LaserLayer.hpp
+    include/Map/Layer/LayerInterface.hpp
     include/Map/Layer/MapLayer.hpp
+    include/Map/Layer/ParticleCloudLayer.hpp
     include/Map/Layer/RobotLayer.hpp
     include/Map/Rendering/RenderCamera.hpp
     include/Map/Rendering/RenderPipeline.hpp
     include/Map/Rendering/RenderScene.hpp
     include/Map/Source/LaserSource.hpp
     include/Map/Source/MapSource.hpp
+    include/Map/Source/ParticleCloudSource.hpp
     include/Map/Source/RobotPoseSource.hpp
     include/Map/Source/SourceInterface.hpp
     include/Map/Subscribers/LaserScanSubscriber.hpp
     include/Map/Subscribers/MapSubscriber.hpp
+    include/Map/Subscribers/ParticleCloudSubscriber.hpp
     include/Map/Subscribers/TFSubscriber.hpp
     include/Map/Utils/Utils.hpp
     include/Map/MapVisualizationManager.hpp
@@ -108,21 +114,26 @@ set(SOURCES
     src/Loader/YamlLoader.cpp
     src/Map/Data/LaserScanData.cpp
     src/Map/Data/MapData.cpp
+    src/Map/Data/ParticleCloudData.cpp
     src/Map/Data/RobotPoseData.cpp
     src/Map/Items/LaserLayerItem.cpp
     src/Map/Items/MapLayerItem.cpp
+    src/Map/Items/ParticleCloudLayerItem.cpp
     src/Map/Items/RobotLayerItem.cpp
     src/Map/Layer/LaserLayer.cpp
     src/Map/Layer/MapLayer.cpp
+    src/Map/Layer/ParticleCloudLayer.cpp
     src/Map/Layer/RobotLayer.cpp
     src/Map/Rendering/RenderCamera.cpp
     src/Map/Rendering/RenderPipeline.cpp
     src/Map/Rendering/RenderScene.cpp
     src/Map/Source/LaserSource.cpp
     src/Map/Source/MapSource.cpp
+    src/Map/Source/ParticleCloudSource.cpp
     src/Map/Source/RobotPoseSource.cpp
     src/Map/Subscribers/LaserScanSubscriber.cpp
     src/Map/Subscribers/MapSubscriber.cpp
+    src/Map/Subscribers/ParticleCloudSubscriber.cpp
     src/Map/Subscribers/TFSubscriber.cpp
     src/Map/Utils/Utils.cpp
     src/Map/MapVisualizationManager.cpp
@@ -202,6 +213,7 @@ ament_target_dependencies(${PROJECT_NAME}
     geometry_msgs
     nav_msgs
     map_msgs
+    nav2_msgs
     tf2
     tf2_ros
     tf2_geometry_msgs
