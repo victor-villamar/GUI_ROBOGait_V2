@@ -10,6 +10,7 @@
 #define T_MAP                       "/map"
 #define T_MAP_UPDATES               "/map_updates"
 #define T_SCAN                      "/scan"
+#define T_PARTICLE_CLOUD            "/particle_cloud"
 #define T_POSE_INITIALIZE           "/initialpose"
 
 // Services
