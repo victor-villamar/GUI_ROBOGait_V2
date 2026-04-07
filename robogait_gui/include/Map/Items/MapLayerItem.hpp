@@ -4,6 +4,7 @@
 
 #include <QPointer>
 #include <QQuickItem>
+#include <QRectF>
 #include <QSGSimpleTextureNode>
 
 #include "Map/Layer/MapLayer.hpp"
@@ -110,20 +111,38 @@ private slots:
   void onFrameReady(); // Slot for frame ready signal
 
 private:
+  /**
+   * @brief Clamp the camera view center to the map boundaries
+   *
+   * @param center The camera view center to clamp
+   *
+   * @return The clamped camera view center
+   */
+  QPointF clampCenterToMap(const QPointF& center) const;
+
+  /**
+   * @brief Apply a pan delta to the camera view
+   *
+   * @param delta The pan delta to apply
+   */
+  void applyPanDelta(const QPointF& delta);
+
   QPointer<ROBOGait::map::rendering::RenderPipeline> pipeline_;         /**< Render pipeline for the map item */
   std::shared_ptr<ROBOGait::map::rendering::RenderScene> render_scene_; /**< Render scene for the map item */
   std::shared_ptr<ROBOGait::map::layer::MapLayer> map_render_;          /**< Map layer for the map item */
   std::shared_ptr<ROBOGait::map::rendering::RenderCamera> camera_;      /**< Camera for the map item */
   QPointer<QQuickItem> sync_item_;                                      /**< Sync item for the map item */
   qint64 last_image_key_;                                               /**< Last image key for the map item */
+  QRectF map_rect_;                                                     /**< Last map rect in world coordinates */
+  bool has_map_rect_;                                                   /**< Map rect availability flag */
 
-  bool fit_done_;          /**< Fit done flag for the map item */
-  bool is_panning_;        /**< Is panning flag for the map item */
-  bool panning_enabled_;   /**< Enable/disable panning behavior */
-  QPointF last_pan_pos_;   /**< Last pan position for the map item */
-  bool is_pinching_;             /**< Is pinching flag for the map item */
-  qreal pinch_start_zoom_;       /**< Pinch start zoom for the map item */
-  qreal pinch_start_distance_;   /**< Pinch start distance for the map item */
+  bool fit_done_;              /**< Fit done flag for the map item */
+  bool is_panning_;            /**< Is panning flag for the map item */
+  bool panning_enabled_;       /**< Enable/disable panning behavior */
+  QPointF last_pan_pos_;       /**< Last pan position for the map item */
+  bool is_pinching_;           /**< Is pinching flag for the map item */
+  qreal pinch_start_zoom_;     /**< Pinch start zoom for the map item */
+  qreal pinch_start_distance_; /**< Pinch start distance for the map item */
 };
 
 } // namespace item

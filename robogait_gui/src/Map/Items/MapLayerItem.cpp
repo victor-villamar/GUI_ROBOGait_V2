@@ -4,6 +4,7 @@
 #include <QPinchGesture>
 #include <QSGTexture>
 #include <QSGTransformNode>
+#include <QtGlobal>
 #include <QtMath>
 #include <algorithm>
 #include <cmath>
@@ -12,8 +13,17 @@
 
 using namespace ROBOGait::map::item;
 
-MapLayerItem::MapLayerItem(QQuickItem* parent) :
-    QQuickItem(parent), last_image_key_(0), fit_done_(false), is_panning_(false), is_pinching_(false), pinch_start_zoom_(1.0), pinch_start_distance_(0.0)
+MapLayerItem::MapLayerItem(QQuickItem* parent)
+  : QQuickItem(parent),
+    last_image_key_(0),
+    map_rect_(),
+    has_map_rect_(false),
+    fit_done_(false),
+    is_panning_(false),
+    panning_enabled_(true),
+    is_pinching_(false),
+    pinch_start_zoom_(1.0),
+    pinch_start_distance_(0.0)
 {
   setFlag(ItemHasContents, true);
   setAcceptedMouseButtons(Qt::AllButtons);
@@ -85,6 +95,7 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
 
   if (!map_render_ || !window())
   {
+    has_map_rect_ = false;
     delete old_node;
     return nullptr;
   }
@@ -98,6 +109,7 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
   const QImage image = map_render_->getImage();
   if (image.isNull())
   {
+    has_map_rect_ = false;
     delete transform_node;
     return nullptr;
   }
@@ -200,10 +212,77 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
     transform_node->setMatrix(camera_->getMatrix());
   }
 
+  map_rect_ = map_rect;
+  has_map_rect_ = !map_rect_.isEmpty();
+
   return transform_node;
 }
 
 void MapLayerItem::onFrameReady() { update(); }
+
+QPointF MapLayerItem::clampCenterToMap(const QPointF& center) const
+{
+  if (!camera_ || !has_map_rect_)
+  {
+    return center;
+  }
+
+  const QRectF rect = map_rect_.normalized();
+  if (rect.isEmpty())
+  {
+    return center;
+  }
+
+  const double zoom = camera_->getZoom();
+  if (zoom <= 0.0)
+  {
+    return center;
+  }
+
+  const double half_w = width() / (2.0 * zoom);
+  const double half_h = height() / (2.0 * zoom);
+
+  double x = center.x();
+  double y = center.y();
+
+  double min_x = rect.left() + half_w;
+  double max_x = rect.right() - half_w;
+  if (rect.width() < (2.0 * half_w))
+  {
+    min_x = rect.right() - half_w;
+    max_x = rect.left() + half_w;
+  }
+  x = qBound(min_x, x, max_x);
+
+  double min_y = rect.top() + half_h;
+  double max_y = rect.bottom() - half_h;
+  if (rect.height() < (2.0 * half_h))
+  {
+    min_y = rect.bottom() - half_h;
+    max_y = rect.top() + half_h;
+  }
+  y = qBound(min_y, y, max_y);
+
+  return QPointF(x, y);
+}
+
+void MapLayerItem::applyPanDelta(const QPointF& delta)
+{
+  if (!camera_)
+  {
+    return;
+  }
+
+  const double zoom = camera_->getZoom();
+  if (zoom <= 0.0)
+  {
+    return;
+  }
+
+  const QPointF center = camera_->getViewCenter();
+  const QPointF new_center(center.x() - delta.x() / zoom, center.y() + delta.y() / zoom);
+  camera_->setViewCenter(clampCenterToMap(new_center));
+}
 
 void MapLayerItem::wheelEvent(QWheelEvent* event)
 {
@@ -215,6 +294,7 @@ void MapLayerItem::wheelEvent(QWheelEvent* event)
 
   const qreal delta = event->angleDelta().y() > 0 ? rendering::RenderCamera::ZOOM_FACTOR : (1.0 / rendering::RenderCamera::ZOOM_FACTOR);
   camera_->zoomByFactor(delta);
+  camera_->setViewCenter(clampCenterToMap(camera_->getViewCenter()));
   emit zoomChanged();
   update();
   if (sync_item_)
@@ -259,11 +339,7 @@ void MapLayerItem::mouseMoveEvent(QMouseEvent* event)
 
   const QPointF delta = event->position() - last_pan_pos_;
   last_pan_pos_ = event->position();
-
-  const QPointF center = camera_->getViewCenter();
-  const double zoom = camera_->getZoom();
-  const QPointF new_center(center.x() - delta.x() / zoom, center.y() - delta.y() / zoom);
-  camera_->setViewCenter(new_center);
+  applyPanDelta(delta);
   update();
   if (sync_item_)
   {
@@ -314,6 +390,11 @@ void MapLayerItem::touchEvent(QTouchEvent* event)
   if (points.size() == 1)
   {
     is_pinching_ = false;
+    if (!panning_enabled_)
+    {
+      QQuickItem::touchEvent(event);
+      return;
+    }
     const QPointF pos = points.front().position();
     switch (event->type())
     {
@@ -327,11 +408,7 @@ void MapLayerItem::touchEvent(QTouchEvent* event)
         {
           const QPointF delta = pos - last_pan_pos_;
           last_pan_pos_ = pos;
-
-          const QPointF center = camera_->getViewCenter();
-          const double zoom = camera_->getZoom();
-          const QPointF new_center(center.x() - delta.x() / zoom, center.y() - delta.y() / zoom);
-          camera_->setViewCenter(new_center);
+          applyPanDelta(delta);
           update();
           if (sync_item_)
           {
@@ -368,6 +445,7 @@ void MapLayerItem::touchEvent(QTouchEvent* event)
     {
       const qreal scale = distance / pinch_start_distance_;
       camera_->setZoom(pinch_start_zoom_ * scale);
+      camera_->setViewCenter(clampCenterToMap(camera_->getViewCenter()));
       emit zoomChanged();
       update();
       if (sync_item_)
@@ -401,6 +479,7 @@ bool MapLayerItem::event(QEvent* event)
       }
       const qreal scale = pinch_gesture->totalScaleFactor();
       camera_->setZoom(pinch_start_zoom_ * scale);
+      camera_->setViewCenter(clampCenterToMap(camera_->getViewCenter()));
       emit zoomChanged();
       update();
       if (sync_item_)

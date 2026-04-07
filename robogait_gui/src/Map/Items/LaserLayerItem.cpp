@@ -9,6 +9,9 @@ using namespace ROBOGait::map::item;
 LaserLayerItem::LaserLayerItem(QQuickItem* parent) : QQuickItem(parent)
 {
   setFlag(ItemHasContents, true);
+  setAcceptedMouseButtons(Qt::NoButton);
+  setAcceptHoverEvents(false);
+  setAcceptTouchEvents(false);
   qInfo() << "[LaserLayerItem::LaserLayerItem] LaserLayerItem created";
 }
 
