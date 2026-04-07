@@ -10,10 +10,12 @@
 #include <rclcpp/timer.hpp>
 
 #include <command_executor_msgs/msg/robot_status.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
 #include "CommandExecutor/CommandExecutorBridge.hpp"
 #include "Map/MapVisualizationManager.hpp"
 #include "Robot/ManualControl.hpp"
+#include "Robot/RobotPlacementController.hpp"
 
 namespace ROBOGait
 {
@@ -59,6 +61,10 @@ public:
   Q_PROPERTY(ROBOGait::qml::executor::CommandExecutorBridge* commandExecutorBridge
              READ getCommandExecutorBridge
              CONSTANT)
+
+  Q_PROPERTY(ROBOGait::robot::RobotPlacementController* robotPlacementController
+             READ getRobotPlacementController
+             CONSTANT)
   // clang-format on
 
   /**
@@ -89,6 +95,13 @@ public:
    * Creates the bridge on first access
    */
   ROBOGait::qml::executor::CommandExecutorBridge* getCommandExecutorBridge();
+
+  /**
+   * @brief Get the robot placement controller instance
+   *
+   * Creates the controller on first access
+   */
+  ROBOGait::robot::RobotPlacementController* getRobotPlacementController();
 
   /**
    * @brief Set the ROS node for the RobotManager
@@ -132,6 +145,13 @@ public:
   void setUseTopicFilter(bool use_topic_filter);
 
   /**
+   * @brief Check if selected robot is still available in discovery list
+   *
+   * @param available_robots List of currently available robot namespaces
+   */
+  void checkRobotAvailability(const QStringList& available_robots);
+
+  /**
    * @brief Enables manual control mode for the selected robot
    */
   Q_INVOKABLE void enableManualControl();
@@ -142,10 +162,13 @@ public:
   Q_INVOKABLE void disableManualControl();
 
   /**
-   * @brief Check if selected robot is still available in discovery list
-   * @param available_robots List of currently available robot namespaces
+   * @brief Publish an initial pose for the robot
+   *
+   * @param x X coordinate of the pose
+   * @param y Y coordinate of the pose
+   * @param theta Orientation of the pose in radians
    */
-  void checkRobotAvailability(const QStringList& available_robots);
+  Q_INVOKABLE void publishInitialPose(double x, double y, double theta);
 
 signals:
   void selectedRobotNamespaceChanged();   /**< Emitted when the selected robot namespace changes */
@@ -197,16 +220,18 @@ private:
   std::unique_ptr<ROBOGait::robot::control::ManualControl> manual_control_;                    /**< Manual control instance */
   std::unique_ptr<ROBOGait::map::manager::MapVisualizationManager> map_visualization_manager_; /**< Map visualization manager */
   std::unique_ptr<ROBOGait::qml::executor::CommandExecutorBridge> command_executor_bridge_;    /**< Command executor bridge instance */
+  std::unique_ptr<ROBOGait::robot::RobotPlacementController> robot_placement_controller_;      /**< Robot placement controller instance */
 
   QString selected_robot_namespace_; /**< The namespace of the selected robot */
   bool use_namespace_discovery_;     /**< True if selected robot is identified by namespace, false if by node name */
   bool use_topic_filter_;            /**< True to monitor via topic, false to skip monitoring */
 
-  rclcpp::Subscription<command_executor_msgs::msg::RobotStatus>::SharedPtr sub_robot_status_; /**< Subscriber to robot_status topic */
-  rclcpp::TimerBase::SharedPtr timer_robot_timeout_;                                          /**< Timer for robot disconnection */
-  rclcpp::CallbackGroup::SharedPtr cb_group_;                                                 /**< Callback group for subscriptions */
-  rclcpp::Time last_robot_message_time_;                                                      /**< Timestamp of last robot message */
-  bool is_monitoring_;                                                                        /**< Flag indicating if monitoring is active */
+  rclcpp::Subscription<command_executor_msgs::msg::RobotStatus>::SharedPtr sub_robot_status_;       /**< Subscriber to robot_status topic */
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_pose_initialize_; /**< Publisher for initializing robot pose */
+  rclcpp::TimerBase::SharedPtr timer_robot_timeout_;                                                /**< Timer for robot disconnection */
+  rclcpp::CallbackGroup::SharedPtr cb_group_;                                                       /**< Callback group for subscriptions */
+  rclcpp::Time last_robot_message_time_;                                                            /**< Timestamp of last robot message */
+  bool is_monitoring_;                                                                              /**< Flag indicating if monitoring is active */
 
   static constexpr double TIMEOUT_SECONDS = 3.0; /**< Timeout in seconds for robot disconnection */
 };

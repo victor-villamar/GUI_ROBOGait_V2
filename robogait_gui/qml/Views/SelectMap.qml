@@ -17,17 +17,17 @@ SelectMapForm {
     property string pendingMapDescription: ""
     property string pendingDeleteMapName: ""
     property bool waitingForMappingStart: false
+    property bool waitingForDeleteMap: false
 
     readonly property var commandExecutorBridge : (userSession && userSession.rosManager && userSession.rosManager.robotManager)
                                                   ? userSession.rosManager.robotManager.commandExecutorBridge
                                                   : null
 
     mapsListView.model: mapsModel
-    selectedMapIndex: -1
+    selectedMapName: (userSession && userSession.currentMapName) ? userSession.currentMapName : ""
 
     function loadMaps() {
         mapsModel.clear()
-        selectedMapIndex = -1
 
         if (!dbManager) {
             return
@@ -41,6 +41,23 @@ SelectMapForm {
                 "map_name": name
             })
         }
+
+        if (selectedMapName && selectedMapName !== "")
+        {
+            var idx = -1
+            for (var j = 0; j < mapsModel.count; ++j) {
+                if (mapsModel.get(j).map_name === selectedMapName)
+                {
+                    idx = j
+                    break
+                }
+            }
+            mapsListView.currentIndex = idx
+        }
+        else
+        {
+            mapsListView.currentIndex = -1
+        }
     }
 
     StackView.onActivated: loadMaps()
@@ -48,7 +65,6 @@ SelectMapForm {
     onAddMapRequested: mapRegisterDialog.open()
 
     onMapClicked: function(mapIndex, mapNameValue) {
-        selectedMapIndex = mapIndex
         mapsListView.currentIndex = mapIndex
 
         if (!dbManager) {
@@ -129,9 +145,11 @@ SelectMapForm {
                 return
             }
 
+            waitingForDeleteMap = true
             var okRemote = commandExecutorBridge.deleteMap(pendingDeleteMapName)
             if(!okRemote)
             {
+                waitingForDeleteMap = false
                 errorPopup.errorRectangleTextError.text = qsTr("Advertencia: No se pudo borrar el mapa en el robot")
                 errorPopup.open()
                 return
@@ -158,7 +176,7 @@ SelectMapForm {
 
             if (mapDetailsDialog.visible && mapDetailsDialog.mapName === pendingDeleteMapName) {
                 mapDetailsDialog.close()
-                selectedMapIndex = -1
+                selectedMapName = ""
                 mapsListView.currentIndex = -1
             }
 
@@ -197,6 +215,26 @@ SelectMapForm {
                 busyDialog.close()
                 errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la creación del mapa")
                 errorPopup.open()
+            }
+        }
+
+        function onRequestFinished(success) {
+            if (waitingForMappingStart) {
+                if (!success) {
+                    waitingForMappingStart = false
+                    busyDialog.close()
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la creación del mapa")
+                    errorPopup.open()
+                }
+                return
+            }
+
+            if (waitingForDeleteMap) {
+                if (!success) {
+                    errorPopup.errorRectangleTextError.text = qsTr("Advertencia: No se pudo borrar el mapa en el robot")
+                    errorPopup.open()
+                }
+                waitingForDeleteMap = false
             }
         }
     }

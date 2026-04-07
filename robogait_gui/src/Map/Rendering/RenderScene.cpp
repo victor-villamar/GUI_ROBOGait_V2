@@ -43,6 +43,19 @@ void RenderScene::setLaserLayer(std::shared_ptr<ROBOGait::map::layer::LaserLayer
   }
 }
 
+void RenderScene::setParticleCloudLayer(std::shared_ptr<ROBOGait::map::layer::ParticleCloudLayer> particle_layer)
+{
+  particle_layer_ = std::move(particle_layer);
+  if (pipeline_)
+  {
+    pipeline_->removeLayer("particlecloud");
+    if (particle_layer_)
+    {
+      pipeline_->addLayer("particlecloud", particle_layer_);
+    }
+  }
+}
+
 std::shared_ptr<RenderPipeline> RenderScene::getPipeline() const { return pipeline_; }
 
 void RenderScene::start()

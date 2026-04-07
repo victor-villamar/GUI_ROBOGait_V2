@@ -10,9 +10,13 @@
 #define T_MAP                       "/map"
 #define T_MAP_UPDATES               "/map_updates"
 #define T_SCAN                      "/scan"
+#define T_PARTICLE_CLOUD            "/particle_cloud"
+#define T_POSE_INITIALIZE           "/initialpose"
 
 // Services
-#define S_CMD                       COMMAND_EXECUTOR"/cmd"
+#define S_CMD                                        COMMAND_EXECUTOR"/cmd"
+#define S_GET_MAP_DATA                               COMMAND_EXECUTOR"/get_map_data"
+#define S_REINITIALIZE_GLOBAL_LOCALIZATION           "/reinitialize_global_localization"
 
 // TF Frames
 #define TF_MAP_FRAME                "map"

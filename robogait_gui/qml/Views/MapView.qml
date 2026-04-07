@@ -6,6 +6,18 @@ import "qrc:/Dialogs"
 
 MapViewForm {
     id: root
+    readonly property real computedIconButtonSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconButtonSize, 0) : 50
+    readonly property real computedIconGlyphSizePx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, 0) : 25
+    readonly property real computedHeaderTopInsetPx: uiSizingSettings ? uiSizingSettings.px(3.0, 0) : 12
+    readonly property real computedButtonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 36
+    readonly property real computedJoystickStickSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.joystickStickSize, 0) : 34
+    readonly property real computedJoystickAreaSizePx: computedJoystickStickSizePx * 4
+
+    iconButtonSizePx: computedIconButtonSizePx
+    iconGlyphSizePx: computedIconGlyphSizePx
+    headerTopInsetPx: computedHeaderTopInsetPx
+    buttonHeightPx: computedButtonHeightPx
+    joystickAreaSizePx: computedJoystickAreaSizePx
 
     property real maxLinearVelocity: 0.22
     property bool confirmBackNavigation: false
@@ -17,6 +29,9 @@ MapViewForm {
     property bool pendingSaveToDb: false
     property bool waitingForResetStop: false
     property bool waitingForResetStart: false
+    property bool pendingQuit: false
+
+    signal appExitFinished()
 
     // Bind to MapVisualizationManager properties
     mapAvailable: (userSession.rosManager &&
@@ -154,9 +169,46 @@ MapViewForm {
         if(!okStop) {
             waitingForMappingStop = false
             pendingSaveAndExit = false
+            pendingQuit = false
             busyDialog.close()
             errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo detener el mapeo")
             errorPopup.open()
+        }
+    }
+
+    function requestAppExit() {
+        if (!commandExecutorBridge || commandExecutorBridge.status !== CommandExecutorBridge.RUNNING) {
+            appExitFinished()
+            return true
+        }
+
+        pendingQuit = true
+        beginStopWithoutSave(false)
+        return true
+    }
+
+    function handleUserSwitch() {
+        if (commandExecutorBridge && commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
+            commandExecutorBridge.stopMapping(false, "")
+        }
+
+        if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
+            var manualControl = userSession.rosManager.robotManager.manualControl
+            if (manualControl) {
+                manualControl.updateVelocity(0.0, 0.0)
+                manualControl.stopRobot()
+            }
+        }
+
+        waitingForResetStop = false
+        waitingForResetStart = false
+        waitingForMappingStop = false
+        pendingSaveAndExit = false
+        pendingSaveToDb = false
+        pendingQuit = false
+
+        if (busyDialog.visible) {
+            busyDialog.close()
         }
     }
 
@@ -181,6 +233,32 @@ MapViewForm {
             busyDialog.close()
             errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo detener el mapeo")
             errorPopup.open()
+        }
+    }
+
+    function emergencyStop() {
+        if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
+            var manualControl = userSession.rosManager.robotManager.manualControl
+            if (manualControl) {
+                manualControl.updateVelocity(0.0, 0.0)
+                manualControl.stopRobot()
+            }
+        }
+
+        var hadOperation = waitingForResetStop || waitingForResetStart || waitingForMappingStop
+        waitingForResetStop = false
+        waitingForResetStart = false
+        waitingForMappingStop = false
+        pendingSaveAndExit = false
+        pendingSaveToDb = false
+        pendingQuit = false
+
+        if (busyDialog.visible) {
+            busyDialog.close()
+        }
+
+        if (hadOperation && commandExecutorBridge && commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
+            commandExecutorBridge.stopMapping(false, "")
         }
     }
 
@@ -235,6 +313,10 @@ MapViewForm {
     // Info button
     infoButton.onClicked: {
         infoDialog.open()
+    }
+
+    emergencyButton.onClicked: {
+        emergencyStop()
     }
 
     lockButton.onClicked: {
@@ -379,7 +461,7 @@ MapViewForm {
                 Button {
                     id: saveButton
                     width: 120
-                    height: 32
+                    height: root.buttonHeightPx
                     text: qsTr("Guardar")
 
                     background: Rectangle {
@@ -407,7 +489,7 @@ MapViewForm {
                 Button {
                     id: noSaveButton
                     width: 120
-                    height: 32
+                    height: root.buttonHeightPx
                     text: qsTr("No Guardar")
 
                     background: Rectangle {
@@ -435,7 +517,7 @@ MapViewForm {
                 Button {
                     id: cancelButton
                     width: 120
-                    height: 32
+                    height: root.buttonHeightPx
                     text: qsTr("Cancelar")
 
                     background: Rectangle {
@@ -557,6 +639,12 @@ MapViewForm {
                 waitingForMappingStop = false
                 busyDialog.close()
 
+                if (pendingQuit) {
+                    pendingQuit = false
+                    appExitFinished()
+                    return
+                }
+
                 if (pendingSaveAndExit) {
                     pendingSaveAndExit = false
                     if (pendingSaveToDb) {
@@ -572,6 +660,7 @@ MapViewForm {
                 waitingForMappingStop = false
                 pendingSaveAndExit = false
                 pendingSaveToDb = false
+                pendingQuit = false
                 busyDialog.close()
                 errorPopup.errorRectangleTextError.text = wasSaving
                     ? qsTr("Error: No se pudo guardar el mapa.")
@@ -579,5 +668,34 @@ MapViewForm {
                 errorPopup.open()
             }
         }
+
+        function onRequestFinished(success) {
+            if (success) {
+                return
+            }
+
+            if (waitingForResetStop || waitingForResetStart) {
+                waitingForResetStop = false
+                waitingForResetStart = false
+                busyDialog.close()
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo reiniciar el mapeo")
+                errorPopup.open()
+                return
+            }
+
+            if (waitingForMappingStop) {
+                var wasSaving = pendingSaveToDb
+                waitingForMappingStop = false
+                pendingSaveAndExit = false
+                pendingSaveToDb = false
+                pendingQuit = false
+                busyDialog.close()
+                errorPopup.errorRectangleTextError.text = wasSaving
+                    ? qsTr("Error: No se pudo guardar el mapa.")
+                    : qsTr("Error: No se pudo detener el mapeo.")
+                errorPopup.open()
+            }
+        }
+
     }
 }

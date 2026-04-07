@@ -44,16 +44,31 @@ YAML::Node YamlLoader::getNode(const std::string& key) const
     keys.push_back(token);
   }
 
-  YAML::Node current_node = YAML::Clone(config_);
+  std::vector<YAML::Node> chain;
+  chain.reserve(keys.size() + 1);
+  chain.push_back(config_);
 
   for (const auto& k : keys)
   {
-    if (!current_node[k])
+    const YAML::Node& current = chain.back();
+    if (!current.IsDefined())
     {
       return YAML::Node();
     }
-    current_node = current_node[k];
+    if (!current.IsMap())
+    {
+      return YAML::Node();
+    }
+
+    const YAML::Node& current_const = current;
+    YAML::Node next_node = current_const[k];
+    if (!next_node.IsDefined())
+    {
+      return YAML::Node();
+    }
+
+    chain.push_back(next_node);
   }
 
-  return current_node;
+  return chain.back();
 }

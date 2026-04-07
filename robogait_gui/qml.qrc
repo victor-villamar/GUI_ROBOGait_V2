@@ -7,6 +7,7 @@
   </qresource>
   <qresource prefix="/Common">
     <file alias="AuthModeDropdown.qml">qml/Common/AuthModeDropdown.qml</file>
+    <file alias="CustomScrollTrack.qml">qml/Common/CustomScrollTrack.qml</file>
     <file alias="CustomToolBar.qml">qml/Common/CustomToolBar.qml</file>
     <file alias="CustomToolBarForm.ui.qml">qml/Common/CustomToolBarForm.ui.qml</file>
     <file alias="KeyboardAwareHelper.qml">qml/Common/KeyboardAwareHelper.qml</file>
@@ -60,6 +61,8 @@
     <file alias="SelectMapForm.ui.qml">qml/Views/SelectMapForm.ui.qml</file>
     <file alias="SelectPatient.qml">qml/Views/SelectPatient.qml</file>
 	  <file alias="SelectPatientForm.ui.qml">qml/Views/SelectPatientForm.ui.qml</file>
+	  <file alias="TestMapView.qml">qml/Views/TestMapView.qml</file>
+	  <file alias="TestMapViewForm.ui.qml">qml/Views/TestMapViewForm.ui.qml</file>
 	  <file alias="UserSwitchPage.qml">qml/Views/UserSwitchPage.qml</file>
 	</qresource>
 </RCC>

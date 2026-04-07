@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
 
 import "qrc:/Common"
 
@@ -18,22 +19,43 @@ Page {
     property real keyboardSafeArea: 0
     property int contentCenterOffset: 0
     property real formContentHeight: formColumn.implicitHeight
+    readonly property bool hasVerticalScroll: flick.contentHeight > flick.height + 1
+    readonly property real dropdownHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.dropdownHeight, 0) : 50
+    readonly property real inputHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, 0) : 50
+    readonly property real comboHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.comboHeight, 0) : 50
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 50
 
     Rectangle {
         anchors.fill: parent
         color: "#518bb7"
 
-        ScrollView {
-            id: scroll
+        Flickable {
+            id: flick
             anchors.fill: parent
             anchors.topMargin: 20
-            anchors.bottomMargin: 30
+            anchors.bottomMargin: 30 + root.keyboardSafeArea
             clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            flickableDirection: Flickable.VerticalFlick
+            interactive: root.hasVerticalScroll
+            contentWidth: width
+            contentHeight: content.implicitHeight
+
+            onContentHeightChanged: {
+                if (!root.hasVerticalScroll) {
+                    contentY = 0
+                }
+            }
+            onHeightChanged: {
+                if (!root.hasVerticalScroll) {
+                    contentY = 0
+                }
+            }
 
             Item {
                 id: content
-                width: scroll.width
-                height: Math.max(formColumn.implicitHeight, scroll.height)
+                width: flick.width
+                implicitHeight: Math.max(formColumn.implicitHeight, flick.height)
 
                 Column {
                     id: formColumn
@@ -46,6 +68,8 @@ Page {
                     AuthModeDropdown {
                         id: authModeDropdown
                         width: formColumn.width
+                        height: root.dropdownHeightPx
+                        controlHeight: root.dropdownHeightPx
                         currentMode: "sign_in"
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
@@ -53,7 +77,7 @@ Page {
                     TextField {
                         id: nameField
                         width: formColumn.width
-                        height: 50
+                        height: root.inputHeightPx
                         font.pointSize: 20
                         color: "#000000"
                         placeholderTextColor: "#808080"
@@ -68,7 +92,7 @@ Page {
                     TextField {
                         id: lastNameField
                         width: formColumn.width
-                        height: 50
+                        height: root.inputHeightPx
                         font.pointSize: 20
                         color: "#000000"
                         placeholderTextColor: "#808080"
@@ -83,7 +107,7 @@ Page {
                     TextField {
                         id: userNameField
                         width: formColumn.width
-                        height: 50
+                        height: root.inputHeightPx
                         font.pointSize: 20
                         color: "#000000"
                         placeholderTextColor: "#808080"
@@ -98,14 +122,92 @@ Page {
                     ComboBox {
                         id: roleCombo
                         width: formColumn.width
-                        height: 50
+                        height: root.comboHeightPx
                         model: [ "Doctor", "Manager" ]
+                        currentIndex: 0
+
+                        background: Rectangle {
+                            color: "#333333"
+                            border.color: "#ffffff"
+                            border.width: 1
+                        }
+
+                        Component.onCompleted: {
+                            if(currentIndex < 0 && count  > 0)
+                            {
+                                currentIndex = 0
+                            }
+                        }
+
+                        onCountChanged: {
+                            if (currentIndex < 0 && count > 0)
+                            {
+                                currentIndex = 0
+                            }
+                        }
+
+                        contentItem: Text {
+                            text: roleCombo.displayText.length  > 0
+                                  ? roleCombo.currentText
+                                  : (roleCombo.count > 0 ? roleCombo.textAt(0) : "")
+                            color: "#ffffff"
+                            font.pointSize: 20
+                            leftPadding: 12
+                            rightPadding: 32
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideRight
+                        }
+
+                        indicator: Text {
+                            text: "▼"
+                            color: "#ffffff"
+                            font.pixelSize: 10
+                            anchors.right: parent.right
+                            anchors.rightMargin: 12
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        popup: Popup {
+                            y: roleCombo.height - 1
+                            width: roleCombo.width
+                            padding: 0
+
+                            contentItem: ListView {
+                                implicitHeight: contentHeight
+                                model: roleCombo.popup.visible ? roleCombo.delegateModel : null
+
+                                delegate: ItemDelegate {
+                                    width: roleCombo.width
+                                    height: root.comboHeightPx
+
+                                    contentItem: Text {
+                                        text: modelData
+                                        color: "#ffffff"
+                                        font.pointSize: 16
+                                        leftPadding: 12
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+
+                                    background: Rectangle {
+                                        color: highlighted ? "#4a4a4a" : "#333333"
+                                        border.color: "#ffffff"
+                                        border.width: 1
+                                    }
+                                }
+                            }
+
+                            background: Rectangle {
+                                color: "#333333"
+                                border.color: "#ffffff"
+                                border.width: 1
+                            }
+                        }
                     }
 
                     TextField {
                         id: passwordField
                         width: formColumn.width
-                        height: 50
+                        height: root.inputHeightPx
                         font.pointSize: 20
                         color: "#000000"
                         placeholderTextColor: "#808080"
@@ -121,7 +223,7 @@ Page {
                     TextField {
                         id: repeatPasswordField
                         width: formColumn.width
-                        height: 50
+                        height: root.inputHeightPx
                         font.pointSize: 20
                         color: "#000000"
                         placeholderTextColor: "#808080"
@@ -137,11 +239,20 @@ Page {
                     Button {
                         id: signInButton
                         width: formColumn.width
-                        height: 50
+                        height: root.buttonHeightPx
                         text: qsTr("Crear cuenta")
                         font.capitalization: Font.AllUppercase
                         font.bold: true
                         font.pointSize: 20
+
+                        contentItem: Text {
+                            text: signInButton.text
+                            font: signInButton.font
+                            color: "#ffffff"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
                         background: Rectangle {
                             radius: 10
                             color: "#aed2ea"
@@ -151,5 +262,13 @@ Page {
                 }
             }
         }
+
+        CustomScrollTrack {
+            flickable: flick
+            formColumn: formColumn
+            startItem: authModeDropdown
+            trackVisible: root.hasVerticalScroll
+        }
+
     }
 }

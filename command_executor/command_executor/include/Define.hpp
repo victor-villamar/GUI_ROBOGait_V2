@@ -11,6 +11,7 @@
 //----- TOPICS -----
 #define T_ROBOT_STATUS  COMMAND_EXECUTOR"/robot_status"
 #define S_CMD           COMMAND_EXECUTOR"/cmd"
+#define S_GET_MAP_DATA  COMMAND_EXECUTOR"/get_map_data"
 
 // clang-format on
 

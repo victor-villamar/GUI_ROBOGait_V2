@@ -18,6 +18,8 @@ Item {
     readonly property bool isGuest: (dbManager && dbManager.userRole === "guest")
 
     readonly property bool canStartTest: (!isGuest && userSession && userSession.hasMapAssigned && userSession.hasPatientAssigned)
+    property real iconButtonSizePx: 37
+    property real iconGlyphSizePx: 37
 
 	    Rectangle {
 	        anchors.fill: parent
@@ -46,6 +48,7 @@ Item {
 		                        width: 110
 		                        height: 90
 		                        anchors.bottom: parent.bottom
+		                        anchors.bottomMargin: -20
 		                        anchors.horizontalCenter: parent.horizontalCenter
 		                        source: "qrc:/qmlresources/logos/upm.png"
 		                        fillMode: Image.PreserveAspectFit
@@ -63,6 +66,7 @@ Item {
 		                        width: 110
 		                        height: 90
 		                        anchors.bottom: parent.bottom
+		                        anchors.bottomMargin: -20
 		                        anchors.horizontalCenter: parent.horizontalCenter
 		                        source: "qrc:/qmlresources/logos/car.png"
 		                        fillMode: Image.PreserveAspectFit
@@ -84,6 +88,7 @@ Item {
 		                        width: 110
 		                        height: 90
 		                        anchors.bottom: parent.bottom
+		                        anchors.bottomMargin: -20
 		                        anchors.horizontalCenter: parent.horizontalCenter
 		                        source: "qrc:/qmlresources/logos/etsidi.png"
 		                        fillMode: Image.PreserveAspectFit
@@ -205,7 +210,7 @@ Item {
             color: "#ffffff"
             text: qsTr("Bienvenido a la aplicación de ROBOGait. Para comenzar, seleccione un mapa y un paciente. Puede acceder al control manual desde esta pantalla. Para más detalles, presione el botón de información.")
             wrapMode: Text.Wrap
-            font.pixelSize: 16
+            font.pixelSize: 22
             horizontalAlignment: Text.AlignHCenter
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
@@ -214,8 +219,8 @@ Item {
 
         Button {
             id: infoButton
-            width: 37
-            height: 37
+            width: root.iconButtonSizePx
+            height: root.iconButtonSizePx
             anchors.verticalCenter: explain.verticalCenter
             anchors.left: explain.right
             anchors.leftMargin: 10
@@ -227,6 +232,9 @@ Item {
 
             contentItem: Image {
                 source: "qrc:/qmlresources/icons/circle_info_solid.svg"
+                width: root.iconGlyphSizePx
+                height: root.iconGlyphSizePx
+                anchors.centerIn: parent
                 fillMode: Image.PreserveAspectFit
                 smooth: true
             }
@@ -243,7 +251,7 @@ Item {
 
             readonly property string mapStatusRichText:
                 (userSession && userSession.hasMapAssigned)
-                ? "<span style='color:#cce54d'>HAY MAPA ACTIVO</span>"
+                ? ("<span style='color:#cce54d'>MAPA: " + userSession.currentMapName + "</span>")
                 : "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY MAPA ACTIVO</span>"
 
             readonly property string patientStatusRichText:
@@ -252,27 +260,27 @@ Item {
                 : "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY PACIENTE ACTIVO</span>"
 
             Text {
-                id: bottomStatusMap
-                font.pixelSize: 14
+                id: bottomStatusPatient
+                font.pixelSize: 20
                 font.bold: true
                 textFormat: Text.RichText
-                text: bottomStatusRow.mapStatusRichText
+                text: bottomStatusRow.patientStatusRichText
             }
 
             Text {
                 id: bottomStatusDash
                 color: "#ffffff"
-                font.pixelSize: 14
+                font.pixelSize: 20
                 font.bold: true
-                text: qsTr(" – ")
+                text: qsTr(" | ")
             }
 
             Text {
-                id: bottomStatusPatient
-                font.pixelSize: 14
+                id: bottomStatusMap
+                font.pixelSize: 20
                 font.bold: true
                 textFormat: Text.RichText
-                text: bottomStatusRow.patientStatusRichText
+                text: bottomStatusRow.mapStatusRichText
             }
         }
 

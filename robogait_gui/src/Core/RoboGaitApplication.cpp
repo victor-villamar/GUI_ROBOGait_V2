@@ -14,6 +14,7 @@
 #include "Loader/YamlLoader.hpp"
 #include "Map/Items/LaserLayerItem.hpp"
 #include "Map/Items/MapLayerItem.hpp"
+#include "Map/Items/ParticleCloudLayerItem.hpp"
 #include "Map/Items/RobotLayerItem.hpp"
 #include "Robot/ManualControl.hpp"
 #include "Robot/RobotDiscovery.hpp"
@@ -59,6 +60,7 @@ void RoboGaitApplication::initCommon()
   qmlRegisterType<ROBOGait::map::item::MapLayerItem>("MapRendering", 1, 0, "MapLayerItem");
   qmlRegisterType<ROBOGait::map::item::RobotLayerItem>("MapRendering", 1, 0, "RobotLayerItem");
   qmlRegisterType<ROBOGait::map::item::LaserLayerItem>("MapRendering", 1, 0, "LaserLayerItem");
+  qmlRegisterType<ROBOGait::map::item::ParticleCloudLayerItem>("MapRendering", 1, 0, "ParticleCloudLayerItem");
   qRegisterMetaType<geometry_msgs::msg::Twist>("geometry_msgs::msg::Twist");
 
   qInfo() << "[RoboGaitApplication::initCommon] QML types and metatypes registered";
@@ -107,6 +109,10 @@ bool RoboGaitApplication::initialize()
   // Initialize DeveloperSettings singleton
   auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
   developer_settings.initializeDefaults();
+
+  // Initialize UiSizingSettings singleton
+  auto& ui_sizing_settings = ROBOGait::settings::UiSizingSettings::getInstance();
+  ui_sizing_settings.initializeDefaults();
 
   // Create ROS node manager
   ros_node_manager_ = std::make_unique<ROBOGait::ros::manager::RosNodeManager>();
@@ -176,6 +182,8 @@ ROBOGait::db::DataBaseManager* RoboGaitApplication::databaseManager() { return &
 ROBOGait::session::UserSession* RoboGaitApplication::userSession() { return user_session_.get(); }
 
 ROBOGait::settings::DeveloperSettings* RoboGaitApplication::developerSettings() { return &ROBOGait::settings::DeveloperSettings::getInstance(); }
+
+ROBOGait::settings::UiSizingSettings* RoboGaitApplication::uiSizingSettings() { return &ROBOGait::settings::UiSizingSettings::getInstance(); }
 
 QQmlApplicationEngine* RoboGaitApplication::qmlEngine() { return qml_app_engine_; }
 
@@ -251,6 +259,7 @@ void RoboGaitApplication::setupQmlContext()
   qml_app_engine_->rootContext()->setContextProperty("userSession", user_session_.get());
   qml_app_engine_->rootContext()->setContextProperty("dbManager", databaseManager());
   qml_app_engine_->rootContext()->setContextProperty("developerSettings", developerSettings());
+  qml_app_engine_->rootContext()->setContextProperty("uiSizingSettings", uiSizingSettings());
 
   qInfo() << "[RoboGaitApplication::setupQmlContext] QML context properties set";
 }

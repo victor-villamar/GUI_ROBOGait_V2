@@ -7,7 +7,10 @@
 #include <QImage>
 #include <QString>
 
+#include <tf2/LinearMath/Quaternion.h>
+
 #include <geometry_msgs/msg/quaternion.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include "Map/Data/MapData.hpp"
 
@@ -38,6 +41,15 @@ static constexpr auto WHITE = qRgb(255, 255, 255);       /**< White color */
  * @return Yaw angle in radians (-π to π)
  */
 double getYaw(const geometry_msgs::msg::Quaternion& quaternion);
+
+/**
+ * @brief Create a ROS2 Quaternion message from a yaw angle
+ *
+ * @param yaw Yaw angle in radians
+ *
+ * @return The quaternion message representing the given yaw angle (rotation around Z-axis)
+ */
+geometry_msgs::msg::Quaternion createQuaternionFromYaw(double yaw);
 
 /**
  * @brief Convert radians to degrees

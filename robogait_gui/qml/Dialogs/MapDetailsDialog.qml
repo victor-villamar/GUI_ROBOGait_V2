@@ -15,7 +15,7 @@ Dialog {
     }
 
     width: parent ? Math.min(760, parent.width * 0.90) : 760
-    height: parent ? Math.min(520, parent.height * 0.80) : 520
+    height: parent ? Math.min(620, parent.height * 0.85) : 620
 
     x: parent ? (parent.width - width) / 2 : 0
     y: parent ? (parent.height - height) / 2 : 0
@@ -23,6 +23,7 @@ Dialog {
     property string mapName: ""
     property var details: ({})
     property string previewPath: ""
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 44
 
     signal acceptedSelection(string mapName)
 
@@ -83,13 +84,15 @@ Dialog {
         Rectangle {
             id: detailsCard
             width: parent.width - 32
-            height: Math.min(360, parent.height - header.height - footer.height - 64)
+            height: Math.min(440, parent.height - header.height - footer.height - detailsSpacer.height - 64)
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.top: header.bottom
+            anchors.topMargin: 12
             color: "#e9e9e9"
             radius: 12
             border.color: "#235c87"
             border.width: 2
+            clip: true
 
             Column {
                 id: detailsColumn
@@ -159,9 +162,18 @@ Dialog {
             }
         }
 
+        Rectangle {
+            id: detailsSpacer
+            height: 10
+            width: detailsCard.width
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: detailsCard.bottom
+            color: "transparent"
+        }
+
         Item {
             id: footer
-            height: 76
+            height: Math.max(76, root.buttonHeightPx + 20)
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
@@ -169,34 +181,44 @@ Dialog {
             anchors.rightMargin: 16
             anchors.bottomMargin: 10
 
-            Button {
-                id: acceptButton
-                width: 180
-                height: 44
+            Column {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
-                padding: 0
+                spacing: 10
 
-                background: Rectangle {
-                    color: acceptButton.down ? "#518bb7" : "#ffffff"
-                    radius: 8
-                    border.color: "#045671"
-                    border.width: 2
-                    Behavior on color { ColorAnimation { duration: 100 } }
+                Button {
+                    id: acceptButton
+                    width: 180
+                    height: root.buttonHeightPx
+                    padding: 0
+
+                    background: Rectangle {
+                        color: acceptButton.down ? "#518bb7" : "#ffffff"
+                        radius: 8
+                        border.color: "#045671"
+                        border.width: 2
+                        Behavior on color { ColorAnimation { duration: 100 } }
+                    }
+
+                    contentItem: Label {
+                        text: qsTr("ACEPTAR")
+                        color: "#045671"
+                        font.pixelSize: 16
+                        font.bold: true
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    onClicked: {
+                        root.close()
+                        root.acceptedSelection(root.mapName)
+                    }
                 }
 
-                contentItem: Label {
-                    text: qsTr("ACEPTAR")
-                    color: "#045671"
-                    font.pixelSize: 16
-                    font.bold: true
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-
-                onClicked: {
-                    root.close()
-                    root.acceptedSelection(root.mapName)
+                Rectangle {
+                    width: acceptButton.width
+                    height: 10
+                    color: "transparent"
                 }
             }
         }

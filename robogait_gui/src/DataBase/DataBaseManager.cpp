@@ -51,6 +51,7 @@ DataBaseManager::DataBaseManager() :
   display_name_ = "";
   user_role_ = "";
   last_error_ = "";
+  last_experiment_id_ = -1;
 }
 
 DataBaseManager::~DataBaseManager() { qInfo() << "[DataBaseManager::~DataBaseManager] DataBaseManager destroyed"; }
@@ -68,6 +69,8 @@ QString DataBaseManager::getDisplayName() const { return display_name_; }
 QString DataBaseManager::getUserRole() const { return user_role_; }
 
 QString DataBaseManager::getLastError() const { return last_error_; }
+
+int DataBaseManager::getLastExperimentId() const { return last_experiment_id_; }
 
 bool DataBaseManager::openDatabase(const QString& db_path)
 {
@@ -118,6 +121,7 @@ bool DataBaseManager::login(const QString& username, const QString& password)
   setDisplayName(maybe_user->name);
   setUserRole(userRoleToDbString(maybe_user->role));
   setLastError("");
+  setLastExperimentId(-1);
   setPassLogin(true);
   qInfo() << "[DataBaseManager::login] Login successful for user:" << maybe_user->user_name << "ID:" << maybe_user->id;
   return true;
@@ -209,6 +213,7 @@ void DataBaseManager::loginGuest(const QString& name)
   setDisplayName(name.trimmed());
   setUserRole("guest");
   setLastError("");
+  setLastExperimentId(-1);
   setPassLogin(true);
   qInfo() << "[DataBaseManager::loginGuest] Guest login successfully";
 }
@@ -220,6 +225,7 @@ void DataBaseManager::logout()
   setDisplayName("");
   setUserRole("");
   setLastError("");
+  setLastExperimentId(-1);
   setPassLogin(false);
   setPassCheckUserName(false);
   qInfo() << "[DataBaseManager::logout] User logged out";
@@ -503,6 +509,86 @@ bool DataBaseManager::deletePatient(int patient_id)
   return true;
 }
 
+
+
+bool DataBaseManager::deleteExperiment(int experiment_id)
+{
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::deleteExperiment] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return false;
+  }
+
+  if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::deleteExperiment] Action not allowed for guest users";
+    setLastError("Accion no permitida para usuario invitado");
+    return false;
+  }
+
+  if (experiment_id <= 0)
+  {
+    qWarning() << "[DataBaseManager::deleteExperiment] Invalid experiment ID";
+    setLastError("ID de experimento invalido");
+    return false;
+  }
+
+  const auto result = experiment_repository_.deleteExperimentByIdForUserName(experiment_id, user_name_);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return false;
+  }
+
+  setLastError("");
+  setLastExperimentId(-1);
+  qInfo() << "[DataBaseManager::deleteExperiment] Experiment deleted successfully:" << experiment_id;
+  return true;
+}
+
+bool DataBaseManager::registerExperiment(const QString& patient_name, const QString& patient_last_name, const QString& map_name)
+{
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::registerExperiment] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return false;
+  }
+
+  if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::registerExperiment] Action not allowed for guest users";
+    setLastError("Accion no permitida para usuario invitado");
+    return false;
+  }
+
+  if (patient_name.trimmed().isEmpty() || patient_last_name.trimmed().isEmpty() || map_name.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::registerExperiment] Patient name, last name or map name is empty";
+    setLastError("Nombre del paciente, apellidos y mapa son obligatorios");
+    return false;
+  }
+
+  const auto result = experiment_repository_.insertExperiment(patient_name.trimmed(), patient_last_name.trimmed(), map_name.trimmed(), user_name_);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return false;
+  }
+
+  const int experiment_id = std::get<int>(result);
+
+  setLastError("");
+  setLastExperimentId(experiment_id);
+  qInfo() << "[DataBaseManager::registerExperiment] Experiment created successfully:" << experiment_id;
+  return true;
+}
+
 QVariantList DataBaseManager::listMaps()
 {
   QVariantList maps_list;
@@ -731,4 +817,15 @@ void DataBaseManager::setLastError(const QString& last_error)
     last_error_ = last_error;
     emit lastErrorChanged();
   }
+}
+
+void DataBaseManager::setLastExperimentId(int experiment_id)
+{
+  if (last_experiment_id_ == experiment_id)
+  {
+    return;
+  }
+
+  last_experiment_id_ = experiment_id;
+  emit lastExperimentIdChanged();
 }

@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 6.0
+import QtQuick.Window 2.15
 
 Dialog {
     id: root
@@ -24,6 +25,8 @@ Dialog {
     y: parent ? Math.round((parent.height - height) / 2) : 0
     
     enabled: userSession && userSession.role === "manager"
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 52
+    readonly property real tabHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.tabHeight, 0) : 44
     
     function reposition()
     {
@@ -127,16 +130,26 @@ Dialog {
             anchors.margins: 20
             spacing: 14
 
+            Rectangle {
+                Layout.fillWidth: true
+                height: 10
+                color: "transparent"
+            }
+
             TabBar {
                 id: settingsTabBar
                 Layout.fillWidth: true
+                height: root.tabHeightPx
                 spacing: 6
                 background: Item {}
 
                 TabButton {
                     id: rosTabButton
                     text: qsTr("Descubrimiento de robots")
-                    padding: 8
+                    height: root.tabHeightPx
+                    padding: 0
+                    leftPadding: 12
+                    rightPadding: 12
 
                     background: Rectangle {
                         color: rosTabButton.checked ? "#045671" : "#e6f2f8"
@@ -158,7 +171,10 @@ Dialog {
                 TabButton {
                     id: rosDomainTabButton
                     text: qsTr("Ros Domain Id")
-                    padding: 8
+                    height: root.tabHeightPx
+                    padding: 0
+                    leftPadding: 12
+                    rightPadding: 12
 
                     background: Rectangle {
                         color: rosDomainTabButton.checked ? "#045671" : "#e6f2f8"
@@ -176,6 +192,12 @@ Dialog {
                         verticalAlignment: Text.AlignVCenter
                     }
                 }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                height: 10
+                color: "transparent"
             }
 
             StackLayout {
@@ -201,7 +223,7 @@ Dialog {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.bottomMargin: 8
                 Layout.preferredWidth: 220
-                Layout.preferredHeight: 52
+                Layout.preferredHeight: root.buttonHeightPx
                 text: qsTr("Aplicar")
                 enabled: developerSettings ? developerSettings.hasPendingChanges : false
             

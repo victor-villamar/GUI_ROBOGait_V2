@@ -102,7 +102,7 @@ QSGNode* LaserLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
   for (int i = 0; i < static_cast<int>(points.size()); ++i)
   {
     const float cx = static_cast<float>(points[i].x);
-    const float cy = static_cast<float>(-points[i].y);
+    const float cy = static_cast<float>(points[i].y);
     writeRect(vertices, i * 6, cx, cy, POINT_SIZE, POINT_SIZE);
   }
 

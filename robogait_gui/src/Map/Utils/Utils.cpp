@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QString>
 #include <QUrl>
+#include <Qt>
 
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -27,6 +28,14 @@ double getYaw(const geometry_msgs::msg::Quaternion& quaternion)
   tf2::Matrix3x3(tf_quat).getRPY(roll, pitch, yaw);
 
   return yaw;
+}
+
+geometry_msgs::msg::Quaternion createQuaternionFromYaw(double yaw)
+{
+  tf2::Quaternion tf_quat;
+  tf_quat.setRPY(0.0, 0.0, yaw);
+
+  return tf2::toMsg(tf_quat);
 }
 
 double rad2deg(double radians) { return radians * RAD2DEG; }
@@ -95,9 +104,7 @@ QImage toQImage(const data::MapData& map_data)
         color = WHITE;
       }
 
-      // Flip Y axis (ROS uses bottom-up, Qt uses top-down)
-      const uint32_t flipped_y = height - 1 - y;
-      image.setPixel(x, flipped_y, color);
+      image.setPixel(x, y, color);
     }
   }
 
@@ -150,6 +157,8 @@ bool generateMapPreview(const data::MapData& map_data, const QString& map_name)
     qCritical() << "[utils::generateMapPreview] Failed to convert map data to QImage";
     return false;
   }
+
+  image = image.flipped(Qt::Vertical);
 
   if (!image.save(file_path, "PNG", IMAGE_QUALITY))
   {

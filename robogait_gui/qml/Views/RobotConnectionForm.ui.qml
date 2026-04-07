@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
 import RobotDiscovery 1.0
 
 import "qrc:/Dialogs"
@@ -13,6 +14,8 @@ Item {
     property int selectedRobotIndex: -1
     property int pendingRobotIndex: -1
     property string selectedRobotNamespace: ""
+    readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 52
+    readonly property real listItemHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.listItemHeight, 0) : 52
 
 
     Rectangle {
@@ -114,7 +117,8 @@ Item {
             // Search button
             Button {
                 id: buttonSearchRobot
-                height: 52
+                width: 220
+                height: root.buttonHeightPx
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: !root.showDiscoveryPanel
@@ -173,6 +177,9 @@ Item {
                         height: 180
                         running: true
                         topPadding: 20
+                        palette.highlight: "#ffffff"
+                        palette.text: "#ffffff"
+                        palette.buttonText: "#ffffff"
                         visible: userSession.rosManager.robotDiscovery.state === RobotDiscovery.SCANNING
                     }
 
@@ -191,8 +198,7 @@ Item {
                         height: Math.min(robotsGrid.implicitHeight + 20, parent.height - 60)
                         anchors.horizontalCenter: parent.horizontalCenter
                         color: "transparent"
-                        border.color: "#ffffff"
-                        border.width: 1
+                        border.width: 0
                         radius: 6
                         clip: true
                         visible: userSession.rosManager.robotDiscovery.state === RobotDiscovery.ROBOTS_FOUND
@@ -237,7 +243,7 @@ Item {
                                     onItemRemoved: robotsGrid.recalcMaxWidth()
                                     delegate: Rectangle {
                                         id: robotItem
-                                        height: 52
+                                        height: root.listItemHeightPx
                                         radius: 14
 
                                         property bool selected: root.pendingRobotIndex === index

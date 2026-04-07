@@ -2,6 +2,7 @@
 #include <QPointF>
 #include <QRectF>
 #include <QtGlobal>
+#include <algorithm>
 #include <cmath>
 
 #include "Context/RobotContext.hpp"
@@ -17,10 +18,12 @@ MapVisualizationManager::MapVisualizationManager() :
     map_layer_(nullptr),
     robot_layer_(nullptr),
     laser_layer_(nullptr),
+    particle_layer_(nullptr),
     render_camera_(std::make_shared<ROBOGait::map::rendering::RenderCamera>()),
     map_source_(std::make_shared<ROBOGait::map::source::MapSource>()),
     pose_source_(std::make_shared<ROBOGait::map::source::RobotPoseSource>()),
     laser_source_(std::make_shared<ROBOGait::map::source::LaserSource>()),
+    particle_source_(std::make_shared<ROBOGait::map::source::ParticleCloudSource>()),
     selected_robot_namespace_(""),
     use_namespace_discovery_(true),
     is_initialized_(false),
@@ -28,6 +31,7 @@ MapVisualizationManager::MapVisualizationManager() :
     map_available_cache_(false),
     robot_pose_available_cache_(false),
     laser_available_cache_(false),
+    particle_cloud_available_cache_(false),
     map_resolution_cache_(0.0),
     scale_meters_cache_(0.0),
     scale_pixels_cache_(0),
@@ -103,6 +107,10 @@ void MapVisualizationManager::setROSNode(rclcpp::Node* parent_node)
   {
     laser_source_->initialize(parent_node_);
   }
+  if (particle_source_)
+  {
+    particle_source_->initialize(parent_node_);
+  }
 
   is_initialized_ = true;
 
@@ -145,6 +153,10 @@ void MapVisualizationManager::setSelectedRobot(const QString& robot_identifier, 
     {
       laser_source_->setRobotContext(context);
     }
+    if (particle_source_)
+    {
+      particle_source_->setRobotContext(context);
+    }
   }
 
   // Create new displays for this robot
@@ -158,6 +170,8 @@ bool MapVisualizationManager::isMapAvailable() const { return map_source_ && map
 bool MapVisualizationManager::isRobotPoseAvailable() const { return pose_source_ && pose_source_->isAvailable(); }
 
 bool MapVisualizationManager::isLaserAvailable() const { return laser_source_ && laser_source_->isAvailable(); }
+
+bool MapVisualizationManager::isParticleCloudAvailable() const { return particle_source_ && particle_source_->isAvailable(); }
 
 double MapVisualizationManager::getZoomLevel() const
 {
@@ -188,6 +202,130 @@ void MapVisualizationManager::setFollowRobot(bool follow_robot)
     emit followRobotChanged();
     updateFollowRobotCamera();
   }
+}
+
+bool MapVisualizationManager::screenToMap(const QPointF& screen_point, QPointF& map_point) const
+{
+  if (!map_layer_ || !render_camera_ || !render_scene_)
+  {
+    qCritical() << "[MapVisualizationManager::screenToMap] Cannot convert screen to map coordinates because render layers or camera are not available";
+    return false;
+  }
+
+  const auto map_data = map_layer_->getMapData();
+  if (!map_data || !map_data->isAvailable())
+  {
+    qCritical() << "[MapVisualizationManager::screenToMap] Cannot convert screen to map coordinates because map data is not available";
+    return false;
+  }
+
+  bool invertible = false;
+  const QMatrix4x4 inv_transform = render_camera_->getMatrix().inverted(&invertible);
+  if (!invertible)
+  {
+    qCritical() << "[MapVisualizationManager::screenToMap] Cannot convert screen to map coordinates because camera transform is not invertible";
+    return false;
+  }
+
+  const QVector4D screen_vec(screen_point.x(), screen_point.y(), 0.0f, 1.0f);
+  const QVector4D world_vec = inv_transform * screen_vec;
+
+  map_point = QPointF(world_vec.x(), world_vec.y());
+  return true;
+}
+
+void MapVisualizationManager::setManualRobotPose(double x, double y, double theta)
+{
+  if (!pose_source_)
+  {
+    qCritical() << "[MapVisualizationManager::setManualRobotPose] Pose source not available";
+    return;
+  }
+
+  auto robot_pose_data = pose_source_->getRobotPoseData();
+  if (!robot_pose_data)
+  {
+    qCritical() << "[MapVisualizationManager::setManualRobotPose] Robot pose data not available";
+    return;
+  }
+
+  ROBOGait::map::data::RobotPoseData::RobotPoseMetadata metadata;
+  metadata.x = x;
+  metadata.y = y;
+  metadata.theta = theta;
+  robot_pose_data->setPose(metadata);
+
+  updateAvailability();
+
+  if (robot_layer_item_)
+  {
+    robot_layer_item_->update();
+  }
+}
+
+QVariantMap MapVisualizationManager::getRobotPose() const
+{
+  QVariantMap pose;
+  pose["available"] = false;
+
+  if (!pose_source_)
+  {
+    qCritical() << "[MapVisualizationManager::getRobotPose] Pose source not available";
+    return pose;
+  }
+
+  const auto robot_pose_data = pose_source_->getRobotPoseData();
+  if (!robot_pose_data || !robot_pose_data->isAvailable())
+  {
+    return pose;
+  }
+
+  const auto metadata = robot_pose_data->getMetadata();
+  pose["x"] = metadata.x;
+  pose["y"] = metadata.y;
+  pose["theta"] = metadata.theta;
+  pose["available"] = true;
+  return pose;
+}
+
+bool MapVisualizationManager::isMapPointInside(double x, double y) const
+{
+  if (!map_layer_)
+  {
+    qCritical() << "[MapVisualizationManager::isMapPointInside] Map layer not available";
+    return false;
+  }
+
+  if (!map_layer_->getMapData())
+  {
+    qCritical() << "[MapVisualizationManager::isMapPointInside] Map data not available";
+    return false;
+  }
+
+  const auto map_metadata = map_layer_->getMapData()->getMetadata();
+  const double width_m = static_cast<double>(map_metadata.width) * map_metadata.resolution;
+  const double height_m = static_cast<double>(map_metadata.height) * map_metadata.resolution;
+
+  if (width_m <= 0.0 || height_m <= 0.0)
+  {
+    qCritical() << "[MapVisualizationManager::isMapPointInside] Invalid map dimensions";
+    return false;
+  }
+
+  const double origin_x = map_metadata.origin_x;
+  const double origin_y = map_metadata.origin_y;
+  const double theta = map_metadata.origin_theta;
+
+  const double cos_t = std::cos(theta);
+  const double sin_t = std::sin(theta);
+
+  const double dx = x - origin_x;
+  const double dy = y - origin_y;
+
+  const double local_x = cos_t * dx + sin_t * dy;
+  const double local_y = -sin_t * dx + cos_t * dy;
+
+  return (local_x >= 0.0 && local_x <= width_m && local_y >= 0.0 && local_y <= height_m);
 }
 
 void MapVisualizationManager::activateSubscriptions()
@@ -221,6 +359,10 @@ void MapVisualizationManager::activateSubscriptions()
   if (laser_source_)
   {
     laser_source_->start();
+  }
+  if (particle_source_)
+  {
+    particle_source_->start();
   }
   if (render_scene_)
   {
@@ -256,6 +398,10 @@ void MapVisualizationManager::destroySubscriptions()
   {
     laser_source_->stop();
   }
+  if (particle_source_)
+  {
+    particle_source_->stop();
+  }
 
   updateAvailability();
 
@@ -267,6 +413,11 @@ void MapVisualizationManager::destroySubscriptions()
   if (robot_layer_item_)
   {
     robot_layer_item_->update();
+  }
+
+  if (particle_layer_item_)
+  {
+    particle_layer_item_->update();
   }
 
   if (follow_robot_)
@@ -322,17 +473,18 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
     return;
   }
 
-  if (!robot_layer_item_)
-  {
-    qWarning() << "[MapVisualizationManager::registerMapLayerItem] Robot layer item not registered yet, MapLayerItem will be registered without sync item "
-                  "until RobotLayerItem is registered";
-    return;
-  }
-
   map_layer_item_->setRenderScene(render_scene_);
   map_layer_item_->setRenderer(map_layer_);
   map_layer_item_->setCamera(render_camera_);
-  map_layer_item_->setSyncItem(robot_layer_item_);
+
+  if (robot_layer_item_)
+  {
+    map_layer_item_->setSyncItem(robot_layer_item_);
+  }
+  else
+  {
+    qWarning() << "[MapVisualizationManager::registerMapLayerItem] Robot layer item not registered yet, MapLayerItem will be registered without sync item";
+  }
 
   // clang-format off
   connect(map_layer_item_,
@@ -343,6 +495,16 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
   // clang-format on
 
   qInfo() << "[MapVisualizationManager::registerMapLayerItem] Item registered";
+}
+
+void MapVisualizationManager::setRobotPoseUpdatesEnabled(bool enabled)
+{
+  if (!pose_source_)
+  {
+    return;
+  }
+
+  pose_source_->setPaused(!enabled);
 }
 
 void MapVisualizationManager::registerRobotLayerItem(QObject* item)
@@ -389,6 +551,12 @@ void MapVisualizationManager::registerRobotLayerItem(QObject* item)
   robot_layer_item_->setRenderScene(render_scene_);
   robot_layer_item_->setRenderer(robot_layer_);
   robot_layer_item_->setCamera(render_camera_);
+
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(robot_layer_item_);
+    map_layer_item_->update();
+  }
 
   qInfo() << "[MapVisualizationManager::registerRobotLayerItem] Item registered";
 }
@@ -439,6 +607,54 @@ void MapVisualizationManager::registerLaserLayerItem(QObject* item)
   laser_layer_item_->setCamera(render_camera_);
 
   qInfo() << "[MapVisualizationManager::registerLaserLayerItem] Item registered";
+}
+
+void MapVisualizationManager::registerParticleCloudLayerItem(QObject* item)
+{
+  if (!item)
+  {
+    qCritical() << "[MapVisualizationManager::registerParticleCloudLayerItem] Null item";
+    return;
+  }
+
+  auto* layer_item = qobject_cast<ROBOGait::map::item::ParticleCloudLayerItem*>(item);
+  if (!layer_item)
+  {
+    qCritical() << "[MapVisualizationManager::registerParticleCloudLayerItem] Invalid item type";
+    return;
+  }
+
+  particle_layer_item_ = layer_item;
+
+  if (!particle_layer_item_)
+  {
+    qCritical() << "[MapVisualizationManager::registerParticleCloudLayerItem] Failed to register ParticleCloudLayerItem";
+    return;
+  }
+
+  if (!render_scene_)
+  {
+    qCritical() << "[MapVisualizationManager::registerParticleCloudLayerItem] Render scene not available, cannot set render scene for ParticleCloudLayerItem";
+    return;
+  }
+
+  if (!particle_layer_)
+  {
+    qCritical() << "[MapVisualizationManager::registerParticleCloudLayerItem] Particle layer not available, cannot set renderer for ParticleCloudLayerItem";
+    return;
+  }
+
+  if (!render_camera_)
+  {
+    qCritical() << "[MapVisualizationManager::registerParticleCloudLayerItem] Render camera not available, cannot set camera for ParticleCloudLayerItem";
+    return;
+  }
+
+  particle_layer_item_->setRenderScene(render_scene_);
+  particle_layer_item_->setRenderer(particle_layer_);
+  particle_layer_item_->setCamera(render_camera_);
+
+  qInfo() << "[MapVisualizationManager::registerParticleCloudLayerItem] Item registered";
 }
 
 void MapVisualizationManager::zoomIn()
@@ -511,9 +727,24 @@ void MapVisualizationManager::fitToView()
   }
 
   const double origin_x = metadata.origin_x;
-  const double origin_y = -(metadata.origin_y + height_m);
+  const double origin_y = metadata.origin_y;
+  const double theta = metadata.origin_theta;
+  const double cos_t = std::cos(theta);
+  const double sin_t = std::sin(theta);
 
-  const QRectF map_rect(origin_x, origin_y, width_m, height_m);
+  auto mapPoint = [&](double x, double y) { return QPointF(origin_x + cos_t * x - sin_t * y, origin_y + sin_t * x + cos_t * y); };
+
+  const QPointF p0 = mapPoint(0.0, 0.0);
+  const QPointF p1 = mapPoint(width_m, 0.0);
+  const QPointF p2 = mapPoint(0.0, height_m);
+  const QPointF p3 = mapPoint(width_m, height_m);
+
+  const double min_x = std::min({p0.x(), p1.x(), p2.x(), p3.x()});
+  const double max_x = std::max({p0.x(), p1.x(), p2.x(), p3.x()});
+  const double min_y = std::min({p0.y(), p1.y(), p2.y(), p3.y()});
+  const double max_y = std::max({p0.y(), p1.y(), p2.y(), p3.y()});
+
+  const QRectF map_rect(QPointF(min_x, min_y), QPointF(max_x, max_y));
   render_camera_->fitToRect(map_rect);
 
   emit zoomLevelChanged();
@@ -605,6 +836,30 @@ void MapVisualizationManager::clearMap()
   updateAvailability();
 }
 
+void MapVisualizationManager::resetParticleCloud()
+{
+  if (particle_source_)
+  {
+    const auto cloud_data = particle_source_->getParticleCloudData();
+    if (cloud_data)
+    {
+      cloud_data->reset();
+    }
+  }
+
+  if (particle_layer_)
+  {
+    particle_layer_->update();
+  }
+
+  if (particle_layer_item_)
+  {
+    particle_layer_item_->update();
+  }
+
+  updateAvailability();
+}
+
 void MapVisualizationManager::onFrameReady()
 {
   updateFollowRobotCamera();
@@ -619,7 +874,7 @@ void MapVisualizationManager::createLayers()
     return;
   }
 
-  if (!map_source_ || !pose_source_ || !laser_source_)
+  if (!map_source_ || !pose_source_ || !laser_source_ || !particle_source_)
   {
     qCritical() << "[MapVisualizationManager::createLayers] Data sources not initialized";
     return;
@@ -634,6 +889,7 @@ void MapVisualizationManager::createLayers()
   const auto map_data = map_source_->getMapData();
   const auto pose_data = pose_source_->getRobotPoseData();
   const auto laser_data = laser_source_->getLaserScanData();
+  const auto particle_data = particle_source_->getParticleCloudData();
 
   map_layer_ = std::make_shared<ROBOGait::map::layer::MapLayer>();
   map_layer_->setMapData(map_data);
@@ -645,7 +901,10 @@ void MapVisualizationManager::createLayers()
   laser_layer_ = std::make_shared<ROBOGait::map::layer::LaserLayer>();
   laser_layer_->setLaserScanData(laser_data);
 
-  if (!map_layer_ || !robot_layer_ || !laser_layer_)
+  particle_layer_ = std::make_shared<ROBOGait::map::layer::ParticleCloudLayer>();
+  particle_layer_->setParticleCloudData(particle_data);
+
+  if (!map_layer_ || !robot_layer_ || !laser_layer_ || !particle_layer_)
   {
     qCritical() << "[MapVisualizationManager::createLayers] Failed to create render layers";
     return;
@@ -654,6 +913,7 @@ void MapVisualizationManager::createLayers()
   render_scene_->setMapLayer(map_layer_);
   render_scene_->setRobotLayer(robot_layer_);
   render_scene_->setLaserLayer(laser_layer_);
+  render_scene_->setParticleCloudLayer(particle_layer_);
 
   updateAvailability();
 
@@ -662,7 +922,7 @@ void MapVisualizationManager::createLayers()
 
 void MapVisualizationManager::destroyLayers()
 {
-  if (!map_layer_ && !robot_layer_ && !laser_layer_)
+  if (!map_layer_ && !robot_layer_ && !laser_layer_ && !particle_layer_)
   {
     qWarning() << "[MapVisualizationManager::destroyLayers] No layers to destroy";
     return;
@@ -678,6 +938,7 @@ void MapVisualizationManager::destroyLayers()
   render_scene_->setMapLayer(nullptr);
   render_scene_->setRobotLayer(nullptr);
   render_scene_->setLaserLayer(nullptr);
+  render_scene_->setParticleCloudLayer(nullptr);
 
   if (map_layer_item_)
   {
@@ -691,13 +952,19 @@ void MapVisualizationManager::destroyLayers()
   {
     laser_layer_item_->setRenderer(nullptr);
   }
+  if (particle_layer_item_)
+  {
+    particle_layer_item_->setRenderer(nullptr);
+  }
 
   map_layer_.reset();
   robot_layer_.reset();
   laser_layer_.reset();
+  particle_layer_.reset();
   map_available_cache_ = false;
   robot_pose_available_cache_ = false;
   laser_available_cache_ = false;
+  particle_cloud_available_cache_ = false;
   map_resolution_cache_ = 0.0;
   scale_meters_cache_ = 0.0;
   scale_pixels_cache_ = 0;
@@ -705,6 +972,7 @@ void MapVisualizationManager::destroyLayers()
   emit mapAvailableChanged();
   emit robotPoseAvailableChanged();
   emit laserAvailableChanged();
+  emit particleCloudAvailableChanged();
   emit mapResolutionChanged();
   emit scaleChanged();
 
@@ -734,6 +1002,13 @@ void MapVisualizationManager::updateAvailability()
   {
     laser_available_cache_ = laser_available;
     emit laserAvailableChanged();
+  }
+
+  const bool particle_available = isParticleCloudAvailable();
+  if (particle_available != particle_cloud_available_cache_)
+  {
+    particle_cloud_available_cache_ = particle_available;
+    emit particleCloudAvailableChanged();
   }
 
   updateMapResolution();
@@ -798,7 +1073,7 @@ void MapVisualizationManager::updateFollowRobotCamera()
   }
 
   const auto pose = robot_layer_->getInterpolatedPose();
-  render_camera_->setViewCenter(QPointF(pose.x, -pose.y));
+  render_camera_->setViewCenter(QPointF(pose.x, pose.y));
   if (map_layer_item_)
   {
     map_layer_item_->update();

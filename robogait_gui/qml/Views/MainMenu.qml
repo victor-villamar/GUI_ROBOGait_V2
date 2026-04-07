@@ -6,6 +6,11 @@ import "qrc:/Views"
 
 MainMenuForm {
     id: root
+    readonly property real computedIconButtonSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconButtonSize, 0) : 37
+    readonly property real computedIconGlyphSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconGlyphSize, 0) : 37
+
+    iconButtonSizePx: computedIconButtonSizePx
+    iconGlyphSizePx: computedIconGlyphSizePx
 
     ErrorRectangle {
         id: infoPopup
@@ -41,7 +46,9 @@ MainMenuForm {
     }
 
     testArea.onClicked: {
-        showNotImplemented(qsTr("Prueba: en desarrollo."))
+        if (StackView.view) {
+            StackView.view.push(testMapViewPage)
+        }
     }
 
     Component {
@@ -57,5 +64,10 @@ MainMenuForm {
     Component {
         id: manualControlPage
         ManualControl { }
+    }
+
+    Component {
+        id: testMapViewPage
+        TestMapView { }
     }
 }

@@ -1,5 +1,31 @@
 # ROBOGait Configuration File
 
+# Ui Configuration
+ui:
+  button_height: 17.0
+  input_height: 17.0
+  combo_height: 17.0
+  dropdown_height: 17.0
+  list_item_height: 17.0
+  badge_height: 14.0
+  badge_menu_item_height: 14.0
+  icon_button_size: 14.0
+  icon_glyph_size: 12.0
+  tab_height: 14.0
+  checkbox_height: 14.0
+  checkbox_indicator_size: 10.0
+  spinbox_button_size: 10.0
+  joystick_stick_size: 17.0
+  pixel_density_override_px_per_mm: 0.0   # 0 = auto
+  min_pixel_density_px_per_mm: 2.5
+  max_pixel_density_px_per_mm: 5.5
+  reference_diagonal_inch: 13.0
+  min_scale: 0.85
+  max_scale: 1.15
+  calibration_factor: 1.0
+  min_interactive_px: 44.0
+  max_interactive_px: 96.0
+
 # Node Configuration
 node:
   namespace: "RoboGait_GUI"
@@ -18,6 +44,5 @@ ros2:
 # Map Rendering Configuration
 map:
   robot_size: 0.32 # turtlebot3 waffle
-  image_path: ".local/robogait/maps/"
-  map_path:   "/maps/"
-  
+  image_path: ".local/robogait/maps/" # local path where map images are stored
+  map_path:   "/maps/" # path used in service calls (relative to the robot's home directory)

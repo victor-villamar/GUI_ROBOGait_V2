@@ -17,6 +17,7 @@ set(msg_files
 # set service files
 set(srv_files
     "srv/Cmd.srv"
+    "srv/GetMapData.srv"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

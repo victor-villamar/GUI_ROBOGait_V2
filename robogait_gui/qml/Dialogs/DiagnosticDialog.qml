@@ -25,6 +25,7 @@ Dialog {
     property var doctorsModel: (userSession && userSession.currentPatient)
                                ? userSession.currentPatient.doctorDiagnostics
                                : []
+    readonly property real listItemHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.listItemHeight, 0) : 44
 
     function selectedDoctor()
     {
@@ -133,7 +134,7 @@ Dialog {
                         delegate: Rectangle {
                             id: doctorCard
                             width: doctorsList.width
-                            height: 44
+                            height: root.listItemHeightPx
                             radius: 10
                             color: ListView.isCurrentItem ? "#518bb7" : "#a9cfe8"
                             border.color: "#ffffff"

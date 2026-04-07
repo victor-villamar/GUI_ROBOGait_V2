@@ -16,6 +16,9 @@ Rectangle {
     property bool manualUnlocked: false
     property real linearValue: 0.0
     property real angularValue: 0.0
+    property real iconButtonSizePx: 0
+    property real iconGlyphSizePx: 0
+    property real joystickAreaSizePx: 0
 
     Rectangle {
         id: information
@@ -109,7 +112,7 @@ Rectangle {
 
     Item {
         id: manualControl
-        width: Math.min(275, Math.max(175, parent.width / 4))
+        width: joystickAreaSizePx > 0 ? joystickAreaSizePx : Math.min(275, Math.max(175, parent.width / 4))
         height: width
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenterOffset: information.width / 2
@@ -127,8 +130,8 @@ Rectangle {
 
     Button {
         id: infoButton
-        width: 37
-        height: 37
+        width: rectangle.iconButtonSizePx
+        height: rectangle.iconButtonSizePx
         anchors.left: information.right
         anchors.bottom: information.bottom
         anchors.leftMargin: 10
@@ -141,6 +144,9 @@ Rectangle {
 
         contentItem: Image {
             source: "qrc:/qmlresources/icons/circle_info_solid.svg"
+            width: rectangle.iconGlyphSizePx
+            height: rectangle.iconGlyphSizePx
+            anchors.centerIn: parent
             fillMode: Image.PreserveAspectFit
             smooth: true
         }
@@ -169,8 +175,8 @@ Rectangle {
 
     Button {
         id: lockButton
-        width: 36
-        height: 36
+        width: rectangle.iconButtonSizePx
+        height: rectangle.iconButtonSizePx
         anchors.top: manualControl.top
         anchors.left: manualControl.right
         anchors.leftMargin: 12
@@ -186,8 +192,8 @@ Rectangle {
             Image {
                 id: lockIcon
                 anchors.centerIn: parent
-                width: parent.width
-                height: parent.height
+                width: rectangle.iconGlyphSizePx
+                height: rectangle.iconGlyphSizePx
                 source: manualUnlocked ? "qrc:/qmlresources/icons/unlock.svg" : "qrc:/qmlresources/icons/lock.svg"
                 fillMode: Image.PreserveAspectFit
                 smooth: true

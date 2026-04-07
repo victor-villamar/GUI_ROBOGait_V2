@@ -48,6 +48,17 @@ public:
    * @return The ID of the inserted result
    */
   DbResult<int> insertResult(int experiment_id, const std::optional<QString>& comment);
+
+  /**
+   * @brief Delete an experiment by ID for a given user
+   *
+   * @param experiment_id The ID of the experiment to delete
+   * @param user_name The user name that owns the experiment
+   *
+   * @return Success or failure result
+   */
+  DbResultVoid deleteExperimentByIdForUserName(int experiment_id, const QString& user_name);
+
 };
 } // namespace db
 } // namespace ROBOGait
