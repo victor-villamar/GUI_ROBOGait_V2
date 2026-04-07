@@ -10,8 +10,6 @@
 #include <chrono>
 #include <memory>
 
-#include "Ros/Define.hpp"
-
 #define T_ROBOT_STATUS "/robot_status"
 
 /**

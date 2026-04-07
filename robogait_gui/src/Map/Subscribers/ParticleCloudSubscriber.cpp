@@ -7,7 +7,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include "Map/Subscribers/ParticleCloudSubscriber.hpp"
-#include "Ros/Define.hpp"
+#include "Ros/QoSProfiles.hpp"
 #include "Ros/TopicsName.hpp"
 
 using namespace ROBOGait::map::subscribers;
@@ -68,7 +68,7 @@ void ParticleCloudSubscriber::start()
   }
 
   sub_cloud_ = parent_node_->create_subscription<nav2_msgs::msg::ParticleCloud>(
-      cloud_topic, QOS_BEST_EFFORT.keep_last(5), std::bind(&ParticleCloudSubscriber::callbackParticleCloud, this, std::placeholders::_1));
+      cloud_topic, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(), std::bind(&ParticleCloudSubscriber::callbackParticleCloud, this, std::placeholders::_1));
 
   active_ = true;
   warn_logged_ = false;

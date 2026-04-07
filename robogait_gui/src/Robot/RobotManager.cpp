@@ -6,6 +6,7 @@
 #include "Map/Utils/Utils.hpp"
 #include "Robot/RobotManager.hpp"
 #include "Ros/Define.hpp"
+#include "Ros/QoSProfiles.hpp"
 #include "Ros/TopicsName.hpp"
 
 using namespace ROBOGait::robot::manager;
@@ -336,7 +337,8 @@ void RobotManager::publishInitialPose(double x, double y, double theta)
   if (!pub_pose_initialize_)
   {
     const QString topic_name = buildTopicName(QString::fromUtf8(T_POSE_INITIALIZE));
-    pub_pose_initialize_ = parent_node_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(topic_name.toStdString(), QOS_RELIABLE_LATCH);
+    pub_pose_initialize_ = parent_node_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(topic_name.toStdString(),
+                                                                                                         ROBOGait::ros::QosProfiles::QOS_RELIABLE_LATCH());
   }
 
   auto msg = geometry_msgs::msg::PoseWithCovarianceStamped();
@@ -387,7 +389,7 @@ void RobotManager::startMonitoring()
           << "(mode:" << (use_namespace_discovery_ ? "namespace" : "node name") << ")";
 
   sub_robot_status_ = parent_node_->create_subscription<command_executor_msgs::msg::RobotStatus>(
-      full_topic, QOS_BEST_EFFORT, std::bind(&RobotManager::callbackRobotStatus, this, std::placeholders::_1));
+      full_topic, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(), std::bind(&RobotManager::callbackRobotStatus, this, std::placeholders::_1));
 
   last_robot_message_time_ = parent_node_->now();
 

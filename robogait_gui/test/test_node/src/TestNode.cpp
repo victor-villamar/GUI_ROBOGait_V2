@@ -1,4 +1,5 @@
 #include "TestNode.hpp"
+#include "Ros/QoSProfiles.hpp"
 
 TestNode::TestNode(std::shared_ptr<rclcpp::Node> node, const std::string& robot_namespace) :
     parent_node_(node), robot_name_("robogait"), robot_namespace_(robot_namespace)
@@ -18,7 +19,7 @@ TestNode::TestNode(std::shared_ptr<rclcpp::Node> node, const std::string& robot_
     topic_name = "/" + robot_namespace_ + T_ROBOT_STATUS;
   }
 
-  pub_robot_status_ = parent_node_->create_publisher<command_executor_msgs::msg::RobotStatus>(topic_name, QOS_BEST_EFFORT);
+  pub_robot_status_ = parent_node_->create_publisher<command_executor_msgs::msg::RobotStatus>(topic_name, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT());
 
   loop_timer_ = parent_node_->create_wall_timer(std::chrono::duration<float>(1.0), std::bind(&TestNode::publishLoop, this), cb_group_);
 

@@ -1,6 +1,7 @@
-#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <filesystem>
 #include <vector>
+
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <yaml-cpp/yaml.h>
 
 #include <QDebug>
@@ -10,6 +11,7 @@
 #include "Loader/YamlLoader.hpp"
 #include "Map/Utils/Utils.hpp"
 #include "Ros/Define.hpp"
+#include "Ros/QoSProfiles.hpp"
 #include "Ros/TopicsName.hpp"
 
 using namespace ROBOGait::ros::executor;
@@ -820,7 +822,8 @@ bool CommandExecutorClient::rebuildClient()
     return false;
   }
 
-  cli_cmd_ = parent_node_->create_client<command_executor_msgs::srv::Cmd>(resolveServiceName(std::string(S_CMD)), QOS_CLIENTS, cb_group_);
+  cli_cmd_ = parent_node_->create_client<command_executor_msgs::srv::Cmd>(resolveServiceName(std::string(S_CMD)), ROBOGait::ros::QosProfiles::QOS_CLIENTS(),
+                                                                          cb_group_);
 
   if (!cli_cmd_)
   {
@@ -828,8 +831,8 @@ bool CommandExecutorClient::rebuildClient()
     return false;
   }
 
-  cli_get_map_data_ =
-      parent_node_->create_client<command_executor_msgs::srv::GetMapData>(resolveServiceName(std::string(S_GET_MAP_DATA)), QOS_CLIENTS, cb_group_);
+  cli_get_map_data_ = parent_node_->create_client<command_executor_msgs::srv::GetMapData>(resolveServiceName(std::string(S_GET_MAP_DATA)),
+                                                                                          ROBOGait::ros::QosProfiles::QOS_CLIENTS(), cb_group_);
 
   if (!cli_get_map_data_)
   {
@@ -838,8 +841,8 @@ bool CommandExecutorClient::rebuildClient()
     return false;
   }
 
-  cli_global_localization_ =
-      parent_node_->create_client<std_srvs::srv::Empty>(resolveServiceName(std::string(S_REINITIALIZE_GLOBAL_LOCALIZATION)), QOS_CLIENTS, cb_group_);
+  cli_global_localization_ = parent_node_->create_client<std_srvs::srv::Empty>(resolveServiceName(std::string(S_REINITIALIZE_GLOBAL_LOCALIZATION)),
+                                                                               ROBOGait::ros::QosProfiles::QOS_CLIENTS(), cb_group_);
 
   if (!cli_global_localization_)
   {
@@ -1188,7 +1191,7 @@ bool CommandExecutorClient::publishMapDataOnce(const nav_msgs::msg::OccupancyGri
   if (!pub_map_data_)
   {
     std::string topic_name = context_ ? context_->resolveTopic(std::string(T_MAP)) : std::string(T_MAP);
-    pub_map_data_ = parent_node_->create_publisher<nav_msgs::msg::OccupancyGrid>(topic_name, QOS_RELIABLE_LATCH);
+    pub_map_data_ = parent_node_->create_publisher<nav_msgs::msg::OccupancyGrid>(topic_name, ROBOGait::ros::QosProfiles::QOS_RELIABLE_LATCH());
     if (!pub_map_data_)
     {
       qCritical() << "[CommandExecutorClient::publishMapDataOnce] Failed to create map data publisher";
