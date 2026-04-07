@@ -11,6 +11,9 @@ using namespace ROBOGait::map::item;
 RobotLayerItem::RobotLayerItem(QQuickItem* parent) : QQuickItem(parent)
 {
   setFlag(ItemHasContents, true);
+  setAcceptedMouseButtons(Qt::NoButton);
+  setAcceptHoverEvents(false);
+  setAcceptTouchEvents(false);
   qInfo() << "[RobotLayerItem::RobotLayerItem] RobotLayerItem created";
 }
 
