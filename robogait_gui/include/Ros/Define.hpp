@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+
 //------ TIME DEFINITIONS ------
 // clang-format off
 #define TIME_TO_ROBOT_POSE_UPDATE     100 // ms (10 Hz)

@@ -1,6 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import CommandExecutorBridge 1.0
+import RobotServiceBridge 1.0
 
 import "qrc:/Dialogs"
 
@@ -90,8 +90,8 @@ MapViewForm {
                   ? userSession.rosManager.robotManager.manualControl.angularVelocity
                   : 0.0
 
-    readonly property var commandExecutorBridge : (userSession && userSession.rosManager && userSession.rosManager.robotManager)
-                                                  ? userSession.rosManager.robotManager.commandExecutorBridge
+    readonly property var robotServiceBridge : (userSession && userSession.rosManager && userSession.rosManager.robotManager)
+                                                  ? userSession.rosManager.robotManager.robotServiceBridge
                                                   : null
 
     function scaleLinear(raw) {
@@ -145,7 +145,7 @@ MapViewForm {
 
         busyDialog.openWithMessage(qsTr("Guardando mapa..."))
 
-        var okStop = commandExecutorBridge.stopMapping(true, mapName)
+        var okStop = robotServiceBridge.stopMapping(true, mapName)
 
         if(!okStop) {
             waitingForMappingStop = false
@@ -164,7 +164,7 @@ MapViewForm {
 
         busyDialog.openWithMessage(qsTr("Saliendo sin guardar..."))
 
-        var okStop = commandExecutorBridge.stopMapping(false, "")
+        var okStop = robotServiceBridge.stopMapping(false, "")
 
         if(!okStop) {
             waitingForMappingStop = false
@@ -177,7 +177,7 @@ MapViewForm {
     }
 
     function requestAppExit() {
-        if (!commandExecutorBridge || commandExecutorBridge.status !== CommandExecutorBridge.RUNNING) {
+        if (!robotServiceBridge || robotServiceBridge.status !== RobotServiceBridge.RUNNING) {
             appExitFinished()
             return true
         }
@@ -188,8 +188,8 @@ MapViewForm {
     }
 
     function handleUserSwitch() {
-        if (commandExecutorBridge && commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
-            commandExecutorBridge.stopMapping(false, "")
+        if (robotServiceBridge && robotServiceBridge.status === RobotServiceBridge.RUNNING) {
+            robotServiceBridge.stopMapping(false, "")
         }
 
         if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
@@ -214,7 +214,7 @@ MapViewForm {
 
     function beginResetMapping() {
 
-        if (commandExecutorBridge.status !== CommandExecutorBridge.RUNNING) {
+        if (robotServiceBridge.status !== RobotServiceBridge.RUNNING) {
             errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo reiniciar el mapeo")
             errorPopup.open()
             return
@@ -227,7 +227,7 @@ MapViewForm {
 
         busyDialog.openWithMessage(qsTr("Reiniciando mapeo..."))
 
-        var okStop = commandExecutorBridge.stopMapping(false, "")
+        var okStop = robotServiceBridge.stopMapping(false, "")
         if (!okStop) {
             waitingForResetStop = false
             busyDialog.close()
@@ -257,8 +257,8 @@ MapViewForm {
             busyDialog.close()
         }
 
-        if (hadOperation && commandExecutorBridge && commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
-            commandExecutorBridge.stopMapping(false, "")
+        if (hadOperation && robotServiceBridge && robotServiceBridge.status === RobotServiceBridge.RUNNING) {
+            robotServiceBridge.stopMapping(false, "")
         }
     }
 
@@ -586,13 +586,13 @@ MapViewForm {
     }
 
     Connections {
-        target: commandExecutorBridge
+        target: robotServiceBridge
 
         function onStatusChanged() {
 
             // Handle reset stop
 
-            if (waitingForResetStop && commandExecutorBridge.status === CommandExecutorBridge.STOPPED) {
+            if (waitingForResetStop && robotServiceBridge.status === RobotServiceBridge.STOPPED) {
                 waitingForResetStop = false
                 waitingForResetStart = true
 
@@ -604,7 +604,7 @@ MapViewForm {
                     mapViz.clearMap()
                 }
 
-                var okStart = commandExecutorBridge.startMapping()
+                var okStart = robotServiceBridge.startMapping()
                 if (!okStart) {
                     waitingForResetStart = false
                     busyDialog.close()
@@ -614,13 +614,13 @@ MapViewForm {
                 return
             }
 
-            if (waitingForResetStart && commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
+            if (waitingForResetStart && robotServiceBridge.status === RobotServiceBridge.RUNNING) {
                 waitingForResetStart = false
                 busyDialog.close()
                 return
             }
 
-            if((waitingForResetStop || waitingForResetStart) && commandExecutorBridge.status === CommandExecutorBridge.ERROR) {
+            if((waitingForResetStop || waitingForResetStart) && robotServiceBridge.status === RobotServiceBridge.ERROR) {
                 waitingForResetStop = false
                 waitingForResetStart = false
                 busyDialog.close()
@@ -635,7 +635,7 @@ MapViewForm {
                 return
             }
 
-            if (commandExecutorBridge.status === CommandExecutorBridge.STOPPED) {
+            if (robotServiceBridge.status === RobotServiceBridge.STOPPED) {
                 waitingForMappingStop = false
                 busyDialog.close()
 
@@ -655,7 +655,7 @@ MapViewForm {
                     }
                 }
             }
-            else if (commandExecutorBridge.status === CommandExecutorBridge.ERROR) {
+            else if (robotServiceBridge.status === RobotServiceBridge.ERROR) {
                 var wasSaving = pendingSaveToDb
                 waitingForMappingStop = false
                 pendingSaveAndExit = false

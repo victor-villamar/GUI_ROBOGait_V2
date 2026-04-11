@@ -1,6 +1,6 @@
-#include "Context/RobotContext.hpp"
-
 #include <QDebug>
+
+#include "Context/RobotContext.hpp"
 
 using namespace ROBOGait::context;
 

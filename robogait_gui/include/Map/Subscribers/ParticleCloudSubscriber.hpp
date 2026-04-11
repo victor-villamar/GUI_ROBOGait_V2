@@ -4,8 +4,9 @@
 #include <optional>
 #include <string>
 
-#include <nav2_msgs/msg/particle_cloud.hpp>
 #include <rclcpp/node.hpp>
+
+#include <nav2_msgs/msg/particle_cloud.hpp>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 

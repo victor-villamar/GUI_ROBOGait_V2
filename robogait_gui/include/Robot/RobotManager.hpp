@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <QObject>
 #include <QString>
 
@@ -12,10 +14,10 @@
 #include <command_executor_msgs/msg/robot_status.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
-#include "CommandExecutor/CommandExecutorBridge.hpp"
 #include "Map/MapVisualizationManager.hpp"
 #include "Robot/ManualControl.hpp"
 #include "Robot/RobotPlacementController.hpp"
+#include "Services/RobotServiceBridge.hpp"
 
 namespace ROBOGait
 {
@@ -58,8 +60,8 @@ public:
              READ getMapVisualizationManager
              CONSTANT)
 
-  Q_PROPERTY(ROBOGait::qml::executor::CommandExecutorBridge* commandExecutorBridge
-             READ getCommandExecutorBridge
+  Q_PROPERTY(ROBOGait::qml::service::RobotServiceBridge* robotServiceBridge
+             READ getRobotServiceBridge
              CONSTANT)
 
   Q_PROPERTY(ROBOGait::robot::RobotPlacementController* robotPlacementController
@@ -94,7 +96,7 @@ public:
    *
    * Creates the bridge on first access
    */
-  ROBOGait::qml::executor::CommandExecutorBridge* getCommandExecutorBridge();
+  ROBOGait::qml::service::RobotServiceBridge* getRobotServiceBridge();
 
   /**
    * @brief Get the robot placement controller instance
@@ -219,7 +221,7 @@ private:
 
   std::unique_ptr<ROBOGait::robot::control::ManualControl> manual_control_;                    /**< Manual control instance */
   std::unique_ptr<ROBOGait::map::manager::MapVisualizationManager> map_visualization_manager_; /**< Map visualization manager */
-  std::unique_ptr<ROBOGait::qml::executor::CommandExecutorBridge> command_executor_bridge_;    /**< Command executor bridge instance */
+  std::unique_ptr<ROBOGait::qml::service::RobotServiceBridge> robot_service_bridge_;           /**< Robot service bridge instance */
   std::unique_ptr<ROBOGait::robot::RobotPlacementController> robot_placement_controller_;      /**< Robot placement controller instance */
 
   QString selected_robot_namespace_; /**< The namespace of the selected robot */

@@ -1,4 +1,4 @@
-#include <QDebug>
+#include <iostream>
 #include <sstream>
 #include <vector>
 
@@ -12,14 +12,14 @@ YamlLoader& YamlLoader::getInstance()
   return instance;
 }
 
-YamlLoader::YamlLoader() : file_path_(""), is_loaded_(false) { qInfo() << "[YamlLoader::YamlLoader] YamlLoader instance created"; }
+YamlLoader::YamlLoader() : file_path_(""), is_loaded_(false) { std::cout << "[YamlLoader::YamlLoader] YamlLoader instance created" << std::endl; }
 
 bool YamlLoader::loadConfig(const std::string& file_path)
 {
   config_ = YAML::LoadFile(file_path);
   file_path_ = file_path;
   is_loaded_ = true;
-  qInfo() << "[YamlLoader::loadConfig] Configuration loaded successfully from:" << QString::fromStdString(file_path);
+  std::cout << "[YamlLoader::loadConfig] Configuration loaded successfully from:" << file_path << std::endl;
   return true;
 }
 

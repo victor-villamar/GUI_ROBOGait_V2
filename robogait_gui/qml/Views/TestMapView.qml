@@ -1,6 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import CommandExecutorBridge 1.0
+import RobotServiceBridge 1.0
 
 import "qrc:/Dialogs"
 import "qrc:/Views"
@@ -50,8 +50,8 @@ TestMapViewForm {
 
     step: stepPosition
 
-    readonly property var commandExecutorBridge : (userSession && userSession.rosManager && userSession.rosManager.robotManager)
-                                                  ? userSession.rosManager.robotManager.commandExecutorBridge
+    readonly property var robotServiceBridge : (userSession && userSession.rosManager && userSession.rosManager.robotManager)
+                                                  ? userSession.rosManager.robotManager.robotServiceBridge
                                                   : null
 
     mapAvailable: (userSession.rosManager &&
@@ -236,7 +236,7 @@ TestMapViewForm {
     }
 
     function triggerGlobalLocalization() {
-        if (!commandExecutorBridge) {
+        if (!robotServiceBridge) {
             failAutoLocalization(qsTr("Error: No hay conexión con el robot"))
             return
         }
@@ -244,7 +244,7 @@ TestMapViewForm {
         autoLocalizationWaitingForNav = false
         autoLocalizationWaitingForService = true
 
-        var okService = commandExecutorBridge.reinitializeGlobalLocalization()
+        var okService = robotServiceBridge.reinitializeGlobalLocalization()
         if (!okService) {
             autoLocalizationWaitingForService = false
             failAutoLocalization(qsTr("Error: No se pudo iniciar la autolocalización"))
@@ -259,7 +259,7 @@ TestMapViewForm {
             return
         }
 
-        if (!commandExecutorBridge) {
+        if (!robotServiceBridge) {
             errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
             errorPopup.open()
             return
@@ -281,20 +281,20 @@ TestMapViewForm {
         autoLocalizationSpinDone = false
         busyDialog.openWithMessage(qsTr("Iniciando autolocalización..."))
 
-        if (commandExecutorBridge.activeCommandKey === "navigation") {
-            if (commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
+        if (robotServiceBridge.activeCommandKey === "navigation") {
+            if (robotServiceBridge.status === RobotServiceBridge.RUNNING) {
                 triggerGlobalLocalization()
                 return
             }
 
-            if (commandExecutorBridge.status === CommandExecutorBridge.STARTING) {
+            if (robotServiceBridge.status === RobotServiceBridge.STARTING) {
                 autoLocalizationWaitingForNav = true
                 return
             }
         }
 
         autoLocalizationWaitingForNav = true
-        var okStart = commandExecutorBridge.startNavigation(mapName)
+        var okStart = robotServiceBridge.startNavigation(mapName)
         if (!okStart) {
             autoLocalizationWaitingForNav = false
             failAutoLocalization(qsTr("Error: No se pudo iniciar la navegación"))
@@ -315,8 +315,8 @@ TestMapViewForm {
         exiting = true
         busyDialog.openWithMessage(qsTr("Saliendo..."))
 
-        if (commandExecutorBridge && commandExecutorBridge.activeCommandKey === "navigation") {
-            var okStop = commandExecutorBridge.stopNavigation()
+        if (robotServiceBridge && robotServiceBridge.activeCommandKey === "navigation") {
+            var okStop = robotServiceBridge.stopNavigation()
             if (!okStop) {
                 busyDialog.close()
                 exiting = false
@@ -335,19 +335,19 @@ TestMapViewForm {
             return
         }
 
-        if (!commandExecutorBridge) {
+        if (!robotServiceBridge) {
             finalizeExit()
             return
         }
 
-        if (commandExecutorBridge.activeCommandKey !== "navigation") {
+        if (robotServiceBridge.activeCommandKey !== "navigation") {
             finalizeExit()
             return
         }
 
-        if (commandExecutorBridge.status === CommandExecutorBridge.STOPPED
-            || commandExecutorBridge.status === CommandExecutorBridge.ERROR
-            || commandExecutorBridge.status === CommandExecutorBridge.IDLE) {
+        if (robotServiceBridge.status === RobotServiceBridge.STOPPED
+            || robotServiceBridge.status === RobotServiceBridge.ERROR
+            || robotServiceBridge.status === RobotServiceBridge.IDLE) {
             finalizeExit()
         }
     }
@@ -451,7 +451,7 @@ TestMapViewForm {
             return
         }
 
-        if (!commandExecutorBridge) {
+        if (!robotServiceBridge) {
             busyDialog.close()
             errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
             errorPopup.open()
@@ -469,7 +469,7 @@ TestMapViewForm {
         experimentRegistered = true
         experimentId = dbManager.lastExperimentId
 
-        var okMap = commandExecutorBridge.requestMapData(mapName)
+        var okMap = robotServiceBridge.requestMapData(mapName)
         if (!okMap) {
             busyDialog.close()
             errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo cargar el mapa")
@@ -522,7 +522,7 @@ TestMapViewForm {
 
         autoLocalizationCompleted = false
 
-        if (!commandExecutorBridge) {
+        if (!robotServiceBridge) {
             errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
             errorPopup.open()
             return
@@ -535,8 +535,8 @@ TestMapViewForm {
             return
         }
 
-        if (commandExecutorBridge.activeCommandKey === "navigation") {
-            if (commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
+        if (robotServiceBridge.activeCommandKey === "navigation") {
+            if (robotServiceBridge.status === RobotServiceBridge.RUNNING) {
                 placementEnabled = false
         syncRobotPoseUpdates()
                 orientationEnabled = false
@@ -545,7 +545,7 @@ TestMapViewForm {
                 return
             }
 
-            if (commandExecutorBridge.status === CommandExecutorBridge.STARTING) {
+            if (robotServiceBridge.status === RobotServiceBridge.STARTING) {
                 waitingForNavigationStart = true
                 busyDialog.openWithMessage(qsTr("Guardando posición..."))
                 return
@@ -555,7 +555,7 @@ TestMapViewForm {
         waitingForNavigationStart = true
         busyDialog.openWithMessage(qsTr("Guardando posición..."))
 
-        var okStart = commandExecutorBridge.startNavigation(mapName)
+        var okStart = robotServiceBridge.startNavigation(mapName)
         if (!okStart) {
             waitingForNavigationStart = false
             busyDialog.close()
@@ -689,19 +689,19 @@ TestMapViewForm {
 
 
     Connections {
-        target: commandExecutorBridge
+        target: robotServiceBridge
         ignoreUnknownSignals: true
 
         function onStatusChanged() {
             if (autoLocalizationWaitingForNav)
             {
-                if (commandExecutorBridge.activeCommandKey === "navigation"
-                    && commandExecutorBridge.status === CommandExecutorBridge.RUNNING)
+                if (robotServiceBridge.activeCommandKey === "navigation"
+                    && robotServiceBridge.status === RobotServiceBridge.RUNNING)
                 {
                     triggerGlobalLocalization()
                 }
-                else if (commandExecutorBridge.activeCommandKey === "navigation"
-                           && commandExecutorBridge.status === CommandExecutorBridge.ERROR)
+                else if (robotServiceBridge.activeCommandKey === "navigation"
+                           && robotServiceBridge.status === RobotServiceBridge.ERROR)
                 {
                     autoLocalizationWaitingForNav = false
                     failAutoLocalization(qsTr("Error: No se pudo iniciar la navegación"))
@@ -710,8 +710,8 @@ TestMapViewForm {
 
             if (waitingForNavigationStart)
             {
-                if (commandExecutorBridge.activeCommandKey === "navigation"
-                    && commandExecutorBridge.status === CommandExecutorBridge.RUNNING)
+                if (robotServiceBridge.activeCommandKey === "navigation"
+                    && robotServiceBridge.status === RobotServiceBridge.RUNNING)
                 {
                     waitingForNavigationStart = false
                     busyDialog.close()
@@ -721,8 +721,8 @@ TestMapViewForm {
                     orientationOverride = false
                     step = stepOrientation
                 }
-                else if (commandExecutorBridge.activeCommandKey === "navigation"
-                           && commandExecutorBridge.status === CommandExecutorBridge.ERROR)
+                else if (robotServiceBridge.activeCommandKey === "navigation"
+                           && robotServiceBridge.status === RobotServiceBridge.ERROR)
                 {
                     waitingForNavigationStart = false
                     busyDialog.close()

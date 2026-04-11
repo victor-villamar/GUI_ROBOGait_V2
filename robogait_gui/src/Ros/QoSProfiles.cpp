@@ -1,3 +1,5 @@
+#include <rmw/qos_profiles.h>
+
 #include "Ros/QoSProfiles.hpp"
 
 using namespace ROBOGait::ros;

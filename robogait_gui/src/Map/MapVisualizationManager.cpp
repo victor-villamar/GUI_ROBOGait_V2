@@ -1,9 +1,10 @@
+#include <algorithm>
+#include <cmath>
+
 #include <QDebug>
 #include <QPointF>
 #include <QRectF>
 #include <QtGlobal>
-#include <algorithm>
-#include <cmath>
 
 #include "Context/RobotContext.hpp"
 #include "Loader/YamlLoader.hpp"

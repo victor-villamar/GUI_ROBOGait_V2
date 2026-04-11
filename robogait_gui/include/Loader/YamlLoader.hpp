@@ -1,11 +1,9 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 
 #include <yaml-cpp/yaml.h>
-
-#include <QDebug>
-#include <QString>
 
 namespace ROBOGait
 {
@@ -84,7 +82,7 @@ template <typename T> T YamlLoader::getValue(const std::string& key, const T& de
 {
   if (!is_loaded_)
   {
-    qWarning() << "[YamlLoader::getValue] Configuration not loaded, returning default value for key:" << QString::fromStdString(key);
+    std::cerr << "[YamlLoader::getValue] Configuration not loaded, returning default value for key: " << key << std::endl;
     return default_value;
   }
 

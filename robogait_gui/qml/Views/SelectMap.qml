@@ -3,7 +3,7 @@ import QtQuick.Controls 2.15
 
 import "qrc:/Dialogs"
 import "qrc:/Views"
-import CommandExecutorBridge 1.0
+import RobotServiceBridge 1.0
 
 SelectMapForm {
     id: root
@@ -19,8 +19,8 @@ SelectMapForm {
     property bool waitingForMappingStart: false
     property bool waitingForDeleteMap: false
 
-    readonly property var commandExecutorBridge : (userSession && userSession.rosManager && userSession.rosManager.robotManager)
-                                                  ? userSession.rosManager.robotManager.commandExecutorBridge
+    readonly property var robotServiceBridge : (userSession && userSession.rosManager && userSession.rosManager.robotManager)
+                                                  ? userSession.rosManager.robotManager.robotServiceBridge
                                                   : null
 
     mapsListView.model: mapsModel
@@ -99,7 +99,7 @@ SelectMapForm {
             waitingForMappingStart = true
             busyDialog.openWithMessage(qsTr("Iniciando creación del mapa..."))
 
-            var ok = commandExecutorBridge.startMapping()
+            var ok = robotServiceBridge.startMapping()
             if(!ok)
             {
                 waitingForMappingStart = false
@@ -146,7 +146,7 @@ SelectMapForm {
             }
 
             waitingForDeleteMap = true
-            var okRemote = commandExecutorBridge.deleteMap(pendingDeleteMapName)
+            var okRemote = robotServiceBridge.deleteMap(pendingDeleteMapName)
             if(!okRemote)
             {
                 waitingForDeleteMap = false
@@ -195,7 +195,7 @@ SelectMapForm {
     }
 
     Connections {
-        target: commandExecutorBridge
+        target: robotServiceBridge
 
         function onStatusChanged() {
 
@@ -203,14 +203,14 @@ SelectMapForm {
                 return
             }
 
-            if(commandExecutorBridge.status === CommandExecutorBridge.RUNNING) {
+            if(robotServiceBridge.status === RobotServiceBridge.RUNNING) {
                 waitingForMappingStart = false
                 busyDialog.close()
                 if(root.StackView.view) {
                     root.StackView.view.push(mapViewPage)
                 }
             }
-            else if (commandExecutorBridge.status === CommandExecutorBridge.ERROR) {
+            else if (robotServiceBridge.status === RobotServiceBridge.ERROR) {
                 waitingForMappingStart = false
                 busyDialog.close()
                 errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la creación del mapa")

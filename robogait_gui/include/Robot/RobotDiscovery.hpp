@@ -1,11 +1,14 @@
 #pragma once
 
+#include <string>
+#include <utility>
+#include <vector>
+
 #include <QObject>
 #include <QStringList>
 #include <QTimer>
+
 #include <rclcpp/node.hpp>
-#include <string>
-#include <vector>
 
 namespace ROBOGait
 {

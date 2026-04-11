@@ -1,8 +1,9 @@
 #pragma once
 
+#include <memory>
+
 #include <QObject>
 #include <QString>
-#include <memory>
 
 #include "DataBase/DataBaseManager.hpp"
 #include "Ros/RosNodeManager.hpp"

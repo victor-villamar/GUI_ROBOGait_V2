@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <cmath>
+
 #include <QDebug>
 #include <QGestureEvent>
 #include <QLineF>
@@ -6,15 +9,13 @@
 #include <QSGTransformNode>
 #include <QtGlobal>
 #include <QtMath>
-#include <algorithm>
-#include <cmath>
 
 #include "Map/Items/MapLayerItem.hpp"
 
 using namespace ROBOGait::map::item;
 
-MapLayerItem::MapLayerItem(QQuickItem* parent)
-  : QQuickItem(parent),
+MapLayerItem::MapLayerItem(QQuickItem* parent) :
+    QQuickItem(parent),
     last_image_key_(0),
     map_rect_(),
     has_map_rect_(false),
