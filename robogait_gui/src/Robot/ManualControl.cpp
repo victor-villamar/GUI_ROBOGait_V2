@@ -4,6 +4,7 @@
 
 #include "Robot/ManualControl.hpp"
 #include "Ros/Define.hpp"
+#include "Ros/QoSProfiles.hpp"
 #include "Ros/TopicsName.hpp"
 
 using namespace ROBOGait::robot::control;
@@ -126,7 +127,7 @@ void ManualControl::ensurePublisherCreated()
   }
 
   qInfo() << "[ManualControl::ensurePublisherCreated] Creating publisher for topic:" << topic_name_;
-  pub_cmd_vel_ = parent_node_->create_publisher<geometry_msgs::msg::Twist>(topic_name_.toStdString(), QOS_RELIABLE);
+  pub_cmd_vel_ = parent_node_->create_publisher<geometry_msgs::msg::Twist>(topic_name_.toStdString(), ROBOGait::ros::QosProfiles::QOS_RELIABLE());
 }
 
 void ManualControl::publishVelocity()

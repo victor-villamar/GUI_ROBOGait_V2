@@ -5,10 +5,11 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/exceptions.hpp>
+
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include "Map/Subscribers/LaserScanSubscriber.hpp"
-#include "Ros/Define.hpp"
+#include "Ros/QoSProfiles.hpp"
 #include "Ros/TopicsName.hpp"
 
 using namespace ROBOGait::map::subscribers;
@@ -68,7 +69,7 @@ void LaserScanSubscriber::start()
     scan_topic = context_->resolveTopic(scan_topic);
   }
 
-  sub_scan_ = parent_node_->create_subscription<sensor_msgs::msg::LaserScan>(scan_topic, QOS_BEST_EFFORT.keep_last(5),
+  sub_scan_ = parent_node_->create_subscription<sensor_msgs::msg::LaserScan>(scan_topic, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(),
                                                                              std::bind(&LaserScanSubscriber::callbackScan, this, std::placeholders::_1));
 
   active_ = true;

@@ -1,3 +1,5 @@
+#include <string>
+
 #include <QDebug>
 #include <QDir>
 #include <QFile>
@@ -5,9 +7,9 @@
 #include <QMetaType>
 #include <QQmlContext>
 #include <QStandardPaths>
-#include <string>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
+
 #include <geometry_msgs/msg/twist.hpp>
 
 #include "Core/RoboGaitApplication.hpp"
@@ -56,7 +58,7 @@ RoboGaitApplication::~RoboGaitApplication()
 void RoboGaitApplication::initCommon()
 {
   qmlRegisterUncreatableType<ROBOGait::robot::discovery::RobotDiscovery>("RobotDiscovery", 1, 0, "RobotDiscovery", "Enums Only");
-  qmlRegisterUncreatableType<ROBOGait::qml::executor::CommandExecutorBridge>("CommandExecutorBridge", 1, 0, "CommandExecutorBridge", "Enums Only");
+  qmlRegisterUncreatableType<ROBOGait::qml::service::RobotServiceBridge>("RobotServiceBridge", 1, 0, "RobotServiceBridge", "Enums Only");
   qmlRegisterType<ROBOGait::map::item::MapLayerItem>("MapRendering", 1, 0, "MapLayerItem");
   qmlRegisterType<ROBOGait::map::item::RobotLayerItem>("MapRendering", 1, 0, "RobotLayerItem");
   qmlRegisterType<ROBOGait::map::item::LaserLayerItem>("MapRendering", 1, 0, "LaserLayerItem");

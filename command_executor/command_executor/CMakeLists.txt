@@ -22,6 +22,7 @@ add_executable(${PROJECT_NAME}_node
     src/Functions.cpp
     src/CommandExecutor.cpp
     src/ProcessManager.cpp
+    src/QoSProfile.cpp
     src/YamlLoader.cpp
     src/main.cpp
 )

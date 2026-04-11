@@ -1,6 +1,6 @@
 import QtQuick 2.15
 
-import "qrc:/Register"
+import "qrc:/Authentication"
 
 Item {
     id: root

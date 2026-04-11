@@ -4,33 +4,33 @@
 #include <QString>
 #include <QTimer>
 
-#include "CommandExecutorClient.hpp"
+#include "Services/RobotServiceClient.hpp"
 
 namespace ROBOGait
 {
 namespace qml
 {
-namespace executor
+namespace service
 {
 /**
- * @brief Bridge class to expose the CommandExecutorClient to QML
+ * @brief Bridge class to expose the RobotServiceClient to QML
  */
-class CommandExecutorBridge : public QObject
+class RobotServiceBridge : public QObject
 {
   Q_OBJECT
 
 public:
   /**
-   * @brief Enum to represent the status of the command executor
+   * @brief Enum to represent the status of the commands executed by the RobotServiceClient
    */
   enum Status
   {
-    IDLE = 0, /**< The command executor is idle */
-    STARTING, /**< The command executor is starting */
-    RUNNING,  /**< The command executor is running */
-    STOPPING, /**< The command executor is stopping */
-    STOPPED,  /**< The command executor has stopped */
-    ERROR     /**< There was an error with the command executor */
+    IDLE = 0, /**< The command is idle */
+    STARTING, /**< The command is starting */
+    RUNNING,  /**< The command is running */
+    STOPPING, /**< The command is stopping */
+    STOPPED,  /**< The command has stopped */
+    ERROR     /**< There was an error with the command */
   };
   Q_ENUM(Status)
 
@@ -38,15 +38,16 @@ public:
   Q_PROPERTY(int status
              READ getStatus
              NOTIFY statusChanged)
+
   Q_PROPERTY(QString activeCommandKey
              READ getActiveCommandKey
              NOTIFY statusChanged)
   // clang-format on
 
   /**
-   * @brief Constructor of the CommandExecutorBridge class
+   * @brief Constructor of the RobotServiceBridge class
    */
-  explicit CommandExecutorBridge(QObject* parent = nullptr);
+  explicit RobotServiceBridge(QObject* parent = nullptr);
 
   /**
    * @brief Get the status of the command executor
@@ -128,18 +129,18 @@ private slots:
 
 private:
   /**
-   * @brief Synchronize the status from the CommandExecutorClient
+   * @brief Synchronize the status from the RobotServiceClient
    */
   void syncFromClient();
 
   /**
-   * @brief Convert the CommandStatus from the CommandExecutorClient to the Bridge Status
+   * @brief Convert the CommandStatus from the RobotServiceClient to the Bridge Status
    *
-   * @param status The CommandStatus from the CommandExecutorClient
+   * @param status The CommandStatus from the RobotServiceClient
    *
    * @return The corresponding Bridge Status
    */
-  Status toBridgeStatus(ROBOGait::ros::executor::CommandExecutorClient::CommandStatus status);
+  Status toBridgeStatus(ROBOGait::ros::service::RobotServiceClient::CommandStatus status);
 
   int status_;                 /**< The current status of the command executor */
   QString active_command_key_; /**< The active command key */
@@ -147,6 +148,6 @@ private:
 
   static constexpr int POLL_INTERVAL_MS = 200; /**< The polling interval in milliseconds */
 };
-} // namespace executor
+} // namespace service
 } // namespace qml
 } // namespace ROBOGait

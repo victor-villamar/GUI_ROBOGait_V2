@@ -1,16 +1,15 @@
 #pragma once
 
+#include <chrono>
+#include <memory>
+#include <string>
+
 #include <rclcpp/callback_group.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/publisher.hpp>
 #include <rclcpp/timer.hpp>
 
 #include <command_executor_msgs/msg/robot_status.hpp>
-
-#include <chrono>
-#include <memory>
-
-#include "Ros/Define.hpp"
 
 #define T_ROBOT_STATUS "/robot_status"
 

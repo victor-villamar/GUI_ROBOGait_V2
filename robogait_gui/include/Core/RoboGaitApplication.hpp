@@ -1,11 +1,12 @@
 #pragma once
 
+#include <memory>
+
 #include <QApplication>
 #include <QLocale>
 #include <QQmlApplicationEngine>
 #include <QString>
 #include <QTranslator>
-#include <memory>
 
 #include "DataBase/DataBaseManager.hpp"
 #include "Ros/RosNodeManager.hpp"

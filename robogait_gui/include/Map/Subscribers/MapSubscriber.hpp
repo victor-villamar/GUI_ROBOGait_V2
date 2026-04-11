@@ -3,10 +3,11 @@
 #include <memory>
 #include <optional>
 
-#include <map_msgs/msg/occupancy_grid_update.hpp>
-#include <nav_msgs/msg/occupancy_grid.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/subscription.hpp>
+
+#include <map_msgs/msg/occupancy_grid_update.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include "Context/RobotContext.hpp"
 #include "Map/Data/MapData.hpp"

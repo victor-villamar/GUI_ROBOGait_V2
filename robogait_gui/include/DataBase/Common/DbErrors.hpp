@@ -1,7 +1,8 @@
 #pragma once
 
-#include <QString>
 #include <variant>
+
+#include <QString>
 
 namespace ROBOGait
 {

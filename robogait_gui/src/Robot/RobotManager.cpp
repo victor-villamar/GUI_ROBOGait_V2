@@ -1,12 +1,14 @@
-#include <QDebug>
 #include <chrono>
 #include <cmath>
 
-#include "CommandExecutor/CommandExecutorClient.hpp"
+#include <QDebug>
+
 #include "Map/Utils/Utils.hpp"
 #include "Robot/RobotManager.hpp"
 #include "Ros/Define.hpp"
+#include "Ros/QoSProfiles.hpp"
 #include "Ros/TopicsName.hpp"
+#include "Services/RobotServiceClient.hpp"
 
 using namespace ROBOGait::robot::manager;
 
@@ -25,7 +27,7 @@ RobotManager::RobotManager() :
   manual_control_ = std::make_unique<ROBOGait::robot::control::ManualControl>();
   map_visualization_manager_ = nullptr;
   robot_placement_controller_ = nullptr;
-  command_executor_bridge_ = nullptr;
+  robot_service_bridge_ = nullptr;
 }
 
 RobotManager::~RobotManager()
@@ -55,9 +57,9 @@ void RobotManager::setROSNode(rclcpp::Node* parent_node)
   }
   parent_node_ = parent_node;
 
-  if (!ROBOGait::ros::executor::CommandExecutorClient::getInstance().initialize(parent_node_))
+  if (!ROBOGait::ros::service::RobotServiceClient::getInstance().initialize(parent_node_))
   {
-    qWarning() << "[RobotManager::setROSNode] CommandExecutorClient initialization failed";
+    qWarning() << "[RobotManager::setROSNode] RobotServiceClient initialization failed";
   }
 
   manual_control_->setROSNode(parent_node);
@@ -139,11 +141,11 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
     ROBOGait::context::RobotContext context;
     if (context.setSelectedRobot(normalized_identifier, is_namespace))
     {
-      ROBOGait::ros::executor::CommandExecutorClient::getInstance().setRobotContext(context);
+      ROBOGait::ros::service::RobotServiceClient::getInstance().setRobotContext(context);
     }
     else
     {
-      ROBOGait::ros::executor::CommandExecutorClient::getInstance().clearRobotContext();
+      ROBOGait::ros::service::RobotServiceClient::getInstance().clearRobotContext();
     }
 
     if (use_topic_filter_)
@@ -169,7 +171,7 @@ void RobotManager::clearSelection()
     emit selectedRobotNamespaceChanged();
     emit selectedRobotDisplayNameChanged();
 
-    ROBOGait::ros::executor::CommandExecutorClient::getInstance().clearRobotContext();
+    ROBOGait::ros::service::RobotServiceClient::getInstance().clearRobotContext();
 
     // Destroy map visualization subscriptions
     if (map_visualization_manager_)
@@ -263,13 +265,13 @@ ROBOGait::map::manager::MapVisualizationManager* RobotManager::getMapVisualizati
   return map_visualization_manager_.get();
 }
 
-ROBOGait::qml::executor::CommandExecutorBridge* RobotManager::getCommandExecutorBridge()
+ROBOGait::qml::service::RobotServiceBridge* RobotManager::getRobotServiceBridge()
 {
-  if (!command_executor_bridge_)
+  if (!robot_service_bridge_)
   {
-    command_executor_bridge_ = std::make_unique<ROBOGait::qml::executor::CommandExecutorBridge>();
+    robot_service_bridge_ = std::make_unique<ROBOGait::qml::service::RobotServiceBridge>();
   }
-  return command_executor_bridge_.get();
+  return robot_service_bridge_.get();
 }
 
 ROBOGait::robot::RobotPlacementController* RobotManager::getRobotPlacementController()
@@ -336,7 +338,8 @@ void RobotManager::publishInitialPose(double x, double y, double theta)
   if (!pub_pose_initialize_)
   {
     const QString topic_name = buildTopicName(QString::fromUtf8(T_POSE_INITIALIZE));
-    pub_pose_initialize_ = parent_node_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(topic_name.toStdString(), QOS_RELIABLE_LATCH);
+    pub_pose_initialize_ = parent_node_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(topic_name.toStdString(),
+                                                                                                         ROBOGait::ros::QosProfiles::QOS_RELIABLE_LATCH());
   }
 
   auto msg = geometry_msgs::msg::PoseWithCovarianceStamped();
@@ -387,7 +390,7 @@ void RobotManager::startMonitoring()
           << "(mode:" << (use_namespace_discovery_ ? "namespace" : "node name") << ")";
 
   sub_robot_status_ = parent_node_->create_subscription<command_executor_msgs::msg::RobotStatus>(
-      full_topic, QOS_BEST_EFFORT, std::bind(&RobotManager::callbackRobotStatus, this, std::placeholders::_1));
+      full_topic, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(), std::bind(&RobotManager::callbackRobotStatus, this, std::placeholders::_1));
 
   last_robot_message_time_ = parent_node_->now();
 

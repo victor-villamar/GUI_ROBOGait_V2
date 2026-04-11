@@ -1,8 +1,9 @@
 #include <iostream>
 
-#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <rclcpp/create_timer.hpp>
 #include <tf2/exceptions.h>
+
+#include <geometry_msgs/msg/transform_stamped.hpp>
 
 #include "Map/Subscribers/TFSubscriber.hpp"
 #include "Map/Utils/Utils.hpp"
@@ -101,7 +102,6 @@ void TFSubscriber::stop()
 bool TFSubscriber::isActive() const { return active_; }
 
 void TFSubscriber::setPaused(bool paused) { paused_ = paused; }
-
 
 void TFSubscriber::updatePoseFromTF()
 {

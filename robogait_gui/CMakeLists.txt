@@ -38,8 +38,6 @@ set(CMAKE_AUTORCC ON)
 
 # Set include directories
 set(HEADERS
-    include/CommandExecutor/CommandExecutorBridge.hpp
-    include/CommandExecutor/CommandExecutorClient.hpp
     include/Context/RobotContext.hpp
     include/Core/RoboGaitApplication.hpp
     include/DataBase/Common/DbErrors.hpp
@@ -86,8 +84,11 @@ set(HEADERS
     include/Robot/RobotManager.hpp
     include/Robot/RobotPlacementController.hpp
     include/Ros/Define.hpp
+    include/Ros/QoSProfiles.hpp
     include/Ros/RosNodeManager.hpp
     include/Ros/TopicsName.hpp
+    include/Services/RobotServiceBridge.hpp
+    include/Services/RobotServiceClient.hpp
     include/Settings/DeveloperSettings.hpp
     include/Settings/UiSizingSettings.hpp
     include/User/Patient.hpp
@@ -96,8 +97,6 @@ set(HEADERS
 
 # Set source files
 set(SOURCES
-    src/CommandExecutor/CommandExecutorBridge.cpp
-    src/CommandExecutor/CommandExecutorClient.cpp
     src/Context/RobotContext.cpp
     src/Core/RoboGaitApplication.cpp
     src/DataBase/Common/DbErrors.cpp
@@ -141,7 +140,10 @@ set(SOURCES
     src/Robot/RobotDiscovery.cpp
     src/Robot/RobotManager.cpp
     src/Robot/RobotPlacementController.cpp
+    src/Ros/QoSProfiles.cpp
     src/Ros/RosNodeManager.cpp
+    src/Services/RobotServiceBridge.cpp
+    src/Services/RobotServiceClient.cpp
     src/Settings/DeveloperSettings.cpp
     src/Settings/UiSizingSettings.cpp
     src/User/Patient.cpp
@@ -233,6 +235,7 @@ add_executable(test_node_node
     test/test_node/src/main.cpp
     test/test_node/src/TestNode.cpp
     test/test_node/include/TestNode.hpp
+    src/Ros/QoSProfiles.cpp
 )
 
 # Include directories for test_node

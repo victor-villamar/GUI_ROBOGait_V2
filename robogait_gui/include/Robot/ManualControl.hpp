@@ -1,13 +1,15 @@
 #pragma once
 
-#include <QObject>
-#include <QString>
 #include <memory>
 
-#include <geometry_msgs/msg/twist.hpp>
+#include <QObject>
+#include <QString>
+
 #include <rclcpp/node.hpp>
 #include <rclcpp/publisher.hpp>
 #include <rclcpp/timer.hpp>
+
+#include <geometry_msgs/msg/twist.hpp>
 
 namespace ROBOGait
 {

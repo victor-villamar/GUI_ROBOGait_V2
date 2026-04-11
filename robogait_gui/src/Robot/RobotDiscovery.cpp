@@ -1,7 +1,9 @@
+#include <utility>
+
 #include <QDebug>
 #include <QSet>
+
 #include <rclcpp/node_interfaces/node_graph_interface.hpp>
-#include <utility>
 
 #include "Robot/RobotDiscovery.hpp"
 #include "Ros/TopicsName.hpp"

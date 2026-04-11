@@ -1,5 +1,5 @@
 import QtQuick 2.15
-import "qrc:/Common"
+import "qrc:/Components"
 
 RegisterPageForm {
     id: registerPage
