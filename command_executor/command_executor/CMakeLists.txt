@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Find packages
 find_package(ament_cmake_ros REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
 find_package(yaml-cpp REQUIRED)
@@ -31,6 +32,7 @@ ament_target_dependencies(${PROJECT_NAME}_node
     rclcpp
     ament_index_cpp
     command_executor_msgs
+    sensor_msgs
 )
 
 target_include_directories(${PROJECT_NAME}_node PRIVATE

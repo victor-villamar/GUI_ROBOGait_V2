@@ -130,6 +130,8 @@ void CommandExecutor::handleGetMapData(const std::shared_ptr<command_executor_ms
   RCLCPP_INFO(get_logger(), "[CommandExecutor::handleGetMapData] Successfully retrieved map data for %s", map_name.c_str());
 }
 
+void CommandExecutor::callbackBatteryStatus(const sensor_msgs::msg::BatteryState::SharedPtr msg) { robot_info_.battery = msg->percentage * 100.0f; }
+
 void CommandExecutor::mainLoop()
 {
   command_executor_msgs::msg::RobotStatus msg;
@@ -194,7 +196,6 @@ bool CommandExecutor::loadConfig()
 
   const int id_value = loader.getValue<int>("robot_info.id", 0);
   robot_info_.id = static_cast<uint8_t>(std::max(0, id_value));
-  robot_info_.battery = 0.0; // TODO: subscribe to robot battery status
   robot_info_.ns = loader.getValue<std::string>("robot_info.namespace", "");
 
   robot_info_.version = loader.getValue<std::string>("robot_info.version", "");
@@ -225,6 +226,9 @@ bool CommandExecutor::createRosInterfaces()
 
   pub_robot_status_ = create_publisher<command_executor_msgs::msg::RobotStatus>(T_ROBOT_STATUS, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT());
 
+  sub_battery_status_ = create_subscription<sensor_msgs::msg::BatteryState>(T_BATTERY_STATUS, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(),
+                                                                            std::bind(&CommandExecutor::callbackBatteryStatus, this, std::placeholders::_1));
+
   timer_ = create_wall_timer(std::chrono::milliseconds(TIME_MAIN_LOOP), std::bind(&CommandExecutor::mainLoop, this)); // one-shot: false, autostart: true
 
   if (!srv_cmd_)
@@ -242,6 +246,13 @@ bool CommandExecutor::createRosInterfaces()
     RCLCPP_ERROR(get_logger(), "[CommandExecutor::createRosInterfaces] Failed to create publisher");
     return false;
   }
+
+  if (!sub_battery_status_)
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::createRosInterfaces] Failed to create battery status subscriber");
+    return false;
+  }
+
   if (!timer_)
   {
     RCLCPP_ERROR(get_logger(), "[CommandExecutor::createRosInterfaces] Failed to create timer");

@@ -8,11 +8,13 @@
 #include <rclcpp/node_options.hpp>
 #include <rclcpp/publisher.hpp>
 #include <rclcpp/service.hpp>
+#include <rclcpp/subscription.hpp>
 #include <rclcpp/timer.hpp>
 
 #include <command_executor_msgs/msg/robot_status.hpp>
 #include <command_executor_msgs/srv/cmd.hpp>
 #include <command_executor_msgs/srv/get_map_data.hpp>
+#include <sensor_msgs/msg/battery_state.hpp>
 
 #include "ProcessManager.hpp"
 #include "YamlLoader.hpp"
@@ -86,6 +88,13 @@ private:
                         std::shared_ptr<command_executor_msgs::srv::GetMapData::Response> response);
 
   /**
+   * @brief Callback for battery status updates
+   *
+   * @param msg The battery status message
+   */
+  void callbackBatteryStatus(const sensor_msgs::msg::BatteryState::SharedPtr msg);
+
+  /**
    * @brief Main loop for processing commands
    */
   void mainLoop();
@@ -142,6 +151,7 @@ private:
   rclcpp::Service<command_executor_msgs::srv::Cmd>::SharedPtr srv_cmd_;                    /**< Command service */
   rclcpp::Service<command_executor_msgs::srv::GetMapData>::SharedPtr srv_get_map_data_;    /**< Get map data service */
   rclcpp::Publisher<command_executor_msgs::msg::RobotStatus>::SharedPtr pub_robot_status_; /**< Robot status publisher */
+  rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr sub_battery_status_;     /**< Battery status subscriber */
   rclcpp::TimerBase::SharedPtr timer_;                                                     /**< Timer */
 
   std::vector<std::string> allow_list_; /**< List of allowed commands */
