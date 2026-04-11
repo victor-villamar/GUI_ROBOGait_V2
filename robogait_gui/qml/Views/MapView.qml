@@ -30,7 +30,6 @@ MapViewForm {
     property bool waitingForResetStop: false
     property bool waitingForResetStart: false
     property bool pendingQuit: false
-
     signal appExitFinished()
 
     // Bind to MapVisualizationManager properties
@@ -210,6 +209,10 @@ MapViewForm {
         if (busyDialog.visible) {
             busyDialog.close()
         }
+
+        if (emergencyLatched) {
+            setEmergencyLatched(false)
+        }
     }
 
     function beginResetMapping() {
@@ -262,6 +265,35 @@ MapViewForm {
         }
     }
 
+    function publishEmergencyZero() {
+        if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
+            var manualControl = userSession.rosManager.robotManager.manualControl
+            if (manualControl) {
+                manualControl.updateVelocity(0.0, 0.0)
+            }
+        }
+    }
+
+    function setEmergencyLatched(active) {
+        emergencyLatched = active
+        if (emergencyButton.checked !== active) {
+            emergencyButton.checked = active
+        }
+        if (active) {
+            emergencyStop()
+            publishEmergencyZero()
+        }
+        else {
+            if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
+                var manualControl = userSession.rosManager.robotManager.manualControl
+                if (manualControl) {
+                    manualControl.updateVelocity(0.0, 0.0)
+                    manualControl.stopPublishing()
+                }
+            }
+        }
+    }
+
     function handleBackNavigation() {
         if (!confirmBackNavigation) {
             return false
@@ -308,6 +340,10 @@ MapViewForm {
 
             userSession.rosManager.robotManager.disableManualControl()
         }
+
+        if (emergencyLatched) {
+            setEmergencyLatched(false)
+        }
     }
 
     // Info button
@@ -316,7 +352,7 @@ MapViewForm {
     }
 
     emergencyButton.onClicked: {
-        emergencyStop()
+        setEmergencyLatched(emergencyButton.checked)
     }
 
     lockButton.onClicked: {

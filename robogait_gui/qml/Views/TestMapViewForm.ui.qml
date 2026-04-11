@@ -29,6 +29,8 @@ Rectangle {
     property real headerTopInsetPx: 0
     property real buttonHeightPx: 0
     property real wheelSizePx: 0
+    property real emergencyButtonSizePx: iconButtonSizePx * 3
+    property real emergencyIconSizePx: emergencyButtonSizePx * 0.6
     property real headerButtonSpacing: 8
 
     signal confirmPlacementRequested()
@@ -120,36 +122,6 @@ Rectangle {
                     verticalAlignment: Text.AlignVCenter
                 }
 
-                Button {
-                    id: emergencyButton
-                    Layout.preferredWidth: root.iconButtonSizePx
-                    Layout.preferredHeight: root.iconButtonSizePx
-                    Layout.alignment: Qt.AlignVCenter
-                    padding: 0
-                    leftPadding: 0
-                    rightPadding: 0
-                    topPadding: 0
-                    bottomPadding: 0
-
-                    background: Rectangle {
-                        radius: width / 2
-                        color: "transparent"
-                    }
-
-                    contentItem: Item {
-                        anchors.fill: parent
-
-                        Image {
-                            source: "qrc:/qmlresources/icons/emergency_stop.svg"
-                            width: root.iconGlyphSizePx
-                            height: root.iconGlyphSizePx
-                            anchors.centerIn: parent
-                            fillMode: Image.PreserveAspectFit
-                            smooth: true
-                        }
-                    }
-                }
-
                 Item {
                     Layout.preferredWidth: 10
                     Layout.preferredHeight: root.iconButtonSizePx
@@ -186,6 +158,36 @@ Rectangle {
 
 
 
+
+            Button {
+                id: emergencyButton
+                width: root.emergencyButtonSizePx > 0 ? root.emergencyButtonSizePx : root.iconButtonSizePx * 3
+                height: width
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.rightMargin: 21
+                anchors.topMargin: 21
+                padding: 0
+                checkable: true
+                z: 80
+
+                background: Rectangle {
+                    radius: width / 2
+                    color: emergencyButton.checked ? "#7a8a93" : "transparent"
+                    border.color: emergencyButton.checked ? "#cbd6dc" : "transparent"
+                    border.width: emergencyButton.checked ? 2 : 0
+                }
+
+                contentItem: Image {
+                    source: "qrc:/qmlresources/icons/emergency_stop.svg"
+                    width: root.emergencyIconSizePx > 0 ? root.emergencyIconSizePx : root.iconGlyphSizePx * 3
+                    height: width
+                    anchors.centerIn: parent
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    opacity: emergencyButton.checked ? 0.6 : 1.0
+                }
+            }
 
             MapLayerItem {
                 id: mapLayerItem

@@ -26,6 +26,7 @@ TestMapViewForm {
 
     property bool exiting: false
     property bool exitAndQuit: false
+    property bool emergencyLatched: false
 
     signal appExitFinished()
 
@@ -195,6 +196,29 @@ TestMapViewForm {
         if (manualControl) {
             manualControl.updateVelocity(0.0, 0.0)
             manualControl.stopRobot()
+        }
+    }
+
+    function publishEmergencyZero() {
+        if (manualControl) {
+            manualControl.updateVelocity(0.0, 0.0)
+        }
+    }
+
+    function setEmergencyLatched(active) {
+        emergencyLatched = active
+        if (emergencyButton.checked !== active) {
+            emergencyButton.checked = active
+        }
+        if (active) {
+            emergencyStop()
+            publishEmergencyZero()
+        }
+        else {
+            if (manualControl) {
+                manualControl.updateVelocity(0.0, 0.0)
+                manualControl.stopPublishing()
+            }
         }
     }
 
@@ -667,6 +691,10 @@ TestMapViewForm {
                 mapVizManager.destroySubscriptions()
             }
         }
+
+        if (emergencyLatched) {
+            setEmergencyLatched(false)
+        }
     }
 
     infoButton.onClicked: {
@@ -674,7 +702,7 @@ TestMapViewForm {
     }
 
     emergencyButton.onClicked: {
-        emergencyStop()
+        setEmergencyLatched(emergencyButton.checked)
     }
 
     ConfirmationDialog {

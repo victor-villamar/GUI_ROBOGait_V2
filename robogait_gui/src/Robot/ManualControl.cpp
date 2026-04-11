@@ -102,6 +102,15 @@ void ManualControl::updateVelocity(double linear, double angular)
 
 void ManualControl::stopRobot() { updateVelocity(0.0, 0.0); }
 
+void ManualControl::stopPublishing()
+{
+  if (timer_cmd_vel_)
+  {
+    timer_cmd_vel_->cancel();
+    timer_active_ = false;
+  }
+}
+
 double ManualControl::getLinearVelocity() const { return linear_velocity_; }
 
 double ManualControl::getAngularVelocity() const { return angular_velocity_; }

@@ -96,8 +96,13 @@ public:
    */
   Q_INVOKABLE void stopRobot();
 
+  /**
+   * @brief Stops continuous publishing of velocity commands
+   */
+  Q_INVOKABLE void stopPublishing();
+
 signals:
-  void velocityChanged();
+  void velocityChanged(); // Signal emitted when the velocity is updated
 
 private:
   /**
