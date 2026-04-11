@@ -1,7 +1,7 @@
 import QtQuick 2.15
 
 import "qrc:/Views"
-import "qrc:/Common"
+import "qrc:/Components"
 import "qrc:/Dialogs"
 
 

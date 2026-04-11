@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
+import "qrc:/Application"
 
 ApplicationWindow {
     id: window
@@ -27,7 +28,7 @@ ApplicationWindow {
 
     Loader {
         id: inputPanelLoader
-        source: "VirtualKeyboardPanel.qml"
+        source: "qrc:/Application/VirtualKeyboardPanel.qml"
         asynchronous: false
         active: false
         

@@ -2,19 +2,20 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
 
-import "qrc:/Common"
+import "qrc:/Components"
 
 Page {
     id: root
 
-    property alias usernameField: usernameField
-    property alias passwordField: passwordField
-    property alias loginButton: loginButton
+    property alias nameField: nameField
+    property alias lastNameField: lastNameField
+
+    property alias guestButton: guestButton
     property alias authModeDropdown: authModeDropdown
     property real keyboardSafeArea: 0
     property int contentCenterOffset: 0
     property real formContentHeight: formColumn.implicitHeight
-    readonly property bool editingActive: usernameField.activeFocus || passwordField.activeFocus
+    readonly property bool editingActive: nameField.activeFocus || lastNameField.activeFocus
     readonly property bool compactInputsMode: editingActive || root.keyboardSafeArea > 0 || Qt.inputMethod.visible
     readonly property bool hasVerticalScroll: flick.contentHeight > flick.height + 1
     readonly property real dropdownHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.dropdownHeight, 0) : 50
@@ -87,18 +88,18 @@ Page {
                         width: formColumn.width
                         height: root.dropdownHeightPx
                         controlHeight: root.dropdownHeightPx
-                        currentMode: "login"
+                        currentMode: "guest"
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
 
                     TextField {
-                        id: usernameField
+                        id: nameField
                         width: formColumn.width
                         height: root.inputHeightPx
                         font.pointSize: 20
                         color: "#000000"
                         placeholderTextColor: "#808080"
-                        placeholderText: qsTr("Usuario")
+                        placeholderText: qsTr("Nombre")
                         background: Rectangle {
                             radius: 10
                             color: "#ffffff"
@@ -107,14 +108,13 @@ Page {
                     }
 
                     TextField {
-                        id: passwordField
+                        id: lastNameField
                         width: formColumn.width
                         height: root.inputHeightPx
                         font.pointSize: 20
                         color: "#000000"
                         placeholderTextColor: "#808080"
-                        echoMode: TextInput.Password
-                        placeholderText: qsTr("Contraseña")
+                        placeholderText: qsTr("Apellidos")
                         background: Rectangle {
                             radius: 10
                             color: "#ffffff"
@@ -123,17 +123,17 @@ Page {
                     }
 
                     Button {
-                        id: loginButton
+                        id: guestButton
                         width: formColumn.width
                         height: root.buttonHeightPx
-                        text: qsTr("Iniciar sesión")
+                        text: qsTr("Entrar como invitado")
                         font.capitalization: Font.AllUppercase
                         font.bold: true
-                        font.pointSize: 22
+                        font.pointSize: 18
 
                         contentItem: Text {
-                            text: loginButton.text
-                            font: loginButton.font
+                            text: guestButton.text
+                            font: guestButton.font
                             color: "#ffffff"
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
