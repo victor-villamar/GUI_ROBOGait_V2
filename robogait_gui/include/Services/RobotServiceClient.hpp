@@ -1,9 +1,11 @@
 #pragma once
 
 #include <chrono>
+#include <functional>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <rclcpp/callback_group.hpp>
 #include <rclcpp/client.hpp>
@@ -22,15 +24,15 @@ namespace ROBOGait
 {
 namespace ros
 {
-namespace executor
+namespace service
 {
 /**
- * @brief Client class to execute commands on the ROS2 side
+ * @brief Client class to interact with robot services
  *
  * This class manages the execution of commands. It interacts with a ROS2 service to send command
  * requests and monitors the health of the nodes associated with the commands.
  */
-class CommandExecutorClient
+class RobotServiceClient
 {
 public:
   /**
@@ -75,18 +77,18 @@ public:
   };
 
   /**
-   * @brief Get the singleton instance of the CommandExecutorClient
+   * @brief Get the singleton instance of the RobotServiceClient
    *
    * @return The singleton instance
    */
-  static CommandExecutorClient& getInstance();
+  static RobotServiceClient& getInstance();
 
   /** Delete copy constructor and assignment operator */
-  CommandExecutorClient(const CommandExecutorClient&) = delete;
-  CommandExecutorClient& operator=(const CommandExecutorClient&) = delete;
+  RobotServiceClient(const RobotServiceClient&) = delete;
+  RobotServiceClient& operator=(const RobotServiceClient&) = delete;
 
   /**
-   * @brief Initialize the CommandExecutorClient
+   * @brief Initialize the RobotServiceClient
    *
    * @param parent_node The parent ROS2 node
    *
@@ -95,7 +97,7 @@ public:
   bool initialize(rclcpp::Node* parent_node);
 
   /**
-   * @brief Check if the CommandExecutorClient is initialized
+   * @brief Check if the RobotServiceClient is initialized
    *
    * @return true if the client is initialized, false otherwise
    */
@@ -237,14 +239,14 @@ private:
   };
 
   /**
-   * @brief Constructor of the CommandExecutorClient class
+   * @brief Constructor of the RobotServiceClient class
    */
-  CommandExecutorClient();
+  RobotServiceClient();
 
   /**
-   * @brief Destructor of the CommandExecutorClient class
+   * @brief Destructor of the RobotServiceClient class
    */
-  ~CommandExecutorClient() = default;
+  ~RobotServiceClient() = default;
 
   /**
    * @brief Load commands from the YAML configuration file
@@ -472,6 +474,6 @@ private:
   static constexpr std::chrono::milliseconds MAP_SAVER_FORCE_STOP_DELAY = std::chrono::milliseconds(2000);         /**< Map saver force stop delay */
   static constexpr std::chrono::milliseconds MAP_SAVER_STARTUP_ASSUME_STOP_DELAY = std::chrono::milliseconds(500); /**< Map saver startup assume stop delay */
 };
-} // namespace executor
+} // namespace service
 } // namespace ros
 } // namespace ROBOGait
