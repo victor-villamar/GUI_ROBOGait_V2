@@ -6,7 +6,7 @@
 
 // Topics
 #define T_CMD_VEL                   "/cmd_vel"
-#define T_ROBOT_STATUS              "/robot_status"
+#define T_ROBOT_STATUS              "/" COMMAND_EXECUTOR"/robot_status"
 #define T_MAP                       "/map"
 #define T_MAP_UPDATES               "/map_updates"
 #define T_SCAN                      "/scan"

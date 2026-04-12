@@ -1,9 +1,11 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 
 #include <QObject>
 #include <QString>
+#include <QVariantList>
 
 #include <rclcpp/callback_group.hpp>
 #include <rclcpp/node.hpp>
@@ -52,6 +54,18 @@ public:
              READ getSelectedRobotDisplayName
              NOTIFY selectedRobotDisplayNameChanged)
 
+  Q_PROPERTY(int batteryLevelTrunc
+             READ getBatteryLevelTrunc
+             NOTIFY robotStatusChanged)
+
+  Q_PROPERTY(QString batteryIcon
+             READ getBatteryIcon
+             NOTIFY robotStatusChanged)
+
+  Q_PROPERTY(QVariantList robotStatusItems
+             READ getRobotStatusItems
+             NOTIFY robotStatusChanged)
+
   Q_PROPERTY(ROBOGait::robot::control::ManualControl* manualControl
              READ getManualControl
              CONSTANT)
@@ -78,6 +92,21 @@ public:
    * @brief Get the display name of the selected robot
    */
   QString getSelectedRobotDisplayName() const;
+
+  /**
+   * @brief Get battery level truncated to 5% steps
+   */
+  int getBatteryLevelTrunc() const;
+
+  /**
+   * @brief Get battery icon path for the truncated level
+   */
+  QString getBatteryIcon() const;
+
+  /**
+   * @brief Get robot status fields as a list of label/value pairs
+   */
+  QVariantList getRobotStatusItems() const;
 
   /**
    * @brief Get the manual control instance
@@ -176,8 +205,27 @@ signals:
   void selectedRobotNamespaceChanged();   /**< Emitted when the selected robot namespace changes */
   void selectedRobotDisplayNameChanged(); /**< Emitted when the selected robot display name changes */
   void robotDisconnected();               /**< Emitted when robot is disconnected due to timeout */
+  void robotStatusChanged();              /**< Emitted when robot status fields are updated */
 
 private:
+  /**
+   * @brief Struct to hold robot status information
+   *
+   * @param id Robot ID
+   * @param ns Robot namespace
+   * @param version Robot version
+   * @param hardware_id Robot hardware ID
+   * @param serial_number Robot serial number
+   */
+  struct RobotStatusInfo
+  {
+    uint8_t id;
+    QString ns;
+    QString version;
+    uint32_t hardware_id;
+    QString serial_number;
+  };
+
   /**
    * @brief Normalize the robot namespace
    *
@@ -217,6 +265,16 @@ private:
    */
   void stopMonitoring();
 
+  /**
+   * @brief Append a label/value pair to the list
+   */
+  void addStatusItem(QVariantList& items, const QString& label, const QString& value) const;
+
+  /**
+   * @brief Build a list of label/value pairs for QML
+   */
+  QVariantList buildStatusItems(const RobotStatusInfo& info) const;
+
   rclcpp::Node* parent_node_; /**< Pointer to the parent ROS node */
 
   std::unique_ptr<ROBOGait::robot::control::ManualControl> manual_control_;                    /**< Manual control instance */
@@ -233,7 +291,12 @@ private:
   rclcpp::TimerBase::SharedPtr timer_robot_timeout_;                                                /**< Timer for robot disconnection */
   rclcpp::CallbackGroup::SharedPtr cb_group_;                                                       /**< Callback group for subscriptions */
   rclcpp::Time last_robot_message_time_;                                                            /**< Timestamp of last robot message */
-  bool is_monitoring_;                                                                              /**< Flag indicating if monitoring is active */
+
+  bool is_monitoring_;                /**< Flag indicating if monitoring is active */
+  RobotStatusInfo robot_status_info_; /**< Latest robot status information */
+  int battery_level_trunc_;           /**< Battery level truncated to 5% steps */
+  QString battery_icon_;              /**< Battery icon path */
+  QVariantList robot_status_items_;   /**< Status items for QML */
 
   static constexpr double TIMEOUT_SECONDS = 3.0; /**< Timeout in seconds for robot disconnection */
 };

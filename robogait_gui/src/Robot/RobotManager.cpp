@@ -1,7 +1,9 @@
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 
 #include <QDebug>
+#include <QVariantMap>
 
 #include "Map/Utils/Utils.hpp"
 #include "Robot/RobotManager.hpp"
@@ -20,7 +22,9 @@ RobotManager::RobotManager() :
     sub_robot_status_(nullptr),
     timer_robot_timeout_(nullptr),
     cb_group_(nullptr),
-    is_monitoring_(false)
+    is_monitoring_(false),
+    battery_level_trunc_(0),
+    battery_icon_("qrc:/qmlresources/icons/color/battery_0.svg")
 {
   qInfo() << "[RobotManager::RobotManager] RobotManager created";
 
@@ -46,6 +50,54 @@ QString RobotManager::getSelectedRobotDisplayName() const
     ns.remove(0, 1);
   }
   return ns.replace("_", " ");
+}
+
+int RobotManager::getBatteryLevelTrunc() const { return battery_level_trunc_; }
+
+QString RobotManager::getBatteryIcon() const { return battery_icon_; }
+
+QVariantList RobotManager::getRobotStatusItems() const { return robot_status_items_; }
+
+ROBOGait::robot::control::ManualControl* RobotManager::getManualControl() const { return manual_control_.get(); }
+
+ROBOGait::map::manager::MapVisualizationManager* RobotManager::getMapVisualizationManager()
+{
+  if (!map_visualization_manager_)
+  {
+    map_visualization_manager_ = std::make_unique<ROBOGait::map::manager::MapVisualizationManager>();
+
+    if (parent_node_)
+    {
+      map_visualization_manager_->setROSNode(parent_node_);
+      if (!selected_robot_namespace_.isEmpty())
+      {
+        map_visualization_manager_->setSelectedRobot(selected_robot_namespace_, use_namespace_discovery_);
+      }
+    }
+  }
+
+  return map_visualization_manager_.get();
+}
+
+ROBOGait::qml::service::RobotServiceBridge* RobotManager::getRobotServiceBridge()
+{
+  if (!robot_service_bridge_)
+  {
+    robot_service_bridge_ = std::make_unique<ROBOGait::qml::service::RobotServiceBridge>();
+  }
+  return robot_service_bridge_.get();
+}
+
+ROBOGait::robot::RobotPlacementController* RobotManager::getRobotPlacementController()
+{
+  if (!robot_placement_controller_)
+  {
+    robot_placement_controller_ = std::make_unique<ROBOGait::robot::RobotPlacementController>();
+  }
+
+  robot_placement_controller_->setMapVisualizationManager(getMapVisualizationManager());
+
+  return robot_placement_controller_.get();
 }
 
 void RobotManager::setROSNode(rclcpp::Node* parent_node)
@@ -208,82 +260,25 @@ void RobotManager::setUseTopicFilter(bool use_topic_filter)
   }
 }
 
-QString RobotManager::normalizeNamespace(const QString& robot_namespace) const
+void RobotManager::checkRobotAvailability(const QStringList& available_robots)
 {
-  QString normalized = robot_namespace.trimmed();
-  if (normalized.isEmpty())
+  if (use_topic_filter_)
   {
-    qWarning() << "[RobotManager::normalizeNamespace] Empty namespace provided.";
-    return QString();
-  }
-  if (!normalized.startsWith('/'))
-  {
-    normalized.prepend('/');
+    return;
   }
 
-  while (normalized.size() > 1 && normalized.endsWith('/'))
+  if (selected_robot_namespace_.isEmpty())
   {
-    normalized.chop(1);
+    qWarning() << "[RobotManager::checkRobotAvailability] No robot selected";
+    return;
   }
 
-  normalized.replace(" ", "_");
-
-  return normalized;
-}
-
-QString RobotManager::buildTopicName(const QString& topic_suffix) const
-{
-  if (use_namespace_discovery_)
+  if (!available_robots.contains(selected_robot_namespace_))
   {
-    return selected_robot_namespace_ + topic_suffix;
+    qWarning() << "[RobotManager::checkRobotAvailability] Robot" << selected_robot_namespace_ << "is no longer available in the graph";
+
+    emit robotDisconnected();
   }
-
-  else
-  {
-    return topic_suffix;
-  }
-}
-
-ROBOGait::robot::control::ManualControl* RobotManager::getManualControl() const { return manual_control_.get(); }
-
-ROBOGait::map::manager::MapVisualizationManager* RobotManager::getMapVisualizationManager()
-{
-  if (!map_visualization_manager_)
-  {
-    map_visualization_manager_ = std::make_unique<ROBOGait::map::manager::MapVisualizationManager>();
-
-    if (parent_node_)
-    {
-      map_visualization_manager_->setROSNode(parent_node_);
-      if (!selected_robot_namespace_.isEmpty())
-      {
-        map_visualization_manager_->setSelectedRobot(selected_robot_namespace_, use_namespace_discovery_);
-      }
-    }
-  }
-
-  return map_visualization_manager_.get();
-}
-
-ROBOGait::qml::service::RobotServiceBridge* RobotManager::getRobotServiceBridge()
-{
-  if (!robot_service_bridge_)
-  {
-    robot_service_bridge_ = std::make_unique<ROBOGait::qml::service::RobotServiceBridge>();
-  }
-  return robot_service_bridge_.get();
-}
-
-ROBOGait::robot::RobotPlacementController* RobotManager::getRobotPlacementController()
-{
-  if (!robot_placement_controller_)
-  {
-    robot_placement_controller_ = std::make_unique<ROBOGait::robot::RobotPlacementController>();
-  }
-
-  robot_placement_controller_->setMapVisualizationManager(getMapVisualizationManager());
-
-  return robot_placement_controller_.get();
 }
 
 void RobotManager::enableManualControl()
@@ -362,6 +357,108 @@ void RobotManager::publishInitialPose(double x, double y, double theta)
   pub_pose_initialize_->publish(msg);
 }
 
+QString RobotManager::normalizeNamespace(const QString& robot_namespace) const
+{
+  QString normalized = robot_namespace.trimmed();
+  if (normalized.isEmpty())
+  {
+    qWarning() << "[RobotManager::normalizeNamespace] Empty namespace provided.";
+    return QString();
+  }
+  if (!normalized.startsWith('/'))
+  {
+    normalized.prepend('/');
+  }
+
+  while (normalized.size() > 1 && normalized.endsWith('/'))
+  {
+    normalized.chop(1);
+  }
+
+  normalized.replace(" ", "_");
+
+  return normalized;
+}
+
+QString RobotManager::buildTopicName(const QString& topic_suffix) const
+{
+  if (use_namespace_discovery_)
+  {
+    return selected_robot_namespace_ + topic_suffix;
+  }
+
+  else
+  {
+    return topic_suffix;
+  }
+}
+
+void RobotManager::callbackRobotStatus(const command_executor_msgs::msg::RobotStatus::SharedPtr msg)
+{
+  if (parent_node_ == nullptr)
+  {
+    qCritical() << "[RobotManager::callbackRobotStatus] Received message but parent node is null, ignoring";
+    return;
+  }
+
+  if (!is_monitoring_)
+  {
+    qCritical() << "[RobotManager::callbackRobotStatus] Received message while monitoring is inactive, ignoring";
+    return;
+  }
+
+  if (!msg)
+  {
+    qWarning() << "[RobotManager::callbackRobotStatus] Received null message, ignoring";
+    return;
+  }
+
+  last_robot_message_time_ = parent_node_->now();
+
+  robot_status_info_.id = msg->id;
+  robot_status_info_.ns = QString::fromStdString(msg->ns);
+  robot_status_info_.version = QString::fromStdString(msg->version);
+  robot_status_info_.hardware_id = msg->hardware_id;
+  robot_status_info_.serial_number = QString::fromStdString(msg->serial_number);
+
+  const float clamped_battery = std::max(0.0f, std::min(100.0f, msg->battery));
+  const int bucket = static_cast<int>(std::floor(clamped_battery / 5.0f)) * 5;
+  battery_level_trunc_ = std::max(0, std::min(100, bucket));
+  battery_icon_ = QString("qrc:/qmlresources/icons/color/battery_%1.svg").arg(battery_level_trunc_);
+
+  robot_status_items_ = buildStatusItems(robot_status_info_);
+
+  emit robotStatusChanged();
+}
+
+void RobotManager::callbackRobotTimeoutTimer()
+{
+  if (parent_node_ == nullptr)
+  {
+    qCritical() << "[RobotManager::callbackRobotTimeoutTimer] Cannot check timeout: null parent node";
+    return;
+  }
+
+  if (!is_monitoring_)
+  {
+    qCritical() << "[RobotManager::callbackRobotTimeoutTimer] Cannot check timeout: monitoring is inactive";
+    return;
+  }
+
+  const auto now = parent_node_->now();
+  const auto elapsed = (now - last_robot_message_time_).seconds();
+
+  if (elapsed > TIMEOUT_SECONDS)
+  {
+    qWarning() << "[RobotManager::callbackRobotTimeoutTimer] Robot timeout detected!"
+               << "Robot:" << selected_robot_namespace_ << "has disconnected after" << elapsed << "seconds";
+
+    stopMonitoring();
+
+    emit robotDisconnected();
+  }
+}
+
 void RobotManager::startMonitoring()
 {
   if (parent_node_ == nullptr)
@@ -376,15 +473,14 @@ void RobotManager::startMonitoring()
     return;
   }
 
-  std::string full_topic;
-  if (use_namespace_discovery_)
+  ROBOGait::context::RobotContext context;
+  if (!context.setSelectedRobot(selected_robot_namespace_, use_namespace_discovery_))
   {
-    full_topic = selected_robot_namespace_.toStdString() + T_ROBOT_STATUS;
+    qCritical() << "[RobotManager::startMonitoring] Cannot start monitoring: Invalid robot context";
+    return;
   }
-  else
-  {
-    full_topic = T_ROBOT_STATUS;
-  }
+
+  const std::string full_topic = context.resolveTopic(T_ROBOT_STATUS);
 
   qInfo() << "[RobotManager::startMonitoring] Starting monitoring for:" << full_topic.c_str()
           << "(mode:" << (use_namespace_discovery_ ? "namespace" : "node name") << ")";
@@ -423,70 +519,22 @@ void RobotManager::stopMonitoring()
   qInfo() << "[RobotManager::stopMonitoring] Monitoring stopped";
 }
 
-void RobotManager::checkRobotAvailability(const QStringList& available_robots)
+void RobotManager::addStatusItem(QVariantList& items, const QString& label, const QString& value) const
 {
-  if (use_topic_filter_)
-  {
-    return;
-  }
-
-  if (selected_robot_namespace_.isEmpty())
-  {
-    qWarning() << "[RobotManager::checkRobotAvailability] No robot selected";
-    return;
-  }
-
-  if (!available_robots.contains(selected_robot_namespace_))
-  {
-    qWarning() << "[RobotManager::checkRobotAvailability] Robot" << selected_robot_namespace_ << "is no longer available in the graph";
-
-    emit robotDisconnected();
-  }
+  QVariantMap row;
+  row.insert("label", label);
+  row.insert("value", value);
+  items.append(row);
 }
 
-void RobotManager::callbackRobotStatus(const command_executor_msgs::msg::RobotStatus::SharedPtr msg)
+QVariantList RobotManager::buildStatusItems(const ROBOGait::robot::manager::RobotManager::RobotStatusInfo& info) const
 {
-  (void)msg; // TODO: Implement handling of RobotStatus messages
+  QVariantList items;
+  addStatusItem(items, "ID", QString::number(static_cast<int>(info.id)));
+  addStatusItem(items, "Namespace", info.ns);
+  addStatusItem(items, "Version", info.version);
+  addStatusItem(items, "Hardware ID", QString::number(static_cast<qulonglong>(info.hardware_id)));
+  addStatusItem(items, "Serial", info.serial_number);
 
-  if (parent_node_ == nullptr)
-  {
-    qCritical() << "[RobotManager::callbackRobotStatus] Received message but parent node is null, ignoring";
-    return;
-  }
-
-  if (!is_monitoring_)
-  {
-    qCritical() << "[RobotManager::callbackRobotStatus] Received message while monitoring is inactive, ignoring";
-    return;
-  }
-
-  last_robot_message_time_ = parent_node_->now();
-}
-
-void RobotManager::callbackRobotTimeoutTimer()
-{
-  if (parent_node_ == nullptr)
-  {
-    qCritical() << "[RobotManager::callbackRobotTimeoutTimer] Cannot check timeout: null parent node";
-    return;
-  }
-
-  if (!is_monitoring_)
-  {
-    qCritical() << "[RobotManager::callbackRobotTimeoutTimer] Cannot check timeout: monitoring is inactive";
-    return;
-  }
-
-  const auto now = parent_node_->now();
-  const auto elapsed = (now - last_robot_message_time_).seconds();
-
-  if (elapsed > TIMEOUT_SECONDS)
-  {
-    qWarning() << "[RobotManager::callbackRobotTimeoutTimer] Robot timeout detected!"
-               << "Robot:" << selected_robot_namespace_ << "has disconnected after" << elapsed << "seconds";
-
-    stopMonitoring();
-
-    emit robotDisconnected();
-  }
+  return items;
 }
