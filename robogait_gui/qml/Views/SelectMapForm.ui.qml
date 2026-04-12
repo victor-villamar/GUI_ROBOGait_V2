@@ -59,7 +59,7 @@ Item {
             }
 
             Image {
-                source: "qrc:/qmlresources/icons/plus_solid.svg"
+                source: "qrc:/qmlresources/icons/color/plus_solid.svg"
                 sourceSize.width: root.iconGlyphPx
                 sourceSize.height: root.iconGlyphPx
                 fillMode: Image.PreserveAspectFit
@@ -124,7 +124,7 @@ Item {
                         background: Rectangle { color: "transparent" }
 
                         contentItem: Image {
-                            source: "qrc:/qmlresources/icons/trash_solid.svg"
+                            source: "qrc:/qmlresources/icons/color/trash_solid.svg"
                             sourceSize.width: root.iconGlyphPx
                             sourceSize.height: root.iconGlyphPx
                             fillMode: Image.PreserveAspectFit

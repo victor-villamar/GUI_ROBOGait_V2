@@ -81,7 +81,7 @@ Dialog {
                 anchors.centerIn: parent
                 width: 14
                 height: 14
-                source: "qrc:/qmlresources/icons/xmark_solid.svg"
+                source: "qrc:/qmlresources/icons/black/xmark_solid.svg"
                 fillMode: Image.PreserveAspectFit
                 smooth: true
             }
@@ -108,7 +108,7 @@ Dialog {
                 width: 40
                 height: 40
                 anchors.horizontalCenter: parent.horizontalCenter
-                source: "qrc:/qmlresources/icons/circle_question.svg"
+                source: "qrc:/qmlresources/icons/color/circle_question.svg"
                 fillMode: Image.PreserveAspectFit
                 smooth: true
                 opacity: 0.85

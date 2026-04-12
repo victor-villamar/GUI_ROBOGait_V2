@@ -143,7 +143,7 @@ Rectangle {
         }
 
         contentItem: Image {
-            source: "qrc:/qmlresources/icons/circle_info_solid.svg"
+            source: "qrc:/qmlresources/icons/white/circle_info_solid.svg"
             width: rectangle.iconGlyphSizePx
             height: rectangle.iconGlyphSizePx
             anchors.centerIn: parent
@@ -194,7 +194,7 @@ Rectangle {
                 anchors.centerIn: parent
                 width: rectangle.iconGlyphSizePx
                 height: rectangle.iconGlyphSizePx
-                source: manualUnlocked ? "qrc:/qmlresources/icons/unlock.svg" : "qrc:/qmlresources/icons/lock.svg"
+                source: manualUnlocked ? "qrc:/qmlresources/icons/white/unlock.svg" : "qrc:/qmlresources/icons/white/lock.svg"
                 fillMode: Image.PreserveAspectFit
                 smooth: true
             }

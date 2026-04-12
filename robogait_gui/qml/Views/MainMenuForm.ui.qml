@@ -231,7 +231,7 @@ Item {
             }
 
             contentItem: Image {
-                source: "qrc:/qmlresources/icons/circle_info_solid.svg"
+                source: "qrc:/qmlresources/icons/white/circle_info_solid.svg"
                 width: root.iconGlyphSizePx
                 height: root.iconGlyphSizePx
                 anchors.centerIn: parent

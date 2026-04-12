@@ -141,7 +141,7 @@ Item {
                     background: null
 
                     contentItem: Image {
-                        source: "qrc:/qmlresources/icons/shutdown.svg"
+                        source: "qrc:/qmlresources/icons/white/shutdown.svg"
                         width: home.iconGlyphSizePx
                         height: home.iconGlyphSizePx
                         anchors.centerIn: parent

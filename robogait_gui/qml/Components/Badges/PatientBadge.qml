@@ -83,7 +83,7 @@ Item {
 
                 Image {
                     anchors.fill: parent
-                    source: "qrc:/qmlresources/icons/patient.svg"
+                    source: "qrc:/qmlresources/icons/white/patient.svg"
                     sourceSize.width: root.badgeIconPx
                     sourceSize.height: root.badgeIconPx
                     fillMode: Image.PreserveAspectFit

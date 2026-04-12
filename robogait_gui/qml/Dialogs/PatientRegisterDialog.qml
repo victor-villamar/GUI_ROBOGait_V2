@@ -79,7 +79,7 @@ Dialog {
             }
 
             contentItem: Image {
-                source: "qrc:/qmlresources/icons/xmark_solid.svg"
+                source: "qrc:/qmlresources/icons/black/xmark_solid.svg"
                 fillMode: Image.PreserveAspectFit
                 sourceSize.width: 14
                 sourceSize.height: 14

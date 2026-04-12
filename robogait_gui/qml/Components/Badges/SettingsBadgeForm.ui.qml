@@ -22,7 +22,7 @@ Item {
         
         enabled: root.enabled
         
-        icon.source: "qrc:/qmlresources/icons/config.svg"
+        icon.source: "qrc:/qmlresources/icons/white/config.svg"
         icon.width: iconGlyphPx
         icon.height: iconGlyphPx
         icon.color: "#ffffff"

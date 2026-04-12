@@ -70,7 +70,7 @@ Dialog {
                 }
 
                 contentItem: Image {
-                    source: "qrc:/qmlresources/icons/xmark_solid.svg"
+                    source: "qrc:/qmlresources/icons/black/xmark_solid.svg"
                     fillMode: Image.PreserveAspectFit
                     sourceSize.width: 12
                     sourceSize.height: 12
@@ -152,7 +152,7 @@ Dialog {
 
                     Image {
                         anchors.centerIn: parent
-                        source: previewPath !== "" ? previewPath : "qrc:/qmlresources/icons/map.svg"
+                        source: previewPath !== "" ? previewPath : "qrc:/qmlresources/icons/color/map.svg"
                         width: parent.width * 0.9
                         height: parent.height * 0.9
                         opacity: previewPath !== "" ? 1.0 : 0.4

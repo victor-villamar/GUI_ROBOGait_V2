@@ -103,7 +103,7 @@ Rectangle {
                         anchors.fill: parent
 
                         Image {
-                            source: "qrc:/qmlresources/icons/circle_info_solid.svg"
+                            source: "qrc:/qmlresources/icons/white/circle_info_solid.svg"
                             width: root.iconGlyphSizePx
                             height: root.iconGlyphSizePx
                             anchors.centerIn: parent
@@ -251,7 +251,7 @@ Rectangle {
                 }
 
                 contentItem: Image {
-                    source: "qrc:/qmlresources/icons/emergency_stop.svg"
+                    source: "qrc:/qmlresources/icons/color/emergency_stop.svg"
                     width: root.emergencyIconSizePx > 0 ? root.emergencyIconSizePx : root.iconGlyphSizePx * 3
                     height: width
                     anchors.centerIn: parent
@@ -417,8 +417,8 @@ Rectangle {
 
                             contentItem: Image {
                                 source: manualUnlocked
-                                        ? "qrc:/qmlresources/icons/unlock.svg"
-                                        : "qrc:/qmlresources/icons/lock.svg"
+                                        ? "qrc:/qmlresources/icons/white/unlock.svg"
+                                        : "qrc:/qmlresources/icons/white/lock.svg"
                                 width: root.iconGlyphSizePx
                                 height: root.iconGlyphSizePx
                                 anchors.centerIn: parent
@@ -452,8 +452,8 @@ Rectangle {
                         width: root.iconGlyphSizePx
                         height: root.iconGlyphSizePx
                         source: joystickPanel.pinned
-                                ? "qrc:/qmlresources/icons/pin.svg"
-                                : "qrc:/qmlresources/icons/pin_empty.svg"
+                                ? "qrc:/qmlresources/icons/white/pin.svg"
+                                : "qrc:/qmlresources/icons/white/pin_empty.svg"
 
                         fillMode: Image.PreserveAspectFit
                         smooth: true
@@ -501,7 +501,7 @@ Rectangle {
                     }
 
                     contentItem: Image {
-                        source: "qrc:/qmlresources/icons/minus.svg"
+                        source: "qrc:/qmlresources/icons/white/minus.svg"
                         width: root.iconGlyphSizePx
                         height: root.iconGlyphSizePx
                         anchors.centerIn: parent
@@ -527,7 +527,7 @@ Rectangle {
                     }
 
                     contentItem: Image {
-                        source: "qrc:/qmlresources/icons/plus.svg"
+                        source: "qrc:/qmlresources/icons/white/plus.svg"
                         width: root.iconGlyphSizePx
                         height: root.iconGlyphSizePx
                         anchors.centerIn: parent
@@ -553,7 +553,7 @@ Rectangle {
                     }
 
                     contentItem: Image {
-                        source: "qrc:/qmlresources/icons/center_to_fit.svg"
+                        source: "qrc:/qmlresources/icons/white/center_to_fit.svg"
                         width: root.iconGlyphSizePx
                         height: root.iconGlyphSizePx
                         anchors.centerIn: parent
@@ -580,7 +580,7 @@ Rectangle {
                     }
 
                     contentItem: Image {
-                        source: "qrc:/qmlresources/icons/center_view.svg"
+                        source: "qrc:/qmlresources/icons/white/center_view.svg"
                         width: root.iconGlyphSizePx
                         height: root.iconGlyphSizePx
                         anchors.centerIn: parent

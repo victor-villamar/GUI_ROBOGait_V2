@@ -22,7 +22,7 @@ Item {
             id: backButton
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            icon.source: "qrc:/qmlresources/icons/keyboard_left.svg"
+            icon.source: "qrc:/qmlresources/icons/white/keyboard_left.svg"
             icon.color: "white"
             icon.width: 24
             icon.height: 24

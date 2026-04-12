@@ -94,8 +94,8 @@ Item {
             width: 20
             height: 20
             source: root.open
-                  ? "qrc:/qmlresources/icons/arrow_up.svg"
-                  : "qrc:/qmlresources/icons/arrow_down.svg"
+                  ? "qrc:/qmlresources/icons/white/arrow_up.svg"
+                  : "qrc:/qmlresources/icons/white/arrow_down.svg"
             fillMode: Image.PreserveAspectFit
             smooth: true
             anchors.verticalCenter: parent.verticalCenter

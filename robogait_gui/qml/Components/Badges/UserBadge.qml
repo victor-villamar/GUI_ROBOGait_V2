@@ -100,7 +100,7 @@ Item {
 
                 Image {
                     anchors.fill: parent
-                    source: "qrc:/qmlresources/icons/circle_user_regular.svg"
+                    source: "qrc:/qmlresources/icons/white/circle_user_regular.svg"
                     sourceSize.width: root.badgeIconPx
                     sourceSize.height: root.badgeIconPx
                     fillMode: Image.PreserveAspectFit
