@@ -534,7 +534,7 @@ QVariantList RobotManager::buildStatusItems(const ROBOGait::robot::manager::Robo
   addStatusItem(items, "Namespace", info.ns);
   addStatusItem(items, "Version", info.version);
   addStatusItem(items, "Hardware ID", QString::number(static_cast<qulonglong>(info.hardware_id)));
-  addStatusItem(items, "Serial", info.serial_number);
+  addStatusItem(items, "S/N", info.serial_number);
 
   return items;
 }
