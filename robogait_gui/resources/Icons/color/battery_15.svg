@@ -1,0 +1,12 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 340" width="680" height="340">
+	<defs>
+		<image  width="101" height="334" id="img1" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGUAAAFOAQMAAAClrkHNAAAAAXNSR0IB2cksfwAAAAZQTFRFAAAA/wAAG/+NIgAAAAJ0Uk5TAP9bkSK1AAAAz0lEQVR4nO3YsQ3CQAwFUJ8oUjICozAaGY1RGIGSSAjIHcr5f4wcCiiQfopIT0lsXzr/YvM1XKxdU6n3wwjaXA20PaOWF5vKzUBLxaf6Z027E6oXabobyEtW9UmavEGVN6jyBlX7I8rbRXnzWdA8CEYJgsGCYMwgGHpFcKAVwfG+JvhJkiRJkiRJkiRJ0p/rF3vj51srK9uEs30628NZvL9nez8nBGmWwKkDJxKcVnCSwSkHJyCcjrwkJ5yqcOLiRWNSwymOl3mT/nAy1B9OD3JQkv2C0Gy9AAAAAElFTkSuQmCC"/>
+	</defs>
+	<style>
+		.s0 { fill: none } 
+		.s1 { opacity: .3;fill: #000000 } 
+	</style>
+	<path class="s0" d="m740-230v800h-800v-800z"/>
+	<use  href="#img1" x="6" y="3"/>
+	<path class="s1" d="m606.67 103.33v-55.66c-0.05-5.81-1.22-11.56-3.47-16.92-2.24-5.36-5.51-10.23-9.61-14.34-4.11-4.1-8.98-7.37-14.34-9.61-5.36-2.25-11.11-3.42-16.92-3.47h-455.66v333.34h455.66c5.81-0.05 11.56-1.22 16.92-3.47 5.36-2.24 10.23-5.51 14.34-9.61 4.1-4.11 7.37-8.98 9.61-14.34 2.25-5.36 3.42-11.11 3.47-16.92v-55.66h66.66v-133.34z"/>
+</svg>

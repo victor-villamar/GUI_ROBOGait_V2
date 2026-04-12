@@ -1,0 +1,12 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 340" width="680" height="340">
+	<defs>
+		<image  width="568" height="334" id="img1" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAjgAAAFOAQMAAACxKPX0AAAAAXNSR0IB2cksfwAAAAZQTFRFAAAAAP8ANkNEvQAAAAJ0Uk5TAP9bkSK1AAABM0lEQVR4nO3csU0EMRBA0VsREFICpVAalAadUAIhSCfAhpxkv9AEb6W98GnPYzv8x2U9t++Xk89x7N/Hp7POx3ZurmeZ9UHrvXtrnPN/68c5Ps8z2zk/rV+nWJ7t3L82TrHM2/kKmOUk41pOsZu3k4x9OcnYl5OMfTkPz42TbJ/QSbbhuliTbdg5zXbunOZYdE5zvDqnOabznObamOc01w/nv5zmmudwOBwOh8PhcDgcDofD4XA4HA6Hw+FwOBwOh8PhcDgcDofD4XA4HA6Hw+FwOBwOh8PhcDgcDofD4XA4HA5ntjOt/8P525nW15rmTOuqTevXTev7VU7VP5zWh6y6l+N6nlWntOqmVh3XqitbdW6r7m7VAc66xFUnueo2JwMLu9ZVZztZ6LJDXnXRgw96+QYpRlDETkxc+wAAAABJRU5ErkJggg=="/>
+	</defs>
+	<style>
+		.s0 { fill: none } 
+		.s1 { opacity: .3;fill: #000000 } 
+	</style>
+	<path class="s0" d="m740-230v800h-800v-800z"/>
+	<use  href="#img1" x="6" y="3"/>
+	<path class="s1" d="m606.67 103.33v-55.66c-0.05-4.83-0.9-9.61-2.51-14.15-1.61-4.55-3.96-8.79-6.95-12.57-3-3.78-6.6-7.03-10.67-9.63-4.06-2.6-8.52-4.51-13.21-5.65v328.66c4.69-1.14 9.15-3.05 13.21-5.65 4.07-2.6 7.67-5.85 10.67-9.63 2.99-3.78 5.34-8.02 6.95-12.57 1.61-4.54 2.46-9.32 2.51-14.15v-55.66h66.66v-133.34z"/>
+</svg>

@@ -1,0 +1,12 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 340" width="680" height="340">
+	<defs>
+		<image  width="468" height="334" id="img1" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAdQAAAFOAQMAAAAFFH4KAAAAAXNSR0IB2cksfwAAAAZQTFRFAAAAAP8ANkNEvQAAAAJ0Uk5TAP9bkSK1AAABFElEQVR4nO3csQ3CMBQG4VgUlIzAKIwGozEKI5COAgViZwLuL56CLkW6TyH2M12uTet1fE3gmlu/X2/YHt6Ebvb05Jb95GHbguiwbJU3C1932PODW7hUw34Y7ZYuc7dwqoalW9Qt3aJu6RZ1e7lzS7c3tXQ0VotHI7R4rEKLRzK0eJxDi49CocVHsNDi46v9yeK/Oq1Wq9VqtVqtVqvVarVarVar1Wq1Wq1Wq9VqtVqtVqvVarVarVar1Wq1Wq1Wq9VqtVqt9o/tHr8d3qPd47fwia1qDlT1Gap6FIlN+htVvZGkkVLWdUlaNEkDJ2nvJM2fpDWUNI6StlLUdEpaUknDii502uxKWmF0seI2WtJkgw+ev7/1iI00mrNiAAAAAElFTkSuQmCC"/>
+	</defs>
+	<style>
+		.s0 { fill: none } 
+		.s1 { opacity: .3;fill: #000000 } 
+	</style>
+	<path class="s0" d="m740-230v800h-800v-800z"/>
+	<path class="s1" d="m606.67 103.33v-55.66c-0.05-5.81-1.22-11.56-3.47-16.92-2.24-5.36-5.51-10.23-9.61-14.34-4.11-4.1-8.98-7.37-14.34-9.61-5.36-2.25-11.11-3.42-16.92-3.47h-89v333.34h89c5.81-0.05 11.56-1.22 16.92-3.47 5.36-2.24 10.23-5.51 14.34-9.61 4.1-4.11 7.37-8.98 9.61-14.34 2.25-5.36 3.42-11.11 3.47-16.92v-55.66h66.66v-133.34z"/>
+	<use  href="#img1" x="6" y="3"/>
+</svg>
