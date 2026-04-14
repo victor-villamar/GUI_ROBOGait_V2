@@ -1,6 +1,9 @@
 #include <string>
 
 #include <QMetaObject>
+#include <QVariantMap>
+
+#include <nav_msgs/msg/path.hpp>
 
 #include "Services/RobotServiceBridge.hpp"
 
@@ -28,6 +31,23 @@ RobotServiceBridge::RobotServiceBridge(QObject* parent) : QObject(parent), statu
   client.setRequestCallback([this](bool success) {
     QMetaObject::invokeMethod(this,
                               [this, success]() { emit requestFinished(success); },
+                              Qt::QueuedConnection);
+  });
+  // clang-format on
+
+  // clang-format off
+  client.setPathResultCallback([this](bool success, const nav_msgs::msg::Path& path) {
+    QVariantList points;
+    points.reserve(static_cast<int>(path.poses.size()));
+    for (const auto& pose : path.poses)
+    {
+      QVariantMap point;
+      point.insert("x", pose.pose.position.x);
+      point.insert("y", pose.pose.position.y);
+      points.append(point);
+    }
+    QMetaObject::invokeMethod(this,
+                              [this, success, points]() { emit pathComputed(success, points); },
                               Qt::QueuedConnection);
   });
   // clang-format on
@@ -62,6 +82,21 @@ bool RobotServiceBridge::startNavigation(const QString& map_name)
 }
 
 bool RobotServiceBridge::reinitializeGlobalLocalization() { return ROBOGait::ros::service::RobotServiceClient::getInstance().reinitializeGlobalLocalization(); }
+
+bool RobotServiceBridge::computePathToPose(double x, double y, double theta)
+{
+  return ROBOGait::ros::service::RobotServiceClient::getInstance().computePathToPose(x, y, theta);
+}
+
+bool RobotServiceBridge::navigateToPose(double x, double y, double theta)
+{
+  return ROBOGait::ros::service::RobotServiceClient::getInstance().navigateToPose(x, y, theta);
+}
+
+bool RobotServiceBridge::cancelNavigateToPose()
+{
+  return ROBOGait::ros::service::RobotServiceClient::getInstance().cancelNavigateToPose();
+}
 
 void RobotServiceBridge::onPoll() { syncFromClient(); }
 

@@ -89,6 +89,11 @@ public:
    */
   void clearRenderRequest() override;
 
+  /**
+   * @brief Reset interpolation state so the next pose is applied immediately
+   */
+  void resetInterpolation();
+
 private:
   /**
    * @brief Read the target pose from the data source

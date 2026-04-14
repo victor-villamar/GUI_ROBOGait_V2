@@ -12,10 +12,14 @@
 #include <rclcpp/node.hpp>
 #include <rclcpp/publisher.hpp>
 #include <rclcpp/timer.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
 
 #include <command_executor_msgs/srv/cmd.hpp>
 #include <command_executor_msgs/srv/get_map_data.hpp>
+#include <nav2_msgs/action/compute_path_to_pose.hpp>
+#include <nav2_msgs/action/navigate_to_pose.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
+#include <nav_msgs/msg/path.hpp>
 #include <std_srvs/srv/empty.hpp>
 
 #include "Context/RobotContext.hpp"
@@ -205,9 +209,41 @@ public:
   CommandStatus getCommandStatus(const std::string& key) const;
 
   /**
-   * @brief Set callback invoked when a command service request completes.
+   * @brief Set callback invoked when a command service request completes
    */
   void setRequestCallback(const std::function<void(bool)>& callback);
+
+  /**
+   * @brief Request a path computation to a target pose
+   *
+   * @param x Goal x in map frame
+   * @param y Goal y in map frame
+   * @param theta Goal yaw in radians
+   *
+   * @return true if the request was sent, false otherwise
+   */
+  bool computePathToPose(double x, double y, double theta);
+
+  /**
+   * @brief Navigate to a target pose
+   *
+   * @param x Goal x in map frame
+   * @param y Goal y in map frame
+   * @param theta Goal yaw in radians
+   *
+   * @return true if the request was sent, false otherwise
+   */
+  bool navigateToPose(double x, double y, double theta);
+
+  /**
+   * @brief Cancel the active navigate to pose action
+   */
+  bool cancelNavigateToPose();
+
+  /**
+   * @brief Set callback invoked when a compute path action finishes
+   */
+  void setPathResultCallback(const std::function<void(bool, const nav_msgs::msg::Path&)>& callback);
 
 private:
   /**
@@ -444,15 +480,39 @@ private:
    */
   bool publishMapDataOnce(const nav_msgs::msg::OccupancyGrid& occupancy_grid);
 
-  rclcpp::Node* parent_node_;                                                          /**< The parent ROS2 node */
-  rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedPtr cli_cmd_;                 /**< The command service client */
-  rclcpp::Client<command_executor_msgs::srv::GetMapData>::SharedPtr cli_get_map_data_; /**< The get map data service client */
-  rclcpp::Client<std_srvs::srv::Empty>::SharedPtr cli_global_localization_;            /**< Global localization service client */
-  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_map_data_;            /**< Publisher for map data */
-  rclcpp::CallbackGroup::SharedPtr cb_group_;                                          /**< The callback group for the command executor */
-  rclcpp::TimerBase::SharedPtr timer_health_;                                          /**< The health timer */
+  /**
+   * @brief Callback for compute path action results
+   */
+  void resultComputePathToPoseCallback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::ComputePathToPose>::WrappedResult& result);
 
-  std::function<void(bool)> request_callback_; /**< Callback to notify the result of command service requests */
+  /**
+   * @brief Callback for navigate to pose goal response
+   */
+  void goalResponseNavigateToPoseCallback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr& goal_handle);
+
+  /**
+   * @brief Callback for navigate to pose cancel response
+   */
+  void cancelNavigateToPoseCallback(typename rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::CancelResponse::SharedPtr response);
+
+  /**
+   * @brief Callback for navigate to pose action results
+   */
+  void resultNavigateToPoseCallback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::WrappedResult& result);
+
+  rclcpp::Node* parent_node_;                                                                      /**< The parent ROS2 node */
+  rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedPtr cli_cmd_;                             /**< The command service client */
+  rclcpp::Client<command_executor_msgs::srv::GetMapData>::SharedPtr cli_get_map_data_;             /**< The get map data service client */
+  rclcpp::Client<std_srvs::srv::Empty>::SharedPtr cli_global_localization_;                        /**< Global localization service client */
+  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_map_data_;                        /**< Publisher for map data */
+  rclcpp_action::Client<nav2_msgs::action::ComputePathToPose>::SharedPtr ac_compute_path_to_pose_; /**< Action client for compute path to pose */
+  rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr ac_navigate_to_pose_;        /**< Action client for navigate to pose */
+  rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr nav_goal_handle_;  /**< Active navigate to pose goal handle */
+  rclcpp::CallbackGroup::SharedPtr cb_group_;                                                      /**< The callback group for the command executor */
+  rclcpp::TimerBase::SharedPtr timer_health_;                                                      /**< The health timer */
+
+  std::function<void(bool)> request_callback_;                                 /**< Callback to notify the result of command service requests */
+  std::function<void(bool, const nav_msgs::msg::Path&)> path_result_callback_; /**< Callback for compute path results */
 
   std::optional<ROBOGait::context::RobotContext> context_; /**< The robot context */
 
@@ -463,6 +523,9 @@ private:
   bool initialized_;              /**< Flag indicating if the client is initialized */
   bool pending_stop_after_save_;  /**< Flag indicating if a stop is pending after save */
   bool map_saver_stop_requested_; /**< Flag indicating if a stop is requested for the map saver */
+  bool nav_goal_active_;          /**< Flag indicating if there is an active navigation goal */
+  bool cancel_requested_;         /**< Flag indicating if a cancel has been requested for the active navigation goal */
+  bool cancel_in_progress_;       /**< Flag indicating if a cancel is in progress for the active navigation goal */
 
   static constexpr const char* KEY_CARTOGRAPHER = "cartographer"; /**< Key for the cartographer command */
   static constexpr const char* KEY_MAP_SAVER = "map_saver";       /**< Key for the map saver command */

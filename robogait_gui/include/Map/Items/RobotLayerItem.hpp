@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include <QColor>
 #include <QPointer>
 #include <QQuickItem>
 #include <QSGGeometryNode>
@@ -29,6 +30,13 @@ public:
 
   ~RobotLayerItem();
 
+  // clang-format off
+  Q_PROPERTY(QColor headColor
+             READ getHeadColor
+             WRITE setHeadColor
+             NOTIFY headColorChanged)
+  // clang-format on
+
   /**
    * @brief Sets the render scene to use for rendering
    *
@@ -49,6 +57,20 @@ public:
    * @param camera The camera to use
    */
   void setCamera(const std::shared_ptr<ROBOGait::map::rendering::RenderCamera>& camera);
+
+  /**
+   * @brief Gets the current head color
+   *
+   * @return The current head color
+   */
+  QColor getHeadColor() const;
+
+  /**
+   * @brief Sets the head color for rendering
+   *
+   * @param color The new head color to set
+   */
+  void setHeadColor(const QColor& color);
 
 protected:
   /**
@@ -81,9 +103,14 @@ private:
   std::shared_ptr<ROBOGait::map::layer::RobotLayer> robot_render_;      /**< Robot layer for the robot item */
   std::shared_ptr<ROBOGait::map::rendering::RenderCamera> camera_;      /**< Camera for the robot item */
 
-  static constexpr auto BODY_COLOR = QColor(75, 80, 86);  /**< Color for the robot body */
-  static constexpr auto WHEEL_COLOR = QColor(21, 24, 31); /**< Color for the robot wheels */
-  static constexpr auto HEAD_COLOR = QColor(220, 20, 20); /**< Color for the robot head */
+  static constexpr auto BODY_COLOR = QColor(75, 80, 86);          /**< Color for the robot body */
+  static constexpr auto WHEEL_COLOR = QColor(21, 24, 31);         /**< Color for the robot wheels */
+  static constexpr auto DEFAULT_HEAD_COLOR = QColor(220, 20, 20); /**< Default color for the robot head */
+
+  QColor head_color_;
+
+signals:
+  void headColorChanged();
 };
 
 } // namespace item

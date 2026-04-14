@@ -5,6 +5,7 @@
 #include "Map/Layer/LaserLayer.hpp"
 #include "Map/Layer/MapLayer.hpp"
 #include "Map/Layer/ParticleCloudLayer.hpp"
+#include "Map/Layer/PathLayer.hpp"
 #include "Map/Layer/RobotLayer.hpp"
 #include "Map/Rendering/RenderPipeline.hpp"
 
@@ -57,6 +58,13 @@ public:
   void setParticleCloudLayer(std::shared_ptr<ROBOGait::map::layer::ParticleCloudLayer> particle_layer);
 
   /**
+   * @brief Set the path layer for the render scene
+   *
+   * @param path_layer The path layer to set
+   */
+  void setPathLayer(std::shared_ptr<ROBOGait::map::layer::PathLayer> path_layer);
+
+  /**
    * @brief Get the render pipeline for the render scene
    *
    * @return The render pipeline
@@ -79,6 +87,7 @@ private:
   std::shared_ptr<ROBOGait::map::layer::RobotLayer> robot_layer_;            /**< Robot layer */
   std::shared_ptr<ROBOGait::map::layer::LaserLayer> laser_layer_;            /**< Laser layer */
   std::shared_ptr<ROBOGait::map::layer::ParticleCloudLayer> particle_layer_; /**< Particle cloud layer */
+  std::shared_ptr<ROBOGait::map::layer::PathLayer> path_layer_;              /**< Path layer */
 };
 
 } // namespace rendering

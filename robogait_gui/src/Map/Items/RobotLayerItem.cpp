@@ -8,7 +8,7 @@
 
 using namespace ROBOGait::map::item;
 
-RobotLayerItem::RobotLayerItem(QQuickItem* parent) : QQuickItem(parent)
+RobotLayerItem::RobotLayerItem(QQuickItem* parent) : QQuickItem(parent), head_color_(DEFAULT_HEAD_COLOR)
 {
   setFlag(ItemHasContents, true);
   setAcceptedMouseButtons(Qt::NoButton);
@@ -51,6 +51,19 @@ void RobotLayerItem::setRenderer(const std::shared_ptr<ROBOGait::map::layer::Rob
 void RobotLayerItem::setCamera(const std::shared_ptr<ROBOGait::map::rendering::RenderCamera>& camera)
 {
   camera_ = camera;
+  update();
+}
+
+QColor RobotLayerItem::getHeadColor() const { return head_color_; }
+
+void RobotLayerItem::setHeadColor(const QColor& color)
+{
+  if (head_color_ == color)
+  {
+    return;
+  }
+  head_color_ = color;
+  emit headColorChanged();
   update();
 }
 
@@ -118,7 +131,7 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
     head_node->setFlag(QSGNode::OwnsGeometry);
 
     auto* head_mat = new QSGFlatColorMaterial();
-    head_mat->setColor(HEAD_COLOR);
+    head_mat->setColor(head_color_);
     head_node->setMaterial(head_mat);
     head_node->setFlag(QSGNode::OwnsMaterial);
     robot_node->appendChildNode(head_node);
@@ -170,6 +183,12 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
   writeRect(wheel_vertices, 30, wheel_x, connector_y, static_cast<float>(connector_w), connector_h);
   writeRect(wheel_vertices, 36, -wheel_x, -connector_y, static_cast<float>(connector_w), connector_h);
   writeRect(wheel_vertices, 42, wheel_x, -connector_y, static_cast<float>(connector_w), connector_h);
+
+  auto* head_mat = static_cast<QSGFlatColorMaterial*>(head_node->material());
+  if (head_mat)
+  {
+    head_mat->setColor(head_color_);
+  }
 
   QSGGeometry* head_geometry = head_node->geometry();
   head_geometry->allocate(6);

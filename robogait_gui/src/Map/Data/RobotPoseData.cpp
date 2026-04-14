@@ -35,8 +35,6 @@ void RobotPoseData::reset()
   metadata_ = RobotPoseMetadata();
   is_available_ = false;
   ++update_stamp_;
-
-  std::cout << "[RobotPoseData::reset] Robot pose reset to origin" << std::endl;
 }
 
 uint64_t RobotPoseData::getUpdateStamp() const
