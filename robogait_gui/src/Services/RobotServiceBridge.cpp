@@ -93,10 +93,7 @@ bool RobotServiceBridge::navigateToPose(double x, double y, double theta)
   return ROBOGait::ros::service::RobotServiceClient::getInstance().navigateToPose(x, y, theta);
 }
 
-bool RobotServiceBridge::cancelNavigateToPose()
-{
-  return ROBOGait::ros::service::RobotServiceClient::getInstance().cancelNavigateToPose();
-}
+bool RobotServiceBridge::cancelNavigateToPose() { return ROBOGait::ros::service::RobotServiceClient::getInstance().cancelNavigateToPose(); }
 
 void RobotServiceBridge::onPoll() { syncFromClient(); }
 

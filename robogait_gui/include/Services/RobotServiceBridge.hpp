@@ -142,6 +142,12 @@ public:
    * @return true if the request was sent, false otherwise
    */
   Q_INVOKABLE bool navigateToPose(double x, double y, double theta);
+
+  /**
+   * @brief Cancel the active navigate to pose action
+   *
+   * @return true if the cancel request was sent successfully, false otherwise
+   */
   Q_INVOKABLE bool cancelNavigateToPose();
 
 signals:
