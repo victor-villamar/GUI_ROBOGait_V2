@@ -38,16 +38,21 @@ RobotServiceClient::RobotServiceClient() :
 
 bool RobotServiceClient::initialize(rclcpp::Node* parent_node)
 {
-  if (initialized_)
-  {
-    qWarning() << "[RobotServiceClient::initialize] RobotServiceClient is already initialized";
-    return true;
-  }
-
   if (!parent_node)
   {
     qCritical() << "[RobotServiceClient::initialize] Invalid parent_node";
     return false;
+  }
+
+  if (initialized_)
+  {
+    if (parent_node_ == parent_node && cb_group_)
+    {
+      qInfo() << "[RobotServiceClient::initialize] Already initialized with the same parent node, skipping reinitialization";
+      return true;
+    }
+
+    resetRobotServiceClient();
   }
 
   parent_node_ = parent_node;
@@ -604,6 +609,17 @@ bool RobotServiceClient::cancelNavigateToPose()
   return true;
 }
 void RobotServiceClient::setPathResultCallback(const std::function<void(bool, const nav_msgs::msg::Path&)>& callback) { path_result_callback_ = callback; }
+
+void RobotServiceClient::resetRobotServiceClient()
+{
+  clearRobotContext();
+  context_.reset();
+  initialized_ = false;
+  commands_.clear();
+  command_states_.clear();
+  cb_group_.reset();
+  parent_node_ = nullptr;
+}
 
 bool RobotServiceClient::loadCommands()
 {

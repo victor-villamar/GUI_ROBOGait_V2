@@ -245,6 +245,11 @@ public:
    */
   void setPathResultCallback(const std::function<void(bool, const nav_msgs::msg::Path&)>& callback);
 
+  /**
+   * @brief Reset the client
+   */
+  void resetRobotServiceClient();
+
 private:
   /**
    * @brief Enum to represent the type of a command request, used for routing the handling of command service responses
