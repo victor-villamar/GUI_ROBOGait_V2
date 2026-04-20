@@ -15,6 +15,7 @@ Rectangle {
     property alias mapLayerItem: mapLayerItem
     property alias robotLayerItem: robotLayerItem
     property alias pathLayerItem: pathLayerItem
+    property alias livePathLayerItem: livePathLayerItem
 
     property alias zoomInButton: zoomInButton
     property alias zoomOutButton: zoomOutButton
@@ -41,6 +42,7 @@ Rectangle {
     signal goalAcceptRequested()
     signal goalClearRequested()
     signal startTestRequested()
+    signal goHomeRequested()
 
     property bool mapAvailable: false
     property bool particleCloudAvailable: false
@@ -311,23 +313,6 @@ Rectangle {
                     }
                 }
 
-                RobotLayerItem {
-                    id: goalRobotLayerItem
-                    anchors.fill: mapLayerItem
-                    visible: mapAvailable && isNavigationStep && goalPlacementEnabled && goalPointSet && !testStarted
-                    z: 2.6
-                    headColor: "#3b82f6"
-
-                    Component.onCompleted: {
-                        if (userSession.rosManager &&
-                            userSession.rosManager.robotManager &&
-                            userSession.rosManager.robotManager.mapVisualizationManager)
-                        {
-                            userSession.rosManager.robotManager.mapVisualizationManager.registerGoalRobotLayerItem(goalRobotLayerItem)
-                        }
-                    }
-                }
-
                 Component.onCompleted: {
                     if (userSession.rosManager &&
                         userSession.rosManager.robotManager &&
@@ -338,12 +323,31 @@ Rectangle {
                 }
             }
 
+            RobotLayerItem {
+                id: goalRobotLayerItem
+                anchors.fill: parent
+                anchors.margins: mapContentMargin
+                visible: mapAvailable && isNavigationStep && goalPlacementEnabled && goalPointSet && !testStarted
+                z: 2
+                headColor: "#3b82f6"
+
+                Component.onCompleted: {
+                    if (userSession.rosManager &&
+                        userSession.rosManager.robotManager &&
+                        userSession.rosManager.robotManager.mapVisualizationManager)
+                    {
+                        userSession.rosManager.robotManager.mapVisualizationManager.registerGoalRobotLayerItem(goalRobotLayerItem)
+                    }
+                }
+            }
+
             PathLayerItem {
                 id: pathLayerItem
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
                 visible: mapAvailable && isNavigationStep
                 z: 1.45
+                pathColor: "#9118DB"
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -351,6 +355,24 @@ Rectangle {
                         userSession.rosManager.robotManager.mapVisualizationManager)
                     {
                         userSession.rosManager.robotManager.mapVisualizationManager.registerPathLayerItem(pathLayerItem)
+                    }
+                }
+            }
+
+            PathLayerItem {
+                id: livePathLayerItem
+                anchors.fill: parent
+                anchors.margins: mapContentMargin
+                visible: mapAvailable && isNavigationStep
+                z: 1.46
+                pathColor: "#18DB22"
+
+                Component.onCompleted: {
+                    if (userSession.rosManager &&
+                        userSession.rosManager.robotManager &&
+                        userSession.rosManager.robotManager.mapVisualizationManager)
+                    {
+                        userSession.rosManager.robotManager.mapVisualizationManager.registerLivePathLayerItem(livePathLayerItem)
                     }
                 }
             }
@@ -1103,6 +1125,38 @@ Rectangle {
                     }
 
                     contentItem: Item {}
+                }
+            }
+
+            Row {
+                id: navigationHomeButton
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                z: 10
+                visible: testStarted
+
+                Button {
+                    id: homeButton
+                    width: root.iconButtonSizePx
+                    height: root.iconButtonSizePx
+
+                    background: Rectangle {
+                        radius: 6
+                        color: homeButton.pressed ? "#1a3a4a" : "#3a7fa0"
+                        border.color: "#ffffff"
+                        border.width: 1
+                    }
+
+                    contentItem: Image {
+                        source: "qrc:/qmlresources/icons/white/home.svg"
+                        width: root.iconGlyphSizePx
+                        height: root.iconGlyphSizePx
+                        anchors.centerIn: parent
+                        fillMode: Image.PreserveAspectFit
+                        smooth: true
+                    }
+
+                    onClicked: goHomeRequested()
                 }
             }
         }
