@@ -20,12 +20,14 @@ MapVisualizationManager::MapVisualizationManager() :
     robot_layer_(nullptr),
     goal_robot_layer_(nullptr),
     path_layer_(nullptr),
+    live_path_layer_(nullptr),
     laser_layer_(nullptr),
     particle_layer_(nullptr),
     render_camera_(std::make_shared<ROBOGait::map::rendering::RenderCamera>()),
     map_source_(std::make_shared<ROBOGait::map::source::MapSource>()),
     pose_source_(std::make_shared<ROBOGait::map::source::RobotPoseSource>()),
     goal_robot_pose_data_(nullptr),
+    manual_path_data_(nullptr),
     path_source_(std::make_shared<ROBOGait::map::source::PathSource>()),
     laser_source_(std::make_shared<ROBOGait::map::source::LaserSource>()),
     particle_source_(std::make_shared<ROBOGait::map::source::ParticleCloudSource>()),
@@ -453,6 +455,10 @@ void MapVisualizationManager::destroySubscriptions()
   {
     path_layer_item_->update();
   }
+  if (live_path_layer_item_)
+  {
+    live_path_layer_item_->update();
+  }
 
   if (particle_layer_item_)
   {
@@ -713,6 +719,54 @@ void MapVisualizationManager::registerPathLayerItem(QObject* item)
   qInfo() << "[MapVisualizationManager::registerPathLayerItem] Item registered";
 }
 
+void MapVisualizationManager::registerLivePathLayerItem(QObject* item)
+{
+  if (!item)
+  {
+    qCritical() << "[MapVisualizationManager::registerLivePathLayerItem] Null item";
+    return;
+  }
+
+  auto* layer_item = qobject_cast<ROBOGait::map::item::PathLayerItem*>(item);
+  if (!layer_item)
+  {
+    qCritical() << "[MapVisualizationManager::registerLivePathLayerItem] Invalid item type";
+    return;
+  }
+
+  live_path_layer_item_ = layer_item;
+
+  if (!live_path_layer_item_)
+  {
+    qCritical() << "[MapVisualizationManager::registerLivePathLayerItem] Failed to register PathLayerItem";
+    return;
+  }
+
+  if (!render_scene_)
+  {
+    qCritical() << "[MapVisualizationManager::registerLivePathLayerItem] Render scene not available, cannot set render scene for PathLayerItem";
+    return;
+  }
+
+  if (!live_path_layer_)
+  {
+    qCritical() << "[MapVisualizationManager::registerLivePathLayerItem] Live path layer not available, cannot set renderer for PathLayerItem";
+    return;
+  }
+
+  if (!render_camera_)
+  {
+    qCritical() << "[MapVisualizationManager::registerLivePathLayerItem] Render camera not available, cannot set camera for PathLayerItem";
+    return;
+  }
+
+  live_path_layer_item_->setRenderScene(render_scene_);
+  live_path_layer_item_->setRenderer(live_path_layer_);
+  live_path_layer_item_->setCamera(render_camera_);
+
+  qInfo() << "[MapVisualizationManager::registerLivePathLayerItem] Item registered";
+}
+
 void MapVisualizationManager::setGoalRobotPose(double x, double y, double theta)
 {
   if (!goal_robot_pose_data_ || !goal_robot_layer_)
@@ -758,13 +812,7 @@ void MapVisualizationManager::clearGoalRobotPose()
 
 void MapVisualizationManager::setManualPathPoints(const QVariantList& points)
 {
-  if (!path_source_)
-  {
-    return;
-  }
-
-  const auto path_data = path_source_->getPathData();
-  if (!path_data)
+  if (!manual_path_data_)
   {
     return;
   }
@@ -792,11 +840,11 @@ void MapVisualizationManager::setManualPathPoints(const QVariantList& points)
 
   if (metadata.points.empty())
   {
-    path_data->reset();
+    manual_path_data_->reset();
   }
   else
   {
-    path_data->setPath(metadata);
+    manual_path_data_->setPath(metadata);
   }
 
   if (path_layer_)
@@ -811,18 +859,12 @@ void MapVisualizationManager::setManualPathPoints(const QVariantList& points)
 
 void MapVisualizationManager::clearManualPath()
 {
-  if (!path_source_)
+  if (!manual_path_data_)
   {
     return;
   }
 
-  const auto path_data = path_source_->getPathData();
-  if (!path_data)
-  {
-    return;
-  }
-
-  path_data->reset();
+  manual_path_data_->reset();
 
   if (path_layer_)
   {
@@ -1161,10 +1203,11 @@ void MapVisualizationManager::createLayers()
 
   const auto map_data = map_source_->getMapData();
   const auto pose_data = pose_source_->getRobotPoseData();
-  const auto path_data = path_source_->getPathData();
+  const auto live_path_data = path_source_->getPathData();
   const auto laser_data = laser_source_->getLaserScanData();
   const auto particle_data = particle_source_->getParticleCloudData();
   goal_robot_pose_data_ = std::make_shared<ROBOGait::map::data::RobotPoseData>();
+  manual_path_data_ = std::make_shared<ROBOGait::map::data::PathData>();
 
   map_layer_ = std::make_shared<ROBOGait::map::layer::MapLayer>();
   map_layer_->setMapData(map_data);
@@ -1178,7 +1221,10 @@ void MapVisualizationManager::createLayers()
   goal_robot_layer_->setRobotSize(robot_size_);
 
   path_layer_ = std::make_shared<ROBOGait::map::layer::PathLayer>();
-  path_layer_->setPathData(path_data);
+  path_layer_->setPathData(manual_path_data_);
+
+  live_path_layer_ = std::make_shared<ROBOGait::map::layer::PathLayer>();
+  live_path_layer_->setPathData(live_path_data);
 
   laser_layer_ = std::make_shared<ROBOGait::map::layer::LaserLayer>();
   laser_layer_->setLaserScanData(laser_data);
@@ -1186,7 +1232,7 @@ void MapVisualizationManager::createLayers()
   particle_layer_ = std::make_shared<ROBOGait::map::layer::ParticleCloudLayer>();
   particle_layer_->setParticleCloudData(particle_data);
 
-  if (!map_layer_ || !robot_layer_ || !goal_robot_layer_ || !path_layer_ || !laser_layer_ || !particle_layer_)
+  if (!map_layer_ || !robot_layer_ || !goal_robot_layer_ || !path_layer_ || !live_path_layer_ || !laser_layer_ || !particle_layer_)
   {
     qCritical() << "[MapVisualizationManager::createLayers] Failed to create render layers";
     return;
@@ -1195,6 +1241,7 @@ void MapVisualizationManager::createLayers()
   render_scene_->setMapLayer(map_layer_);
   render_scene_->setRobotLayer(robot_layer_);
   render_scene_->setPathLayer(path_layer_);
+  render_scene_->setLivePathLayer(live_path_layer_);
   render_scene_->setLaserLayer(laser_layer_);
   render_scene_->setParticleCloudLayer(particle_layer_);
 
@@ -1205,7 +1252,7 @@ void MapVisualizationManager::createLayers()
 
 void MapVisualizationManager::destroyLayers()
 {
-  if (!map_layer_ && !robot_layer_ && !path_layer_ && !laser_layer_ && !particle_layer_)
+  if (!map_layer_ && !robot_layer_ && !path_layer_ && !live_path_layer_ && !laser_layer_ && !particle_layer_)
   {
     qWarning() << "[MapVisualizationManager::destroyLayers] No layers to destroy";
     return;
@@ -1221,6 +1268,7 @@ void MapVisualizationManager::destroyLayers()
   render_scene_->setMapLayer(nullptr);
   render_scene_->setRobotLayer(nullptr);
   render_scene_->setPathLayer(nullptr);
+  render_scene_->setLivePathLayer(nullptr);
   render_scene_->setLaserLayer(nullptr);
   render_scene_->setParticleCloudLayer(nullptr);
 
@@ -1240,6 +1288,10 @@ void MapVisualizationManager::destroyLayers()
   {
     path_layer_item_->setRenderer(nullptr);
   }
+  if (live_path_layer_item_)
+  {
+    live_path_layer_item_->setRenderer(nullptr);
+  }
   if (laser_layer_item_)
   {
     laser_layer_item_->setRenderer(nullptr);
@@ -1253,7 +1305,9 @@ void MapVisualizationManager::destroyLayers()
   robot_layer_.reset();
   goal_robot_layer_.reset();
   path_layer_.reset();
+  live_path_layer_.reset();
   goal_robot_pose_data_.reset();
+  manual_path_data_.reset();
   laser_layer_.reset();
   particle_layer_.reset();
   map_available_cache_ = false;

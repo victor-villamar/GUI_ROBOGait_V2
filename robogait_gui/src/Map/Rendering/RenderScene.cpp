@@ -61,10 +61,23 @@ void RenderScene::setPathLayer(std::shared_ptr<ROBOGait::map::layer::PathLayer> 
   path_layer_ = std::move(path_layer);
   if (pipeline_)
   {
-    pipeline_->removeLayer("path");
+    pipeline_->removeLayer("path_preview");
     if (path_layer_)
     {
-      pipeline_->addLayer("path", path_layer_);
+      pipeline_->addLayer("path_preview", path_layer_);
+    }
+  }
+}
+
+void RenderScene::setLivePathLayer(std::shared_ptr<ROBOGait::map::layer::PathLayer> live_path_layer)
+{
+  live_path_layer_ = std::move(live_path_layer);
+  if (pipeline_)
+  {
+    pipeline_->removeLayer("path_live");
+    if (live_path_layer_)
+    {
+      pipeline_->addLayer("path_live", live_path_layer_);
     }
   }
 }

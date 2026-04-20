@@ -58,13 +58,12 @@ QColor RobotLayerItem::getHeadColor() const { return head_color_; }
 
 void RobotLayerItem::setHeadColor(const QColor& color)
 {
-  if (head_color_ == color)
+  if (head_color_ != color)
   {
-    return;
+    head_color_ = color;
+    emit headColorChanged();
+    update();
   }
-  head_color_ = color;
-  emit headColorChanged();
-  update();
 }
 
 QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* data)

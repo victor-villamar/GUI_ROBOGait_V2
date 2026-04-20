@@ -286,6 +286,13 @@ public:
   Q_INVOKABLE void registerPathLayerItem(QObject* item);
 
   /**
+   * @brief Register live PathLayerItem created in QML
+   *
+   * @param item Pointer to PathLayerItem created in QML
+   */
+  Q_INVOKABLE void registerLivePathLayerItem(QObject* item);
+
+  /**
    * @brief Set goal robot pose for visualization
    *
    * @param x X coordinate of the goal robot in map frame (meters)
@@ -417,19 +424,22 @@ private:
   std::shared_ptr<ROBOGait::map::layer::MapLayer> map_layer_;                 /**< Map layer renderer */
   std::shared_ptr<ROBOGait::map::layer::RobotLayer> robot_layer_;             /**< Robot layer renderer */
   std::shared_ptr<ROBOGait::map::layer::RobotLayer> goal_robot_layer_;        /**< Goal robot layer renderer */
-  std::shared_ptr<ROBOGait::map::layer::PathLayer> path_layer_;               /**< Path layer renderer */
+  std::shared_ptr<ROBOGait::map::layer::PathLayer> path_layer_;               /**< Manual/preview path layer renderer */
+  std::shared_ptr<ROBOGait::map::layer::PathLayer> live_path_layer_;          /**< Live path layer renderer (/plan) */
   std::shared_ptr<ROBOGait::map::layer::LaserLayer> laser_layer_;             /**< Laser layer renderer */
   std::shared_ptr<ROBOGait::map::layer::ParticleCloudLayer> particle_layer_;  /**< Particle cloud layer renderer */
   QPointer<ROBOGait::map::item::MapLayerItem> map_layer_item_;                /**< Map layer item */
   QPointer<ROBOGait::map::item::RobotLayerItem> robot_layer_item_;            /**< Robot layer item */
   QPointer<ROBOGait::map::item::RobotLayerItem> goal_robot_layer_item_;       /**< Goal robot layer item */
-  QPointer<ROBOGait::map::item::PathLayerItem> path_layer_item_;              /**< Path layer item */
+  QPointer<ROBOGait::map::item::PathLayerItem> path_layer_item_;              /**< Manual/preview path layer item */
+  QPointer<ROBOGait::map::item::PathLayerItem> live_path_layer_item_;         /**< Live path layer item */
   QPointer<ROBOGait::map::item::LaserLayerItem> laser_layer_item_;            /**< Laser layer item */
   QPointer<ROBOGait::map::item::ParticleCloudLayerItem> particle_layer_item_; /**< Particle cloud layer item */
 
   std::shared_ptr<ROBOGait::map::source::MapSource> map_source_;                /**< Map source */
   std::shared_ptr<ROBOGait::map::source::RobotPoseSource> pose_source_;         /**< Robot pose source */
   std::shared_ptr<ROBOGait::map::data::RobotPoseData> goal_robot_pose_data_;    /**< Goal robot pose data */
+  std::shared_ptr<ROBOGait::map::data::PathData> manual_path_data_;             /**< Manual/preview path data */
   std::shared_ptr<ROBOGait::map::source::PathSource> path_source_;              /**< Path source */
   std::shared_ptr<ROBOGait::map::source::LaserSource> laser_source_;            /**< Laser source */
   std::shared_ptr<ROBOGait::map::source::ParticleCloudSource> particle_source_; /**< Particle cloud source */

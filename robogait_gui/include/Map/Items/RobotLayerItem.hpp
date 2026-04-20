@@ -82,6 +82,9 @@ protected:
    */
   QSGNode* updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* data) override;
 
+signals:
+  void headColorChanged(); // Signal emitted when the head color changes
+
 private slots:
   void onFrameReady(); // Slot for frame ready signal
 
@@ -107,10 +110,7 @@ private:
   static constexpr auto WHEEL_COLOR = QColor(21, 24, 31);         /**< Color for the robot wheels */
   static constexpr auto DEFAULT_HEAD_COLOR = QColor(220, 20, 20); /**< Default color for the robot head */
 
-  QColor head_color_;
-
-signals:
-  void headColorChanged();
+  QColor head_color_; /**< Color for the robot head */
 };
 
 } // namespace item
