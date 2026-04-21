@@ -40,10 +40,19 @@ TestMapViewForm {
     property bool autoLocalizationSpinDone: false
     property int autoLocalizationSpinMs: 30000
     property real autoLocalizationAngularSpeed: 0.75
+    property bool initialRobotPoseSaved: false
+    property var initialRobotMapPosition: Qt.point(0, 0)
+    property real initialRobotTheta: 0
+    property bool waitingGoalPathResult: false
+    property bool waitingHomePathResult: false
 
     readonly property var manualControl: (userSession && userSession.rosManager && userSession.rosManager.robotManager)
                                             ? userSession.rosManager.robotManager.manualControl
                                             : null
+
+    readonly property var mapVisualizationManager: (userSession && userSession.rosManager && userSession.rosManager.robotManager)
+                                                   ? userSession.rosManager.robotManager.mapVisualizationManager
+                                                   : null
 
     readonly property int stepPosition: 0
     readonly property int stepOrientation: 1
@@ -71,6 +80,112 @@ TestMapViewForm {
 
     showRobotPose: mapAvailable && ((placementController && placementController.hasPosition) || autoLocalizationCompleted || autoLocalizationActive)
 
+    function clearGoalSelection() {
+        goalPointSet = false
+        goalOrientationEnabled = false
+        goalOrientationSet = false
+        goalAccepted = false
+        goalPathReady = false
+        testStarted = false
+        initialRobotPoseSaved = false
+        initialRobotMapPosition = Qt.point(0, 0)
+        initialRobotTheta = 0
+        waitingGoalPathResult = false
+        waitingHomePathResult = false
+        goalOrientationDeg = 0
+        goalMapPosition = Qt.point(0, 0)
+    }
+
+    function saveInitialRobotPose() {
+        initialRobotPoseSaved = false
+
+        if (!mapVisualizationManager || !mapVisualizationManager.getRobotPose) {
+            return false
+        }
+
+        var pose = mapVisualizationManager.getRobotPose()
+        if (!pose || !pose.available) {
+            return false
+        }
+
+        initialRobotMapPosition = Qt.point(pose.x, pose.y)
+        initialRobotTheta = pose.theta
+        initialRobotPoseSaved = true
+        return true
+    }
+
+    function handleGoalTap(screenX, screenY) {
+        if (!mapVisualizationManager || !mapAvailable || !goalPlacementEnabled) {
+            return
+        }
+        if (goalPointSet) {
+            return
+        }
+
+        var mapPoint = mapVisualizationManager.screenToMap(screenX, screenY)
+        if (!mapPoint || !mapPoint.available) {
+            return
+        }
+
+        goalMapPosition = Qt.point(mapPoint.x, mapPoint.y)
+        goalPointSet = true
+        goalAccepted = false
+        goalOrientationEnabled = true
+
+        var pose = mapVisualizationManager.getRobotPose()
+        if (pose && pose.available) {
+            goalOrientationDeg = pose.theta * 180 / Math.PI
+        } else {
+            goalOrientationDeg = 0
+        }
+
+        goalOrientationSet = true
+
+        if (mapVisualizationManager.setGoalRobotPose) {
+            mapVisualizationManager.setGoalRobotPose(goalMapPosition.x, goalMapPosition.y, goalOrientationDeg * Math.PI / 180)
+        }
+    }
+
+    function handleGoalClear() {
+        clearGoalSelection()
+        goalPathReady = false
+        if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+            mapVisualizationManager.setPathUpdatesEnabled(false)
+        }
+        if (mapVisualizationManager && mapVisualizationManager.clearManualPath) {
+            mapVisualizationManager.clearManualPath()
+        }
+
+        if (mapVisualizationManager && mapVisualizationManager.clearGoalRobotPose) {
+            mapVisualizationManager.clearGoalRobotPose()
+        }
+    }
+
+    function handleGoalAccept() {
+        if (!goalPointSet || !goalOrientationSet) {
+            return
+        }
+        goalPathReady = false
+        waitingGoalPathResult = true
+        waitingHomePathResult = false
+        if (robotServiceBridge && robotServiceBridge.computePathToPose) {
+            var okCompute = robotServiceBridge.computePathToPose(goalMapPosition.x, goalMapPosition.y, goalOrientationDeg * Math.PI / 180)
+            if (!okCompute) {
+                waitingGoalPathResult = false
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo calcular la ruta")
+                errorPopup.open()
+                return
+            }
+        } else {
+            waitingGoalPathResult = false
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
+            errorPopup.open()
+            return
+        }
+        goalAccepted = true
+        goalOrientationEnabled = false
+    }
+
     onStepChanged: {
         if (step === stepPosition) {
             resetParticleCloudData()
@@ -83,6 +198,21 @@ TestMapViewForm {
         if (step !== stepOrientation) {
             orientationEnabled = false
             orientationOverride = false
+        }
+
+        if (step !== stepNavigation) {
+            goalPlacementEnabled = false
+            clearGoalSelection()
+            goalPathReady = false
+            if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+                mapVisualizationManager.setPathUpdatesEnabled(false)
+            }
+            if (mapVisualizationManager && mapVisualizationManager.clearManualPath) {
+                mapVisualizationManager.clearManualPath()
+            }
+            if (mapVisualizationManager && mapVisualizationManager.clearGoalRobotPose) {
+                mapVisualizationManager.clearGoalRobotPose()
+            }
         }
 
     }
@@ -103,6 +233,42 @@ TestMapViewForm {
             }
         }
 
+    }
+
+    onGoalPlacementEnabledChanged: {
+        if (goalPlacementEnabled) {
+            goalPathReady = false
+            if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+                mapVisualizationManager.setPathUpdatesEnabled(false)
+            }
+            if (mapVisualizationManager && mapVisualizationManager.clearManualPath) {
+                mapVisualizationManager.clearManualPath()
+            }
+            if (goalPointSet) {
+                goalAccepted = false
+                goalOrientationEnabled = true
+                if (mapVisualizationManager && mapVisualizationManager.setGoalRobotPose) {
+                    mapVisualizationManager.setGoalRobotPose(goalMapPosition.x, goalMapPosition.y, goalOrientationDeg * Math.PI / 180)
+                }
+            } else {
+                clearGoalSelection()
+                if (mapVisualizationManager && mapVisualizationManager.clearGoalRobotPose) {
+                    mapVisualizationManager.clearGoalRobotPose()
+                }
+            }
+            if (mapVisualizationManager && mapVisualizationManager.followRobot !== undefined) {
+                mapVisualizationManager.followRobot = false
+            }
+        }
+    }
+
+    onGoalOrientationDegChanged: {
+        if (!goalPointSet || !goalPlacementEnabled || goalAccepted) {
+            return
+        }
+        if (mapVisualizationManager && mapVisualizationManager.setGoalRobotPose) {
+            mapVisualizationManager.setGoalRobotPose(goalMapPosition.x, goalMapPosition.y, goalOrientationDeg * Math.PI / 180)
+        }
     }
 
     function syncRobotPoseUpdates() {
@@ -213,6 +379,9 @@ TestMapViewForm {
         if (active) {
             emergencyStop()
             publishEmergencyZero()
+            if (testStarted && robotServiceBridge && robotServiceBridge.cancelNavigateToPose) {
+                robotServiceBridge.cancelNavigateToPose()
+            }
         }
         else {
             if (manualControl) {
@@ -617,6 +786,62 @@ TestMapViewForm {
         step = stepNavigation
     }
 
+    onGoalAcceptRequested: {
+        if (step !== stepNavigation) {
+            return
+        }
+        handleGoalAccept()
+    }
+
+    onGoalClearRequested: {
+        if (step !== stepNavigation) {
+            return
+        }
+        handleGoalClear()
+    }
+
+    onStartTestRequested: {
+        if (step !== stepNavigation) {
+            return
+        }
+
+        if (!goalPathReady) {
+            return
+        }
+
+        startTestConfirmDialog.openWithMessage(qsTr("¿Iniciar test con este objetivo?"))
+    }
+
+    onGoHomeRequested: {
+        if (step !== stepNavigation || !testStarted || !initialRobotPoseSaved) {
+            return
+        }
+        if (!robotServiceBridge || !robotServiceBridge.computePathToPose) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
+            errorPopup.open()
+            return
+        }
+
+        waitingHomePathResult = true
+        waitingGoalPathResult = false
+
+        if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+            mapVisualizationManager.setPathUpdatesEnabled(false)
+        }
+
+        if (mapVisualizationManager && mapVisualizationManager.clearManualPath) {
+            mapVisualizationManager.clearManualPath()
+        }
+
+        var okComputeHome = robotServiceBridge.computePathToPose(initialRobotMapPosition.x, initialRobotMapPosition.y, initialRobotTheta)
+        if (!okComputeHome) {
+            waitingHomePathResult = false
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo calcular la ruta a la posición inicial")
+            errorPopup.open()
+            return
+        }
+    }
+
     onBackOrientationRequested: {
         if (step !== stepOrientation) {
             return
@@ -814,6 +1039,45 @@ TestMapViewForm {
             }
         }
 
+        function onPathComputed(success, points) {
+            if (!mapVisualizationManager || !mapVisualizationManager.setManualPathPoints) {
+                return
+            }
+            var fromHomeRequest = waitingHomePathResult
+            var fromGoalRequest = waitingGoalPathResult
+
+            waitingHomePathResult = false
+            waitingGoalPathResult = false
+
+            if (!success) {
+                if (mapVisualizationManager.clearManualPath) {
+                    mapVisualizationManager.clearManualPath()
+                }
+                if (fromGoalRequest) {
+                    goalPathReady = false
+                }
+                if (fromHomeRequest) {
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo calcular la ruta a la posición inicial")
+                    errorPopup.open()
+                }
+                return
+            }
+
+            mapVisualizationManager.setManualPathPoints(points)
+
+            if (fromGoalRequest) {
+                goalPathReady = points && points.length > 1
+                return
+            }
+
+            if (fromHomeRequest) {
+                goHomeConfirmDialog.openWithMessage(qsTr("¿Seguro que quieres volver a la posición inicial?"))
+                return
+            }
+
+            goalPathReady = points && points.length > 1
+        }
+
     }
 
 
@@ -824,6 +1088,79 @@ TestMapViewForm {
 
         onAccepted: {
             beginAutoLocalization()
+        }
+    }
+
+    ConfirmationDialog {
+        id: startTestConfirmDialog
+        acceptText: qsTr("Iniciar")
+        holdToAccept: true
+
+        onAccepted: {
+            if (step !== stepNavigation) {
+                return
+            }
+
+            if (!goalPathReady) {
+                return
+            }
+
+            if (!robotServiceBridge || !robotServiceBridge.navigateToPose) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
+                errorPopup.open()
+                return
+            }
+
+            if (!saveInitialRobotPose()) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo guardar la posición inicial del robot")
+                errorPopup.open()
+                return
+            }
+
+            var okStart = robotServiceBridge.navigateToPose(goalMapPosition.x, goalMapPosition.y, goalOrientationDeg * Math.PI / 180)
+            if (!okStart) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación")
+                errorPopup.open()
+                return
+            }
+
+            testStarted = true
+
+            if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+                mapVisualizationManager.setPathUpdatesEnabled(true)
+            }
+        }
+
+        onRejected: {
+        }
+    }
+
+    ConfirmationDialog {
+        id: goHomeConfirmDialog
+        acceptText: qsTr("Aceptar")
+        holdToAccept: true
+
+        onAccepted: {
+            if (step !== stepNavigation || !testStarted || !initialRobotPoseSaved) {
+                return
+            }
+
+            if (!robotServiceBridge || !robotServiceBridge.navigateToPose) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
+                errorPopup.open()
+                return
+            }
+
+            var okHome = robotServiceBridge.navigateToPose(initialRobotMapPosition.x, initialRobotMapPosition.y, initialRobotTheta)
+            if (!okHome) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación a la posición inicial")
+                errorPopup.open()
+                return
+            }
+
+            if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+                mapVisualizationManager.setPathUpdatesEnabled(true)
+            }
         }
     }
 

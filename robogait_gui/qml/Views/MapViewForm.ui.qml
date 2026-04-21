@@ -56,7 +56,7 @@ Rectangle {
     property real headerTopInsetPx: 0
     property real buttonHeightPx: 0
     property real joystickAreaSizePx: 0
-    property real emergencyButtonSizePx: iconButtonSizePx * 3
+    property real emergencyButtonSizePx: iconButtonSizePx * 2
     property real emergencyIconSizePx: emergencyButtonSizePx * 0.6
     property real headerButtonSpacing: 8
 
@@ -233,7 +233,7 @@ Rectangle {
 
             Button {
                 id: emergencyButton
-                width: root.emergencyButtonSizePx > 0 ? root.emergencyButtonSizePx : root.iconButtonSizePx * 3
+                width: root.emergencyButtonSizePx > 0 ? root.emergencyButtonSizePx : root.iconButtonSizePx * 2
                 height: width
                 anchors.right: parent.right
                 anchors.top: parent.top
@@ -252,7 +252,7 @@ Rectangle {
 
                 contentItem: Image {
                     source: "qrc:/qmlresources/icons/color/emergency_stop.svg"
-                    width: root.emergencyIconSizePx > 0 ? root.emergencyIconSizePx : root.iconGlyphSizePx * 3
+                    width: root.emergencyIconSizePx > 0 ? root.emergencyIconSizePx : root.iconGlyphSizePx * 2
                     height: width
                     anchors.centerIn: parent
                     fillMode: Image.PreserveAspectFit
@@ -274,6 +274,23 @@ Rectangle {
                         userSession.rosManager.robotManager.mapVisualizationManager)
                     {
                         userSession.rosManager.robotManager.mapVisualizationManager.registerMapLayerItem(mapLayerItem)
+                    }
+                }
+            }
+
+            PathLayerItem {
+                id: pathLayerItem
+                anchors.fill: parent
+                anchors.margins: mapContentMargin
+                visible: mapAvailable
+                z: 1.45
+
+                Component.onCompleted: {
+                    if (userSession.rosManager &&
+                        userSession.rosManager.robotManager &&
+                        userSession.rosManager.robotManager.mapVisualizationManager)
+                    {
+                        userSession.rosManager.robotManager.mapVisualizationManager.registerPathLayerItem(pathLayerItem)
                     }
                 }
             }

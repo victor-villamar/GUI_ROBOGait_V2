@@ -17,6 +17,7 @@
 #include "Map/Items/LaserLayerItem.hpp"
 #include "Map/Items/MapLayerItem.hpp"
 #include "Map/Items/ParticleCloudLayerItem.hpp"
+#include "Map/Items/PathLayerItem.hpp"
 #include "Map/Items/RobotLayerItem.hpp"
 #include "Robot/ManualControl.hpp"
 #include "Robot/RobotDiscovery.hpp"
@@ -63,6 +64,7 @@ void RoboGaitApplication::initCommon()
   qmlRegisterType<ROBOGait::map::item::RobotLayerItem>("MapRendering", 1, 0, "RobotLayerItem");
   qmlRegisterType<ROBOGait::map::item::LaserLayerItem>("MapRendering", 1, 0, "LaserLayerItem");
   qmlRegisterType<ROBOGait::map::item::ParticleCloudLayerItem>("MapRendering", 1, 0, "ParticleCloudLayerItem");
+  qmlRegisterType<ROBOGait::map::item::PathLayerItem>("MapRendering", 1, 0, "PathLayerItem");
   qRegisterMetaType<geometry_msgs::msg::Twist>("geometry_msgs::msg::Twist");
 
   qInfo() << "[RoboGaitApplication::initCommon] QML types and metatypes registered";

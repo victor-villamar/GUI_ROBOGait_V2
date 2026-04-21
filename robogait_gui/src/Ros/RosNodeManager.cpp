@@ -9,6 +9,7 @@
 #include "Loader/YamlLoader.hpp"
 #include "Ros/Define.hpp"
 #include "Ros/RosNodeManager.hpp"
+#include "Services/RobotServiceClient.hpp"
 
 using namespace ROBOGait::ros::manager;
 
@@ -223,13 +224,10 @@ void RosNodeManager::shutdown()
 
   stopSpinThread();
 
-  if (executor_ && ros_node_)
-  {
-    executor_->remove_node(ros_node_);
-  }
+  ROBOGait::ros::service::RobotServiceClient::getInstance().resetRobotServiceClient();
 
-  ros_node_.reset();
   executor_.reset();
+  ros_node_.reset();
 
   if (context_ && context_->is_valid())
   {

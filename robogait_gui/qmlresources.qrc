@@ -43,11 +43,12 @@
     <file alias="config.svg">resources/Icons/white/config.svg</file>
     <file alias="eraser_solid.svg">resources/Icons/white/eraser_solid.svg</file>
     <file alias="file_arrow_down_solid.svg">resources/Icons/white/file_arrow_down_solid.svg</file>
-    <file alias="goal.png">resources/Icons/white/goal.png</file>
+    <file alias="goal.svg">resources/Icons/white/goal.svg</file>
     <file alias="home.svg">resources/Icons/white/home.svg</file>
     <file alias="keyboard_left.svg">resources/Icons/white/keyboard_left.svg</file>
     <file alias="lock.svg">resources/Icons/white/lock.svg</file>
     <file alias="minus.svg">resources/Icons/white/minus.svg</file>
+    <file alias="path.svg">resources/Icons/white/path.svg</file>
     <file alias="patient.svg">resources/Icons/white/patient.svg</file>
     <file alias="pencil_solid.svg">resources/Icons/white/pencil_solid.svg</file>
     <file alias="pin_empty.svg">resources/Icons/white/pin_empty.svg</file>

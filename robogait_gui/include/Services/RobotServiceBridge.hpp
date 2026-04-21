@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <QVariantList>
 
 #include "Services/RobotServiceClient.hpp"
 
@@ -120,9 +121,39 @@ public:
    */
   Q_INVOKABLE bool reinitializeGlobalLocalization();
 
+  /**
+   * @brief Compute path to a goal pose
+   *
+   * @param x Goal x in map frame
+   * @param y Goal y in map frame
+   * @param theta Goal yaw in radians
+   *
+   * @return true if the request was sent, false otherwise
+   */
+  Q_INVOKABLE bool computePathToPose(double x, double y, double theta);
+
+  /**
+   * @brief Navigate to a goal pose
+   *
+   * @param x Goal x in map frame
+   * @param y Goal y in map frame
+   * @param theta Goal yaw in radians
+   *
+   * @return true if the request was sent, false otherwise
+   */
+  Q_INVOKABLE bool navigateToPose(double x, double y, double theta);
+
+  /**
+   * @brief Cancel the active navigate to pose action
+   *
+   * @return true if the cancel request was sent successfully, false otherwise
+   */
+  Q_INVOKABLE bool cancelNavigateToPose();
+
 signals:
-  void statusChanged();               // Emitted when the status changes
-  void requestFinished(bool success); // Emitted when a command request finishes
+  void statusChanged();                                        // Emitted when the status changes
+  void requestFinished(bool success);                          // Emitted when a command request finishes
+  void pathComputed(bool success, const QVariantList& points); // Emitted when path action finishes
 
 private slots:
   void onPoll(); // Polling slot to update the status

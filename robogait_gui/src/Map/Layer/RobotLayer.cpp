@@ -113,6 +113,14 @@ bool RobotLayer::needsRender() const { return render_requested_; }
 
 void RobotLayer::clearRenderRequest() { render_requested_ = false; }
 
+void RobotLayer::resetInterpolation()
+{
+  QMutexLocker lock(&state_mutex_);
+  first_update_ = true;
+  has_last_update_ = false;
+  render_requested_ = true;
+}
+
 RobotLayer::Pose2D RobotLayer::readTargetPose() const
 {
   RobotLayer::Pose2D pose{0.0, 0.0, 0.0};

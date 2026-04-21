@@ -56,6 +56,32 @@ void RenderScene::setParticleCloudLayer(std::shared_ptr<ROBOGait::map::layer::Pa
   }
 }
 
+void RenderScene::setPathLayer(std::shared_ptr<ROBOGait::map::layer::PathLayer> path_layer)
+{
+  path_layer_ = std::move(path_layer);
+  if (pipeline_)
+  {
+    pipeline_->removeLayer("path_preview");
+    if (path_layer_)
+    {
+      pipeline_->addLayer("path_preview", path_layer_);
+    }
+  }
+}
+
+void RenderScene::setLivePathLayer(std::shared_ptr<ROBOGait::map::layer::PathLayer> live_path_layer)
+{
+  live_path_layer_ = std::move(live_path_layer);
+  if (pipeline_)
+  {
+    pipeline_->removeLayer("path_live");
+    if (live_path_layer_)
+    {
+      pipeline_->addLayer("path_live", live_path_layer_);
+    }
+  }
+}
+
 std::shared_ptr<RenderPipeline> RenderScene::getPipeline() const { return pipeline_; }
 
 void RenderScene::start()
