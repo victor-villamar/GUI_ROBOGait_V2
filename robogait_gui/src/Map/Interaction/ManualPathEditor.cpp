@@ -16,22 +16,42 @@ bool ManualPathEditor::hasPath() const { return !points_.isEmpty(); }
 
 void ManualPathEditor::setMapVisualizationManager(ROBOGait::map::manager::MapVisualizationManager* manager) { map_visualization_manager_ = manager; }
 
-void ManualPathEditor::beginStroke()
+bool ManualPathEditor::beginStroke()
 {
   if (!ensureMapVisualizationManager())
   {
     qCritical() << "[ManualPathEditor::beginStroke] MapVisualizationManager not set";
-    return;
+    return false;
+  }
+
+  // A path can only be drawn once per clear action
+  if (!points_.isEmpty())
+  {
+    return false;
   }
 
   stroke_blocked_by_outside_ = false;
-  map_visualization_manager_->clearManualPath();
+  map_visualization_manager_->clearManualDrawPath();
   setDrawing(true);
+
+  if (!appendRobotStartPoint())
+  {
+    qWarning() << "[ManualPathEditor::beginStroke] Robot pose unavailable, stroke canceled";
+    setDrawing(false);
+    return false;
+  }
+
+  syncPathToVisualization();
+  return true;
 }
 
 void ManualPathEditor::beginStrokeFromScreen(double screen_x, double screen_y)
 {
-  beginStroke();
+  if (!beginStroke())
+  {
+    return;
+  }
+
   appendPointFromScreen(screen_x, screen_y);
 }
 
@@ -87,7 +107,7 @@ void ManualPathEditor::clear()
 {
   if (map_visualization_manager_)
   {
-    map_visualization_manager_->clearManualPath();
+    map_visualization_manager_->clearManualDrawPath();
     return;
   }
 
@@ -175,7 +195,7 @@ void ManualPathEditor::syncPathToVisualization()
     return;
   }
 
-  map_visualization_manager_->setManualPathPoints(getPathPoints());
+  map_visualization_manager_->setManualDrawPathPoints(getPathPoints());
 }
 
 void ManualPathEditor::setDrawing(bool drawing)
@@ -203,5 +223,38 @@ bool ManualPathEditor::arePointVectorsEqual(const QVector<QPointF>& lhs, const Q
     }
   }
 
+  return true;
+}
+
+bool ManualPathEditor::appendRobotStartPoint()
+{
+  if (!ensureMapVisualizationManager())
+  {
+    return false;
+  }
+
+  const QVariantMap pose = map_visualization_manager_->getRobotPose();
+  const bool available = pose.value("available").toBool();
+  if (!available)
+  {
+    return false;
+  }
+
+  bool ok_x = false;
+  bool ok_y = false;
+  const double x = pose.value("x").toDouble(&ok_x);
+  const double y = pose.value("y").toDouble(&ok_y);
+  if (!ok_x || !ok_y)
+  {
+    return false;
+  }
+
+  if (!map_visualization_manager_->isMapPointInside(x, y))
+  {
+    return false;
+  }
+
+  points_.append(QPointF(x, y));
+  emit pathChanged();
   return true;
 }

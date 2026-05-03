@@ -60,8 +60,12 @@ public:
 
   /**
    * @brief Start a new stroke and clear previous path
+   *
+   * Initializes the first point from current robot pose.
+   *
+   * @return true if stroke started with a valid robot-start point, false otherwise
    */
-  void beginStroke();
+  bool beginStroke();
 
   /**
    * @brief Get current path points as QVariantList of {x, y}
@@ -112,6 +116,13 @@ private:
    * @brief Compare two point vectors
    */
   static bool arePointVectorsEqual(const QVector<QPointF>& lhs, const QVector<QPointF>& rhs);
+
+  /**
+   * @brief Append the current robot position as first point of the stroke
+   *
+   * @return true if robot pose was valid and point added
+   */
+  bool appendRobotStartPoint();
 
   ROBOGait::map::manager::MapVisualizationManager* map_visualization_manager_; /**< Map visualization manager pointer */
   QVector<QPointF> points_;                                                    /**< Current manual path points */

@@ -448,6 +448,24 @@ Rectangle {
             }
 
             PathLayerItem {
+                id: manualDrawPathLayerItem
+                anchors.fill: parent
+                anchors.margins: mapContentMargin
+                visible: mapAvailable && isNavigationStep
+                z: 1.455
+                pathColor: "#F57927"
+
+                Component.onCompleted: {
+                    if (userSession.rosManager &&
+                        userSession.rosManager.robotManager &&
+                        userSession.rosManager.robotManager.mapVisualizationManager)
+                    {
+                        userSession.rosManager.robotManager.mapVisualizationManager.registerManualDrawPathLayerItem(manualDrawPathLayerItem)
+                    }
+                }
+            }
+
+            PathLayerItem {
                 id: livePathLayerItem
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
