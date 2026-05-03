@@ -57,6 +57,7 @@ set(HEADERS
     include/Map/Data/ParticleCloudData.hpp
     include/Map/Data/PathData.hpp
     include/Map/Data/RobotPoseData.hpp
+    include/Map/Interaction/ManualPathEditor.hpp
     include/Map/Items/LaserLayerItem.hpp
     include/Map/Items/MapLayerItem.hpp
     include/Map/Items/ParticleCloudLayerItem.hpp
@@ -121,6 +122,7 @@ set(SOURCES
     src/Map/Data/ParticleCloudData.cpp
     src/Map/Data/PathData.cpp
     src/Map/Data/RobotPoseData.cpp
+    src/Map/Interaction/ManualPathEditor.cpp
     src/Map/Items/LaserLayerItem.cpp
     src/Map/Items/MapLayerItem.cpp
     src/Map/Items/ParticleCloudLayerItem.cpp
