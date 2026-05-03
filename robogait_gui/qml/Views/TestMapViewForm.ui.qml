@@ -41,6 +41,7 @@ Rectangle {
     signal autoLocalizationRequested()
     signal goalAcceptRequested()
     signal goalClearRequested()
+    signal pathClearRequested()
     signal startTestRequested()
     signal goHomeRequested()
 
@@ -51,6 +52,7 @@ Rectangle {
     property bool orientationEnabled: false
     property bool orientationOverride: false
     property bool goalPlacementEnabled: false
+    property bool pathPlacementEnabled: false
     property bool goalPointSet: false
     property bool goalOrientationEnabled: false
     property bool goalOrientationSet: false
@@ -282,19 +284,69 @@ Rectangle {
                 }
             }
 
+            Rectangle {
+                id: pathActionPanel
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.rightMargin: 21
+                anchors.bottomMargin: 21
+                color: "#2c5f7c"
+                radius: 10
+                border.color: "#6aa3c8"
+                border.width: 2
+                z: 70
+                visible: mapAvailable && isNavigationStep && pathPlacementEnabled && !testStarted
+
+                property int padding: 10
+                property real buttonWidth: 160
+                width: buttonWidth + (padding * 2)
+                height: root.buttonHeightPx + (padding * 2)
+
+                Button {
+                    id: pathClearButton
+                    anchors.fill: parent
+                    anchors.margins: pathActionPanel.padding
+                    enabled: mapVisualizationManager &&
+                             mapVisualizationManager.manualPathEditor &&
+                             mapVisualizationManager.manualPathEditor.hasPath
+                    opacity: enabled ? 1.0 : 0.4
+
+                    background: Rectangle {
+                        radius: 6
+                        color: pathClearButton.pressed ? "#1a3a4a" : "#3a7fa0"
+                        border.color: "#ffffff"
+                        border.width: 1
+                    }
+
+                    contentItem: Text {
+                        text: qsTr("BORRAR")
+                        color: "#ffffff"
+                        font.pixelSize: 14
+                        font.bold: true
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    onClicked: pathClearRequested()
+                }
+            }
+
             MapLayerItem {
                 id: mapLayerItem
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
                 visible: mapAvailable
                 z: 1
-                isPanningEnabled: !placementEnabled && !goalPlacementEnabled && !testStarted
+                isPanningEnabled: !placementEnabled && !goalPlacementEnabled && !pathPlacementEnabled && !testStarted
 
                 TapHandler {
                     acceptedButtons: Qt.LeftButton
                     gesturePolicy: TapHandler.DragThreshold
                     onTapped: {
                         if (testStarted) {
+                            return
+                        }
+                        if (mapAvailable && isNavigationStep && pathPlacementEnabled) {
                             return
                         }
                         if (mapAvailable && isNavigationStep && goalPlacementEnabled) {
@@ -310,6 +362,42 @@ Rectangle {
                             return
                         }
                         placementController.setPositionFromScreenCoordinates(point.position.x, point.position.y)
+                    }
+                }
+
+                DragHandler {
+                    id: pathDragHandler
+                    target: null
+                    acceptedButtons: Qt.LeftButton
+                    dragThreshold: 0
+                    enabled: mapAvailable && isNavigationStep && pathPlacementEnabled && !testStarted
+
+                    onActiveChanged: {
+                        if (active) {
+                            if (root.handlePathStrokeStart) {
+                                root.handlePathStrokeStart(centroid.position.x, centroid.position.y)
+                            }
+                        }
+                        else {
+                            if (root.handlePathStrokeEnd) {
+                                root.handlePathStrokeEnd()
+                            }
+                        }
+                    }
+
+                    onCentroidChanged: {
+                        if (!active) {
+                            return
+                        }
+                        if (root.handlePathStrokeMove) {
+                            root.handlePathStrokeMove(centroid.position.x, centroid.position.y)
+                        }
+                    }
+
+                    onCanceled: function() {
+                        if (root.handlePathStrokeEnd) {
+                            root.handlePathStrokeEnd()
+                        }
                     }
                 }
 
@@ -1082,7 +1170,13 @@ Rectangle {
                     }
 
                     onClicked: {
-                        goalPlacementEnabled = !goalPlacementEnabled
+                        if (goalPlacementEnabled) {
+                            goalPlacementEnabled = false
+                        }
+                        else {
+                            goalPlacementEnabled = true
+                            pathPlacementEnabled = false
+                        }
                     }
                 }
 
@@ -1090,12 +1184,12 @@ Rectangle {
                     id: pathModeButton
                     width: root.iconButtonSizePx
                     height: root.iconButtonSizePx
-                    enabled: false
-                    opacity: 0.5
+                    opacity: enabled ? 1.0 : 0.5
+                    enabled: mapAvailable && isNavigationStep
 
                     background: Rectangle {
                         radius: 6
-                        color: "#3a7fa0"
+                        color: pathPlacementEnabled ? "#1a3a4a" : "#3a7fa0"
                         border.color: "#ffffff"
                         border.width: 1
                     }
@@ -1107,6 +1201,16 @@ Rectangle {
                         anchors.centerIn: parent
                         fillMode: Image.PreserveAspectFit
                         smooth: true
+                    }
+
+                    onClicked: {
+                        if (pathPlacementEnabled) {
+                            pathPlacementEnabled = false
+                        }
+                        else {
+                            pathPlacementEnabled = true
+                            goalPlacementEnabled = false
+                        }
                     }
                 }
 

@@ -11,6 +11,7 @@
 #include <rclcpp/node.hpp>
 
 #include "Map/Data/RobotPoseData.hpp"
+#include "Map/Interaction/ManualPathEditor.hpp"
 #include "Map/Items/LaserLayerItem.hpp"
 #include "Map/Items/MapLayerItem.hpp"
 #include "Map/Items/ParticleCloudLayerItem.hpp"
@@ -84,6 +85,10 @@ class MapVisualizationManager : public QObject
              READ isFollowingRobot
              WRITE setFollowRobot
              NOTIFY followRobotChanged)
+
+  Q_PROPERTY(ROBOGait::map::interaction::ManualPathEditor* manualPathEditor
+             READ getManualPathEditor
+             CONSTANT)
   // clang-format on
 
 public:
@@ -236,6 +241,11 @@ public:
    * @return true if the point is inside the map, false otherwise
    */
   bool isMapPointInside(double x, double y) const;
+
+  /**
+   * @brief Get manual path editor
+   */
+  ROBOGait::map::interaction::ManualPathEditor* getManualPathEditor() const;
 
   /**
    * @brief Activate subscriptions for data sources
@@ -436,13 +446,14 @@ private:
   QPointer<ROBOGait::map::item::LaserLayerItem> laser_layer_item_;            /**< Laser layer item */
   QPointer<ROBOGait::map::item::ParticleCloudLayerItem> particle_layer_item_; /**< Particle cloud layer item */
 
-  std::shared_ptr<ROBOGait::map::source::MapSource> map_source_;                /**< Map source */
-  std::shared_ptr<ROBOGait::map::source::RobotPoseSource> pose_source_;         /**< Robot pose source */
-  std::shared_ptr<ROBOGait::map::data::RobotPoseData> goal_robot_pose_data_;    /**< Goal robot pose data */
-  std::shared_ptr<ROBOGait::map::data::PathData> manual_path_data_;             /**< Manual/preview path data */
-  std::shared_ptr<ROBOGait::map::source::PathSource> path_source_;              /**< Path source */
-  std::shared_ptr<ROBOGait::map::source::LaserSource> laser_source_;            /**< Laser source */
-  std::shared_ptr<ROBOGait::map::source::ParticleCloudSource> particle_source_; /**< Particle cloud source */
+  std::shared_ptr<ROBOGait::map::source::MapSource> map_source_;                     /**< Map source */
+  std::shared_ptr<ROBOGait::map::source::RobotPoseSource> pose_source_;              /**< Robot pose source */
+  std::shared_ptr<ROBOGait::map::data::RobotPoseData> goal_robot_pose_data_;         /**< Goal robot pose data */
+  std::shared_ptr<ROBOGait::map::data::PathData> manual_path_data_;                  /**< Manual/preview path data */
+  std::shared_ptr<ROBOGait::map::source::PathSource> path_source_;                   /**< Path source */
+  std::shared_ptr<ROBOGait::map::source::LaserSource> laser_source_;                 /**< Laser source */
+  std::shared_ptr<ROBOGait::map::source::ParticleCloudSource> particle_source_;      /**< Particle cloud source */
+  std::unique_ptr<ROBOGait::map::interaction::ManualPathEditor> manual_path_editor_; /**< Manual path editor */
 
   QString selected_robot_namespace_;    /**< Selected robot namespace */
   bool use_namespace_discovery_;        /**< Use namespace-based topic discovery */

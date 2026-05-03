@@ -53,6 +53,9 @@ TestMapViewForm {
     readonly property var mapVisualizationManager: (userSession && userSession.rosManager && userSession.rosManager.robotManager)
                                                    ? userSession.rosManager.robotManager.mapVisualizationManager
                                                    : null
+    readonly property var manualPathEditor: (mapVisualizationManager && mapVisualizationManager.manualPathEditor)
+                                            ? mapVisualizationManager.manualPathEditor
+                                            : null
 
     readonly property int stepPosition: 0
     readonly property int stepOrientation: 1
@@ -186,6 +189,41 @@ TestMapViewForm {
         goalOrientationEnabled = false
     }
 
+    function handlePathClear() {
+        if (manualPathEditor && manualPathEditor.clear) {
+            manualPathEditor.clear()
+            return
+        }
+
+        if (mapVisualizationManager && mapVisualizationManager.clearManualPath) {
+            mapVisualizationManager.clearManualPath()
+        }
+    }
+
+    function handlePathStrokeStart(screenX, screenY) {
+        if (!mapAvailable || !pathPlacementEnabled || !manualPathEditor || !manualPathEditor.beginStrokeFromScreen) {
+            return
+        }
+
+        manualPathEditor.beginStrokeFromScreen(screenX, screenY)
+    }
+
+    function handlePathStrokeMove(screenX, screenY) {
+        if (!mapAvailable || !pathPlacementEnabled || !manualPathEditor || !manualPathEditor.appendPointFromScreen) {
+            return
+        }
+
+        manualPathEditor.appendPointFromScreen(screenX, screenY)
+    }
+
+    function handlePathStrokeEnd() {
+        if (!manualPathEditor || !manualPathEditor.endStroke) {
+            return
+        }
+
+        manualPathEditor.endStroke()
+    }
+
     onStepChanged: {
         if (step === stepPosition) {
             resetParticleCloudData()
@@ -202,6 +240,7 @@ TestMapViewForm {
 
         if (step !== stepNavigation) {
             goalPlacementEnabled = false
+            pathPlacementEnabled = false
             clearGoalSelection()
             goalPathReady = false
             if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
@@ -237,6 +276,9 @@ TestMapViewForm {
 
     onGoalPlacementEnabledChanged: {
         if (goalPlacementEnabled) {
+            if (pathPlacementEnabled) {
+                pathPlacementEnabled = false
+            }
             goalPathReady = false
             if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
                 mapVisualizationManager.setPathUpdatesEnabled(false)
@@ -250,7 +292,8 @@ TestMapViewForm {
                 if (mapVisualizationManager && mapVisualizationManager.setGoalRobotPose) {
                     mapVisualizationManager.setGoalRobotPose(goalMapPosition.x, goalMapPosition.y, goalOrientationDeg * Math.PI / 180)
                 }
-            } else {
+            }
+            else {
                 clearGoalSelection()
                 if (mapVisualizationManager && mapVisualizationManager.clearGoalRobotPose) {
                     mapVisualizationManager.clearGoalRobotPose()
@@ -259,6 +302,27 @@ TestMapViewForm {
             if (mapVisualizationManager && mapVisualizationManager.followRobot !== undefined) {
                 mapVisualizationManager.followRobot = false
             }
+        }
+    }
+
+    onPathPlacementEnabledChanged: {
+        if (pathPlacementEnabled) {
+            if (goalPlacementEnabled) {
+                goalPlacementEnabled = false
+            }
+            goalPathReady = false
+            if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+                mapVisualizationManager.setPathUpdatesEnabled(false)
+            }
+            if (mapVisualizationManager && mapVisualizationManager.clearGoalRobotPose) {
+                mapVisualizationManager.clearGoalRobotPose()
+            }
+            if (mapVisualizationManager && mapVisualizationManager.followRobot !== undefined) {
+                mapVisualizationManager.followRobot = false
+            }
+        }
+        else {
+            handlePathClear()
         }
     }
 
@@ -798,6 +862,13 @@ TestMapViewForm {
             return
         }
         handleGoalClear()
+    }
+
+    onPathClearRequested: {
+        if (step !== stepNavigation) {
+            return
+        }
+        handlePathClear()
     }
 
     onStartTestRequested: {

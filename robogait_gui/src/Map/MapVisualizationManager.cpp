@@ -31,6 +31,7 @@ MapVisualizationManager::MapVisualizationManager() :
     path_source_(std::make_shared<ROBOGait::map::source::PathSource>()),
     laser_source_(std::make_shared<ROBOGait::map::source::LaserSource>()),
     particle_source_(std::make_shared<ROBOGait::map::source::ParticleCloudSource>()),
+    manual_path_editor_(std::make_unique<ROBOGait::map::interaction::ManualPathEditor>()),
     selected_robot_namespace_(""),
     use_namespace_discovery_(true),
     is_initialized_(false),
@@ -45,6 +46,11 @@ MapVisualizationManager::MapVisualizationManager() :
     robot_size_(0.5),
     follow_robot_(false)
 {
+  if (manual_path_editor_)
+  {
+    manual_path_editor_->setMapVisualizationManager(this);
+  }
+
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
 
   if (yaml_loader.isLoaded())
@@ -359,6 +365,8 @@ bool MapVisualizationManager::isMapPointInside(double x, double y) const
 
   return (local_x >= 0.0 && local_x <= width_m && local_y >= 0.0 && local_y <= height_m);
 }
+
+ROBOGait::map::interaction::ManualPathEditor* MapVisualizationManager::getManualPathEditor() const { return manual_path_editor_.get(); }
 
 void MapVisualizationManager::activateSubscriptions()
 {
@@ -812,11 +820,6 @@ void MapVisualizationManager::clearGoalRobotPose()
 
 void MapVisualizationManager::setManualPathPoints(const QVariantList& points)
 {
-  if (!manual_path_data_)
-  {
-    return;
-  }
-
   ROBOGait::map::data::PathData::PathMetadata metadata;
   metadata.points.reserve(points.size());
 
@@ -838,13 +841,16 @@ void MapVisualizationManager::setManualPathPoints(const QVariantList& points)
     metadata.points.emplace_back(x, y);
   }
 
-  if (metadata.points.empty())
+  if (manual_path_data_)
   {
-    manual_path_data_->reset();
-  }
-  else
-  {
-    manual_path_data_->setPath(metadata);
+    if (metadata.points.empty())
+    {
+      manual_path_data_->reset();
+    }
+    else
+    {
+      manual_path_data_->setPath(metadata);
+    }
   }
 
   if (path_layer_)
@@ -854,17 +860,20 @@ void MapVisualizationManager::setManualPathPoints(const QVariantList& points)
   if (path_layer_item_)
   {
     path_layer_item_->update();
+  }
+
+  if (manual_path_editor_)
+  {
+    manual_path_editor_->setCachedPath(points);
   }
 }
 
 void MapVisualizationManager::clearManualPath()
 {
-  if (!manual_path_data_)
+  if (manual_path_data_)
   {
-    return;
+    manual_path_data_->reset();
   }
-
-  manual_path_data_->reset();
 
   if (path_layer_)
   {
@@ -873,6 +882,11 @@ void MapVisualizationManager::clearManualPath()
   if (path_layer_item_)
   {
     path_layer_item_->update();
+  }
+
+  if (manual_path_editor_)
+  {
+    manual_path_editor_->clearCachedPath();
   }
 }
 
@@ -1209,6 +1223,11 @@ void MapVisualizationManager::createLayers()
   goal_robot_pose_data_ = std::make_shared<ROBOGait::map::data::RobotPoseData>();
   manual_path_data_ = std::make_shared<ROBOGait::map::data::PathData>();
 
+  if (manual_path_editor_)
+  {
+    manual_path_editor_->clearCachedPath();
+  }
+
   map_layer_ = std::make_shared<ROBOGait::map::layer::MapLayer>();
   map_layer_->setMapData(map_data);
 
@@ -1254,12 +1273,22 @@ void MapVisualizationManager::destroyLayers()
 {
   if (!map_layer_ && !robot_layer_ && !path_layer_ && !live_path_layer_ && !laser_layer_ && !particle_layer_)
   {
+    if (manual_path_editor_)
+    {
+      manual_path_editor_->clearCachedPath();
+    }
+
     qWarning() << "[MapVisualizationManager::destroyLayers] No layers to destroy";
     return;
   }
 
   if (!render_scene_)
   {
+    if (manual_path_editor_)
+    {
+      manual_path_editor_->clearCachedPath();
+    }
+
     qWarning() << "[MapVisualizationManager::destroyLayers] Render scene not available, cannot properly disconnect layers from scene";
     return;
   }
@@ -1308,6 +1337,12 @@ void MapVisualizationManager::destroyLayers()
   live_path_layer_.reset();
   goal_robot_pose_data_.reset();
   manual_path_data_.reset();
+
+  if (manual_path_editor_)
+  {
+    manual_path_editor_->clearCachedPath();
+  }
+
   laser_layer_.reset();
   particle_layer_.reset();
   map_available_cache_ = false;
