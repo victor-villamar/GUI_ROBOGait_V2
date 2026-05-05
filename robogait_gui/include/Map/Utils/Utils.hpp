@@ -2,10 +2,13 @@
 
 #include <cmath>
 #include <memory>
+#include <optional>
 #include <string>
+#include <vector>
 
 #include <QImage>
 #include <QString>
+#include <QVariantList>
 
 #include <tf2/LinearMath/Quaternion.h>
 
@@ -30,6 +33,20 @@ static constexpr int IMAGE_QUALITY = 100;          /**< Image quality */
 static constexpr auto DARK_BLUE_GRAY = qRgb(26, 58, 74); /**< Dark blue-gray color */
 static constexpr auto LIGHT_BLUE = qRgb(169, 207, 232);  /**< Light blue color */
 static constexpr auto WHITE = qRgb(255, 255, 255);       /**< White color */
+
+/**
+ * @brief Waypoint input structure for navigation goals
+ *
+ * @param x X coordinate in meters
+ * @param y Y coordinate in meters
+ * @param theta Optional orientation in radians (yaw)
+ */
+struct WaypointInput
+{
+  double x = 0.0;
+  double y = 0.0;
+  std::optional<double> theta;
+};
 
 /**
  * @brief Extract yaw angle from ROS2 Quaternion message
@@ -118,6 +135,24 @@ QString getMapPreviewPath(const QString& map_name);
  * @return Sanitized map name safe for file paths
  */
 std::string sanitizeMapName(const std::string& map_name);
+
+/**
+ * @brief Parse waypoint list coming from Qt into strongly typed inputs
+ *
+ * @param points List with entries containing x, y and optional theta
+ * @return Parsed and validated waypoint list
+ */
+std::vector<WaypointInput> parseWaypointInputs(const QVariantList& points);
+
+/**
+ * @brief Build waypoint orientation quaternion
+ *
+ * Uses theta if available, otherwise returns identity orientation.
+ *
+ * @param waypoint Parsed waypoint
+ * @return Waypoint orientation quaternion
+ */
+geometry_msgs::msg::Quaternion buildWaypointOrientation(const WaypointInput& waypoint);
 
 } // namespace utils
 } // namespace map

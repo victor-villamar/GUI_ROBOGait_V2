@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QString>
 #include <QUrl>
+#include <QVariantMap>
 #include <Qt>
 
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -270,6 +271,63 @@ std::string sanitizeMapName(const std::string& map_name)
   }
 
   return out;
+}
+
+std::vector<WaypointInput> parseWaypointInputs(const QVariantList& points)
+{
+  std::vector<WaypointInput> out;
+  out.reserve(static_cast<size_t>(points.size()));
+
+  for (const QVariant& value : points)
+  {
+    if (!value.canConvert<QVariantMap>())
+    {
+      continue;
+    }
+
+    const QVariantMap point_map = value.toMap();
+
+    bool ok_x = false;
+    bool ok_y = false;
+    bool ok_theta = false;
+
+    const double x = point_map.value("x").toDouble(&ok_x);
+    const double y = point_map.value("y").toDouble(&ok_y);
+    const double theta = point_map.value("theta").toDouble(&ok_theta);
+
+    if (!ok_x || !ok_y || !std::isfinite(x) || !std::isfinite(y))
+    {
+      continue;
+    }
+
+    WaypointInput waypoint;
+    waypoint.x = x;
+    waypoint.y = y;
+
+    if (ok_theta && std::isfinite(theta))
+    {
+      waypoint.theta = theta;
+    }
+
+    out.push_back(std::move(waypoint));
+  }
+
+  return out;
+}
+
+geometry_msgs::msg::Quaternion buildWaypointOrientation(const WaypointInput& waypoint)
+{
+  if (waypoint.theta.has_value())
+  {
+    return createQuaternionFromYaw(waypoint.theta.value());
+  }
+
+  geometry_msgs::msg::Quaternion orientation;
+  orientation.x = 0.0;
+  orientation.y = 0.0;
+  orientation.z = 0.0;
+  orientation.w = 1.0;
+  return orientation;
 }
 
 } // namespace utils

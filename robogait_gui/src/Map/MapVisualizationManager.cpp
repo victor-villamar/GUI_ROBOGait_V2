@@ -538,13 +538,52 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
   map_layer_item_->setRenderer(map_layer_);
   map_layer_item_->setCamera(render_camera_);
 
+  bool has_sync_overlay = false;
   if (robot_layer_item_)
   {
     map_layer_item_->setSyncItem(robot_layer_item_);
+    has_sync_overlay = true;
   }
-  else
+
+  if (goal_robot_layer_item_)
   {
-    qWarning() << "[MapVisualizationManager::registerMapLayerItem] Robot layer item not registered yet, MapLayerItem will be registered without sync item";
+    map_layer_item_->setSyncItem(goal_robot_layer_item_);
+    has_sync_overlay = true;
+  }
+
+  if (path_layer_item_)
+  {
+    map_layer_item_->setSyncItem(path_layer_item_);
+    has_sync_overlay = true;
+  }
+
+  if (manual_draw_path_layer_item_)
+  {
+    map_layer_item_->setSyncItem(manual_draw_path_layer_item_);
+    has_sync_overlay = true;
+  }
+
+  if (live_path_layer_item_)
+  {
+    map_layer_item_->setSyncItem(live_path_layer_item_);
+    has_sync_overlay = true;
+  }
+
+  if (laser_layer_item_)
+  {
+    map_layer_item_->setSyncItem(laser_layer_item_);
+    has_sync_overlay = true;
+  }
+
+  if (particle_layer_item_)
+  {
+    map_layer_item_->setSyncItem(particle_layer_item_);
+    has_sync_overlay = true;
+  }
+
+  if (!has_sync_overlay)
+  {
+    qWarning() << "[MapVisualizationManager::registerMapLayerItem] Overlay items not registered yet, MapLayerItem will be registered without sync overlays";
   }
 
   // clang-format off
@@ -684,6 +723,11 @@ void MapVisualizationManager::registerGoalRobotLayerItem(QObject* item)
   goal_robot_layer_item_->setRenderer(goal_robot_layer_);
   goal_robot_layer_item_->setCamera(render_camera_);
 
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(goal_robot_layer_item_);
+  }
+
   qInfo() << "[MapVisualizationManager::registerGoalRobotLayerItem] Item registered";
 }
 
@@ -731,6 +775,11 @@ void MapVisualizationManager::registerPathLayerItem(QObject* item)
   path_layer_item_->setRenderScene(render_scene_);
   path_layer_item_->setRenderer(path_layer_);
   path_layer_item_->setCamera(render_camera_);
+
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(path_layer_item_);
+  }
 
   qInfo() << "[MapVisualizationManager::registerPathLayerItem] Item registered";
 }
@@ -780,6 +829,11 @@ void MapVisualizationManager::registerManualDrawPathLayerItem(QObject* item)
   manual_draw_path_layer_item_->setRenderer(manual_draw_path_layer_);
   manual_draw_path_layer_item_->setCamera(render_camera_);
 
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(manual_draw_path_layer_item_);
+  }
+
   qInfo() << "[MapVisualizationManager::registerManualDrawPathLayerItem] Item registered";
 }
 
@@ -827,6 +881,11 @@ void MapVisualizationManager::registerLivePathLayerItem(QObject* item)
   live_path_layer_item_->setRenderScene(render_scene_);
   live_path_layer_item_->setRenderer(live_path_layer_);
   live_path_layer_item_->setCamera(render_camera_);
+
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(live_path_layer_item_);
+  }
 
   qInfo() << "[MapVisualizationManager::registerLivePathLayerItem] Item registered";
 }
@@ -1054,6 +1113,11 @@ void MapVisualizationManager::registerLaserLayerItem(QObject* item)
   laser_layer_item_->setRenderer(laser_layer_);
   laser_layer_item_->setCamera(render_camera_);
 
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(laser_layer_item_);
+  }
+
   qInfo() << "[MapVisualizationManager::registerLaserLayerItem] Item registered";
 }
 
@@ -1101,6 +1165,11 @@ void MapVisualizationManager::registerParticleCloudLayerItem(QObject* item)
   particle_layer_item_->setRenderScene(render_scene_);
   particle_layer_item_->setRenderer(particle_layer_);
   particle_layer_item_->setCamera(render_camera_);
+
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(particle_layer_item_);
+  }
 
   qInfo() << "[MapVisualizationManager::registerParticleCloudLayerItem] Item registered";
 }

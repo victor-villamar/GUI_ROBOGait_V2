@@ -41,6 +41,8 @@ Rectangle {
     signal autoLocalizationRequested()
     signal goalAcceptRequested()
     signal goalClearRequested()
+    signal pathAcceptRequested()
+    signal pathSegmentRequested()
     signal pathClearRequested()
     signal startTestRequested()
     signal goHomeRequested()
@@ -58,14 +60,22 @@ Rectangle {
     property bool goalOrientationSet: false
     property bool goalAccepted: false
     property bool goalPathReady: false
+    property bool manualPathReady: false
+    property bool pathTerminalPoseSet: false
+    property bool pathTerminalOrientationOverride: false
     property bool testStarted: false
     property real goalOrientationDeg: 0
     property var goalMapPosition: Qt.point(0, 0)
+    property real pathTerminalOrientationDeg: 0
+    property var pathTerminalMapPosition: Qt.point(0, 0)
     property var placementController: (userSession.rosManager && userSession.rosManager.robotManager)
                                       ? userSession.rosManager.robotManager.robotPlacementController
                                       : null
     property bool showRobotPose: false
     property bool showParticleCloud: false
+    readonly property bool manualPathAvailable: mapVisualizationManager &&
+                                                mapVisualizationManager.manualPathEditor &&
+                                                mapVisualizationManager.manualPathEditor.hasPath
 
 
     ColumnLayout {
@@ -245,7 +255,7 @@ Rectangle {
                         }
 
                         contentItem: Text {
-                            text: qsTr("ACEPTAR")
+                            text: qsTr("CALCULAR")
                             color: "#ffffff"
                             font.pixelSize: 14
                             font.bold: true
@@ -299,35 +309,100 @@ Rectangle {
 
                 property int padding: 10
                 property real buttonWidth: 160
+                property int buttonsSpacing: 8
                 width: buttonWidth + (padding * 2)
-                height: root.buttonHeightPx + (padding * 2)
+                height: (root.buttonHeightPx * 3) + (buttonsSpacing * 2) + (padding * 2)
 
-                Button {
-                    id: pathClearButton
+                Column {
                     anchors.fill: parent
                     anchors.margins: pathActionPanel.padding
-                    enabled: mapVisualizationManager &&
-                             mapVisualizationManager.manualPathEditor &&
-                             mapVisualizationManager.manualPathEditor.hasPath
-                    opacity: enabled ? 1.0 : 0.4
+                    spacing: pathActionPanel.buttonsSpacing
 
-                    background: Rectangle {
-                        radius: 6
-                        color: pathClearButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
-                        border.width: 1
+                    Button {
+                        id: pathAcceptButton
+                        width: pathActionPanel.buttonWidth
+                        height: root.buttonHeightPx
+                        enabled: mapVisualizationManager &&
+                                 mapVisualizationManager.manualPathEditor &&
+                                 mapVisualizationManager.manualPathEditor.hasPath &&
+                                 mapVisualizationManager.manualPathEditor.isSegmented
+                        opacity: enabled ? 1.0 : 0.4
+
+                        background: Rectangle {
+                            radius: 6
+                            color: pathAcceptButton.pressed ? "#1a3a4a" : "#3a7fa0"
+                            border.color: "#ffffff"
+                            border.width: 1
+                        }
+
+                        contentItem: Text {
+                            text: qsTr("ACEPTAR")
+                            color: "#ffffff"
+                            font.pixelSize: 14
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: pathAcceptRequested()
                     }
 
-                    contentItem: Text {
-                        text: qsTr("BORRAR")
-                        color: "#ffffff"
-                        font.pixelSize: 14
-                        font.bold: true
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
+                    Button {
+                        id: pathSegmentButton
+                        width: pathActionPanel.buttonWidth
+                        height: root.buttonHeightPx
+                        enabled: mapVisualizationManager &&
+                                 mapVisualizationManager.manualPathEditor &&
+                                 mapVisualizationManager.manualPathEditor.hasPath &&
+                                 !mapVisualizationManager.manualPathEditor.isSegmented
+                        opacity: enabled ? 1.0 : 0.4
+
+                        background: Rectangle {
+                            radius: 6
+                            color: pathSegmentButton.pressed ? "#1a3a4a" : "#3a7fa0"
+                            border.color: "#ffffff"
+                            border.width: 1
+                        }
+
+                        contentItem: Text {
+                            text: qsTr("SEGMENTAR")
+                            color: "#ffffff"
+                            font.pixelSize: 14
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: pathSegmentRequested()
                     }
 
-                    onClicked: pathClearRequested()
+                    Button {
+                        id: pathClearButton
+                        width: pathActionPanel.buttonWidth
+                        height: root.buttonHeightPx
+                        enabled: mapVisualizationManager &&
+                                 mapVisualizationManager.manualPathEditor &&
+                                 mapVisualizationManager.manualPathEditor.hasPath
+                        opacity: enabled ? 1.0 : 0.4
+
+                        background: Rectangle {
+                            radius: 6
+                            color: pathClearButton.pressed ? "#1a3a4a" : "#3a7fa0"
+                            border.color: "#ffffff"
+                            border.width: 1
+                        }
+
+                        contentItem: Text {
+                            text: qsTr("BORRAR")
+                            color: "#ffffff"
+                            font.pixelSize: 14
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: pathClearRequested()
+                    }
                 }
             }
 
@@ -337,7 +412,10 @@ Rectangle {
                 anchors.margins: mapContentMargin
                 visible: mapAvailable
                 z: 1
-                isPanningEnabled: !placementEnabled && !goalPlacementEnabled && !pathPlacementEnabled && !testStarted
+                isPanningEnabled: !placementEnabled &&
+                                  !goalPlacementEnabled &&
+                                  !testStarted &&
+                                  (!pathPlacementEnabled || (manualPathAvailable && !pathDragHandler.active))
 
                 TapHandler {
                     acceptedButtons: Qt.LeftButton
@@ -370,7 +448,12 @@ Rectangle {
                     target: null
                     acceptedButtons: Qt.LeftButton
                     dragThreshold: 0
-                    enabled: mapAvailable && isNavigationStep && pathPlacementEnabled && !testStarted
+                    grabPermissions: PointerHandler.TakeOverForbidden
+                    enabled: mapAvailable &&
+                             isNavigationStep &&
+                             pathPlacementEnabled &&
+                             !testStarted &&
+                             (!manualPathAvailable || active)
 
                     onActiveChanged: {
                         if (active) {
@@ -415,7 +498,9 @@ Rectangle {
                 id: goalRobotLayerItem
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
-                visible: mapAvailable && isNavigationStep && goalPlacementEnabled && goalPointSet && !testStarted
+                visible: mapAvailable && isNavigationStep && !testStarted &&
+                         ((goalPlacementEnabled && goalPointSet) ||
+                          (pathPlacementEnabled && pathTerminalPoseSet))
                 z: 2
                 headColor: "#3b82f6"
 
@@ -782,6 +867,147 @@ Rectangle {
             }
 
             Rectangle {
+                id: pathRotationPanel
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                anchors.leftMargin: 21
+                anchors.bottomMargin: 21
+                color: pathTerminalPoseSet ? "#2c5f7c" : "#3b4a55"
+                radius: 13
+                border.color: pathTerminalPoseSet ? "#6aa3c8" : "#5f707d"
+                border.width: 3
+                z: 50
+                visible: mapAvailable && isNavigationStep && pathPlacementEnabled && pathTerminalPoseSet && !testStarted
+                opacity: pathTerminalPoseSet ? 1.0 : 0.6
+
+                property int padding: 13
+                property real wheelSize: wheelSizePx > 0 ? wheelSizePx
+                                                       : Math.min(240, Math.min(parent.width, parent.height) * 0.32)
+
+                implicitWidth: pathPanelContent.implicitWidth + (padding * 2)
+                implicitHeight: pathPanelContent.implicitHeight + (padding * 2)
+
+                Column {
+                    id: pathPanelContent
+                    anchors.fill: parent
+                    anchors.margins: pathRotationPanel.padding
+                    spacing: 10
+
+                    Rectangle {
+                        width: pathRotationPanel.wheelSize
+                        height: 36
+                        color: pathTerminalPoseSet ? "#1a3a4a" : "#2e3a43"
+                        radius: 6
+                        opacity: 0.9
+
+                        Text {
+                            anchors.centerIn: parent
+                            color: "#ffffff"
+                            font.pixelSize: 16
+                            font.bold: true
+                            text: qsTr("Orientación: %1°").arg(Math.round(((pathRotationOverlay.degrees + 360) % 360)))
+                        }
+                    }
+
+                    Item {
+                        id: pathRotationOverlay
+                        width: pathRotationPanel.wheelSize
+                        height: width
+
+                        readonly property real orientationRad: pathTerminalOrientationDeg * Math.PI / 180
+                        readonly property real degrees: pathTerminalOrientationDeg
+                        property real radius: Math.max(0, (width * 0.5) - 14)
+
+                        function updateOrientationFromPoint(px, py)
+                        {
+                            if (!pathTerminalPoseSet)
+                            {
+                                return
+                            }
+                            var dx = px - width / 2
+                            var dy = py - height / 2
+                            if (dx === 0 && dy === 0)
+                            {
+                                return
+                            }
+                            var angle = Math.atan2(-dy, dx)
+                            var deg = angle * 180 / Math.PI
+                            var current = pathTerminalOrientationDeg
+                            var delta = deg - current
+                            while (delta > 180) delta -= 360
+                            while (delta < -180) delta += 360
+                            var eased = current + (delta * 0.35)
+                            pathTerminalOrientationDeg = eased
+                            pathTerminalOrientationOverride = true
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: width / 2
+                            color: "transparent"
+                            border.color: pathTerminalPoseSet ? "#ffffff" : "#9aa8b1"
+                            border.width: 2
+                        }
+
+                        Canvas {
+                            id: pathDirectionMarker
+                            width: pathRotationPanel.wheelSize / 4
+                            height: width
+                            x: (pathRotationOverlay.width / 2) + radius * Math.cos(pathRotationOverlay.orientationRad) - width / 2
+                            y: (pathRotationOverlay.height / 2) - radius * Math.sin(pathRotationOverlay.orientationRad) - height / 2
+                            rotation: 90 - pathRotationOverlay.degrees
+                            transformOrigin: Item.Center
+
+                            onPaint: {
+                                var ctx = getContext("2d")
+                                ctx.clearRect(0, 0, width, height)
+                                ctx.fillStyle = pathTerminalPoseSet ? "#ffffff" : "#9aa8b1"
+                                var cx = width / 2
+                                var headY = 0
+                                var headW = width * 0.7
+                                var tailW = width * 0.35
+                                var tailY = height * 0.65
+                                ctx.beginPath()
+                                ctx.moveTo(cx, headY)
+                                ctx.lineTo(cx + headW / 2, tailY)
+                                ctx.lineTo(cx + tailW / 2, tailY)
+                                ctx.lineTo(cx + tailW / 2, height)
+                                ctx.lineTo(cx - tailW / 2, height)
+                                ctx.lineTo(cx - tailW / 2, tailY)
+                                ctx.lineTo(cx - headW / 2, tailY)
+                                ctx.closePath()
+                                ctx.fill()
+                            }
+                        }
+
+                        MultiPointTouchArea {
+                            anchors.fill: parent
+                            enabled: pathTerminalPoseSet
+                            minimumTouchPoints: 1
+                            maximumTouchPoints: 1
+                            onTouchUpdated: {
+                                if (touchPoints.length > 0) {
+                                    var p = touchPoints[0]
+                                    pathRotationOverlay.updateOrientationFromPoint(p.x, p.y)
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton
+                            onPressed: function(mouse) { pathRotationOverlay.updateOrientationFromPoint(mouse.x, mouse.y) }
+                            onPositionChanged: function(mouse) {
+                                if (pressed) {
+                                    pathRotationOverlay.updateOrientationFromPoint(mouse.x, mouse.y)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
                 id: emptyMapPlaceholder
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
@@ -1134,8 +1360,8 @@ Rectangle {
                     Layout.preferredWidth: 150
                     Layout.preferredHeight: root.buttonHeightPx
                     Layout.alignment: Qt.AlignVCenter
-                    visible: goalAccepted && !testStarted
-                    enabled: goalPathReady
+                    visible: ((goalPlacementEnabled && goalAccepted) || (pathPlacementEnabled && manualPathReady)) && !testStarted
+                    enabled: goalPlacementEnabled ? goalPathReady : (pathPlacementEnabled ? manualPathReady : false)
                     opacity: enabled ? 1.0 : 0.4
 
                     background: Rectangle {

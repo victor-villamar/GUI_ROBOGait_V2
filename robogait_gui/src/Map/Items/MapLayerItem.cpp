@@ -72,7 +72,23 @@ void MapLayerItem::setCamera(const std::shared_ptr<ROBOGait::map::rendering::Ren
   update();
 }
 
-void MapLayerItem::setSyncItem(QQuickItem* item) { sync_item_ = item; }
+void MapLayerItem::setSyncItem(QQuickItem* item)
+{
+  if (!item)
+  {
+    return;
+  }
+
+  for (const auto& sync_item : sync_items_)
+  {
+    if (sync_item == item)
+    {
+      return;
+    }
+  }
+
+  sync_items_.append(item);
+}
 
 bool MapLayerItem::isPanningEnabled() const { return panning_enabled_; }
 
@@ -194,10 +210,7 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
       camera_->fitToRect(map_rect);
       fit_done_ = true;
       emit zoomChanged();
-      if (sync_item_)
-      {
-        sync_item_->update();
-      }
+      updateSyncItems();
     }
   }
   else
@@ -298,10 +311,7 @@ void MapLayerItem::wheelEvent(QWheelEvent* event)
   camera_->setViewCenter(clampCenterToMap(camera_->getViewCenter()));
   emit zoomChanged();
   update();
-  if (sync_item_)
-  {
-    sync_item_->update();
-  }
+  updateSyncItems();
   event->accept();
 }
 
@@ -342,10 +352,7 @@ void MapLayerItem::mouseMoveEvent(QMouseEvent* event)
   last_pan_pos_ = event->position();
   applyPanDelta(delta);
   update();
-  if (sync_item_)
-  {
-    sync_item_->update();
-  }
+  updateSyncItems();
   event->accept();
 }
 
@@ -411,10 +418,7 @@ void MapLayerItem::touchEvent(QTouchEvent* event)
           last_pan_pos_ = pos;
           applyPanDelta(delta);
           update();
-          if (sync_item_)
-          {
-            sync_item_->update();
-          }
+          updateSyncItems();
           event->accept();
           return;
         }
@@ -449,10 +453,7 @@ void MapLayerItem::touchEvent(QTouchEvent* event)
       camera_->setViewCenter(clampCenterToMap(camera_->getViewCenter()));
       emit zoomChanged();
       update();
-      if (sync_item_)
-      {
-        sync_item_->update();
-      }
+      updateSyncItems();
       event->accept();
       return;
     }
@@ -483,13 +484,26 @@ bool MapLayerItem::event(QEvent* event)
       camera_->setViewCenter(clampCenterToMap(camera_->getViewCenter()));
       emit zoomChanged();
       update();
-      if (sync_item_)
-      {
-        sync_item_->update();
-      }
+      updateSyncItems();
       return true;
     }
   }
 
   return QQuickItem::event(event);
+}
+
+void MapLayerItem::updateSyncItems()
+{
+  for (int i = sync_items_.size() - 1; i >= 0; --i)
+  {
+    QQuickItem* item = sync_items_[i];
+
+    if (!item)
+    {
+      sync_items_.removeAt(i);
+      continue;
+    }
+
+    item->update();
+  }
 }
