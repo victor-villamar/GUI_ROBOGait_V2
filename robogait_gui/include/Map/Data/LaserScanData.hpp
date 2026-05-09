@@ -21,16 +21,16 @@ public:
   /**
    * @brief Structure representing a single laser point in Cartesian coordinates
    *
-   * @param x The x-coordinate of the laser point
-   * @param y The y-coordinate of the laser point
+   * @param x_ The x-coordinate of the laser point
+   * @param y_ The y-coordinate of the laser point
    */
   struct LaserPoint
   {
-    double x;
-    double y;
+    double x_;
+    double y_;
 
-    LaserPoint() : x(0.0), y(0.0) {}
-    LaserPoint(double x, double y) : x(x), y(y) {}
+    LaserPoint() : x_(0.0), y_(0.0) {}
+    LaserPoint(double x, double y) : x_(x), y_(y) {}
   };
 
   /**

@@ -422,7 +422,7 @@ bool ManualPathEditor::isLineSegmentApproximation(const QVector<QPointF>& points
 QVector<int> ManualPathEditor::detectShortStrawCorners(const QVector<QPointF>& points, int window, double median_factor, double line_threshold) const
 {
   QVector<int> corners;
-  const int point_count = points.size();
+  const int point_count = static_cast<int>(points.size());
 
   if (point_count == 0)
   {
@@ -641,11 +641,11 @@ QVector<QPointF> ManualPathEditor::simplifyWithLockedCorners(const QVector<QPoin
 
   QSet<int> locked_set;
   locked_set.insert(0);
-  locked_set.insert(points.size() - 1);
+  locked_set.insert(static_cast<int>(points.size()) - 1);
 
   for (const int index : locked_corner_indices)
   {
-    if (index > 0 && index < (points.size() - 1))
+    if (index > 0 && index < (static_cast<int>(points.size()) - 1))
     {
       locked_set.insert(index);
     }

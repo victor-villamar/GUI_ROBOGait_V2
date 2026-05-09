@@ -157,6 +157,8 @@ ParticleCloudSubscriber::transformParticleCloud(const nav2_msgs::msg::ParticleCl
   const bool needs_transform = (cloud_frame != map_frame_);
 
   tf2::Transform tf;
+  tf.setIdentity();
+
   if (needs_transform)
   {
     geometry_msgs::msg::TransformStamped transform_stamped;

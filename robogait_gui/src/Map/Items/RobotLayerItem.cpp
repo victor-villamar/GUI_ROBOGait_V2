@@ -4,8 +4,8 @@
 #include <QSGTransformNode>
 #include <QtMath>
 
-#include "Themes/AppTheme.hpp"
 #include "Map/Items/RobotLayerItem.hpp"
+#include "Themes/AppTheme.hpp"
 
 using namespace ROBOGait::map::item;
 

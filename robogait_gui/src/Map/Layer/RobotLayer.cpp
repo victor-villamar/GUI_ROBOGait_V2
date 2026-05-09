@@ -130,8 +130,8 @@ RobotLayer::Pose2D RobotLayer::readTargetPose() const
     return pose;
   }
   auto metadata = robot_pose_data_->getMetadata();
-  pose.x = metadata.x;
-  pose.y = metadata.y;
-  pose.yaw = metadata.theta;
+  pose.x = metadata.x_;
+  pose.y = metadata.y_;
+  pose.yaw = metadata.theta_;
   return pose;
 }

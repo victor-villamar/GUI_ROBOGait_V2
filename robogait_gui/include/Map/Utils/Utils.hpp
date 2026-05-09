@@ -30,10 +30,6 @@ static constexpr int8_t UNKNOWN_OCCUPANCY = -1;    /**< Unknown occupancy value 
 static constexpr int8_t FREE_SPACE_THRESHOLD = 50; /**< Free space threshold */
 static constexpr int IMAGE_QUALITY = 100;          /**< Image quality */
 
-static constexpr auto DARK_BLUE_GRAY = qRgb(26, 58, 74); /**< Dark blue-gray color */
-static constexpr auto LIGHT_BLUE = qRgb(169, 207, 232);  /**< Light blue color */
-static constexpr auto WHITE = qRgb(255, 255, 255);       /**< White color */
-
 /**
  * @brief Waypoint input structure for navigation goals
  *

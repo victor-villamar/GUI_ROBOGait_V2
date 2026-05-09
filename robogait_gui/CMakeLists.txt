@@ -10,7 +10,6 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(yaml-cpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(map_msgs REQUIRED)
@@ -18,8 +17,9 @@ find_package(nav2_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-find_package(command_executor_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(yaml-cpp REQUIRED)
+find_package(command_executor_msgs REQUIRED)
 
 find_package(Qt6 REQUIRED COMPONENTS
     Core
@@ -97,6 +97,20 @@ set(HEADERS
     include/Services/RobotServiceClient.hpp
     include/Settings/DeveloperSettings.hpp
     include/Settings/UiSizingSettings.hpp
+    include/Themes/AppTheme.hpp
+    include/Themes/ThemeAuth.hpp
+    include/Themes/ThemeBadges.hpp
+    include/Themes/ThemeCore.hpp
+    include/Themes/ThemeDialogsCommon.hpp
+    include/Themes/ThemeHome.hpp
+    include/Themes/ThemeJoystick.hpp
+    include/Themes/ThemeMainMenu.hpp
+    include/Themes/ThemeManualControl.hpp
+    include/Themes/ThemeMap.hpp
+    include/Themes/ThemeOrientationWheel.hpp
+    include/Themes/ThemeRobotConnection.hpp
+    include/Themes/ThemeSelection.hpp
+    include/Themes/ThemeSettings.hpp
     include/User/Patient.hpp
     include/User/UserSession.hpp
 )
@@ -158,6 +172,20 @@ set(SOURCES
     src/Services/RobotServiceClient.cpp
     src/Settings/DeveloperSettings.cpp
     src/Settings/UiSizingSettings.cpp
+    src/Themes/AppTheme.cpp
+    src/Themes/ThemeAuth.cpp
+    src/Themes/ThemeBadges.cpp
+    src/Themes/ThemeCore.cpp
+    src/Themes/ThemeDialogsCommon.cpp
+    src/Themes/ThemeHome.cpp
+    src/Themes/ThemeJoystick.cpp
+    src/Themes/ThemeMainMenu.cpp
+    src/Themes/ThemeManualControl.cpp
+    src/Themes/ThemeMap.cpp
+    src/Themes/ThemeOrientationWheel.cpp
+    src/Themes/ThemeRobotConnection.cpp
+    src/Themes/ThemeSelection.cpp
+    src/Themes/ThemeSettings.cpp
     src/User/Patient.cpp
     src/User/UserSession.cpp
     src/main.cpp
@@ -173,9 +201,8 @@ set(RESOURCES
 set(LIBS
     rclcpp::rclcpp
     ament_index_cpp::ament_index_cpp
-    yaml-cpp
     ${geometry_msgs_LIBRARIES}
-    ${OpenCV_LIBS}
+    yaml-cpp
 )
 
 # Set Qt library dependencies
@@ -204,7 +231,6 @@ include_directories(
     ${std_msgs_INCLUDE_DIRS}
     ${nav_msgs_INCLUDE_DIRS}
     ${tf2_INCLUDE_DIRS}
-    ${OpenCV_INCLUDE_DIRS}
     ${Qt6Core_INCLUDE_DIRS}
     ${Qt6Gui_INCLUDE_DIRS}
     ${Qt6Qml_INCLUDE_DIRS}
@@ -220,6 +246,37 @@ add_executable(${PROJECT_NAME}
     ${HEADERS}
 )
 
+option(ENABLE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Wshadow
+        -Wold-style-cast
+        -Woverloaded-virtual
+        -Wnon-virtual-dtor
+        -Wduplicated-cond
+        -Wduplicated-branches
+        -Wlogical-op
+        -Wnull-dereference
+        -Wuseless-cast
+        -Wdouble-promotion
+        -Wformat=2
+        -Wzero-as-null-pointer-constant
+        -Wcast-qual
+        -Wconversion
+        -Wfloat-conversion
+    )
+
+    if(ENABLE_WARNINGS_AS_ERRORS)
+        target_compile_options(${PROJECT_NAME} PRIVATE
+            -Werror
+        )
+    endif()
+endif()
+
 # Add dependencies
 ament_target_dependencies(${PROJECT_NAME}
     rclcpp
@@ -231,9 +288,9 @@ ament_target_dependencies(${PROJECT_NAME}
     tf2
     tf2_ros
     tf2_geometry_msgs
-    yaml-cpp
-    command_executor_msgs
     std_srvs
+    command_executor_msgs
+    yaml-cpp
 )
 
 # Link libraries
@@ -242,33 +299,8 @@ target_link_libraries(${PROJECT_NAME}
     ${QT_LIBS}
 )
 
-# Add test_node executable
-add_executable(test_node_node
-    test/test_node/src/main.cpp
-    test/test_node/src/TestNode.cpp
-    test/test_node/include/TestNode.hpp
-    src/Ros/QoSProfiles.cpp
-)
-
-# Include directories for test_node
-target_include_directories(test_node_node PRIVATE
-    test/test_node/include
-    include/Ros
-    ${rclcpp_INCLUDE_DIRS}
-)
-
-# Add dependencies for test_node
-ament_target_dependencies(test_node_node
-    rclcpp
-    command_executor_msgs
-)
-
 # Install
 install(TARGETS ${PROJECT_NAME}
-    DESTINATION lib/${PROJECT_NAME}
-)
-
-install(TARGETS test_node_node
     DESTINATION lib/${PROJECT_NAME}
 )
 

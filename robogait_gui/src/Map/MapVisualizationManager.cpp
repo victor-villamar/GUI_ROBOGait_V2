@@ -16,6 +16,7 @@ using namespace ROBOGait::map::manager;
 MapVisualizationManager::MapVisualizationManager() :
     parent_node_(nullptr),
     render_scene_(std::make_shared<ROBOGait::map::rendering::RenderScene>()),
+    render_camera_(std::make_shared<ROBOGait::map::rendering::RenderCamera>()),
     map_layer_(nullptr),
     robot_layer_(nullptr),
     goal_robot_layer_(nullptr),
@@ -24,7 +25,6 @@ MapVisualizationManager::MapVisualizationManager() :
     live_path_layer_(nullptr),
     laser_layer_(nullptr),
     particle_layer_(nullptr),
-    render_camera_(std::make_shared<ROBOGait::map::rendering::RenderCamera>()),
     map_source_(std::make_shared<ROBOGait::map::source::MapSource>()),
     pose_source_(std::make_shared<ROBOGait::map::source::RobotPoseSource>()),
     goal_robot_pose_data_(nullptr),
@@ -250,7 +250,7 @@ bool MapVisualizationManager::screenToMap(const QPointF& screen_point, QPointF& 
     return false;
   }
 
-  const QVector4D screen_vec(screen_point.x(), screen_point.y(), 0.0f, 1.0f);
+  const QVector4D screen_vec(static_cast<float>(screen_point.x()), static_cast<float>(screen_point.y()), 0.0f, 1.0f);
   const QVector4D world_vec = inv_transform * screen_vec;
 
   map_point = QPointF(world_vec.x(), world_vec.y());
@@ -290,9 +290,9 @@ void MapVisualizationManager::setManualRobotPose(double x, double y, double thet
   }
 
   ROBOGait::map::data::RobotPoseData::RobotPoseMetadata metadata;
-  metadata.x = x;
-  metadata.y = y;
-  metadata.theta = theta;
+  metadata.x_ = x;
+  metadata.y_ = y;
+  metadata.theta_ = theta;
   robot_pose_data->setPose(metadata);
 
   updateAvailability();
@@ -321,9 +321,9 @@ QVariantMap MapVisualizationManager::getRobotPose() const
   }
 
   const auto metadata = robot_pose_data->getMetadata();
-  pose["x"] = metadata.x;
-  pose["y"] = metadata.y;
-  pose["theta"] = metadata.theta;
+  pose["x"] = metadata.x_;
+  pose["y"] = metadata.y_;
+  pose["theta"] = metadata.theta_;
   pose["available"] = true;
   return pose;
 }
@@ -343,8 +343,8 @@ bool MapVisualizationManager::isMapPointInside(double x, double y) const
   }
 
   const auto map_metadata = map_layer_->getMapData()->getMetadata();
-  const double width_m = static_cast<double>(map_metadata.width) * map_metadata.resolution;
-  const double height_m = static_cast<double>(map_metadata.height) * map_metadata.resolution;
+  const double width_m = static_cast<double>(map_metadata.width_) * map_metadata.resolution_;
+  const double height_m = static_cast<double>(map_metadata.height_) * map_metadata.resolution_;
 
   if (width_m <= 0.0 || height_m <= 0.0)
   {
@@ -352,9 +352,9 @@ bool MapVisualizationManager::isMapPointInside(double x, double y) const
     return false;
   }
 
-  const double origin_x = map_metadata.origin_x;
-  const double origin_y = map_metadata.origin_y;
-  const double theta = map_metadata.origin_theta;
+  const double origin_x = map_metadata.origin_x_;
+  const double origin_y = map_metadata.origin_y_;
+  const double theta = map_metadata.origin_theta_;
 
   const double cos_t = std::cos(theta);
   const double sin_t = std::sin(theta);
@@ -899,9 +899,9 @@ void MapVisualizationManager::setGoalRobotPose(double x, double y, double theta)
   }
 
   ROBOGait::map::data::RobotPoseData::RobotPoseMetadata metadata;
-  metadata.x = x;
-  metadata.y = y;
-  metadata.theta = theta;
+  metadata.x_ = x;
+  metadata.y_ = y;
+  metadata.theta_ = theta;
   goal_robot_pose_data_->setPose(metadata);
 
   goal_robot_layer_->update();
@@ -1234,8 +1234,8 @@ void MapVisualizationManager::fitToView()
 
   setFollowRobot(false);
   const auto metadata = map_layer_->getMapData()->getMetadata();
-  const double width_m = static_cast<double>(metadata.width) * metadata.resolution;
-  const double height_m = static_cast<double>(metadata.height) * metadata.resolution;
+  const double width_m = static_cast<double>(metadata.width_) * metadata.resolution_;
+  const double height_m = static_cast<double>(metadata.height_) * metadata.resolution_;
 
   if (width_m <= 0.0 || height_m <= 0.0)
   {
@@ -1243,9 +1243,9 @@ void MapVisualizationManager::fitToView()
     return;
   }
 
-  const double origin_x = metadata.origin_x;
-  const double origin_y = metadata.origin_y;
-  const double theta = metadata.origin_theta;
+  const double origin_x = metadata.origin_x_;
+  const double origin_y = metadata.origin_y_;
+  const double theta = metadata.origin_theta_;
   const double cos_t = std::cos(theta);
   const double sin_t = std::sin(theta);
 
@@ -1606,7 +1606,7 @@ void MapVisualizationManager::updateMapResolution()
     const auto map_data = map_source_->getMapData();
     if (map_data)
     {
-      new_resolution = map_data->getMetadata().resolution;
+      new_resolution = map_data->getMetadata().resolution_;
     }
   }
 

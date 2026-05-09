@@ -200,13 +200,13 @@ ROBOGait::map::data::LaserScanData::LaserScanMetadata LaserScanSubscriber::trans
     const float range = msg->ranges[i];
     if (!std::isfinite(range) || range < msg->range_min || range > msg->range_max)
     {
-      angle += msg->angle_increment;
+      angle += static_cast<double>(msg->angle_increment);
       continue;
     }
 
     // Convert polar coordinates to Cartesian coordinates
-    const double lx = range * cos(angle);
-    const double ly = range * sin(angle);
+    const double lx = static_cast<double>(range) * cos(angle);
+    const double ly = static_cast<double>(range) * sin(angle);
 
     // Transform to map frame
     const tf2::Vector3 laser_point(lx, ly, 0.0);
@@ -214,7 +214,7 @@ ROBOGait::map::data::LaserScanData::LaserScanMetadata LaserScanSubscriber::trans
 
     metadata.points.emplace_back(map_point.x(), map_point.y());
 
-    angle += msg->angle_increment;
+    angle += static_cast<double>(msg->angle_increment);
   }
 
   return metadata;

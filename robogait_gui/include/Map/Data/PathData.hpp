@@ -19,16 +19,16 @@ public:
   /**
    * @brief Structure representing a single path point in map coordinates
    *
-   * @param x The x-coordinate of the path point
-   * @param y The y-coordinate of the path point
+   * @param x_ The x-coordinate of the path point
+   * @param y_ The y-coordinate of the path point
    */
   struct PathPoint
   {
-    double x;
-    double y;
+    double x_;
+    double y_;
 
-    PathPoint() : x(0.0), y(0.0) {}
-    PathPoint(double x, double y) : x(x), y(y) {}
+    PathPoint() : x_(0.0), y_(0.0) {}
+    PathPoint(double x, double y) : x_(x), y_(y) {}
   };
 
   /**

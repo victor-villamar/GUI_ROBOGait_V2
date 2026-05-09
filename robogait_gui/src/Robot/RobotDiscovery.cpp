@@ -16,9 +16,9 @@ RobotDiscovery::RobotDiscovery() :
     is_scanning_(false),
     state_(State::IDLE),
     poll_timer_(this),
+    poll_interval_(DEFAULT_POLL_INTERVAL),
     scan_timeout_timer_(this),
     scan_timeout_(DEFAULT_SCAN_TIMEOUT),
-    poll_interval_(DEFAULT_POLL_INTERVAL),
     use_namespace_discovery_(true),
     use_topic_filter_(true)
 {
