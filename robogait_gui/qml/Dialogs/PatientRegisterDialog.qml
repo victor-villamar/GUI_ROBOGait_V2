@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import AppTheme 1.0
 
 import "qrc:/Dialogs"
 import "qrc:/Components"
@@ -14,7 +15,7 @@ Dialog {
 
     Overlay.modal: Rectangle {
         anchors.fill: parent
-        color: "#A0505050"
+        color: AppTheme.selection.overlayDim
     }
 
     width: parent ? Math.min(580, parent.width * 0.90) : 580
@@ -52,8 +53,8 @@ Dialog {
     onOpened: resetForm()
 
     background: Rectangle {
-        color: "#518bb7"
-        border.color: "#ffffff"
+        color: AppTheme.selection.primary
+        border.color: AppTheme.selection.white
         border.width: 2
         radius: 12
     }
@@ -72,9 +73,9 @@ Dialog {
             anchors.rightMargin: 12
 
             background: Rectangle {
-                color: closeButton.down ? "#a9cfe8" : "#ffffff"
+                color: closeButton.down ? AppTheme.selection.closeButtonPressedBackground : AppTheme.selection.white
                 radius: 8
-                border.color: "#045671"
+                border.color: AppTheme.selection.primaryDark
                 border.width: 2
             }
 
@@ -130,7 +131,7 @@ Dialog {
 
                     Text {
                         text: qsTr("Registrar paciente")
-                        color: "#ffffff"
+                        color: AppTheme.selection.white
                         font.pixelSize: 40
                         horizontalAlignment: Text.AlignHCenter
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -141,7 +142,7 @@ Dialog {
                         id: nameField
                         width: formColumn.innerWidth
                         height: root.inputHeightPx
-                        color: "#000000"
+                        color: AppTheme.selection.black
                         font.pointSize: 15
                         verticalAlignment: TextInput.AlignVCenter
                         leftPadding: 10
@@ -150,8 +151,7 @@ Dialog {
 
                         background: Rectangle {
                             radius: 10
-                            color: "#FFFFFF"
-                            border.color: "#CCCCCC"
+                            color: AppTheme.selection.white
                         }
                     }
 
@@ -159,7 +159,7 @@ Dialog {
                         id: lastNameField
                         width: formColumn.innerWidth
                         height: root.inputHeightPx
-                        color: "#000000"
+                        color: AppTheme.selection.black
                         font.pointSize: 15
                         verticalAlignment: TextInput.AlignVCenter
                         leftPadding: 10
@@ -168,8 +168,7 @@ Dialog {
 
                         background: Rectangle {
                             radius: 10
-                            color: "#FFFFFF"
-                            border.color: "#CCCCCC"
+                            color: AppTheme.selection.white
                         }
                     }
 
@@ -177,7 +176,7 @@ Dialog {
                         id: ageField
                         width: formColumn.innerWidth
                         height: root.inputHeightPx
-                        color: "#000000"
+                        color: AppTheme.selection.black
                         font.pointSize: 15
                         verticalAlignment: TextInput.AlignVCenter
                         leftPadding: 10
@@ -186,8 +185,7 @@ Dialog {
 
                         background: Rectangle {
                             radius: 10
-                            color: "#FFFFFF"
-                            border.color: "#CCCCCC"
+                            color: AppTheme.selection.white
                         }
                     }
 
@@ -195,7 +193,7 @@ Dialog {
                         id: weightField
                         width: formColumn.innerWidth
                         height: root.inputHeightPx
-                        color: "#000000"
+                        color: AppTheme.selection.black
                         font.pointSize: 15
                         verticalAlignment: TextInput.AlignVCenter
                         leftPadding: 10
@@ -204,8 +202,7 @@ Dialog {
 
                         background: Rectangle {
                             radius: 10
-                            color: "#FFFFFF"
-                            border.color: "#CCCCCC"
+                            color: AppTheme.selection.white
                         }
                     }
 
@@ -213,7 +210,7 @@ Dialog {
                         id: heightField
                         width: formColumn.innerWidth
                         height: root.inputHeightPx
-                        color: "#000000"
+                        color: AppTheme.selection.black
                         font.pointSize: 15
                         verticalAlignment: TextInput.AlignVCenter
                         leftPadding: 10
@@ -222,8 +219,7 @@ Dialog {
 
                         background: Rectangle {
                             radius: 10
-                            color: "#FFFFFF"
-                            border.color: "#CCCCCC"
+                            color: AppTheme.selection.white
                         }
                     }
 
@@ -231,15 +227,14 @@ Dialog {
                         id: descriptionField
                         width: formColumn.innerWidth
                         height: root.textAreaHeightPx
-                        color: "#000000"
+                        color: AppTheme.selection.black
                         font.pointSize: 15
                         wrapMode: TextEdit.Wrap
                         placeholderText: qsTr("Descripción")
 
                         background: Rectangle {
                             radius: 10
-                            color: "#FFFFFF"
-                            border.color: "#CCCCCC"
+                            color: AppTheme.selection.white
                         }
                     }
 
@@ -251,13 +246,12 @@ Dialog {
 
                         background: Rectangle {
                             radius: 10
-                            color: "#aed2ea"
-                            border.color: "#aed2ea"
+                            color: AppTheme.selection.lightBlue
                         }
 
                         contentItem: Label {
                             text: qsTr("AÑADIR")
-                            color: "#ffffff"
+                            color: AppTheme.selection.white
                             font.bold: true
                             font.pixelSize: 20
                             horizontalAlignment: Text.AlignHCenter

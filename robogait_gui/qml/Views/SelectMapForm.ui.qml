@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import AppTheme 1.0
 
 Item {
     id: root
@@ -20,13 +21,13 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: "#518bb7"
+        color: AppTheme.selection.background
     }
 
     Text {
         id: titleText
         text: qsTr("SELECCIONE UN MAPA")
-        color: "#ffffff"
+        color: AppTheme.selection.white
         font.pixelSize: 30
         horizontalAlignment: Text.AlignHCenter
         anchors.top: parent.top
@@ -43,8 +44,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
 
         background: Rectangle {
-            color: "#ffffff"
-            border.color: "#cccccc"
+            color: AppTheme.selection.white
             radius: 15
         }
 
@@ -54,7 +54,7 @@ Item {
             Text {
                 text: qsTr("Crear nuevo mapa")
                 font.pixelSize: 22
-                color: "#000000"
+                color: AppTheme.selection.black
                 anchors.centerIn: parent
             }
 
@@ -98,13 +98,12 @@ Item {
                     width: parent.width
                     height: root.listItemHeightPx
                     radius: 15
-                    color: map_name === root.selectedMapName ? "#aed2ea" : "#ffffff"
-                    border.color: "#cccccc"
+                    color: map_name === root.selectedMapName ? AppTheme.selection.lightBlue : AppTheme.selection.white
 
                     Text {
                         text: map_name
                         font.pixelSize: 22
-                        color: "#000000"
+                        color: AppTheme.selection.black
                         anchors.centerIn: parent
                     }
 

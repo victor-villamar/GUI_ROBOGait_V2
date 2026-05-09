@@ -170,16 +170,16 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
   if (map_render_->getMapData())
   {
     auto metadata = map_render_->getMapData()->getMetadata();
-    const double width_m = static_cast<double>(metadata.width) * metadata.resolution;
-    const double height_m = static_cast<double>(metadata.height) * metadata.resolution;
+    const double width_m = static_cast<double>(metadata.width_) * metadata.resolution_;
+    const double height_m = static_cast<double>(metadata.height_) * metadata.resolution_;
 
     if (width_m > 0.0 && height_m > 0.0)
     {
       node->setRect(0.0, 0.0, width_m, height_m);
 
-      const double origin_x = metadata.origin_x;
-      const double origin_y = metadata.origin_y;
-      const double theta = metadata.origin_theta;
+      const double origin_x = metadata.origin_x_;
+      const double origin_y = metadata.origin_y_;
+      const double theta = metadata.origin_theta_;
       const double cos_t = std::cos(theta);
       const double sin_t = std::sin(theta);
 
@@ -197,8 +197,8 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
 
       map_rect = QRectF(QPointF(min_x, min_y), QPointF(max_x, max_y));
 
-      map_matrix.translate(origin_x, origin_y);
-      map_matrix.rotate(qRadiansToDegrees(theta), 0.0f, 0.0f, 1.0f);
+      map_matrix.translate(static_cast<float>(origin_x), static_cast<float>(origin_y));
+      map_matrix.rotate(static_cast<float>(qRadiansToDegrees(theta)), 0.0f, 0.0f, 1.0f);
     }
     else
     {
@@ -494,7 +494,7 @@ bool MapLayerItem::event(QEvent* event)
 
 void MapLayerItem::updateSyncItems()
 {
-  for (int i = sync_items_.size() - 1; i >= 0; --i)
+  for (int i = static_cast<int>(sync_items_.size()) - 1; i >= 0; --i)
   {
     QQuickItem* item = sync_items_[i];
 

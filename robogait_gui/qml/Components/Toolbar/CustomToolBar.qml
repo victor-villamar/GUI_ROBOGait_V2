@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import AppTheme 1.0
 
 CustomToolBarForm {
     readonly property real backButtonSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconButtonSize, 0) : 32

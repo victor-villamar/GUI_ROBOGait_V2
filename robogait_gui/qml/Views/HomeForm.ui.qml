@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import AppTheme 1.0
 
 Item {
     id: home
@@ -13,7 +14,7 @@ Item {
     Rectangle {
         id: background
         anchors.fill: parent
-        color: "#518bb7"
+        color: AppTheme.core.appBackground
 
         ColumnLayout {
             anchors.fill: parent
@@ -86,16 +87,16 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
 
                         background: Rectangle {
-                            color: buttonStart.down ? "#e9e9e9" : "#aed2ea"
+                            color: buttonStart.down ? AppTheme.home.light : AppTheme.home.startButtonBg
                             radius: 15
-                            border.color: "#e9e9e9"
+                            border.color: AppTheme.home.light
                             border.width: 2
                         }
 
                         contentItem: Label {
                             id: buttonLabel
                             text: qsTr("START")
-                            color: "#518bb7"
+                            color: AppTheme.home.startButtonText
                             font.pixelSize: home.height < 500 ? 40 : 60
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter

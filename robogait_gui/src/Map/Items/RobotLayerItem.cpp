@@ -4,12 +4,22 @@
 #include <QSGTransformNode>
 #include <QtMath>
 
+#include "Themes/AppTheme.hpp"
 #include "Map/Items/RobotLayerItem.hpp"
 
 using namespace ROBOGait::map::item;
 
-RobotLayerItem::RobotLayerItem(QQuickItem* parent) : QQuickItem(parent), head_color_(DEFAULT_HEAD_COLOR)
+RobotLayerItem::RobotLayerItem(QQuickItem* parent) :
+    QQuickItem(parent), body_color_(DEFAULT_BODY_COLOR), wheel_color_(DEFAULT_WHEEL_COLOR), head_color_(DEFAULT_HEAD_COLOR)
 {
+  const auto& theme = ROBOGait::settings::AppTheme::getInstance();
+  if (auto* map_theme = qobject_cast<ROBOGait::settings::ThemeMap*>(theme.getMap()))
+  {
+    body_color_ = map_theme->getRobotBody();
+    wheel_color_ = map_theme->getRobotWheel();
+    head_color_ = map_theme->getRobotHead();
+  }
+
   setFlag(ItemHasContents, true);
   setAcceptedMouseButtons(Qt::NoButton);
   setAcceptHoverEvents(false);
@@ -55,6 +65,8 @@ void RobotLayerItem::setCamera(const std::shared_ptr<ROBOGait::map::rendering::R
 }
 
 QColor RobotLayerItem::getHeadColor() const { return head_color_; }
+QColor RobotLayerItem::getBodyColor() const { return body_color_; }
+QColor RobotLayerItem::getWheelColor() const { return wheel_color_; }
 
 void RobotLayerItem::setHeadColor(const QColor& color)
 {
@@ -62,6 +74,26 @@ void RobotLayerItem::setHeadColor(const QColor& color)
   {
     head_color_ = color;
     emit headColorChanged();
+    update();
+  }
+}
+
+void RobotLayerItem::setBodyColor(const QColor& color)
+{
+  if (body_color_ != color)
+  {
+    body_color_ = color;
+    emit bodyColorChanged();
+    update();
+  }
+}
+
+void RobotLayerItem::setWheelColor(const QColor& color)
+{
+  if (wheel_color_ != color)
+  {
+    wheel_color_ = color;
+    emit wheelColorChanged();
     update();
   }
 }
@@ -106,7 +138,7 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
     body_node->setFlag(QSGNode::OwnsGeometry);
 
     auto* body_mat = new QSGFlatColorMaterial();
-    body_mat->setColor(BODY_COLOR);
+    body_mat->setColor(body_color_);
     body_node->setMaterial(body_mat);
     body_node->setFlag(QSGNode::OwnsMaterial);
     robot_node->appendChildNode(body_node);
@@ -118,7 +150,7 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
     wheels_node->setFlag(QSGNode::OwnsGeometry);
 
     auto* wheels_mat = new QSGFlatColorMaterial();
-    wheels_mat->setColor(WHEEL_COLOR);
+    wheels_mat->setColor(wheel_color_);
     wheels_node->setMaterial(wheels_mat);
     wheels_node->setFlag(QSGNode::OwnsMaterial);
     robot_node->appendChildNode(wheels_node);
@@ -169,7 +201,7 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
   writeRect(wheel_vertices, 12, -wheel_x, -wheel_y, static_cast<float>(wheel_w), static_cast<float>(wheel_h));
   writeRect(wheel_vertices, 18, wheel_x, -wheel_y, static_cast<float>(wheel_w), static_cast<float>(wheel_h));
 
-  const float wheel_inner_y = static_cast<float>(wheel_y - (wheel_h * 0.5));
+  const float wheel_inner_y = wheel_y - static_cast<float>((wheel_h * 0.5));
   const float body_edge_y = static_cast<float>(body_h * 0.5);
   float connector_h = wheel_inner_y - body_edge_y;
   if (connector_h < 0.0f)
@@ -184,6 +216,19 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
   writeRect(wheel_vertices, 42, wheel_x, -connector_y, static_cast<float>(connector_w), connector_h);
 
   auto* head_mat = static_cast<QSGFlatColorMaterial*>(head_node->material());
+  auto* body_mat = static_cast<QSGFlatColorMaterial*>(body_node->material());
+  auto* wheels_mat = static_cast<QSGFlatColorMaterial*>(wheels_node->material());
+
+  if (body_mat)
+  {
+    body_mat->setColor(body_color_);
+  }
+
+  if (wheels_mat)
+  {
+    wheels_mat->setColor(wheel_color_);
+  }
+
   if (head_mat)
   {
     head_mat->setColor(head_color_);
@@ -211,7 +256,7 @@ QSGNode* RobotLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
 
   QMatrix4x4 robot_matrix;
   robot_matrix.translate(cx, cy);
-  robot_matrix.rotate(qRadiansToDegrees(yaw), 0.0f, 0.0f, 1.0f);
+  robot_matrix.rotate(static_cast<float>(qRadiansToDegrees(yaw)), 0.0f, 0.0f, 1.0f);
   robot_node->setMatrix(robot_matrix);
 
   return transform_node;

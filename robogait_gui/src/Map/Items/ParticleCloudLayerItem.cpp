@@ -2,12 +2,19 @@
 #include <QSGFlatColorMaterial>
 #include <QSGTransformNode>
 
+#include "Themes/AppTheme.hpp"
 #include "Map/Items/ParticleCloudLayerItem.hpp"
 
 using namespace ROBOGait::map::item;
 
-ParticleCloudLayerItem::ParticleCloudLayerItem(QQuickItem* parent) : QQuickItem(parent)
+ParticleCloudLayerItem::ParticleCloudLayerItem(QQuickItem* parent) : QQuickItem(parent), particle_color_(DEFAULT_PARTICLE_COLOR)
 {
+  const auto& theme = ROBOGait::settings::AppTheme::getInstance();
+  if (auto* map_theme = qobject_cast<ROBOGait::settings::ThemeMap*>(theme.getMap()))
+  {
+    particle_color_ = map_theme->getParticle();
+  }
+
   setFlag(ItemHasContents, true);
   qInfo() << "[ParticleCloudLayerItem::ParticleCloudLayerItem] ParticleCloudLayerItem created";
 }
@@ -49,6 +56,18 @@ void ParticleCloudLayerItem::setCamera(const std::shared_ptr<ROBOGait::map::rend
   update();
 }
 
+QColor ParticleCloudLayerItem::getParticleColor() const { return particle_color_; }
+
+void ParticleCloudLayerItem::setParticleColor(const QColor& color)
+{
+  if (particle_color_ != color)
+  {
+    particle_color_ = color;
+    emit particleColorChanged();
+    update();
+  }
+}
+
 QSGNode* ParticleCloudLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* data)
 {
   Q_UNUSED(data);
@@ -82,7 +101,7 @@ QSGNode* ParticleCloudLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintN
     points_node->setFlag(QSGNode::OwnsGeometry);
 
     auto* material = new QSGFlatColorMaterial();
-    material->setColor(PARTICLE_COLOR);
+    material->setColor(particle_color_);
     material->setFlag(QSGMaterial::Blending, false);
     points_node->setMaterial(material);
     points_node->setFlag(QSGNode::OwnsMaterial);
@@ -95,14 +114,20 @@ QSGNode* ParticleCloudLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintN
   }
 
   QSGGeometry* geometry = points_node->geometry();
+  auto* material = static_cast<QSGFlatColorMaterial*>(points_node->material());
+  if (material)
+  {
+    material->setColor(particle_color_);
+    points_node->markDirty(QSGNode::DirtyMaterial);
+  }
   const int vertex_count = static_cast<int>(particles.size()) * 6;
   geometry->allocate(vertex_count);
   auto* vertices = geometry->vertexDataAsPoint2D();
 
   for (int i = 0; i < static_cast<int>(particles.size()); ++i)
   {
-    const float cx = static_cast<float>(particles[i].x);
-    const float cy = static_cast<float>(particles[i].y);
+    const float cx = static_cast<float>(particles[i].x_);
+    const float cy = static_cast<float>(particles[i].y_);
     writeRect(vertices, i * 6, cx, cy, POINT_SIZE, POINT_SIZE);
   }
 

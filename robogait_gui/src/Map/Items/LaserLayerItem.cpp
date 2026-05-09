@@ -2,12 +2,19 @@
 #include <QSGFlatColorMaterial>
 #include <QSGTransformNode>
 
+#include "Themes/AppTheme.hpp"
 #include "Map/Items/LaserLayerItem.hpp"
 
 using namespace ROBOGait::map::item;
 
-LaserLayerItem::LaserLayerItem(QQuickItem* parent) : QQuickItem(parent)
+LaserLayerItem::LaserLayerItem(QQuickItem* parent) : QQuickItem(parent), laser_color_(DEFAULT_LASER_COLOR)
 {
+  const auto& theme = ROBOGait::settings::AppTheme::getInstance();
+  if (auto* map_theme = qobject_cast<ROBOGait::settings::ThemeMap*>(theme.getMap()))
+  {
+    laser_color_ = map_theme->getLaser();
+  }
+
   setFlag(ItemHasContents, true);
   setAcceptedMouseButtons(Qt::NoButton);
   setAcceptHoverEvents(false);
@@ -52,6 +59,18 @@ void LaserLayerItem::setCamera(const std::shared_ptr<ROBOGait::map::rendering::R
   update();
 }
 
+QColor LaserLayerItem::getLaserColor() const { return laser_color_; }
+
+void LaserLayerItem::setLaserColor(const QColor& color)
+{
+  if (laser_color_ != color)
+  {
+    laser_color_ = color;
+    emit laserColorChanged();
+    update();
+  }
+}
+
 QSGNode* LaserLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* data)
 {
   Q_UNUSED(data);
@@ -85,7 +104,7 @@ QSGNode* LaserLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
     points_node->setFlag(QSGNode::OwnsGeometry);
 
     auto* material = new QSGFlatColorMaterial();
-    material->setColor(LASER_COLOR);
+    material->setColor(laser_color_);
     material->setFlag(QSGMaterial::Blending, false);
     points_node->setMaterial(material);
     points_node->setFlag(QSGNode::OwnsMaterial);
@@ -98,14 +117,20 @@ QSGNode* LaserLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
   }
 
   QSGGeometry* geometry = points_node->geometry();
+  auto* material = static_cast<QSGFlatColorMaterial*>(points_node->material());
+  if (material)
+  {
+    material->setColor(laser_color_);
+    points_node->markDirty(QSGNode::DirtyMaterial);
+  }
   const int vertex_count = static_cast<int>(points.size()) * 6;
   geometry->allocate(vertex_count);
   auto* vertices = geometry->vertexDataAsPoint2D();
 
   for (int i = 0; i < static_cast<int>(points.size()); ++i)
   {
-    const float cx = static_cast<float>(points[i].x);
-    const float cy = static_cast<float>(points[i].y);
+    const float cx = static_cast<float>(points[i].x_);
+    const float cy = static_cast<float>(points[i].y_);
     writeRect(vertices, i * 6, cx, cy, POINT_SIZE, POINT_SIZE);
   }
 

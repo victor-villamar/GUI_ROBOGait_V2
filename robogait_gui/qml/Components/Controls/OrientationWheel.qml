@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import AppTheme 1.0
 
 Rectangle {
     id: root
@@ -8,14 +9,14 @@ Rectangle {
     property bool visiblePanel: true
     property real wheelSize: 200
     property string title: qsTr("Orientación")
-    property color panelEnabledColor: "#2c5f7c"
-    property color panelDisabledColor: "#3b4a55"
-    property color borderEnabledColor: "#6aa3c8"
-    property color borderDisabledColor: "#5f707d"
-    property color headerEnabledColor: "#1a3a4a"
-    property color headerDisabledColor: "#2e3a43"
-    property color markerEnabledColor: "#ffffff"
-    property color markerDisabledColor: "#9aa8b1"
+    property color panelEnabledColor: AppTheme.orientationWheel.panelEnabled
+    property color panelDisabledColor: AppTheme.orientationWheel.panelDisabled
+    property color borderEnabledColor: AppTheme.orientationWheel.borderEnabled
+    property color borderDisabledColor: AppTheme.orientationWheel.borderDisabled
+    property color headerEnabledColor: AppTheme.orientationWheel.headerEnabled
+    property color headerDisabledColor: AppTheme.orientationWheel.headerDisabled
+    property color markerEnabledColor: AppTheme.orientationWheel.white
+    property color markerDisabledColor: AppTheme.orientationWheel.markerDisabled
     property real easingFactor: 0.35
     property int padding: 13
 
@@ -80,7 +81,7 @@ Rectangle {
 
             Text {
                 anchors.centerIn: parent
-                color: "#ffffff"
+                color: AppTheme.orientationWheel.white
                 font.pixelSize: 16
                 font.bold: true
                 text: qsTr("%1: %2°").arg(root.title).arg(Math.round(((root.angleDeg + 360) % 360)))

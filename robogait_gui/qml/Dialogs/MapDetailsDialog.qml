@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import AppTheme 1.0
 
 Dialog {
     id: root
@@ -11,7 +12,7 @@ Dialog {
 
     Overlay.modal: Rectangle {
         anchors.fill: parent
-        color: "#A0505050"
+        color: AppTheme.selection.overlayDim
     }
 
     width: parent ? Math.min(760, parent.width * 0.90) : 760
@@ -35,8 +36,8 @@ Dialog {
     }
 
     background: Rectangle {
-        color: "#a9cfe8"
-        border.color: "#ffffff"
+        color: AppTheme.selection.primary
+        border.color: AppTheme.selection.white
         border.width: 2
         radius: 12
     }
@@ -63,9 +64,9 @@ Dialog {
                 padding: 0
 
                 background: Rectangle {
-                    color: closeButton.down ? "#518bb7" : "#ffffff"
+                    color: closeButton.down ? AppTheme.selection.primary : AppTheme.selection.white
                     radius: 8
-                    border.color: "#045671"
+                    border.color: AppTheme.selection.primaryDark
                     border.width: 2
                 }
 
@@ -88,9 +89,9 @@ Dialog {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: header.bottom
             anchors.topMargin: 12
-            color: "#e9e9e9"
+            color: AppTheme.selection.detailsCardBackground
             radius: 12
-            border.color: "#235c87"
+            border.color: AppTheme.selection.detailsCardBorder
             border.width: 2
             clip: true
 
@@ -145,9 +146,9 @@ Dialog {
                     id: previewBox
                     width: parent.width
                     height: Math.max(180, detailsCard.height - infoColumn.height - 32)
-                    color: "#d9d9d9"
+                    color: AppTheme.selection.previewBackground
                     radius: 8
-                    border.color: "#c0c0c0"
+                    border.color: AppTheme.selection.previewBorder
                     border.width: 1
 
                     Image {
@@ -193,16 +194,16 @@ Dialog {
                     padding: 0
 
                     background: Rectangle {
-                        color: acceptButton.down ? "#518bb7" : "#ffffff"
+                        color: acceptButton.down ? AppTheme.selection.primary : AppTheme.selection.white
                         radius: 8
-                        border.color: "#045671"
+                        border.color: AppTheme.selection.primaryDark
                         border.width: 2
                         Behavior on color { ColorAnimation { duration: 100 } }
                     }
 
                     contentItem: Label {
                         text: qsTr("ACEPTAR")
-                        color: "#045671"
+                        color: AppTheme.selection.primaryDark
                         font.pixelSize: 16
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter

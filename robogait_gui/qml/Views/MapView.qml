@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import AppTheme 1.0
 import RobotServiceBridge 1.0
 
 import "qrc:/Dialogs"
@@ -453,7 +454,7 @@ MapViewForm {
 
         Overlay.modal: Rectangle {
             anchors.fill: parent
-            color: "#A0505050"
+            color: AppTheme.core.overlayDim
         }
 
         width: parent ? Math.min(520, parent.width * 0.85) : 520
@@ -461,8 +462,8 @@ MapViewForm {
         y: parent ? Math.round((parent.height - height) / 2) : 0
 
         background: Rectangle {
-            color: "#a9cfe8"
-            border.color: "#ffffff"
+            color: AppTheme.map.mapFree
+            border.color: AppTheme.map.white
             border.width: 2
             radius: 12
         }
@@ -480,7 +481,7 @@ MapViewForm {
                 anchors.leftMargin: 18
                 anchors.rightMargin: 18
                 text: qsTr("¿Guardar los cambios en este archivo?")
-                color: "#045671"
+                color: AppTheme.settings.primaryDark
                 font.pixelSize: 18
                 font.bold: true
                 wrapMode: Text.WordWrap
@@ -501,15 +502,15 @@ MapViewForm {
                     text: qsTr("Guardar")
 
                     background: Rectangle {
-                        color: saveButton.down ? "#518bb7" : "#ffffff"
+                        color: saveButton.down ? AppTheme.map.appBackground : AppTheme.map.white
                         radius: 8
-                        border.color: "#045671"
+                        border.color: AppTheme.settings.primaryDark
                         border.width: 2
                     }
 
                     contentItem: Label {
                         text: saveButton.text
-                        color: "#045671"
+                        color: AppTheme.settings.primaryDark
                         font.pixelSize: 16
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -529,15 +530,15 @@ MapViewForm {
                     text: qsTr("No Guardar")
 
                     background: Rectangle {
-                        color: noSaveButton.down ? "#518bb7" : "#ffffff"
+                        color: noSaveButton.down ? AppTheme.map.appBackground : AppTheme.map.white
                         radius: 8
-                        border.color: "#045671"
+                        border.color: AppTheme.settings.primaryDark
                         border.width: 2
                     }
 
                     contentItem: Label {
                         text: noSaveButton.text
-                        color: "#045671"
+                        color: AppTheme.settings.primaryDark
                         font.pixelSize: 16
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -557,15 +558,15 @@ MapViewForm {
                     text: qsTr("Cancelar")
 
                     background: Rectangle {
-                        color: cancelButton.down ? "#518bb7" : "#ffffff"
+                        color: cancelButton.down ? AppTheme.map.appBackground : AppTheme.map.white
                         radius: 8
-                        border.color: "#045671"
+                        border.color: AppTheme.settings.primaryDark
                         border.width: 2
                     }
 
                     contentItem: Label {
                         text: cancelButton.text
-                        color: "#045671"
+                        color: AppTheme.settings.primaryDark
                         font.pixelSize: 16
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter

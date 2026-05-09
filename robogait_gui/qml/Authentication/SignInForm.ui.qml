@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
+import AppTheme 1.0
 
 import "qrc:/Components"
 
@@ -27,7 +28,7 @@ Page {
 
     Rectangle {
         anchors.fill: parent
-        color: "#518bb7"
+        color: AppTheme.core.appBackground
 
         Flickable {
             id: flick
@@ -79,13 +80,12 @@ Page {
                         width: formColumn.width
                         height: root.inputHeightPx
                         font.pointSize: 20
-                        color: "#000000"
-                        placeholderTextColor: "#808080"
+                        color: AppTheme.core.dark
+                        placeholderTextColor: AppTheme.auth.placeholderText
                         placeholderText: qsTr("Nombre")
                         background: Rectangle {
                             radius: 10
-                            color: "#ffffff"
-                            border.color: "#CCCCCC"
+                            color: AppTheme.core.white
                         }
                     }
 
@@ -94,13 +94,12 @@ Page {
                         width: formColumn.width
                         height: root.inputHeightPx
                         font.pointSize: 20
-                        color: "#000000"
-                        placeholderTextColor: "#808080"
+                        color: AppTheme.core.dark
+                        placeholderTextColor: AppTheme.auth.placeholderText
                         placeholderText: qsTr("Apellidos")
                         background: Rectangle {
                             radius: 10
-                            color: "#ffffff"
-                            border.color: "#CCCCCC"
+                            color: AppTheme.core.white
                         }
                     }
 
@@ -109,13 +108,12 @@ Page {
                         width: formColumn.width
                         height: root.inputHeightPx
                         font.pointSize: 20
-                        color: "#000000"
-                        placeholderTextColor: "#808080"
+                        color: AppTheme.core.dark
+                        placeholderTextColor: AppTheme.auth.placeholderText
                         placeholderText: qsTr("Nombre de usuario")
                         background: Rectangle {
                             radius: 10
-                            color: "#ffffff"
-                            border.color: "#CCCCCC"
+                            color: AppTheme.core.white
                         }
                     }
 
@@ -127,8 +125,8 @@ Page {
                         currentIndex: 0
 
                         background: Rectangle {
-                            color: "#333333"
-                            border.color: "#ffffff"
+                            color: AppTheme.auth.comboBackground
+                            border.color: AppTheme.core.white
                             border.width: 1
                         }
 
@@ -150,7 +148,7 @@ Page {
                             text: roleCombo.displayText.length  > 0
                                   ? roleCombo.currentText
                                   : (roleCombo.count > 0 ? roleCombo.textAt(0) : "")
-                            color: "#ffffff"
+                            color: AppTheme.core.white
                             font.pointSize: 20
                             leftPadding: 12
                             rightPadding: 32
@@ -160,7 +158,7 @@ Page {
 
                         indicator: Text {
                             text: "▼"
-                            color: "#ffffff"
+                            color: AppTheme.core.white
                             font.pixelSize: 10
                             anchors.right: parent.right
                             anchors.rightMargin: 12
@@ -177,28 +175,30 @@ Page {
                                 model: roleCombo.popup.visible ? roleCombo.delegateModel : null
 
                                 delegate: ItemDelegate {
+                                    id: roleDelegate
                                     width: roleCombo.width
                                     height: root.comboHeightPx
+                                    highlighted: roleCombo.highlightedIndex === index
 
                                     contentItem: Text {
                                         text: modelData
-                                        color: "#ffffff"
+                                        color: AppTheme.core.white
                                         font.pointSize: 16
                                         leftPadding: 12
                                         verticalAlignment: Text.AlignVCenter
                                     }
 
                                     background: Rectangle {
-                                        color: highlighted ? "#4a4a4a" : "#333333"
-                                        border.color: "#ffffff"
+                                        color: roleDelegate.highlighted ? AppTheme.auth.comboBackgroundHighlighted : AppTheme.auth.comboBackground
+                                        border.color: AppTheme.core.white
                                         border.width: 1
                                     }
                                 }
                             }
 
                             background: Rectangle {
-                                color: "#333333"
-                                border.color: "#ffffff"
+                                color: AppTheme.auth.comboBackground
+                                border.color: AppTheme.core.white
                                 border.width: 1
                             }
                         }
@@ -209,14 +209,13 @@ Page {
                         width: formColumn.width
                         height: root.inputHeightPx
                         font.pointSize: 20
-                        color: "#000000"
-                        placeholderTextColor: "#808080"
+                        color: AppTheme.core.dark
+                        placeholderTextColor: AppTheme.auth.placeholderText
                         echoMode: TextInput.Password
                         placeholderText: qsTr("Contraseña (mín. 8)")
                         background: Rectangle {
                             radius: 10
-                            color: "#ffffff"
-                            border.color: "#CCCCCC"
+                            color: AppTheme.core.white
                         }
                     }
 
@@ -225,14 +224,13 @@ Page {
                         width: formColumn.width
                         height: root.inputHeightPx
                         font.pointSize: 20
-                        color: "#000000"
-                        placeholderTextColor: "#808080"
+                        color: AppTheme.core.dark
+                        placeholderTextColor: AppTheme.auth.placeholderText
                         echoMode: TextInput.Password
                         placeholderText: qsTr("Repetir contraseña")
                         background: Rectangle {
                             radius: 10
-                            color: "#ffffff"
-                            border.color: "#CCCCCC"
+                            color: AppTheme.core.white
                         }
                     }
 
@@ -248,15 +246,14 @@ Page {
                         contentItem: Text {
                             text: signInButton.text
                             font: signInButton.font
-                            color: "#ffffff"
+                            color: AppTheme.core.white
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                         }
 
                         background: Rectangle {
                             radius: 10
-                            color: "#aed2ea"
-                            border.color: "#aed2ea"
+                            color: AppTheme.auth.buttonBackground
                         }
                     }
                 }

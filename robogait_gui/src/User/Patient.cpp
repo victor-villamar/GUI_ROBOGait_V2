@@ -1,4 +1,6 @@
 #include "User/Patient.hpp"
+#include "Themes/AppTheme.hpp"
+#include "Themes/ThemeMainMenu.hpp"
 
 using namespace ROBOGait::user;
 
@@ -16,13 +18,20 @@ bool Patient::isActive() const { return id_ >= 0; }
 
 QString Patient::getStatusRichText() const
 {
+  auto& theme = ROBOGait::settings::AppTheme::getInstance();
+  const auto* main_menu_theme = qobject_cast<const ROBOGait::settings::ThemeMainMenu*>(theme.getMainMenu());
+
+  const QString active_color = main_menu_theme ? main_menu_theme->getStatusMapActive().name() : QStringLiteral("#cce54d");
+  const QString error_color = main_menu_theme ? main_menu_theme->getStatusError().name() : QStringLiteral("#cc0000");
+  const QString text_primary_color = main_menu_theme ? main_menu_theme->getTextPrimary().name() : QStringLiteral("#ffffff");
+
   if (isActive())
   {
     const QString display = display_name_.isEmpty() ? (last_name_ + ", " + name_).trimmed() : display_name_;
-    return "<span style='color:#cce54d'>PACIENTE: " + display + "</span>";
+    return QString("<span style='color:%1'>PACIENTE: </span><span style='color:%2'>%3</span>").arg(active_color, text_primary_color, display);
   }
 
-  return "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY PACIENTE ACTIVO</span>";
+  return QString("<span style='color:%1'>NO</span><span style='color:%2'> HAY PACIENTE ACTIVO</span>").arg(error_color, text_primary_color);
 }
 
 QVariantList Patient::getDoctorDiagnostics() const { return doctor_diagnostics_; }

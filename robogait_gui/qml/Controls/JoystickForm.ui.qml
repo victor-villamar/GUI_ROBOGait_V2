@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import AppTheme 1.0
 
 Item {
     id: root
@@ -15,8 +16,8 @@ Item {
         width: Math.min(parent.width, parent.height)
         height: width
         radius: width / 2
-        color: "#a9cfe8"
-        border.color: "#ffffff"
+        color: AppTheme.joystick.baseFill
+        border.color: AppTheme.joystick.light
         border.width: 4
         anchors.centerIn: parent
 
@@ -25,8 +26,8 @@ Item {
             width: totalArea.width / 4
             height: width
             radius: width / 2
-            color: "#045671"
-            border.color: "#ffffff"
+            color: AppTheme.joystick.stickFill
+            border.color: AppTheme.joystick.light
             border.width: 3
             x: (totalArea.width - width) / 2
             y: (totalArea.height - height) / 2

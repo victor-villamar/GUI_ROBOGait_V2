@@ -26,16 +26,26 @@ class RobotLayerItem : public QQuickItem
   Q_OBJECT
 
 public:
-  explicit RobotLayerItem(QQuickItem* parent = nullptr);
-
-  ~RobotLayerItem();
-
   // clang-format off
   Q_PROPERTY(QColor headColor
              READ getHeadColor
              WRITE setHeadColor
              NOTIFY headColorChanged)
+
+  Q_PROPERTY(QColor bodyColor
+             READ getBodyColor
+             WRITE setBodyColor
+             NOTIFY bodyColorChanged)
+
+  Q_PROPERTY(QColor wheelColor
+             READ getWheelColor
+             WRITE setWheelColor
+             NOTIFY wheelColorChanged)
   // clang-format on
+
+  explicit RobotLayerItem(QQuickItem* parent = nullptr);
+
+  ~RobotLayerItem();
 
   /**
    * @brief Sets the render scene to use for rendering
@@ -66,11 +76,39 @@ public:
   QColor getHeadColor() const;
 
   /**
+   * @brief Gets the current body color
+   *
+   * @return The current body color
+   */
+  QColor getBodyColor() const;
+
+  /**
+   * @brief Gets the current wheel color
+   *
+   * @return The current wheel color
+   */
+  QColor getWheelColor() const;
+
+  /**
    * @brief Sets the head color for rendering
    *
    * @param color The new head color to set
    */
   void setHeadColor(const QColor& color);
+
+  /**
+   * @brief Sets the body color for rendering
+   *
+   * @param color The new body color to set
+   */
+  void setBodyColor(const QColor& color);
+
+  /**
+   * @brief Sets the wheel color for rendering
+   *
+   * @param color The new wheel color to set
+   */
+  void setWheelColor(const QColor& color);
 
 protected:
   /**
@@ -83,7 +121,9 @@ protected:
   QSGNode* updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* data) override;
 
 signals:
-  void headColorChanged(); // Signal emitted when the head color changes
+  void headColorChanged();  // Signal emitted when the head color changes
+  void bodyColorChanged();  // Signal emitted when the body color changes
+  void wheelColorChanged(); // Signal emitted when the wheel color changes
 
 private slots:
   void onFrameReady(); // Slot for frame ready signal
@@ -106,13 +146,14 @@ private:
   std::shared_ptr<ROBOGait::map::layer::RobotLayer> robot_render_;      /**< Robot layer for the robot item */
   std::shared_ptr<ROBOGait::map::rendering::RenderCamera> camera_;      /**< Camera for the robot item */
 
-  static constexpr auto BODY_COLOR = QColor(75, 80, 86);          /**< Color for the robot body */
-  static constexpr auto WHEEL_COLOR = QColor(21, 24, 31);         /**< Color for the robot wheels */
+  QColor body_color_;  /**< Color for the robot body */
+  QColor wheel_color_; /**< Color for the robot wheels */
+  QColor head_color_;  /**< Color for the robot head */
+
+  static constexpr auto DEFAULT_BODY_COLOR = QColor(75, 80, 86);  /**< Color for the robot body */
+  static constexpr auto DEFAULT_WHEEL_COLOR = QColor(21, 24, 31); /**< Color for the robot wheels */
   static constexpr auto DEFAULT_HEAD_COLOR = QColor(220, 20, 20); /**< Default color for the robot head */
-
-  QColor head_color_; /**< Color for the robot head */
 };
-
 } // namespace item
 } // namespace map
 } // namespace ROBOGait

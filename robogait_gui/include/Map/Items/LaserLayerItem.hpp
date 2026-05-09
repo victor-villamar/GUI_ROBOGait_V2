@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include <QColor>
 #include <QPointer>
 #include <QQuickItem>
 #include <QSGGeometryNode>
@@ -24,6 +25,13 @@ class LaserLayerItem : public QQuickItem
   Q_OBJECT
 
 public:
+  // clang-format off
+  Q_PROPERTY(QColor laserColor
+             READ getLaserColor
+             WRITE setLaserColor
+             NOTIFY laserColorChanged)
+  // clang-format on
+
   /**
    * @brief Constructor for the LaserLayerItem class
    */
@@ -55,6 +63,20 @@ public:
    */
   void setCamera(const std::shared_ptr<ROBOGait::map::rendering::RenderCamera>& camera);
 
+  /**
+   * @brief Get the current laser color
+   *
+   * @return The current laser color
+   */
+  QColor getLaserColor() const;
+
+  /**
+   * @brief Set the laser color for rendering
+   *
+   * @param color The new laser color to set
+   */
+  void setLaserColor(const QColor& color);
+
 protected:
   /**
    * @brief Update the paint node for the laser layer item
@@ -64,6 +86,9 @@ protected:
    * @return The updated paint node
    */
   QSGNode* updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* data) override;
+
+signals:
+  void laserColorChanged(); // Signal emitted when the laser color changes
 
 private slots:
   void onFrameReady(); // Slot to handle frame ready signal
@@ -86,8 +111,10 @@ private:
   std::shared_ptr<ROBOGait::map::layer::LaserLayer> laser_render_;      /**< Laser layer for the laser item */
   std::shared_ptr<ROBOGait::map::rendering::RenderCamera> camera_;      /**< Camera for the laser item */
 
-  static constexpr float POINT_SIZE = 0.03f;             /**< Size of the laser points */
-  static constexpr auto LASER_COLOR = QColor(255, 0, 0); /**< Color of the laser points */
+  QColor laser_color_; /** < Color of the laser points */
+
+  static constexpr float POINT_SIZE = 0.03f;                     /**< Size of the laser points */
+  static constexpr auto DEFAULT_LASER_COLOR = QColor(255, 0, 0); /**< Color of the laser points */
 };
 
 } // namespace item

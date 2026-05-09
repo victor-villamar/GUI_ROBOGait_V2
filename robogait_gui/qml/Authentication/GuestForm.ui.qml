@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
+import AppTheme 1.0
 
 import "qrc:/Components"
 
@@ -24,7 +25,7 @@ Page {
 
     Rectangle {
         anchors.fill: parent
-        color: "#518bb7"
+        color: AppTheme.core.appBackground
 
         Flickable {
             id: flick
@@ -97,13 +98,12 @@ Page {
                         width: formColumn.width
                         height: root.inputHeightPx
                         font.pointSize: 20
-                        color: "#000000"
-                        placeholderTextColor: "#808080"
+                        color: AppTheme.core.dark
+                        placeholderTextColor: AppTheme.auth.placeholderText
                         placeholderText: qsTr("Nombre")
                         background: Rectangle {
                             radius: 10
-                            color: "#ffffff"
-                            border.color: "#CCCCCC"
+                            color: AppTheme.core.white
                         }
                     }
 
@@ -112,13 +112,12 @@ Page {
                         width: formColumn.width
                         height: root.inputHeightPx
                         font.pointSize: 20
-                        color: "#000000"
-                        placeholderTextColor: "#808080"
+                        color: AppTheme.core.dark
+                        placeholderTextColor: AppTheme.auth.placeholderText
                         placeholderText: qsTr("Apellidos")
                         background: Rectangle {
                             radius: 10
-                            color: "#ffffff"
-                            border.color: "#CCCCCC"
+                            color: AppTheme.core.white
                         }
                     }
 
@@ -134,15 +133,14 @@ Page {
                         contentItem: Text {
                             text: guestButton.text
                             font: guestButton.font
-                            color: "#ffffff"
+                            color: AppTheme.core.white
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                         }
 
                         background: Rectangle {
                             radius: 10
-                            color: "#aed2ea"
-                            border.color: "#aed2ea"
+                            color: AppTheme.auth.buttonBackground
                         }
                     }
                 }

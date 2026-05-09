@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 6.0
+import AppTheme 1.0
 
 import "qrc:/Dialogs"
 
@@ -23,7 +24,7 @@ Item {
 
 	    Rectangle {
 	        anchors.fill: parent
-	        color: "#518bb7"
+        color: AppTheme.mainMenu.background
 
 	        Item {
 	            id: topLogoBar
@@ -207,7 +208,7 @@ Item {
         Text {
             id: explain
             width: Math.min(900, parent.width * 0.9)
-            color: "#ffffff"
+            color: AppTheme.mainMenu.textPrimary
             text: qsTr("Bienvenido a la aplicación de ROBOGait. Para comenzar, seleccione un mapa y un paciente. Puede acceder al control manual desde esta pantalla. Para más detalles, presione el botón de información.")
             wrapMode: Text.Wrap
             font.pixelSize: 22
@@ -251,13 +252,16 @@ Item {
 
             readonly property string mapStatusRichText:
                 (userSession && userSession.hasMapAssigned)
-                ? ("<span style='color:#cce54d'>MAPA: " + userSession.currentMapName + "</span>")
-                : "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY MAPA ACTIVO</span>"
+                ? ("<span style='color:" + AppTheme.mainMenu.statusMapActive + "'>MAPA: </span>"
+                   + "<span style='color:" + AppTheme.mainMenu.textPrimary + "'>" + userSession.currentMapName + "</span>")
+                : ("<span style='color:" + AppTheme.mainMenu.statusError + "'>NO</span>"
+                   + "<span style='color:" + AppTheme.mainMenu.textPrimary + "'> HAY MAPA ACTIVO</span>")
 
             readonly property string patientStatusRichText:
                 (userSession && userSession.currentPatient)
                 ? userSession.currentPatient.statusRichText
-                : "<span style='color:#cc0000'>NO</span><span style='color:#ffffff'> HAY PACIENTE ACTIVO</span>"
+                : ("<span style='color:" + AppTheme.mainMenu.statusError + "'>NO</span>"
+                   + "<span style='color:" + AppTheme.mainMenu.textPrimary + "'> HAY PACIENTE ACTIVO</span>")
 
             Text {
                 id: bottomStatusPatient
@@ -269,7 +273,7 @@ Item {
 
             Text {
                 id: bottomStatusDash
-                color: "#ffffff"
+                color: AppTheme.mainMenu.textPrimary
                 font.pixelSize: 20
                 font.bold: true
                 text: qsTr(" | ")

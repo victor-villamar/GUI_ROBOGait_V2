@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import AppTheme 1.0
 
 import "qrc:/Dialogs"
 
@@ -56,8 +57,8 @@ Item {
         height: root.implicitHeight
         width: root.badgeWidth
         radius: Math.round(height * 0.32)
-        color: "#a9cfe8"
-        border.color: "#ffffff"
+        color: AppTheme.badges.badgeBackground
+        border.color: AppTheme.badges.light
         border.width: 2
 
         anchors.top: parent.top
@@ -99,7 +100,7 @@ Item {
             Text {
                 id: robotNameText
                 text: root.robotDisplayName
-                color: "#045671"
+                color: AppTheme.badges.primary
                 font.pixelSize: 18
                 font.bold: true
                 elide: Text.ElideRight
@@ -125,8 +126,8 @@ Item {
               : 0
         opacity: root.detailsOpen ? 1 : 0
         radius: 14
-        color: "#ffffff"
-        border.color: "#045671"
+        color: AppTheme.badges.light
+        border.color: AppTheme.badges.primary
         border.width: 2
         clip: true
 
@@ -163,7 +164,7 @@ Item {
                         Text {
                             id: labelText
                             text: modelData.label + ":"
-                            color: "#045671"
+                            color: AppTheme.badges.primary
                             font.pixelSize: 12
                             font.bold: true
                             anchors.verticalCenter: parent.verticalCenter
@@ -171,7 +172,7 @@ Item {
 
                         Text {
                             text: modelData.value
-                            color: "#045671"
+                            color: AppTheme.badges.primary
                             font.pixelSize: 12
                             elide: Text.ElideRight
                             anchors.verticalCenter: parent.verticalCenter
@@ -184,7 +185,7 @@ Item {
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
                         height: root.dividerSize
-                        color: "#045671"
+                        color: AppTheme.badges.primary
                         opacity: 0.35
                         visible: index < (root.detailsCount - 1)
                     }

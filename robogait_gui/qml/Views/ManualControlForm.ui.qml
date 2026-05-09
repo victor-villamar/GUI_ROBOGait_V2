@@ -1,13 +1,14 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import AppTheme 1.0
 
 import "qrc:/Controls"
 import "qrc:/Dialogs"
 
 Rectangle {
     id: rectangle
-    color: "#518bb7"
+    color: AppTheme.manualControl.background
     
     property alias joystick: joystick
     property alias infoButton: infoButton
@@ -23,7 +24,7 @@ Rectangle {
     Rectangle {
         id: information
         width: 2 * parent.width / 3 - 40
-        color: "#518bb7"
+        color: AppTheme.manualControl.background
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -51,16 +52,16 @@ Rectangle {
 
             Text {
                 text: qsTr("Desbloqueo del joystick")
-                color: "#00C8FF"
+                color: AppTheme.manualControl.sectionTitle
                 font.pixelSize: 26
-                styleColor: "#e9e9e9"
+                styleColor: AppTheme.manualControl.sectionTitleShadow
                 font.bold: true
             }
 
             Text {
                 id: step1Text
                 width: parent.width
-                color: "#ffffff"
+                color: AppTheme.manualControl.light
                 font.pixelSize: 21
                 wrapMode: Text.WordWrap
                 text: qsTr("Pulse el candado a la derecha del joystick para desbloquearlo. Para bloquearlo, vuelva a pulsar el candado.")
@@ -68,16 +69,16 @@ Rectangle {
 
             Text {
                 text: qsTr("Movimiento del joystick")
-                color: "#00C8FF"
+                color: AppTheme.manualControl.sectionTitle
                 font.pixelSize: 26
-                styleColor: "#e9e9e9"
+                styleColor: AppTheme.manualControl.sectionTitleShadow
                 font.bold: true
             }
 
             Text {
                 id: step2Text
                 width: parent.width
-                color: "#ffffff"
+                color: AppTheme.manualControl.light
                 font.pixelSize: 21
                 wrapMode: Text.WordWrap
                 text: qsTr("Desplace el círculo pequeño para comenzar a moverse. La velocidad de movimiento aumentará cuanto más se aleje del centro.")
@@ -86,7 +87,7 @@ Rectangle {
             Text {
                 id: moreInfoText
                 width: parent.width
-                color: "#ffffff"
+                color: AppTheme.manualControl.light
                 font.pixelSize: 21
                 wrapMode: Text.WordWrap
                 text: qsTr("Para más detalles presione el botón de información.")
@@ -94,7 +95,7 @@ Rectangle {
 
             Text {
                 text: qsTr("¡¡ADVERTENCIA!!")
-                color: "#c52020"
+                color: AppTheme.manualControl.warningTitle
                 font.pixelSize: 26
                 font.bold: true
             }
@@ -102,7 +103,7 @@ Rectangle {
             Text {
                 id: warningText
                 width: parent.width
-                color: "#ffffff"
+                color: AppTheme.manualControl.light
                 font.pixelSize: 21
                 wrapMode: Text.WordWrap
                 text: qsTr("Este robot no cuenta con un sistema de gestión de colisiones. Asegúrese de evitar obstáculos y supervisar su desplazamiento en todo momento.")
@@ -165,7 +166,7 @@ Rectangle {
     Text {
         id: velocityText
         height: 32
-        color: "#ffffff"
+        color: AppTheme.manualControl.light
         text: qsTr("%1 m/s  %2 rad/s").arg(linearValue.toFixed(3)).arg(angularValue.toFixed(3))
         anchors.horizontalCenter: manualControl.horizontalCenter
         anchors.bottom: manualControl.top
@@ -219,7 +220,7 @@ Rectangle {
             + "</ul>"
             + "<h2>Bloqueo del joystick</h2>"
             + "<p>Pulse el candado a la derecha del joystick para bloquearlo.</p>"
-            + "<h2><span style='color:#c52020'>¡¡ADVERTENCIA!!</span></h2>"
+            + "<h2><span style='color:" + AppTheme.manualControl.warningTitle + "'>¡¡ADVERTENCIA!!</span></h2>"
             + "<p>Este robot no cuenta con un sistema de gestión de colisiones. Asegúrese de evitar obstáculos y supervisar su desplazamiento en todo momento.</p>"
             + "<h2>¿Necesita ayuda?</h2>"
             + "<p>Para asistencia técnica, contacte con ETSIDI en: "

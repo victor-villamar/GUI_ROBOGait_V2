@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import AppTheme 1.0
 import QtQuick.Layouts 1.15
 import MapRendering 1.0
 
@@ -9,7 +10,7 @@ import "qrc:/Dialogs"
 
 Rectangle {
     id: root
-    color: "#518bb7"
+    color: AppTheme.map.appBackground
 
     property alias infoButton: infoButton
     property alias emergencyButton: emergencyButton
@@ -89,7 +90,7 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: Math.max(60, root.iconButtonSizePx + 20)
-            color: "#2c5f7c"
+            color: AppTheme.map.panel
             radius: 8
 
             RowLayout {
@@ -147,7 +148,7 @@ Rectangle {
                     text: qsTr("Prueba")
                     font.pixelSize: 24
                     font.bold: true
-                    color: "#ffffff"
+                    color: AppTheme.map.white
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -163,9 +164,9 @@ Rectangle {
             id: mapDisplayArea
             Layout.fillWidth: true
             Layout.fillHeight: true
-            color: "#1a3a4a"
+            color: AppTheme.map.panelHeader
             radius: 8
-            border.color: "#2c5f7c"
+            border.color: AppTheme.map.panel
             border.width: 2
             clip: true
 
@@ -175,6 +176,9 @@ Rectangle {
                 anchors.margins: mapContentMargin
                 visible: showRobotPose
                 z: 2
+                bodyColor: AppTheme.map.robotBody
+                wheelColor: AppTheme.map.robotWheel
+                headColor: AppTheme.map.robotHead
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -203,8 +207,8 @@ Rectangle {
 
                 background: Rectangle {
                     radius: width / 2
-                    color: emergencyButton.checked ? "#7a8a93" : "transparent"
-                    border.color: emergencyButton.checked ? "#cbd6dc" : "transparent"
+                    color: emergencyButton.checked ? AppTheme.map.emergencyStopLatchedBg : "transparent"
+                    border.color: emergencyButton.checked ? AppTheme.map.emergencyStopLatchedBorder : "transparent"
                     border.width: emergencyButton.checked ? 2 : 0
                 }
 
@@ -225,9 +229,9 @@ Rectangle {
                 anchors.bottom: parent.bottom
                 anchors.rightMargin: 21
                 anchors.bottomMargin: 21
-                color: "#2c5f7c"
+                color: AppTheme.map.panel
                 radius: 10
-                border.color: "#6aa3c8"
+                border.color: AppTheme.map.panelBorder
                 border.width: 2
                 z: 70
                 visible: mapAvailable && isNavigationStep && goalPlacementEnabled && !testStarted
@@ -251,14 +255,14 @@ Rectangle {
 
                         background: Rectangle {
                             radius: 6
-                            color: goalAcceptButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                            border.color: "#ffffff"
+                            color: goalAcceptButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
                             border.width: 1
                         }
 
                         contentItem: Text {
                             text: qsTr("CALCULAR")
-                            color: "#ffffff"
+                            color: AppTheme.map.white
                             font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -277,14 +281,14 @@ Rectangle {
 
                         background: Rectangle {
                             radius: 6
-                            color: goalClearButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                            border.color: "#ffffff"
+                            color: goalClearButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
                             border.width: 1
                         }
 
                         contentItem: Text {
                             text: qsTr("BORRAR")
-                            color: "#ffffff"
+                            color: AppTheme.map.white
                             font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -302,9 +306,9 @@ Rectangle {
                 anchors.bottom: parent.bottom
                 anchors.rightMargin: 21
                 anchors.bottomMargin: 21
-                color: "#2c5f7c"
+                color: AppTheme.map.panel
                 radius: 10
-                border.color: "#6aa3c8"
+                border.color: AppTheme.map.panelBorder
                 border.width: 2
                 z: 70
                 visible: mapAvailable && isNavigationStep && pathPlacementEnabled && !testStarted
@@ -332,14 +336,14 @@ Rectangle {
 
                         background: Rectangle {
                             radius: 6
-                            color: pathAcceptButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                            border.color: "#ffffff"
+                            color: pathAcceptButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
                             border.width: 1
                         }
 
                         contentItem: Text {
                             text: qsTr("ACEPTAR")
-                            color: "#ffffff"
+                            color: AppTheme.map.white
                             font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -361,14 +365,14 @@ Rectangle {
 
                         background: Rectangle {
                             radius: 6
-                            color: pathSegmentButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                            border.color: "#ffffff"
+                            color: pathSegmentButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
                             border.width: 1
                         }
 
                         contentItem: Text {
                             text: qsTr("SEGMENTAR")
-                            color: "#ffffff"
+                            color: AppTheme.map.white
                             font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -389,14 +393,14 @@ Rectangle {
 
                         background: Rectangle {
                             radius: 6
-                            color: pathClearButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                            border.color: "#ffffff"
+                            color: pathClearButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
                             border.width: 1
                         }
 
                         contentItem: Text {
                             text: qsTr("BORRAR")
-                            color: "#ffffff"
+                            color: AppTheme.map.white
                             font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -504,7 +508,9 @@ Rectangle {
                          ((goalPlacementEnabled && goalPointSet) ||
                           (pathPlacementEnabled && pathTerminalPoseSet))
                 z: 2
-                headColor: "#3b82f6"
+                headColor: AppTheme.map.pathHeadBlue
+                bodyColor: AppTheme.map.robotBody
+                wheelColor: AppTheme.map.robotWheel
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -522,7 +528,7 @@ Rectangle {
                 anchors.margins: mapContentMargin
                 visible: mapAvailable && isNavigationStep
                 z: 1.45
-                pathColor: "#9118DB"
+                pathColor: AppTheme.map.pathColorPrimary
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -540,7 +546,7 @@ Rectangle {
                 anchors.margins: mapContentMargin
                 visible: mapAvailable && isNavigationStep
                 z: 1.455
-                pathColor: "#F57927"
+                pathColor: AppTheme.map.pathColorSecondary
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -558,7 +564,7 @@ Rectangle {
                 anchors.margins: mapContentMargin
                 visible: mapAvailable && isNavigationStep
                 z: 1.46
-                pathColor: "#18DB22"
+                pathColor: AppTheme.map.pathColorTertiary
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -576,6 +582,7 @@ Rectangle {
                 anchors.margins: mapContentMargin
                 visible: mapAvailable && particleCloudAvailable && showParticleCloud
                 z: 1.4
+                particleColor: AppTheme.map.particle
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -656,8 +663,8 @@ Rectangle {
                 id: emptyMapPlaceholder
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
-                color: "#1a3a4a"
-                border.color: "#2c5f7c"
+                color: AppTheme.map.panelHeader
+                border.color: AppTheme.map.panel
                 visible: !mapAvailable
                 z: 0
             }
@@ -665,7 +672,7 @@ Rectangle {
             Text {
                 anchors.centerIn: parent
                 text: qsTr("Esperando mapa...")
-                color: "#ffffff"
+                color: AppTheme.map.white
                 opacity: 0.7
                 font.pixelSize: 16
                 visible: !mapAvailable
@@ -676,7 +683,7 @@ Rectangle {
             id: bottomBar
             Layout.fillWidth: true
             Layout.preferredHeight: Math.max(60, root.buttonHeightPx + 16)
-            color: "#2c5f7c"
+            color: AppTheme.map.panel
             radius: 6
             visible: !isNavigationStep
 
@@ -701,14 +708,14 @@ Rectangle {
 
                         background: Rectangle {
                             radius: 6
-                            color: enablePlacementButton.checked ? "#1a3a4a" : "#3a7fa0"
-                            border.color: "#ffffff"
+                            color: enablePlacementButton.checked ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
                             border.width: 1
                         }
 
                         contentItem: Text {
                             text: qsTr("HABILITAR COLOCACIÓN")
-                            color: "#ffffff"
+                            color: AppTheme.map.white
                             font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -727,14 +734,14 @@ Rectangle {
 
                         background: Rectangle {
                             radius: 6
-                            color: clearPlacementButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                            border.color: "#ffffff"
+                            color: clearPlacementButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
                             border.width: 1
                         }
 
                         contentItem: Text {
                             text: qsTr("BORRAR")
-                            color: "#ffffff"
+                            color: AppTheme.map.white
                             font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -761,14 +768,14 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: autoLocalizationButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: autoLocalizationButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
                     contentItem: Text {
                         text: qsTr("AUTOLOCALIZAR")
-                        color: "#ffffff"
+                        color: AppTheme.map.white
                         font.pixelSize: 14
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -791,14 +798,14 @@ Rectangle {
                     enabled: true
                     background: Rectangle {
                         radius: 6
-                        color: orientationEnabled ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: orientationEnabled ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
                     contentItem: Text {
                         text: qsTr("HABILITAR ORIENTACIÓN")
-                        color: "#ffffff"
+                        color: AppTheme.map.white
                         font.pixelSize: 14
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -830,14 +837,14 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: backOrientationButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: backOrientationButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
                     contentItem: Text {
                         text: qsTr("ATRÁS")
-                        color: "#ffffff"
+                        color: AppTheme.map.white
                         font.pixelSize: 14
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -862,14 +869,14 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: confirmPlacementButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: confirmPlacementButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
                     contentItem: Text {
                         text: qsTr("CONFIRMAR")
-                        color: "#ffffff"
+                        color: AppTheme.map.white
                         font.pixelSize: 14
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -891,7 +898,7 @@ Rectangle {
             id: navigationBar
             Layout.fillWidth: true
             Layout.preferredHeight: Math.max(60, root.iconButtonSizePx + 16)
-            color: "#2c5f7c"
+            color: AppTheme.map.panel
             radius: 6
             visible: isNavigationStep
             opacity: mapAvailable ? 1.0 : 0.5
@@ -913,8 +920,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: parent.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: parent.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -936,8 +943,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: parent.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: parent.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -959,8 +966,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: parent.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: parent.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -983,8 +990,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: followButton.checked ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: followButton.checked ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -1011,14 +1018,14 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: startTestButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: startTestButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
                     contentItem: Text {
                         text: qsTr("INICIAR TEST")
-                        color: "#ffffff"
+                        color: AppTheme.map.white
                         font.pixelSize: 14
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -1044,8 +1051,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: goalPlacementEnabled ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: goalPlacementEnabled ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -1078,8 +1085,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: pathPlacementEnabled ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: pathPlacementEnabled ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -1118,8 +1125,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: homeButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: homeButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
