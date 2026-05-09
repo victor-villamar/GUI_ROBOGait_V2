@@ -3,6 +3,8 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import MapRendering 1.0
 
+
+import "qrc:/Components"
 import "qrc:/Dialogs"
 
 Rectangle {
@@ -231,7 +233,7 @@ Rectangle {
                 visible: mapAvailable && isNavigationStep && goalPlacementEnabled && !testStarted
 
                 property int padding: 10
-                property real buttonWidth: 160
+                property real buttonWidth: 200
                 width: buttonWidth + (padding * 2)
                 height: (root.buttonHeightPx * 2) + (padding * 2) + 8
 
@@ -308,7 +310,7 @@ Rectangle {
                 visible: mapAvailable && isNavigationStep && pathPlacementEnabled && !testStarted
 
                 property int padding: 10
-                property real buttonWidth: 160
+                property real buttonWidth: 200
                 property int buttonsSpacing: 8
                 width: buttonWidth + (padding * 2)
                 height: (root.buttonHeightPx * 3) + (buttonsSpacing * 2) + (padding * 2)
@@ -585,425 +587,68 @@ Rectangle {
                 }
             }
 
-            Rectangle {
+            OrientationWheel {
                 id: rotationPanel
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.rightMargin: 21
                 anchors.bottomMargin: 21
-                color: orientationEnabled ? "#2c5f7c" : "#3b4a55"
-                radius: 13
-                border.color: orientationEnabled ? "#6aa3c8" : "#5f707d"
-                border.width: 3
                 z: 50
-                visible: mapAvailable && isOrientationStep && placementController && placementController.hasPosition
-                opacity: orientationEnabled ? 1.0 : 0.6
+                visiblePanel: mapAvailable && isOrientationStep && placementController && placementController.hasPosition
+                enabled: orientationEnabled
+                wheelSize: wheelSizePx > 0 ? wheelSizePx : Math.min(240, Math.min(parent.width, parent.height) * 0.32)
+                title: qsTr("Orientación")
+                angleDeg: placementController ? (placementController.theta * 180 / Math.PI) : 0
 
-                property int padding: 13
-                property real wheelSize: wheelSizePx > 0 ? wheelSizePx
-                                                       : Math.min(240, Math.min(parent.width, parent.height) * 0.32)
-
-                implicitWidth: panelContent.implicitWidth + (padding * 2)
-                implicitHeight: panelContent.implicitHeight + (padding * 2)
-
-                Column {
-                    id: panelContent
-                    anchors.fill: parent
-                    anchors.margins: rotationPanel.padding
-                    spacing: 10
-
-                    Rectangle {
-                        width: rotationPanel.wheelSize
-                        height: 36
-                        color: orientationEnabled ? "#1a3a4a" : "#2e3a43"
-                        radius: 6
-                        opacity: 0.9
-
-                        Text {
-                            anchors.centerIn: parent
-                            color: "#ffffff"
-                            font.pixelSize: 16
-                            font.bold: true
-                            text: qsTr("Orientación: %1°").arg(Math.round(((rotationOverlay.degrees + 360) % 360)))
-                        }
+                onAngleChanged: function(deg) {
+                    if (!placementController || !placementController.hasPosition || !orientationEnabled) {
+                        return
                     }
-
-                    Item {
-                        id: rotationOverlay
-                        width: rotationPanel.wheelSize
-                        height: width
-
-                        readonly property real orientationRad: placementController ? placementController.theta : 0.0
-                        readonly property real degrees: orientationRad * 180 / Math.PI
-                        property real radius: Math.max(0, (width * 0.5) - 14)
-
-                        function updateOrientationFromPoint(px, py) 
-                        {
-                            if (!placementController || !placementController.hasPosition || !orientationEnabled)
-                            {
-                                return
-                            }
-                            var dx = px - width / 2
-                            var dy = py - height / 2
-                            if (dx === 0 && dy === 0)
-                            {
-                                return
-                            }
-                            var angle = Math.atan2(-dy, dx)
-                            var deg = angle * 180 / Math.PI
-                            var current = rotationOverlay.degrees
-                            var delta = deg - current
-                            while (delta > 180) delta -= 360
-                            while (delta < -180) delta += 360
-                            var eased = current + (delta * 0.35)
-                            placementController.setOrientationDegrees(eased)
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: width / 2
-                            color: "transparent"
-                            border.color: orientationEnabled ? "#ffffff" : "#9aa8b1"
-                            border.width: 2
-                        }
-
-                        Canvas {
-                            id: directionMarker
-                            width: rotationPanel.wheelSize / 4
-                            height: width
-                            x: (rotationOverlay.width / 2) + radius * Math.cos(rotationOverlay.orientationRad) - width / 2
-                            y: (rotationOverlay.height / 2) - radius * Math.sin(rotationOverlay.orientationRad) - height / 2
-                            rotation: 90 - rotationOverlay.degrees
-                            transformOrigin: Item.Center
-
-                            onPaint: {
-                                var ctx = getContext("2d")
-                                ctx.clearRect(0, 0, width, height)
-                                ctx.fillStyle = orientationEnabled ? "#ffffff" : "#9aa8b1"
-                                var cx = width / 2
-                                var headY = 0
-                                var headW = width * 0.7
-                                var tailW = width * 0.35
-                                var tailY = height * 0.65
-                                ctx.beginPath()
-                                ctx.moveTo(cx, headY)
-                                ctx.lineTo(cx + headW / 2, tailY)
-                                ctx.lineTo(cx + tailW / 2, tailY)
-                                ctx.lineTo(cx + tailW / 2, height)
-                                ctx.lineTo(cx - tailW / 2, height)
-                                ctx.lineTo(cx - tailW / 2, tailY)
-                                ctx.lineTo(cx - headW / 2, tailY)
-                                ctx.closePath()
-                                ctx.fill()
-                            }
-                        }
-
-                        MultiPointTouchArea {
-                            anchors.fill: parent
-                            enabled: orientationEnabled
-                            minimumTouchPoints: 1
-                            maximumTouchPoints: 1
-                            onTouchUpdated: {
-                                if (touchPoints.length > 0) {
-                                    var p = touchPoints[0]
-                                    rotationOverlay.updateOrientationFromPoint(p.x, p.y)
-                                }
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            acceptedButtons: Qt.LeftButton
-                            onPressed: function(mouse) { rotationOverlay.updateOrientationFromPoint(mouse.x, mouse.y) }
-                            onPositionChanged: function(mouse) {
-                                if (pressed) {
-                                    rotationOverlay.updateOrientationFromPoint(mouse.x, mouse.y)
-                                }
-                            }
-                        }
-                    }
+                    placementController.setOrientationDegrees(deg)
                 }
             }
 
-            Rectangle {
+            OrientationWheel {
                 id: goalRotationPanel
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
                 anchors.leftMargin: 21
                 anchors.bottomMargin: 21
-                color: goalOrientationEnabled ? "#2c5f7c" : "#3b4a55"
-                radius: 13
-                border.color: goalOrientationEnabled ? "#6aa3c8" : "#5f707d"
-                border.width: 3
                 z: 50
-                visible: mapAvailable && isNavigationStep && goalPlacementEnabled && goalPointSet && !goalAccepted && !testStarted
-                opacity: goalOrientationEnabled ? 1.0 : 0.6
+                visiblePanel: mapAvailable && isNavigationStep && goalPlacementEnabled && goalPointSet && !goalAccepted && !testStarted
+                enabled: goalOrientationEnabled
+                wheelSize: wheelSizePx > 0 ? wheelSizePx : Math.min(240, Math.min(parent.width, parent.height) * 0.32)
+                title: qsTr("Orientación")
+                angleDeg: goalOrientationDeg
 
-                property int padding: 13
-                property real wheelSize: wheelSizePx > 0 ? wheelSizePx
-                                                       : Math.min(240, Math.min(parent.width, parent.height) * 0.32)
-
-                implicitWidth: goalPanelContent.implicitWidth + (padding * 2)
-                implicitHeight: goalPanelContent.implicitHeight + (padding * 2)
-
-                Column {
-                    id: goalPanelContent
-                    anchors.fill: parent
-                    anchors.margins: goalRotationPanel.padding
-                    spacing: 10
-
-                    Rectangle {
-                        width: goalRotationPanel.wheelSize
-                        height: 36
-                        color: goalOrientationEnabled ? "#1a3a4a" : "#2e3a43"
-                        radius: 6
-                        opacity: 0.9
-
-                        Text {
-                            anchors.centerIn: parent
-                            color: "#ffffff"
-                            font.pixelSize: 16
-                            font.bold: true
-                            text: qsTr("Orientación: %1°").arg(Math.round(((goalRotationOverlay.degrees + 360) % 360)))
-                        }
+                onAngleChanged: function(deg) {
+                    if (!goalOrientationEnabled) {
+                        return
                     }
-
-                    Item {
-                        id: goalRotationOverlay
-                        width: goalRotationPanel.wheelSize
-                        height: width
-
-                        readonly property real orientationRad: goalOrientationDeg * Math.PI / 180
-                        readonly property real degrees: goalOrientationDeg
-                        property real radius: Math.max(0, (width * 0.5) - 14)
-
-                        function updateOrientationFromPoint(px, py)
-                        {
-                            if (!goalOrientationEnabled)
-                            {
-                                return
-                            }
-                            var dx = px - width / 2
-                            var dy = py - height / 2
-                            if (dx === 0 && dy === 0)
-                            {
-                                return
-                            }
-                            var angle = Math.atan2(-dy, dx)
-                            var deg = angle * 180 / Math.PI
-                            var current = goalOrientationDeg
-                            var delta = deg - current
-                            while (delta > 180) delta -= 360
-                            while (delta < -180) delta += 360
-                            var eased = current + (delta * 0.35)
-                            goalOrientationDeg = eased
-                            goalOrientationSet = true
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: width / 2
-                            color: "transparent"
-                            border.color: goalOrientationEnabled ? "#ffffff" : "#9aa8b1"
-                            border.width: 2
-                        }
-
-                        Canvas {
-                            id: goalDirectionMarker
-                            width: goalRotationPanel.wheelSize / 4
-                            height: width
-                            x: (goalRotationOverlay.width / 2) + radius * Math.cos(goalRotationOverlay.orientationRad) - width / 2
-                            y: (goalRotationOverlay.height / 2) - radius * Math.sin(goalRotationOverlay.orientationRad) - height / 2
-                            rotation: 90 - goalRotationOverlay.degrees
-                            transformOrigin: Item.Center
-
-                            onPaint: {
-                                var ctx = getContext("2d")
-                                ctx.clearRect(0, 0, width, height)
-                                ctx.fillStyle = goalOrientationEnabled ? "#ffffff" : "#9aa8b1"
-                                var cx = width / 2
-                                var headY = 0
-                                var headW = width * 0.7
-                                var tailW = width * 0.35
-                                var tailY = height * 0.65
-                                ctx.beginPath()
-                                ctx.moveTo(cx, headY)
-                                ctx.lineTo(cx + headW / 2, tailY)
-                                ctx.lineTo(cx + tailW / 2, tailY)
-                                ctx.lineTo(cx + tailW / 2, height)
-                                ctx.lineTo(cx - tailW / 2, height)
-                                ctx.lineTo(cx - tailW / 2, tailY)
-                                ctx.lineTo(cx - headW / 2, tailY)
-                                ctx.closePath()
-                                ctx.fill()
-                            }
-                        }
-
-                        MultiPointTouchArea {
-                            anchors.fill: parent
-                            enabled: goalOrientationEnabled
-                            minimumTouchPoints: 1
-                            maximumTouchPoints: 1
-                            onTouchUpdated: {
-                                if (touchPoints.length > 0) {
-                                    var p = touchPoints[0]
-                                    goalRotationOverlay.updateOrientationFromPoint(p.x, p.y)
-                                }
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            acceptedButtons: Qt.LeftButton
-                            onPressed: function(mouse) { goalRotationOverlay.updateOrientationFromPoint(mouse.x, mouse.y) }
-                            onPositionChanged: function(mouse) {
-                                if (pressed) {
-                                    goalRotationOverlay.updateOrientationFromPoint(mouse.x, mouse.y)
-                                }
-                            }
-                        }
-                    }
+                    goalOrientationDeg = deg
+                    goalOrientationSet = true
                 }
             }
 
-            Rectangle {
+            OrientationWheel {
                 id: pathRotationPanel
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
                 anchors.leftMargin: 21
                 anchors.bottomMargin: 21
-                color: pathTerminalPoseSet ? "#2c5f7c" : "#3b4a55"
-                radius: 13
-                border.color: pathTerminalPoseSet ? "#6aa3c8" : "#5f707d"
-                border.width: 3
                 z: 50
-                visible: mapAvailable && isNavigationStep && pathPlacementEnabled && pathTerminalPoseSet && !testStarted
-                opacity: pathTerminalPoseSet ? 1.0 : 0.6
+                visiblePanel: mapAvailable && isNavigationStep && pathPlacementEnabled && pathTerminalPoseSet && !testStarted
+                enabled: pathTerminalPoseSet
+                wheelSize: wheelSizePx > 0 ? wheelSizePx : Math.min(240, Math.min(parent.width, parent.height) * 0.32)
+                title: qsTr("Orientación")
+                angleDeg: pathTerminalOrientationDeg
 
-                property int padding: 13
-                property real wheelSize: wheelSizePx > 0 ? wheelSizePx
-                                                       : Math.min(240, Math.min(parent.width, parent.height) * 0.32)
-
-                implicitWidth: pathPanelContent.implicitWidth + (padding * 2)
-                implicitHeight: pathPanelContent.implicitHeight + (padding * 2)
-
-                Column {
-                    id: pathPanelContent
-                    anchors.fill: parent
-                    anchors.margins: pathRotationPanel.padding
-                    spacing: 10
-
-                    Rectangle {
-                        width: pathRotationPanel.wheelSize
-                        height: 36
-                        color: pathTerminalPoseSet ? "#1a3a4a" : "#2e3a43"
-                        radius: 6
-                        opacity: 0.9
-
-                        Text {
-                            anchors.centerIn: parent
-                            color: "#ffffff"
-                            font.pixelSize: 16
-                            font.bold: true
-                            text: qsTr("Orientación: %1°").arg(Math.round(((pathRotationOverlay.degrees + 360) % 360)))
-                        }
+                onAngleChanged: function(deg) {
+                    if (!pathTerminalPoseSet) {
+                        return
                     }
-
-                    Item {
-                        id: pathRotationOverlay
-                        width: pathRotationPanel.wheelSize
-                        height: width
-
-                        readonly property real orientationRad: pathTerminalOrientationDeg * Math.PI / 180
-                        readonly property real degrees: pathTerminalOrientationDeg
-                        property real radius: Math.max(0, (width * 0.5) - 14)
-
-                        function updateOrientationFromPoint(px, py)
-                        {
-                            if (!pathTerminalPoseSet)
-                            {
-                                return
-                            }
-                            var dx = px - width / 2
-                            var dy = py - height / 2
-                            if (dx === 0 && dy === 0)
-                            {
-                                return
-                            }
-                            var angle = Math.atan2(-dy, dx)
-                            var deg = angle * 180 / Math.PI
-                            var current = pathTerminalOrientationDeg
-                            var delta = deg - current
-                            while (delta > 180) delta -= 360
-                            while (delta < -180) delta += 360
-                            var eased = current + (delta * 0.35)
-                            pathTerminalOrientationDeg = eased
-                            pathTerminalOrientationOverride = true
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: width / 2
-                            color: "transparent"
-                            border.color: pathTerminalPoseSet ? "#ffffff" : "#9aa8b1"
-                            border.width: 2
-                        }
-
-                        Canvas {
-                            id: pathDirectionMarker
-                            width: pathRotationPanel.wheelSize / 4
-                            height: width
-                            x: (pathRotationOverlay.width / 2) + radius * Math.cos(pathRotationOverlay.orientationRad) - width / 2
-                            y: (pathRotationOverlay.height / 2) - radius * Math.sin(pathRotationOverlay.orientationRad) - height / 2
-                            rotation: 90 - pathRotationOverlay.degrees
-                            transformOrigin: Item.Center
-
-                            onPaint: {
-                                var ctx = getContext("2d")
-                                ctx.clearRect(0, 0, width, height)
-                                ctx.fillStyle = pathTerminalPoseSet ? "#ffffff" : "#9aa8b1"
-                                var cx = width / 2
-                                var headY = 0
-                                var headW = width * 0.7
-                                var tailW = width * 0.35
-                                var tailY = height * 0.65
-                                ctx.beginPath()
-                                ctx.moveTo(cx, headY)
-                                ctx.lineTo(cx + headW / 2, tailY)
-                                ctx.lineTo(cx + tailW / 2, tailY)
-                                ctx.lineTo(cx + tailW / 2, height)
-                                ctx.lineTo(cx - tailW / 2, height)
-                                ctx.lineTo(cx - tailW / 2, tailY)
-                                ctx.lineTo(cx - headW / 2, tailY)
-                                ctx.closePath()
-                                ctx.fill()
-                            }
-                        }
-
-                        MultiPointTouchArea {
-                            anchors.fill: parent
-                            enabled: pathTerminalPoseSet
-                            minimumTouchPoints: 1
-                            maximumTouchPoints: 1
-                            onTouchUpdated: {
-                                if (touchPoints.length > 0) {
-                                    var p = touchPoints[0]
-                                    pathRotationOverlay.updateOrientationFromPoint(p.x, p.y)
-                                }
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            acceptedButtons: Qt.LeftButton
-                            onPressed: function(mouse) { pathRotationOverlay.updateOrientationFromPoint(mouse.x, mouse.y) }
-                            onPositionChanged: function(mouse) {
-                                if (pressed) {
-                                    pathRotationOverlay.updateOrientationFromPoint(mouse.x, mouse.y)
-                                }
-                            }
-                        }
-                    }
+                    pathTerminalOrientationDeg = deg
+                    pathTerminalOrientationOverride = true
                 }
             }
 
@@ -1456,23 +1101,6 @@ Rectangle {
                             goalPlacementEnabled = false
                         }
                     }
-                }
-
-                Button {
-                    id: placeholderModeButton
-                    width: root.iconButtonSizePx
-                    height: root.iconButtonSizePx
-                    enabled: false
-                    opacity: 0.35
-
-                    background: Rectangle {
-                        radius: 6
-                        color: "#3a7fa0"
-                        border.color: "#ffffff"
-                        border.width: 1
-                    }
-
-                    contentItem: Item {}
                 }
             }
 
