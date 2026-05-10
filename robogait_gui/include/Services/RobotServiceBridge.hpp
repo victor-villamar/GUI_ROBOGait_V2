@@ -35,6 +35,18 @@ public:
   };
   Q_ENUM(Status)
 
+  /**
+   * @brief Enum to represent navigation action final result
+   */
+  enum NavigationResult
+  {
+    NAV_UNKNOWN = 0,   /**< Unknown result */
+    NAV_SUCCEEDED = 1, /**< Goal reached */
+    NAV_CANCELED = 2,  /**< Goal canceled */
+    NAV_ABORTED = 3    /**< Goal aborted */
+  };
+  Q_ENUM(NavigationResult)
+
   // clang-format off
   Q_PROPERTY(int status
              READ getStatus
@@ -172,6 +184,7 @@ signals:
   void statusChanged();                                        // Emitted when the status changes
   void requestFinished(bool success);                          // Emitted when a command request finishes
   void pathComputed(bool success, const QVariantList& points); // Emitted when path action finishes
+  void navigationFinished(int resultCode);                     // Emitted when navigate action finishes
 
 private slots:
   void onPoll(); // Polling slot to update the status
@@ -190,6 +203,15 @@ private:
    * @return The corresponding Bridge Status
    */
   Status toBridgeStatus(ROBOGait::ros::service::RobotServiceClient::CommandStatus status);
+
+  /**
+   * @brief Convert RobotServiceClient navigation result to bridge navigation result
+   *
+   * @param result Navigation result from RobotServiceClient
+   *
+   * @return Equivalent bridge navigation result
+   */
+  static NavigationResult toBridgeNavigationResult(ROBOGait::ros::service::RobotServiceClient::NavigationResult result);
 
   int status_;                 /**< The current status of the command executor */
   QString active_command_key_; /**< The active command key */

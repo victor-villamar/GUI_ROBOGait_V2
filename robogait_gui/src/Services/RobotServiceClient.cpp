@@ -752,6 +752,8 @@ bool RobotServiceClient::cancelNavigateToPose()
 
 void RobotServiceClient::setPathResultCallback(const std::function<void(bool, const nav_msgs::msg::Path&)>& callback) { path_result_callback_ = callback; }
 
+void RobotServiceClient::setNavigationResultCallback(const std::function<void(NavigationResult)>& callback) { navigation_result_callback_ = callback; }
+
 void RobotServiceClient::resetRobotServiceClient()
 {
   clearRobotContext();
@@ -963,6 +965,14 @@ void RobotServiceClient::notifyRequestResult(bool success)
   if (request_callback_)
   {
     request_callback_(success);
+  }
+}
+
+void RobotServiceClient::notifyNavigationResult(NavigationResult result)
+{
+  if (navigation_result_callback_)
+  {
+    navigation_result_callback_(result);
   }
 }
 
@@ -1627,48 +1637,63 @@ void RobotServiceClient::resultNavigateToPoseCallback(const rclcpp_action::Clien
     return;
   }
 
+  NavigationResult nav_result = NavigationResult::UNKNOWN;
   switch (result.code)
   {
     case rclcpp_action::ResultCode::SUCCEEDED:
       qInfo() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal alcanzado";
+      nav_result = NavigationResult::SUCCEEDED;
       break;
 
     case rclcpp_action::ResultCode::CANCELED:
       qInfo() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal cancelado";
+      nav_result = NavigationResult::CANCELED;
       break;
 
     case rclcpp_action::ResultCode::ABORTED:
       qWarning() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal abortado";
+      nav_result = NavigationResult::ABORTED;
       break;
 
     default:
       qWarning() << "[RobotServiceClient::resultNavigateToPoseCallback] Estado desconocido";
+      nav_result = NavigationResult::UNKNOWN;
       break;
   }
 
   nav_goal_active_ = false;
   nav_goal_handle_.reset();
+  notifyNavigationResult(nav_result);
 }
 
 void RobotServiceClient::resultNavigateThroughPosesCallback(
     const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateThroughPoses>::WrappedResult& result)
 {
+  NavigationResult nav_result = NavigationResult::UNKNOWN;
   switch (result.code)
   {
     case rclcpp_action::ResultCode::SUCCEEDED:
       qInfo() << "[RobotServiceClient::resultNavigateThroughPosesCallback] Goal alcanzado";
+      nav_result = NavigationResult::SUCCEEDED;
       break;
 
     case rclcpp_action::ResultCode::CANCELED:
       qInfo() << "[RobotServiceClient::resultNavigateThroughPosesCallback] Goal cancelado";
+      nav_result = NavigationResult::CANCELED;
       break;
 
     case rclcpp_action::ResultCode::ABORTED:
       qWarning() << "[RobotServiceClient::resultNavigateThroughPosesCallback] Goal abortado";
+      nav_result = NavigationResult::ABORTED;
       break;
 
     default:
       qWarning() << "[RobotServiceClient::resultNavigateThroughPosesCallback] Estado desconocido";
+      nav_result = NavigationResult::UNKNOWN;
       break;
   }
+
+  nav_goal_active_ = false;
+  nav_goal_handle_.reset();
+  notifyNavigationResult(nav_result);
 }

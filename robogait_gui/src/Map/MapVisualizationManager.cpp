@@ -648,6 +648,16 @@ void MapVisualizationManager::setPathUpdatesEnabled(bool enabled)
   else
   {
     path_source_->stop();
+
+    // Ensure the live-path layer repaints immediately after reset.
+    if (live_path_layer_)
+    {
+      live_path_layer_->update();
+    }
+    if (live_path_layer_item_)
+    {
+      live_path_layer_item_->update();
+    }
   }
 }
 

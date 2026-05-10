@@ -34,20 +34,12 @@ public:
    * @param patient_last_name The last name of the patient
    * @param map_name The name of the map
    * @param user_name The name of the user
+   * @param comment Optional annotations for the experiment
    *
    * @return The ID of the inserted experiment
    */
-  DbResult<int> insertExperiment(const QString& patient_name, const QString& patient_last_name, const QString& map_name, const QString& user_name);
-
-  /**
-   * @brief Insert a new result into the database
-   *
-   * @param experiment_id The ID of the experiment
-   * @param comment An optional comment for the result
-   *
-   * @return The ID of the inserted result
-   */
-  DbResult<int> insertResult(int experiment_id, const std::optional<QString>& comment);
+  DbResult<int> insertExperiment(const QString& patient_name, const QString& patient_last_name, const QString& map_name, const QString& user_name,
+                                 const std::optional<QString>& comment);
 
   /**
    * @brief Delete an experiment by ID for a given user
@@ -58,7 +50,6 @@ public:
    * @return Success or failure result
    */
   DbResultVoid deleteExperimentByIdForUserName(int experiment_id, const QString& user_name);
-
 };
 } // namespace db
 } // namespace ROBOGait

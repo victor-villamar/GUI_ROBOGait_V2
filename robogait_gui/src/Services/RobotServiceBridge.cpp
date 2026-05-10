@@ -51,6 +51,16 @@ RobotServiceBridge::RobotServiceBridge(QObject* parent) : QObject(parent), statu
                               Qt::QueuedConnection);
   });
   // clang-format on
+
+  // clang-format off
+  client.setNavigationResultCallback([this](ROBOGait::ros::service::RobotServiceClient::NavigationResult result) {
+    const NavigationResult mapped_result = toBridgeNavigationResult(result);
+    const int result_code = static_cast<int>(mapped_result);
+    QMetaObject::invokeMethod(this,
+                              [this, result_code]() { emit navigationFinished(result_code); },
+                              Qt::QueuedConnection);
+  });
+  // clang-format on
 }
 
 int RobotServiceBridge::getStatus() const { return status_; }
@@ -148,5 +158,21 @@ RobotServiceBridge::Status RobotServiceBridge::toBridgeStatus(ROBOGait::ros::ser
     case ROBOGait::ros::service::RobotServiceClient::CommandStatus::ERROR:
     default:
       return RobotServiceBridge::Status::ERROR;
+  }
+}
+
+RobotServiceBridge::NavigationResult RobotServiceBridge::toBridgeNavigationResult(ROBOGait::ros::service::RobotServiceClient::NavigationResult result)
+{
+  switch (result)
+  {
+    case ROBOGait::ros::service::RobotServiceClient::NavigationResult::SUCCEEDED:
+      return RobotServiceBridge::NavigationResult::NAV_SUCCEEDED;
+    case ROBOGait::ros::service::RobotServiceClient::NavigationResult::CANCELED:
+      return RobotServiceBridge::NavigationResult::NAV_CANCELED;
+    case ROBOGait::ros::service::RobotServiceClient::NavigationResult::ABORTED:
+      return RobotServiceBridge::NavigationResult::NAV_ABORTED;
+    case ROBOGait::ros::service::RobotServiceClient::NavigationResult::UNKNOWN:
+    default:
+      return RobotServiceBridge::NavigationResult::NAV_UNKNOWN;
   }
 }

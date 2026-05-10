@@ -57,6 +57,17 @@ public:
   };
 
   /**
+   * @brief Enum to represent navigation action final result
+   */
+  enum class NavigationResult
+  {
+    UNKNOWN = 0,   /**< Unknown result */
+    SUCCEEDED = 1, /**< Goal reached */
+    CANCELED = 2,  /**< Goal canceled */
+    ABORTED = 3    /**< Goal aborted */
+  };
+
+  /**
    * @brief Struct to hold command information
    *
    * @param name The name of the ROS2 node
@@ -268,6 +279,11 @@ public:
   void setPathResultCallback(const std::function<void(bool, const nav_msgs::msg::Path&)>& callback);
 
   /**
+   * @brief Set callback invoked when a navigation action finishes
+   */
+  void setNavigationResultCallback(const std::function<void(NavigationResult)>& callback);
+
+  /**
    * @brief Reset the client
    */
   void resetRobotServiceClient();
@@ -392,6 +408,11 @@ private:
    * @param success Whether the command service request was successful
    */
   void notifyRequestResult(bool success);
+
+  /**
+   * @brief Notify the result of a navigation action through the callback
+   */
+  void notifyNavigationResult(NavigationResult result);
 
   /**
    * @brief Call the get map data service to retrieve YAML and PGM info for a map
@@ -553,6 +574,7 @@ private:
 
   std::function<void(bool)> request_callback_;                                 /**< Callback to notify the result of command service requests */
   std::function<void(bool, const nav_msgs::msg::Path&)> path_result_callback_; /**< Callback for compute path results */
+  std::function<void(NavigationResult)> navigation_result_callback_;           /**< Callback for navigation action results */
 
   std::optional<ROBOGait::context::RobotContext> context_; /**< The robot context */
 

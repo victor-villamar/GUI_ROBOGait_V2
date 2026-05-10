@@ -40,9 +40,6 @@ ApplicationWindow {
             if (status === Loader.Error) {
                 console.log("[main.qml] Qt VirtualKeyboard not available - keyboard support disabled")
                 active = false
-            } 
-            else if (status === Loader.Ready) {
-                console.log("[main.qml] Qt VirtualKeyboard loaded successfully")
             }
         }
     }
