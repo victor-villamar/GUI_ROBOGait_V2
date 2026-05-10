@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 6.0
+import AppTheme 1.0
 
 import "qrc:/Dialogs"
 
@@ -58,8 +59,8 @@ Item {
         height: root.implicitHeight
         width: root.badgeWidth
         radius: Math.round(height * 0.32)
-        color: "#a9cfe8"
-        border.color: "#ffffff"
+        color: AppTheme.badges.badgeBackground
+        border.color: AppTheme.badges.light
         border.width: 2
 
         anchors.top: parent.top
@@ -93,7 +94,7 @@ Item {
 
             Text {
                 text: root.patientLabel
-                color: "#045671"
+                color: AppTheme.badges.primary
                 font.pixelSize: 18
                 font.bold: true
                 elide: Text.ElideRight
@@ -138,8 +139,8 @@ Item {
         height: root.dropDownOpen ? root.segmentHeight : 0
         opacity: root.dropDownOpen ? 1 : 0
         radius: 14
-        color: "#ffffff"
-        border.color: "#045671"
+        color: AppTheme.badges.light
+        border.color: AppTheme.badges.primary
         border.width: 2
         clip: true
 
@@ -166,13 +167,13 @@ Item {
                 id: diagnosticsSegment
                 width: parent.width
                 height: root.segmentHeight
-                color: diagnosticsArea.pressed ? "#00C8FF" : "transparent"
+                color: diagnosticsArea.pressed ? AppTheme.badges.pressedBackground : "transparent"
 
                 Text {
                     id: diagnosticsText
                     anchors.centerIn: parent
                     text: qsTr("Diagnosticos")
-                    color: "#045671"
+                    color: AppTheme.badges.primary
                     font.pixelSize: 12
                     font.bold: true
                 }

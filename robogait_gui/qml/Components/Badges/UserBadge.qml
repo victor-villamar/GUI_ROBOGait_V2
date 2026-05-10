@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 6.0
 import QtQuick.Window 2.15
+import AppTheme 1.0
 
 import "qrc:/Dialogs"
 
@@ -75,8 +76,8 @@ Item {
         height: root.implicitHeight
         width: root.badgeWidth
         radius: Math.round(height * 0.32)
-        color: "#a9cfe8"
-        border.color: "#ffffff"
+        color: AppTheme.badges.badgeBackground
+        border.color: AppTheme.badges.light
         border.width: 2
 
         anchors.top: parent.top
@@ -110,7 +111,7 @@ Item {
 
             Text {
                 text: root.userLabel
-                color: "#045671"
+                color: AppTheme.badges.primary
                 font.pixelSize: 18
                 font.bold: true
                 elide: Text.ElideRight
@@ -157,8 +158,8 @@ Item {
               : 0
         opacity: root.dropDownOpen ? 1 : 0
         radius: 14
-        color: "#ffffff"
-        border.color: "#045671"
+        color: AppTheme.badges.light
+        border.color: AppTheme.badges.primary
         border.width: 2
         clip: true
 
@@ -186,14 +187,14 @@ Item {
                 id: disconnectSegment
                 width: parent.width
                 height: root.segmentHeight
-                color: disconnectArea.pressed ? "#00C8FF" : "transparent"
+                color: disconnectArea.pressed ? AppTheme.badges.pressedBackground : "transparent"
                 visible: root.robotConnected
 
                 Text {
                     id: disconnectText
                     anchors.centerIn: parent
                     text: qsTr("Desconectar")
-                    color: root.robotConnected ? "#045671" : "#8a8a8a"
+                    color: root.robotConnected ? AppTheme.badges.primary : AppTheme.badges.textDisabled
                     font.pixelSize: 12
                     font.bold: true
                 }
@@ -216,7 +217,7 @@ Item {
                 id: dividerAfterDisconnect
                 width: parent.width
                 height: root.dividerSize
-                color: "#045671"
+                color: AppTheme.badges.primary
                 opacity: 0.35
                 visible: root.robotConnected
             }
@@ -225,13 +226,13 @@ Item {
                 id: changeUserSegment
                 width: parent.width
                 height: root.segmentHeight
-                color: changeUserArea.pressed ? "#00C8FF" : "transparent"
+                color: changeUserArea.pressed ? AppTheme.badges.pressedBackground : "transparent"
 
                 Text {
                     id: changeUserText
                     anchors.centerIn: parent
                     text: qsTr("Cambiar usuario")
-                    color: "#045671"
+                    color: AppTheme.badges.primary
                     font.pixelSize: 12
                     font.bold: true
                 }
@@ -250,7 +251,7 @@ Item {
             Rectangle {
                 width: parent.width
                 height: root.dividerSize
-                color: "#045671"
+                color: AppTheme.badges.primary
                 opacity: 0.35
             }
 
@@ -258,13 +259,13 @@ Item {
                 id: logoutSegment
                 width: parent.width
                 height: root.segmentHeight
-                color: logoutArea.pressed ? "#00C8FF" : "transparent"
+                color: logoutArea.pressed ? AppTheme.badges.pressedBackground : "transparent"
 
                 Text {
                     id: logoutText
                     anchors.centerIn: parent
                     text: qsTr("Cerrar sesión")
-                    color: "#045671"
+                    color: AppTheme.badges.primary
                     font.pixelSize: 12
                     font.bold: true
                 }
@@ -287,7 +288,7 @@ Item {
             Rectangle {
                 width: parent.width
                 height: root.dividerSize
-                color: "#045671"
+                color: AppTheme.badges.primary
                 opacity: 0.35
             }
 
@@ -295,13 +296,13 @@ Item {
                 id: appExitSegment
                 width: parent.width
                 height: root.segmentHeight
-                color: appExitArea.pressed ? "#00C8FF" : "transparent"
+                color: appExitArea.pressed ? AppTheme.badges.pressedBackground : "transparent"
 
                 Text {
                     id: appExitText
                     anchors.centerIn: parent
                     text: qsTr("Cerrar aplicación")
-                    color: "#045671"
+                    color: AppTheme.badges.primary
                     font.pixelSize: 12
                     font.bold: true
                 }

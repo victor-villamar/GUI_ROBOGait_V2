@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
 import RobotDiscovery 1.0
+import AppTheme 1.0
 
 import "qrc:/Dialogs"
 
@@ -20,13 +21,13 @@ Item {
 
     Rectangle {
         id: background
-        color: "#518bb7"
+        color: AppTheme.robotConnection.background
         anchors.fill: parent
 
         // Title
         Text {
             id: titleText
-            color: "#ffffff"
+            color: AppTheme.robotConnection.white
             text: qsTr("CONEXIÓN AL ROBOT")
             font.pixelSize: 32
             font.styleName: "Medium"
@@ -55,7 +56,7 @@ Item {
                 // Title 1
                 Text {
                     text: qsTr("1º ENCENDER EL ORDENADOR DEL ROBOT MÓVIL")
-                    color: "#00C8FF"
+                    color: AppTheme.robotConnection.accent
                     font.pixelSize: 20
                     font.bold: true
                 }
@@ -63,7 +64,7 @@ Item {
                 Text {
                     id: step1Text
                     width: scrollView.width
-                    color: "#ffffff"
+                    color: AppTheme.robotConnection.white
                     font.pixelSize: 17
                     wrapMode: Text.WordWrap
                     text: qsTr("Para encenderlo, sigue estos pasos:\n\n    1.  Conecta el ordenador (NUC) a la batería portátil (power bank).\n    2.  Enciende la batería portátil y ajusta el voltaje hasta que marque 20V.\n    3.  Comprueba que los dos cables de las antenas WiFi estén bien conectadas al ordenador.\n    4.  Enciende el ordenador (NUC).\n    5.  Espera unos segundos hasta que el indicador LED de la conexión WiFi se mantenga en verde fijo (sin parpadear).")
@@ -72,7 +73,7 @@ Item {
                 // Title 2
                 Text {
                     text: qsTr("2º CONEXIÓN A LA RED WIFI")
-                    color: "#00C8FF"
+                    color: AppTheme.robotConnection.accent
                     font.pixelSize: 20
                     font.bold: true
                 }
@@ -80,7 +81,7 @@ Item {
                 Text {
                     id: step2Text
                     width: scrollView.width
-                    color: "#ffffff"
+                    color: AppTheme.robotConnection.white
                     font.pixelSize: 17
                     wrapMode: Text.WordWrap
                     text: qsTr("Conéctate a la red WiFi del robot móvil desde la tablet.\nEnciende la tablet, abre la configuración de WiFi y selecciona la red con el nombre robogait2024.")
@@ -89,7 +90,7 @@ Item {
                 // Title 3
                 Text {
                     text: qsTr("3º ENCENDER LA BASE DEL ROBOT")
-                    color: "#00C8FF"
+                    color: AppTheme.robotConnection.accent
                     font.pixelSize: 20
                     font.bold: true
                 }
@@ -97,7 +98,7 @@ Item {
                 Text {
                     id: step3Text
                     width: scrollView.width
-                    color: "#ffffff"
+                    color: AppTheme.robotConnection.white
                     font.pixelSize: 17
                     wrapMode: Text.WordWrap
                     text: qsTr("Presiona el botón que se encuentra en la base del robot.\nSabrás que se ha encendido correctamente cuando:\n\n     1.  Se encienda un luz LED azul.\n     2.  Escuches un pitido agudo.")
@@ -124,9 +125,9 @@ Item {
                 visible: !root.showDiscoveryPanel
 
                 background: Rectangle {
-                    color: buttonSearchRobot.down ? "#00C8FF" : "#ffffff"
+                    color: buttonSearchRobot.down ? AppTheme.robotConnection.accent : AppTheme.robotConnection.white
                     radius: 8
-                    border.color: "#045671"
+                    border.color: AppTheme.robotConnection.primary
                     border.width: 2
 
                     // Animation only for color change
@@ -138,7 +139,7 @@ Item {
                 contentItem: Label {
                     id: buttonLabel
                     text: qsTr("Buscar Robot")
-                    color: "#045671"
+                    color: AppTheme.robotConnection.primary
                     font.pixelSize: 17
                     font.bold: true
                     horizontalAlignment: Text.AlignHCenter
@@ -162,7 +163,7 @@ Item {
                     spacing: 8
                     Text {
                             text: qsTr("ROBOTS DETECTADOS")
-                            color: "#00C8FF"
+                            color: AppTheme.robotConnection.accent
                             font.pixelSize: 20
                             font.bold: true
                             width: parent.width
@@ -177,15 +178,15 @@ Item {
                         height: 180
                         running: true
                         topPadding: 20
-                        palette.highlight: "#ffffff"
-                        palette.text: "#ffffff"
-                        palette.buttonText: "#ffffff"
+                        palette.text: AppTheme.robotConnection.white
+                        palette.buttonText: AppTheme.robotConnection.white
+                        palette.highlight: AppTheme.robotConnection.white
                         visible: userSession.rosManager.robotDiscovery.state === RobotDiscovery.SCANNING
                     }
 
                     Text {
                         text: qsTr("Buscando robots…")
-                        color: "#ffffff"
+                        color: AppTheme.robotConnection.white
                         font.pixelSize: 14
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
@@ -248,8 +249,8 @@ Item {
 
                                         property bool selected: root.pendingRobotIndex === index
   
-                                        color: selected ? "#ffffff" : "#a9cfe8"
-                                        border.color: selected ? "#00C8FF" : "#ffffff"
+                                        color: selected ? AppTheme.robotConnection.robotCardSelected : AppTheme.robotConnection.robotCardNormal
+                                        border.color: selected ? AppTheme.robotConnection.accent : AppTheme.robotConnection.white
                                         border.width: 2
                                         implicitWidth: Math.max(220, contentRow.implicitWidth + 30)
                                         width: Math.min(parent.width, robotsGrid.maxItemWidth)
@@ -271,7 +272,7 @@ Item {
                                                 radius: 10
                                                 clip: true
                                                 color: robotLabel.color
-                                                border.color: "#ffffff"
+                                                border.color: AppTheme.robotConnection.white
                                                 border.width: 1
 
                                                 Image {
@@ -288,7 +289,7 @@ Item {
                                             Text {
                                                 id: robotLabel
                                                 text: modelData
-                                                color: "#4f86b4"
+                                                color: AppTheme.robotConnection.robotLabel
                                                 font.pixelSize: 16
                                                 font.bold: true
                                                 elide: Text.ElideRight

@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import AppTheme 1.0
 import "qrc:/Dialogs"
 
 SettingsBadgeForm {

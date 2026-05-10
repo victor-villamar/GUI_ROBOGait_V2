@@ -88,9 +88,19 @@ bool RobotServiceBridge::computePathToPose(double x, double y, double theta)
   return ROBOGait::ros::service::RobotServiceClient::getInstance().computePathToPose(x, y, theta);
 }
 
+bool RobotServiceBridge::computePathThroughPoses(const QVariantList& points)
+{
+  return ROBOGait::ros::service::RobotServiceClient::getInstance().computePathThroughPoses(points);
+}
+
 bool RobotServiceBridge::navigateToPose(double x, double y, double theta)
 {
   return ROBOGait::ros::service::RobotServiceClient::getInstance().navigateToPose(x, y, theta);
+}
+
+bool RobotServiceBridge::navigateThroughPoses(const QVariantList& points)
+{
+  return ROBOGait::ros::service::RobotServiceClient::getInstance().navigateThroughPoses(points);
 }
 
 bool RobotServiceBridge::cancelNavigateToPose() { return ROBOGait::ros::service::RobotServiceClient::getInstance().cancelNavigateToPose(); }

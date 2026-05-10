@@ -63,9 +63,12 @@ QMatrix4x4 RenderCamera::getMatrix() const
 {
   QMutexLocker lock(&mutex_);
   QMatrix4x4 matrix;
-  matrix.translate(viewport_.width() * VIEWPORT_FACTOR, viewport_.height() * VIEWPORT_FACTOR);
-  matrix.scale(zoom_, -zoom_);
-  matrix.translate(-center_.x(), -center_.y());
+  const float viewport_center_x = static_cast<float>(viewport_.width() * VIEWPORT_FACTOR);
+  const float viewport_center_y = static_cast<float>(viewport_.height() * VIEWPORT_FACTOR);
+
+  matrix.translate(viewport_center_x, viewport_center_y);
+  matrix.scale(static_cast<float>(zoom_), static_cast<float>(-zoom_));
+  matrix.translate(static_cast<float>(-center_.x()), static_cast<float>(-center_.y()));
   return matrix;
 }
 

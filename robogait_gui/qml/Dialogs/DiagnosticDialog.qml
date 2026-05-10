@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 6.0
+import AppTheme 1.0
 
 Dialog {
     id: root
@@ -12,7 +13,7 @@ Dialog {
 
     Overlay.modal: Rectangle {
         anchors.fill: parent
-        color: "#A0505050"
+        color: AppTheme.dialogsCommon.overlayDim
     }
 
     width: parent ? Math.min(900, parent.width * 0.9) : 900
@@ -46,8 +47,8 @@ Dialog {
     }
 
     background: Rectangle {
-        color: "#a9cfe8"
-        border.color: "#ffffff"
+        color: AppTheme.dialogsCommon.panelBackground
+        border.color: AppTheme.dialogsCommon.light
         border.width: 2
         radius: 12
     }
@@ -74,9 +75,9 @@ Dialog {
                 padding: 0
 
                 background: Rectangle {
-                    color: closeButton.down ? "#518bb7" : "#ffffff"
+                    color: closeButton.down ? AppTheme.dialogsCommon.closeButtonPressed : AppTheme.dialogsCommon.light
                     radius: 8
-                    border.color: "#045671"
+                    border.color: AppTheme.dialogsCommon.primary
                     border.width: 2
                 }
 
@@ -109,7 +110,7 @@ Dialog {
                 Layout.preferredWidth: Math.max(220, parent.width * 0.3)
                 Layout.fillHeight: true
                 radius: 12
-                color: "#045671"
+                color: AppTheme.dialogsCommon.primary
 
                 ColumnLayout {
                     anchors.fill: parent
@@ -118,7 +119,7 @@ Dialog {
 
                     Text {
                         text: qsTr("Doctores")
-                        color: "#ffffff"
+                        color: AppTheme.dialogsCommon.light
                         font.pixelSize: 16
                         font.bold: true
                     }
@@ -136,14 +137,14 @@ Dialog {
                             width: doctorsList.width
                             height: root.listItemHeightPx
                             radius: 10
-                            color: ListView.isCurrentItem ? "#518bb7" : "#a9cfe8"
-                            border.color: "#ffffff"
+                            color: ListView.isCurrentItem ? AppTheme.dialogsCommon.closeButtonPressed : AppTheme.dialogsCommon.panelBackground
+                            border.color: AppTheme.dialogsCommon.light
                             border.width: 2
 
                             Text {
                                 anchors.centerIn: parent
                                 text: (modelData.display || ((modelData.doctor_last_name || "") + ", " + (modelData.doctor_name || "")).trim())
-                                color: ListView.isCurrentItem ? "#ffffff" : "#045671"
+                                color: ListView.isCurrentItem ? AppTheme.dialogsCommon.light : AppTheme.dialogsCommon.primary
                                 font.pixelSize: 14
                                 font.bold: true
                                 elide: Text.ElideRight
@@ -167,8 +168,8 @@ Dialog {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 radius: 12
-                color: "#e9e9e9"
-                border.color: "#235c87"
+                color: AppTheme.dialogsCommon.diagnosticDetailsBackground
+                border.color: AppTheme.dialogsCommon.panelAccentBorder
                 border.width: 2
 
                 Item {
@@ -184,7 +185,7 @@ Dialog {
                         Text {
                             text: qsTr("Fecha: %1").arg(root.selectedDoctor() ? (root.selectedDoctor().create_day || "") : "")
                             font.pixelSize: 16
-                            color: "#045671"
+                            color: AppTheme.dialogsCommon.primary
                             wrapMode: Text.NoWrap
                             elide: Text.ElideRight
                         }
@@ -192,7 +193,7 @@ Dialog {
                         Text {
                             text: qsTr("Descripcion: %1").arg(root.selectedDoctor() ? (root.selectedDoctor().description || "") : "")
                             font.pixelSize: 16
-                            color: "#045671"
+                            color: AppTheme.dialogsCommon.primary
                             wrapMode: Text.WordWrap
                         }
                     }
@@ -201,7 +202,7 @@ Dialog {
                         anchors.centerIn: parent
                         visible: root.selectedDoctor() === null
                         text: qsTr("Seleccione doctor para comprobar el diagnostico del paciente")
-                        color: "#045671"
+                        color: AppTheme.dialogsCommon.primary
                         font.pixelSize: 16
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.WordWrap

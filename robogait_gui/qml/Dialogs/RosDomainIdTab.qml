@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 6.0
 import QtQuick.Window 2.15
+import AppTheme 1.0
 
 Item {
     id: root
@@ -46,13 +47,13 @@ Item {
             text: qsTr("Configuracion del Ros Domain Id")
             font.pixelSize: 18
             font.bold: true
-            color: root.enabled ? "#045671" : "#999999"
+            color: root.enabled ? AppTheme.settings.primaryDark : AppTheme.settings.sectionTitleDisabled
             width: parent.width
         }
 
         Rectangle {
             height: 2
-            color: "#ffffff"
+            color: AppTheme.settings.white
             width: parent.width
         }
 
@@ -62,7 +63,7 @@ Item {
             label: Text {
                 text: domainGroup.title
                 font: domainGroup.font
-                color: "#000000"
+                color: AppTheme.settings.black
             }
 
             width: parent.width
@@ -74,7 +75,7 @@ Item {
                 Text {
                     text: qsTr("Selecciona el dominio de ROS")
                     font.pixelSize: 12
-                    color: "#666666"
+                    color: AppTheme.settings.groupDescription
                     width: parent.width
                     wrapMode: Text.WordWrap
                 }
@@ -88,10 +89,10 @@ Item {
                     enabled: root.enabled
                     width: 160
                     height: root.spinboxHeightPx
-                    palette.base: "#ffffff"
-                    palette.text: "#045671"
-                    palette.button: "#a9cfe8"
-                    palette.buttonText: "#045671"
+                    palette.base: AppTheme.settings.white
+                    palette.text: AppTheme.settings.primaryDark
+                    palette.button: AppTheme.settings.lightBlue
+                    palette.buttonText: AppTheme.settings.primaryDark
 
                     onValueChanged: {
                         if (!userSession || !userSession.isAuthenticated) {
@@ -108,7 +109,7 @@ Item {
                         font.pixelSize: root.spinboxNumberFontPx
                         font.family: domainSpinBox.font.family
                         font.bold: domainSpinBox.font.bold
-                        color: "#045671"
+                        color: AppTheme.settings.primaryDark
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         readOnly: !domainSpinBox.editable
@@ -120,8 +121,8 @@ Item {
                     up.indicator: Rectangle {
                         implicitWidth: root.spinboxButtonPx
                         implicitHeight: root.spinboxButtonPx
-                        color: "#a9cfe8"
-                        border.color: "#045671"
+                        color: AppTheme.settings.lightBlue
+                        border.color: AppTheme.settings.primaryDark
                         border.width: 1
                         radius: Math.round(root.spinboxButtonPx * 0.2)
                         anchors.right: parent.right
@@ -131,7 +132,7 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: "▲"
-                            color: "#045671"
+                            color: AppTheme.settings.primaryDark
                             font.pixelSize: Math.round(root.spinboxButtonPx * 0.6)
                         }
                     }
@@ -139,8 +140,8 @@ Item {
                     down.indicator: Rectangle {
                         implicitWidth: root.spinboxButtonPx
                         implicitHeight: root.spinboxButtonPx
-                        color: "#a9cfe8"
-                        border.color: "#045671"
+                        color: AppTheme.settings.lightBlue
+                        border.color: AppTheme.settings.primaryDark
                         border.width: 1
                         radius: Math.round(root.spinboxButtonPx * 0.2)
                         anchors.right: parent.right
@@ -150,7 +151,7 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: "▼"
-                            color: "#045671"
+                            color: AppTheme.settings.primaryDark
                             font.pixelSize: Math.round(root.spinboxButtonPx * 0.6)
                         }
                     }
@@ -159,8 +160,8 @@ Item {
                         implicitWidth: 160
                         implicitHeight: root.spinboxHeightPx
                         radius: 6
-                        color: "#ffffff"
-                        border.color: "#045671"
+                        color: AppTheme.settings.white
+                        border.color: AppTheme.settings.primaryDark
                         border.width: 1
                     }
                 }
@@ -168,7 +169,7 @@ Item {
                 Text {
                     text: qsTr("El Domain Id define el dominio DDS para el descubrimiento")
                     font.pixelSize: 11
-                    color: "#2E7D32"
+                    color: AppTheme.settings.statusOk
                     width: parent.width
                     wrapMode: Text.WordWrap
                     font.bold: true

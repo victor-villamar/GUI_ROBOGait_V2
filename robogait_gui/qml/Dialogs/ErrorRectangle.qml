@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import AppTheme 1.0
 
 Popup {
     id: root
@@ -13,7 +14,7 @@ Popup {
 
     Overlay.modal: Rectangle {
         anchors.fill: parent
-        color: "#A0505050"
+        color: AppTheme.dialogsCommon.overlayDim
     }
 
     // Permite controlar el comportamiento del cierre
@@ -47,15 +48,15 @@ Popup {
     Rectangle {
         width: parent.width
         height: parent.height
-        color: "#f8d7da"
-        border.color: "#f5c6cb"
+        color: AppTheme.dialogsCommon.errorBackground
+        border.color: AppTheme.dialogsCommon.errorBorder
         radius: 10
 
         Text {
             id: textError
             anchors.centerIn: parent
             text: "Error: Has puesto el robot en una posicion donde esta prohibido."
-            color: "#721c24"
+            color: AppTheme.dialogsCommon.errorText
             font.pixelSize: 16
         }
 

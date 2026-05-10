@@ -123,11 +123,11 @@ void TFSubscriber::updatePoseFromTF()
 
     data::RobotPoseData::RobotPoseMetadata metadata;
     // Extract position
-    metadata.x = transform.transform.translation.x;
-    metadata.y = transform.transform.translation.y;
+    metadata.x_ = transform.transform.translation.x;
+    metadata.y_ = transform.transform.translation.y;
 
     // Extract orientation (convert quaternion to yaw)
-    metadata.theta = ROBOGait::map::utils::getYaw(transform.transform.rotation);
+    metadata.theta_ = ROBOGait::map::utils::getYaw(transform.transform.rotation);
 
     robot_pose_data_->setPose(metadata);
 

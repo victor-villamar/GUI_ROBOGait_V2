@@ -2,12 +2,19 @@
 #include <QSGFlatColorMaterial>
 #include <QSGTransformNode>
 
+#include "Themes/AppTheme.hpp"
 #include "Map/Items/PathLayerItem.hpp"
 
 using namespace ROBOGait::map::item;
 
 PathLayerItem::PathLayerItem(QQuickItem* parent) : QQuickItem(parent), path_color_(DEFAULT_PATH_COLOR)
 {
+  const auto& theme = ROBOGait::settings::AppTheme::getInstance();
+  if (auto* map_theme = qobject_cast<ROBOGait::settings::ThemeMap*>(theme.getMap()))
+  {
+    path_color_ = map_theme->getPathColorPrimary();
+  }
+
   setFlag(ItemHasContents, true);
   setAcceptedMouseButtons(Qt::NoButton);
   setAcceptHoverEvents(false);
@@ -128,7 +135,7 @@ QSGNode* PathLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* 
   auto* vertices = geometry->vertexDataAsPoint2D();
   for (int i = 0; i < static_cast<int>(points.size()); ++i)
   {
-    vertices[i].set(static_cast<float>(points[i].x), static_cast<float>(points[i].y));
+    vertices[i].set(static_cast<float>(points[i].x_), static_cast<float>(points[i].y_));
   }
 
   path_node->markDirty(QSGNode::DirtyGeometry);

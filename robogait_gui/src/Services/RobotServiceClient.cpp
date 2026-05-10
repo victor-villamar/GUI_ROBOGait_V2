@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <optional>
 #include <vector>
 
 #include <action_msgs/srv/cancel_goal.hpp>
@@ -99,7 +100,9 @@ void RobotServiceClient::clearRobotContext()
   cli_cmd_.reset();
   cli_get_map_data_.reset();
   cli_global_localization_.reset();
+  ac_compute_path_through_poses_.reset();
   ac_compute_path_to_pose_.reset();
+  ac_navigate_through_poses_.reset();
   ac_navigate_to_pose_.reset();
   nav_goal_active_ = false;
   nav_goal_handle_.reset();
@@ -521,6 +524,65 @@ bool RobotServiceClient::computePathToPose(double x, double y, double theta)
   return true;
 }
 
+bool RobotServiceClient::computePathThroughPoses(const QVariantList& points)
+{
+  if (!initialized_ || !parent_node_)
+  {
+    qCritical() << "[RobotServiceClient::computePathThroughPoses] RobotServiceClient is not initialized";
+    return false;
+  }
+
+  if (!ac_compute_path_through_poses_)
+  {
+    qCritical() << "[RobotServiceClient::computePathThroughPoses] Action client not available (robot not selected?)";
+    return false;
+  }
+
+  if (points.size() < 2)
+  {
+    qCritical() << "[RobotServiceClient::computePathThroughPoses] At least two points are required";
+    return false;
+  }
+
+  if (!ac_compute_path_through_poses_->wait_for_action_server(SERVICE_CALL_TIMEOUT))
+  {
+    qCritical() << "[RobotServiceClient::computePathThroughPoses] Action server not available after waiting";
+    return false;
+  }
+
+  const std::vector<ROBOGait::map::utils::WaypointInput> waypoints = ROBOGait::map::utils::parseWaypointInputs(points);
+
+  if (waypoints.size() < 2)
+  {
+    qCritical() << "[RobotServiceClient::computePathThroughPoses] Not enough valid points to build goal";
+    return false;
+  }
+
+  const std::string frame = context_ ? context_->resolveFrame(std::string(TF_MAP_FRAME)) : std::string(TF_MAP_FRAME);
+  const rclcpp::Time stamp = parent_node_->now();
+
+  nav2_msgs::action::ComputePathThroughPoses::Goal goal_msg;
+  goal_msg.goals.reserve(waypoints.size());
+
+  for (size_t i = 0; i < waypoints.size(); ++i)
+  {
+    geometry_msgs::msg::PoseStamped pose;
+    pose.header.frame_id = frame;
+    pose.header.stamp = stamp;
+    pose.pose.position.x = waypoints[i].x;
+    pose.pose.position.y = waypoints[i].y;
+    pose.pose.position.z = 0.0;
+    pose.pose.orientation = ROBOGait::map::utils::buildWaypointOrientation(waypoints[i]);
+    goal_msg.goals.push_back(std::move(pose));
+  }
+
+  rclcpp_action::Client<nav2_msgs::action::ComputePathThroughPoses>::SendGoalOptions options;
+  options.result_callback = std::bind(&RobotServiceClient::resultComputePathThroughPosesCallback, this, std::placeholders::_1);
+
+  ac_compute_path_through_poses_->async_send_goal(goal_msg, options);
+  return true;
+}
+
 bool RobotServiceClient::navigateToPose(double x, double y, double theta)
 {
   if (!initialized_ || !parent_node_)
@@ -554,6 +616,7 @@ bool RobotServiceClient::navigateToPose(double x, double y, double theta)
     qInfo() << "[RobotServiceClient::navigateToPose] Cancel in progress, waiting for cancel to complete before sending new goal";
     return false;
   }
+
   if (nav_goal_active_)
   {
     cancelNavigateToPose();
@@ -571,6 +634,64 @@ bool RobotServiceClient::navigateToPose(double x, double y, double theta)
   return true;
 }
 
+bool RobotServiceClient::navigateThroughPoses(const QVariantList& points)
+{
+  if (!initialized_ || !parent_node_)
+  {
+    qCritical() << "[RobotServiceClient::navigateThroughPoses] RobotServiceClient is not initialized";
+    return false;
+  }
+
+  if (!ac_navigate_through_poses_)
+  {
+    qCritical() << "[RobotServiceClient::navigateThroughPoses] Action client not available (robot not selected?)";
+    return false;
+  }
+
+  if (points.size() < 2)
+  {
+    qCritical() << "[RobotServiceClient::navigateThroughPoses] At least two points are required";
+    return false;
+  }
+
+  if (!ac_navigate_through_poses_->wait_for_action_server(SERVICE_CALL_TIMEOUT))
+  {
+    qCritical() << "[RobotServiceClient::navigateThroughPoses] Action server not available after waiting";
+    return false;
+  }
+
+  const std::vector<ROBOGait::map::utils::WaypointInput> waypoints = ROBOGait::map::utils::parseWaypointInputs(points);
+  if (waypoints.size() < 2)
+  {
+    qCritical() << "[RobotServiceClient::navigateThroughPoses] Not enough valid points to build goal";
+    return false;
+  }
+
+  const std::string frame = context_ ? context_->resolveFrame(std::string(TF_MAP_FRAME)) : std::string(TF_MAP_FRAME);
+  const rclcpp::Time stamp = parent_node_->now();
+
+  nav2_msgs::action::NavigateThroughPoses::Goal goal_msg;
+  goal_msg.poses.reserve(waypoints.size());
+
+  for (size_t i = 0; i < waypoints.size(); ++i)
+  {
+    geometry_msgs::msg::PoseStamped pose;
+    pose.header.frame_id = frame;
+    pose.header.stamp = stamp;
+    pose.pose.position.x = waypoints[i].x;
+    pose.pose.position.y = waypoints[i].y;
+    pose.pose.position.z = 0.0;
+    pose.pose.orientation = ROBOGait::map::utils::buildWaypointOrientation(waypoints[i]);
+    goal_msg.poses.push_back(std::move(pose));
+  }
+
+  rclcpp_action::Client<nav2_msgs::action::NavigateThroughPoses>::SendGoalOptions options;
+  options.result_callback = std::bind(&RobotServiceClient::resultNavigateThroughPosesCallback, this, std::placeholders::_1);
+
+  ac_navigate_through_poses_->async_send_goal(goal_msg, options);
+  return true;
+}
+
 bool RobotServiceClient::cancelNavigateToPose()
 {
   if (!initialized_ || !parent_node_)
@@ -579,9 +700,9 @@ bool RobotServiceClient::cancelNavigateToPose()
     return false;
   }
 
-  if (!ac_navigate_to_pose_)
+  if (!ac_navigate_to_pose_ && !ac_navigate_through_poses_)
   {
-    qCritical() << "[RobotServiceClient::cancelNavigateToPose] Action client not available (robot not selected?)";
+    qCritical() << "[RobotServiceClient::cancelNavigateToPose] Action clients not available (robot not selected?)";
     return false;
   }
 
@@ -590,7 +711,16 @@ bool RobotServiceClient::cancelNavigateToPose()
     cancel_requested_ = true;
     cancel_in_progress_ = true;
     nav_goal_handle_.reset();
-    ac_navigate_to_pose_->async_cancel_all_goals(std::bind(&RobotServiceClient::cancelNavigateToPoseCallback, this, std::placeholders::_1));
+
+    if (ac_navigate_to_pose_)
+    {
+      ac_navigate_to_pose_->async_cancel_all_goals(std::bind(&RobotServiceClient::cancelNavigateToPoseCallback, this, std::placeholders::_1));
+    }
+
+    if (ac_navigate_through_poses_)
+    {
+      ac_navigate_through_poses_->async_cancel_all_goals();
+    }
     return true;
   }
 
@@ -599,15 +729,27 @@ bool RobotServiceClient::cancelNavigateToPose()
 
   if (nav_goal_handle_)
   {
-    ac_navigate_to_pose_->async_cancel_goal(nav_goal_handle_, std::bind(&RobotServiceClient::cancelNavigateToPoseCallback, this, std::placeholders::_1));
+    if (ac_navigate_to_pose_)
+    {
+      ac_navigate_to_pose_->async_cancel_goal(nav_goal_handle_, std::bind(&RobotServiceClient::cancelNavigateToPoseCallback, this, std::placeholders::_1));
+    }
   }
   else
   {
-    ac_navigate_to_pose_->async_cancel_all_goals(std::bind(&RobotServiceClient::cancelNavigateToPoseCallback, this, std::placeholders::_1));
+    if (ac_navigate_to_pose_)
+    {
+      ac_navigate_to_pose_->async_cancel_all_goals(std::bind(&RobotServiceClient::cancelNavigateToPoseCallback, this, std::placeholders::_1));
+    }
+  }
+
+  if (ac_navigate_through_poses_)
+  {
+    ac_navigate_through_poses_->async_cancel_all_goals();
   }
 
   return true;
 }
+
 void RobotServiceClient::setPathResultCallback(const std::function<void(bool, const nav_msgs::msg::Path&)>& callback) { path_result_callback_ = callback; }
 
 void RobotServiceClient::resetRobotServiceClient()
@@ -999,6 +1141,19 @@ bool RobotServiceClient::rebuildClient()
     return false;
   }
 
+  ac_compute_path_through_poses_ = rclcpp_action::create_client<nav2_msgs::action::ComputePathThroughPoses>(
+      parent_node_->get_node_base_interface(), parent_node_->get_node_graph_interface(), parent_node_->get_node_logging_interface(),
+      parent_node_->get_node_waitables_interface(), resolveServiceName(std::string(A_COMPUTE_PATH_THROUGH_POSES)), cb_group_);
+
+  if (!ac_compute_path_through_poses_)
+  {
+    qCritical() << "[RobotServiceClient::rebuildClient] Failed to create compute_path_through_poses action client";
+    cli_cmd_.reset();
+    cli_get_map_data_.reset();
+    cli_global_localization_.reset();
+    return false;
+  }
+
   ac_compute_path_to_pose_ = rclcpp_action::create_client<nav2_msgs::action::ComputePathToPose>(
       parent_node_->get_node_base_interface(), parent_node_->get_node_graph_interface(), parent_node_->get_node_logging_interface(),
       parent_node_->get_node_waitables_interface(), resolveServiceName(std::string(A_COMPUTE_PATH_TO_POSE)), cb_group_);
@@ -1009,6 +1164,7 @@ bool RobotServiceClient::rebuildClient()
     cli_cmd_.reset();
     cli_get_map_data_.reset();
     cli_global_localization_.reset();
+    ac_compute_path_through_poses_.reset();
     return false;
   }
 
@@ -1022,7 +1178,24 @@ bool RobotServiceClient::rebuildClient()
     cli_cmd_.reset();
     cli_get_map_data_.reset();
     cli_global_localization_.reset();
+    ac_compute_path_through_poses_.reset();
     ac_compute_path_to_pose_.reset();
+    return false;
+  }
+
+  ac_navigate_through_poses_ = rclcpp_action::create_client<nav2_msgs::action::NavigateThroughPoses>(
+      parent_node_->get_node_base_interface(), parent_node_->get_node_graph_interface(), parent_node_->get_node_logging_interface(),
+      parent_node_->get_node_waitables_interface(), resolveServiceName(std::string(A_NAVIGATE_THROUGH_POSES)), cb_group_);
+
+  if (!ac_navigate_through_poses_)
+  {
+    qCritical() << "[RobotServiceClient::rebuildClient] Failed to create navigate_through_poses action client";
+    cli_cmd_.reset();
+    cli_get_map_data_.reset();
+    cli_global_localization_.reset();
+    ac_compute_path_through_poses_.reset();
+    ac_compute_path_to_pose_.reset();
+    ac_navigate_to_pose_.reset();
     return false;
   }
 
@@ -1390,6 +1563,21 @@ void RobotServiceClient::resultComputePathToPoseCallback(const rclcpp_action::Cl
   }
 }
 
+void RobotServiceClient::resultComputePathThroughPosesCallback(
+    const rclcpp_action::ClientGoalHandle<nav2_msgs::action::ComputePathThroughPoses>::WrappedResult& result)
+{
+  const bool success = (result.code == rclcpp_action::ResultCode::SUCCEEDED) && result.result;
+  nav_msgs::msg::Path path;
+  if (success)
+  {
+    path = result.result->path;
+  }
+  if (path_result_callback_)
+  {
+    path_result_callback_(success, path);
+  }
+}
+
 void RobotServiceClient::goalResponseNavigateToPoseCallback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr& goal_handle)
 {
   if (!goal_handle)
@@ -1460,4 +1648,27 @@ void RobotServiceClient::resultNavigateToPoseCallback(const rclcpp_action::Clien
 
   nav_goal_active_ = false;
   nav_goal_handle_.reset();
+}
+
+void RobotServiceClient::resultNavigateThroughPosesCallback(
+    const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateThroughPoses>::WrappedResult& result)
+{
+  switch (result.code)
+  {
+    case rclcpp_action::ResultCode::SUCCEEDED:
+      qInfo() << "[RobotServiceClient::resultNavigateThroughPosesCallback] Goal alcanzado";
+      break;
+
+    case rclcpp_action::ResultCode::CANCELED:
+      qInfo() << "[RobotServiceClient::resultNavigateThroughPosesCallback] Goal cancelado";
+      break;
+
+    case rclcpp_action::ResultCode::ABORTED:
+      qWarning() << "[RobotServiceClient::resultNavigateThroughPosesCallback] Goal abortado";
+      break;
+
+    default:
+      qWarning() << "[RobotServiceClient::resultNavigateThroughPosesCallback] Estado desconocido";
+      break;
+  }
 }

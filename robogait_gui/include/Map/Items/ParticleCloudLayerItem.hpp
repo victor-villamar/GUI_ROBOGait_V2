@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include <QColor>
 #include <QPointer>
 #include <QQuickItem>
 #include <QSGGeometryNode>
@@ -24,6 +25,13 @@ class ParticleCloudLayerItem : public QQuickItem
   Q_OBJECT
 
 public:
+  // clang-format off
+  Q_PROPERTY(QColor particleColor
+             READ getParticleColor
+             WRITE setParticleColor
+             NOTIFY particleColorChanged)
+  // clang-format on
+
   /**
    * @brief Constructor for the ParticleCloudLayerItem class
    */
@@ -55,6 +63,20 @@ public:
    */
   void setCamera(const std::shared_ptr<ROBOGait::map::rendering::RenderCamera>& camera);
 
+  /**
+   * @brief Get the current particle color
+   *
+   * @return The current particle color
+   */
+  QColor getParticleColor() const;
+
+  /**
+   * @brief Set the particle color for rendering
+   *
+   * @param color The new particle color to set
+   */
+  void setParticleColor(const QColor& color);
+
 protected:
   /**
    * @brief Update the paint node for the particle cloud layer item
@@ -64,6 +86,9 @@ protected:
    * @return The updated paint node
    */
   QSGNode* updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* data) override;
+
+signals:
+  void particleColorChanged(); // Signal emitted when the particle color changes
 
 private slots:
   void onFrameReady(); // Slot to handle frame ready signal
@@ -86,8 +111,10 @@ private:
   std::shared_ptr<ROBOGait::map::layer::ParticleCloudLayer> particle_render_; /**< Particle cloud layer for the item */
   std::shared_ptr<ROBOGait::map::rendering::RenderCamera> camera_;            /**< Camera for the particle cloud item */
 
-  static constexpr float POINT_SIZE = 0.025f;                 /**< Size of the particle points */
-  static constexpr auto PARTICLE_COLOR = QColor(255, 128, 0); /**< Color of the particle points */
+  QColor particle_color_; /** < Color of the particle points */
+
+  static constexpr float POINT_SIZE = 0.025f;                         /**< Size of the particle points */
+  static constexpr auto DEFAULT_PARTICLE_COLOR = QColor(255, 128, 0); /**< Color of the particle points */
 };
 
 } // namespace item

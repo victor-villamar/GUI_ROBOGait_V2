@@ -9,7 +9,7 @@
 
 using namespace ROBOGait::map::subscribers;
 
-MapSubscriber::MapSubscriber() : parent_node_(nullptr), map_data_(nullptr), active_(false), context_(std::nullopt) {}
+MapSubscriber::MapSubscriber() : parent_node_(nullptr), map_data_(nullptr), context_(std::nullopt), active_(false) {}
 
 void MapSubscriber::initialize(rclcpp::Node* parent_node)
 {
@@ -81,12 +81,12 @@ void MapSubscriber::callbackMap(const nav_msgs::msg::OccupancyGrid::SharedPtr ms
   }
 
   data::MapData::MapMetadata metadata;
-  metadata.resolution = msg->info.resolution;
-  metadata.width = msg->info.width;
-  metadata.height = msg->info.height;
-  metadata.origin_x = msg->info.origin.position.x;
-  metadata.origin_y = msg->info.origin.position.y;
-  metadata.origin_theta = utils::getYaw(msg->info.origin.orientation);
+  metadata.resolution_ = msg->info.resolution;
+  metadata.width_ = msg->info.width;
+  metadata.height_ = msg->info.height;
+  metadata.origin_x_ = msg->info.origin.position.x;
+  metadata.origin_y_ = msg->info.origin.position.y;
+  metadata.origin_theta_ = utils::getYaw(msg->info.origin.orientation);
 
   std::vector<int8_t> occupancy_data(msg->data.begin(), msg->data.end());
 

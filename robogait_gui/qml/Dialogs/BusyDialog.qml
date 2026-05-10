@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import AppTheme 1.0
 
 Dialog {
     id: root
@@ -11,7 +12,7 @@ Dialog {
 
     Overlay.modal: Rectangle {
         anchors.fill: parent
-        color: "#A0505050"
+        color: AppTheme.dialogsCommon.overlayDim
     }
 
     width: parent ? Math.min(720, parent.width * 0.85) : 720
@@ -28,8 +29,8 @@ Dialog {
     }
 
     background: Rectangle {
-        color: "#045671"
-        border.color: "#045671"
+        color: AppTheme.dialogsCommon.primary
+        border.color: AppTheme.dialogsCommon.primary
         border.width: 2
         radius: 12
     }
@@ -42,9 +43,9 @@ Dialog {
             width: parent.width - 32
             height: parent.height - 32
             anchors.centerIn: parent
-            color: "#a9cfe8"
+            color: AppTheme.dialogsCommon.panelBackground
             radius: 12
-            border.color: "#045671"
+            border.color: AppTheme.dialogsCommon.primary
             border.width: 2
 
             Column {
@@ -54,7 +55,7 @@ Dialog {
 
                 Label {
                     text: root.message
-                    color: "#045671"
+                    color: AppTheme.dialogsCommon.primary
                     font.pixelSize: 18
                     font.bold: true
                     horizontalAlignment: Text.AlignHCenter
@@ -68,9 +69,9 @@ Dialog {
                     height: 180
                     running: true
                     anchors.horizontalCenter: parent.horizontalCenter
-                    palette.highlight: "#ffffff"
-                    palette.text: "#ffffff"
-                    palette.buttonText: "#ffffff"
+                    palette.highlight: AppTheme.dialogsCommon.light
+                    palette.text: AppTheme.dialogsCommon.light
+                    palette.buttonText: AppTheme.dialogsCommon.light
                 }
             }
         }

@@ -23,6 +23,7 @@
 #include "Robot/RobotDiscovery.hpp"
 #include "Robot/RobotManager.hpp"
 #include "Ros/Define.hpp"
+#include "Themes/AppTheme.hpp"
 #include "User/Patient.hpp"
 
 using namespace ROBOGait::core;
@@ -60,11 +61,15 @@ void RoboGaitApplication::initCommon()
 {
   qmlRegisterUncreatableType<ROBOGait::robot::discovery::RobotDiscovery>("RobotDiscovery", 1, 0, "RobotDiscovery", "Enums Only");
   qmlRegisterUncreatableType<ROBOGait::qml::service::RobotServiceBridge>("RobotServiceBridge", 1, 0, "RobotServiceBridge", "Enums Only");
+
   qmlRegisterType<ROBOGait::map::item::MapLayerItem>("MapRendering", 1, 0, "MapLayerItem");
   qmlRegisterType<ROBOGait::map::item::RobotLayerItem>("MapRendering", 1, 0, "RobotLayerItem");
   qmlRegisterType<ROBOGait::map::item::LaserLayerItem>("MapRendering", 1, 0, "LaserLayerItem");
   qmlRegisterType<ROBOGait::map::item::ParticleCloudLayerItem>("MapRendering", 1, 0, "ParticleCloudLayerItem");
   qmlRegisterType<ROBOGait::map::item::PathLayerItem>("MapRendering", 1, 0, "PathLayerItem");
+
+  qmlRegisterSingletonInstance("AppTheme", 1, 0, "AppTheme", &ROBOGait::settings::AppTheme::getInstance());
+
   qRegisterMetaType<geometry_msgs::msg::Twist>("geometry_msgs::msg::Twist");
 
   qInfo() << "[RoboGaitApplication::initCommon] QML types and metatypes registered";
@@ -122,7 +127,7 @@ bool RoboGaitApplication::initialize()
   ros_node_manager_ = std::make_unique<ROBOGait::ros::manager::RosNodeManager>();
 
   // Initialize ROS with command line arguments
-  int argc = arguments().size();
+  int argc = static_cast<int>(arguments().size());
   QList<QByteArray> args_byte_array;
   QList<char*> args_char_ptr;
 

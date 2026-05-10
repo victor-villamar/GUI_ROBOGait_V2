@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 6.0
 import QtQuick.Window 2.15
+import AppTheme 1.0
 
 Dialog {
     id: root
@@ -13,7 +14,7 @@ Dialog {
 
     Overlay.modal: Rectangle {
         anchors.fill: parent
-        color: "#A0505050"
+        color: AppTheme.settings.overlayDim
     }
 
     width: Math.min(500, parent ? parent.width * 0.9 : 500)
@@ -44,14 +45,14 @@ Dialog {
     onParentChanged: reposition()
 
     background: Rectangle {
-        color: "#a9cfe8"
-        border.color: "#ffffff"
+        color: AppTheme.settings.lightBlue
+        border.color: AppTheme.settings.white
         border.width: 2
         radius: 12
     }
     
     header: Rectangle {
-        color: "#045671"
+        color: AppTheme.settings.primaryDark
         height: 50
         radius: 12
         
@@ -60,7 +61,7 @@ Dialog {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             height: 12
-            color: "#045671"
+            color: AppTheme.settings.primaryDark
         }
         
         Row {
@@ -74,7 +75,7 @@ Dialog {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.title
-                color: "white"
+                color: AppTheme.settings.white
                 font.pixelSize: 18
                 font.bold: true
             }
@@ -85,7 +86,7 @@ Dialog {
             anchors.rightMargin: 15
             anchors.verticalCenter: parent.verticalCenter
             text: userSession ? qsTr("User: %1").arg(userSession.username) : ""
-            color: "#a9cfe8"
+            color: AppTheme.settings.lightBlue
             font.pixelSize: 14
             font.bold: true
         }
@@ -100,15 +101,15 @@ Dialog {
             anchors.verticalCenter: parent.verticalCenter
             
             background: Rectangle {
-                color: closeButton.down ? "#518bb7" : "#ffffff"
+                color: closeButton.down ? AppTheme.settings.closeButtonPressedBg : AppTheme.settings.white
                 radius: 8
-                border.color: "#045671"
+                border.color: AppTheme.settings.primaryDark
                 border.width: 2
             }
             
             contentItem: Label {
                 text: closeButton.text
-                color: "#045671"
+                color: AppTheme.settings.primaryDark
                 font.pixelSize: 16
                 font.bold: true
                 horizontalAlignment: Text.AlignHCenter
@@ -152,15 +153,15 @@ Dialog {
                     rightPadding: 12
 
                     background: Rectangle {
-                        color: rosTabButton.checked ? "#045671" : "#e6f2f8"
-                        border.color: "#ffffff"
+                        color: rosTabButton.checked ? AppTheme.settings.primaryDark : AppTheme.settings.tabUnselectedBg
+                        border.color: AppTheme.settings.white
                         border.width: 2
                         radius: 8
                     }
 
                     contentItem: Text {
                         text: rosTabButton.text
-                        color: rosTabButton.checked ? "#ffffff" : "#045671"
+                        color: rosTabButton.checked ? AppTheme.settings.white : AppTheme.settings.primaryDark
                         font.pixelSize: 14
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -177,15 +178,15 @@ Dialog {
                     rightPadding: 12
 
                     background: Rectangle {
-                        color: rosDomainTabButton.checked ? "#045671" : "#e6f2f8"
-                        border.color: "#ffffff"
+                        color: rosDomainTabButton.checked ? AppTheme.settings.primaryDark : AppTheme.settings.tabUnselectedBg
+                        border.color: AppTheme.settings.white
                         border.width: 2
                         radius: 8
                     }
 
                     contentItem: Text {
                         text: rosDomainTabButton.text
-                        color: rosDomainTabButton.checked ? "#ffffff" : "#045671"
+                        color: rosDomainTabButton.checked ? AppTheme.settings.white : AppTheme.settings.primaryDark
                         font.pixelSize: 14
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -252,9 +253,9 @@ Dialog {
 
                 background: Rectangle {
                     id: applyButtonBackground
-                    color: "#ffffff"
+                    color: AppTheme.settings.white
                     radius: 8
-                    border.color: "#045671"
+                    border.color: AppTheme.settings.primaryDark
                     border.width: 2
                     clip: true
 
@@ -262,7 +263,7 @@ Dialog {
                         anchors.left: parent.left
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
-                        color: "#00C8FF"
+                        color: AppTheme.settings.applyProgressFill
                         width: parent.width * applyButton.holdProgress
                         radius: applyButtonBackground.radius
                         antialiasing: true
@@ -271,7 +272,7 @@ Dialog {
 
                 contentItem: Label {
                     text: applyButton.text
-                    color: "#045671"
+                    color: AppTheme.settings.primaryDark
                     font.pixelSize: 16
                     font.bold: true
                     horizontalAlignment: Text.AlignHCenter
@@ -320,9 +321,9 @@ Dialog {
             Rectangle {
                 Layout.fillWidth: true
                 height: 60
-                color: "#ffffff"
+                color: AppTheme.settings.white
                 radius: 8
-                border.color: "#045671"
+                border.color: AppTheme.settings.primaryDark
                 border.width: 1
             
                 Text {
@@ -331,7 +332,7 @@ Dialog {
                     anchors.margins: 10
                     text: qsTr("ℹ️ Los cambios se aplican inmediatamente. El descubrimiento de namespaces ayuda a organizar robots en entornos multi-robot.")
                     font.pixelSize: 11
-                    color: "#045671"
+                    color: AppTheme.settings.primaryDark
                     wrapMode: Text.WordWrap
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignLeft

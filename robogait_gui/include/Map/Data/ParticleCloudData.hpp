@@ -19,20 +19,20 @@ public:
   /**
    * @brief Structure representing a single particle in the cloud
    *
-   * @param x The x-coordinate of the particle
-   * @param y The y-coordinate of the particle
-   * @param theta The orientation of the particle in radians
-   * @param weight The weight of the particle
+   * @param x_ The x-coordinate of the particle
+   * @param y_ The y-coordinate of the particle
+   * @param theta_ The orientation of the particle in radians
+   * @param weight_ The weight of the particle
    */
   struct Particle
   {
-    double x;
-    double y;
-    double theta;
-    double weight;
+    double x_;
+    double y_;
+    double theta_;
+    double weight_;
 
-    Particle() : x(0.0), y(0.0), theta(0.0), weight(0.0) {}
-    Particle(double x, double y, double theta, double weight) : x(x), y(y), theta(theta), weight(weight) {}
+    Particle() : x_(0.0), y_(0.0), theta_(0.0), weight_(0.0) {}
+    Particle(double x, double y, double theta, double weight) : x_(x), y_(y), theta_(theta), weight_(weight) {}
   };
 
   /**

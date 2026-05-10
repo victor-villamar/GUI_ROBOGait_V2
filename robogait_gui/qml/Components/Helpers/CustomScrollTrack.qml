@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import AppTheme 1.0
 
 Item {
     id: root
@@ -14,8 +15,8 @@ Item {
     property real minTrackHeight: 80
     property real minThumbHeight: 36
 
-    property color trackColor: "#0f3f63"
-    property color thumbColor: "#ffffff"
+    property color trackColor: AppTheme.core.scrollTrack
+    property color thumbColor: AppTheme.core.white
     property real trackOpacity: 0.35
     property real thumbOpacity: 0.95
 

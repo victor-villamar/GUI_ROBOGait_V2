@@ -7,7 +7,7 @@
 
 using namespace ROBOGait::map::subscribers;
 
-PathSubscriber::PathSubscriber() : parent_node_(nullptr), path_data_(nullptr), active_(false), context_(std::nullopt) {}
+PathSubscriber::PathSubscriber() : parent_node_(nullptr), path_data_(nullptr), context_(std::nullopt), active_(false) {}
 
 void PathSubscriber::initialize(rclcpp::Node* parent_node)
 {

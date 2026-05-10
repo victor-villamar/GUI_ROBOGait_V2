@@ -21,6 +21,7 @@
     <file alias="SettingsBadge.qml">qml/Components/Badges/SettingsBadge.qml</file>
     <file alias="SettingsBadgeForm.ui.qml">qml/Components/Badges/SettingsBadgeForm.ui.qml</file>
     <file alias="UserBadge.qml">qml/Components/Badges/UserBadge.qml</file>
+    <file alias="OrientationWheel.qml">qml/Components/Controls/OrientationWheel.qml</file>
     <file alias="CustomScrollTrack.qml">qml/Components/Helpers/CustomScrollTrack.qml</file>
     <file alias="KeyboardAwareHelper.qml">qml/Components/Helpers/KeyboardAwareHelper.qml</file>
     <file alias="AuthModeDropdown.qml">qml/Components/Inputs/AuthModeDropdown.qml</file>

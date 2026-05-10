@@ -22,7 +22,7 @@ void MapData::setOccupancyData(const std::vector<int8_t>& occupancy_data, const 
   std::lock_guard<std::mutex> lock(data_mutex_);
 
   // Validate dimensions
-  const size_t expected_size = metadata.width * metadata.height;
+  const size_t expected_size = metadata.width_ * metadata.height_;
   if (occupancy_data.size() != expected_size)
   {
     std::cerr << "[MapData::setOccupancyData] Data size mismatch! Expected " << expected_size << ", got " << occupancy_data.size() << std::endl;
@@ -30,9 +30,9 @@ void MapData::setOccupancyData(const std::vector<int8_t>& occupancy_data, const 
     return;
   }
 
-  if (metadata.width == 0 || metadata.height == 0)
+  if (metadata.width_ == 0 || metadata.height_ == 0)
   {
-    std::cerr << "[MapData::setOccupancyData] Invalid map dimensions: width=" << metadata.width << ", height=" << metadata.height << std::endl;
+    std::cerr << "[MapData::setOccupancyData] Invalid map dimensions: width=" << metadata.width_ << ", height=" << metadata.height_ << std::endl;
     is_available_ = false;
     return;
   }
@@ -73,13 +73,13 @@ void MapData::updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height
     return;
   }
 
-  if (x + width > metadata_.width || y + height > metadata_.height)
+  if (x + width > metadata_.width_ || y + height > metadata_.height_)
   {
     std::cerr << "[MapData::updateRegion] Update region out of bounds" << std::endl;
     return;
   }
 
-  if (x == 0 && y == 0 && width == metadata_.width && height == metadata_.height)
+  if (x == 0 && y == 0 && width == metadata_.width_ && height == metadata_.height_)
   {
     // Full map update, can replace data directly
     std::copy(data.begin(), data.end(), occupancy_data_.begin());
@@ -87,10 +87,10 @@ void MapData::updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height
     return;
   }
 
-  if (x == 0 && width == metadata_.width)
+  if (x == 0 && width == metadata_.width_)
   {
     // Update the entire column
-    const uint32_t start_index = y * metadata_.width;
+    const uint32_t start_index = y * metadata_.width_;
     std::copy(data.begin(), data.end(), occupancy_data_.begin() + start_index);
     ++update_stamp_;
     return;
@@ -98,7 +98,7 @@ void MapData::updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height
 
   for (uint32_t update_y = 0; update_y < height; ++update_y)
   {
-    const uint32_t map_row_start = (y + update_y) * metadata_.width + x;
+    const uint32_t map_row_start = (y + update_y) * metadata_.width_ + x;
     const uint32_t update_row_start = update_y * width;
 
     // clang-format off

@@ -1,13 +1,16 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import AppTheme 1.0
 import QtQuick.Layouts 1.15
 import MapRendering 1.0
 
+
+import "qrc:/Components"
 import "qrc:/Dialogs"
 
 Rectangle {
     id: root
-    color: "#518bb7"
+    color: AppTheme.map.appBackground
 
     property alias infoButton: infoButton
     property alias emergencyButton: emergencyButton
@@ -41,6 +44,9 @@ Rectangle {
     signal autoLocalizationRequested()
     signal goalAcceptRequested()
     signal goalClearRequested()
+    signal pathAcceptRequested()
+    signal pathSegmentRequested()
+    signal pathClearRequested()
     signal startTestRequested()
     signal goHomeRequested()
 
@@ -51,19 +57,28 @@ Rectangle {
     property bool orientationEnabled: false
     property bool orientationOverride: false
     property bool goalPlacementEnabled: false
+    property bool pathPlacementEnabled: false
     property bool goalPointSet: false
     property bool goalOrientationEnabled: false
     property bool goalOrientationSet: false
     property bool goalAccepted: false
     property bool goalPathReady: false
+    property bool manualPathReady: false
+    property bool pathTerminalPoseSet: false
+    property bool pathTerminalOrientationOverride: false
     property bool testStarted: false
     property real goalOrientationDeg: 0
     property var goalMapPosition: Qt.point(0, 0)
+    property real pathTerminalOrientationDeg: 0
+    property var pathTerminalMapPosition: Qt.point(0, 0)
     property var placementController: (userSession.rosManager && userSession.rosManager.robotManager)
                                       ? userSession.rosManager.robotManager.robotPlacementController
                                       : null
     property bool showRobotPose: false
     property bool showParticleCloud: false
+    readonly property bool manualPathAvailable: mapVisualizationManager &&
+                                                mapVisualizationManager.manualPathEditor &&
+                                                mapVisualizationManager.manualPathEditor.hasPath
 
 
     ColumnLayout {
@@ -75,7 +90,7 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: Math.max(60, root.iconButtonSizePx + 20)
-            color: "#2c5f7c"
+            color: AppTheme.map.panel
             radius: 8
 
             RowLayout {
@@ -133,7 +148,7 @@ Rectangle {
                     text: qsTr("Prueba")
                     font.pixelSize: 24
                     font.bold: true
-                    color: "#ffffff"
+                    color: AppTheme.map.white
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -149,9 +164,9 @@ Rectangle {
             id: mapDisplayArea
             Layout.fillWidth: true
             Layout.fillHeight: true
-            color: "#1a3a4a"
+            color: AppTheme.map.panelHeader
             radius: 8
-            border.color: "#2c5f7c"
+            border.color: AppTheme.map.panel
             border.width: 2
             clip: true
 
@@ -161,6 +176,9 @@ Rectangle {
                 anchors.margins: mapContentMargin
                 visible: showRobotPose
                 z: 2
+                bodyColor: AppTheme.map.robotBody
+                wheelColor: AppTheme.map.robotWheel
+                headColor: AppTheme.map.robotHead
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -189,8 +207,8 @@ Rectangle {
 
                 background: Rectangle {
                     radius: width / 2
-                    color: emergencyButton.checked ? "#7a8a93" : "transparent"
-                    border.color: emergencyButton.checked ? "#cbd6dc" : "transparent"
+                    color: emergencyButton.checked ? AppTheme.map.emergencyStopLatchedBg : "transparent"
+                    border.color: emergencyButton.checked ? AppTheme.map.emergencyStopLatchedBorder : "transparent"
                     border.width: emergencyButton.checked ? 2 : 0
                 }
 
@@ -211,15 +229,15 @@ Rectangle {
                 anchors.bottom: parent.bottom
                 anchors.rightMargin: 21
                 anchors.bottomMargin: 21
-                color: "#2c5f7c"
+                color: AppTheme.map.panel
                 radius: 10
-                border.color: "#6aa3c8"
+                border.color: AppTheme.map.panelBorder
                 border.width: 2
                 z: 70
                 visible: mapAvailable && isNavigationStep && goalPlacementEnabled && !testStarted
 
                 property int padding: 10
-                property real buttonWidth: 160
+                property real buttonWidth: 200
                 width: buttonWidth + (padding * 2)
                 height: (root.buttonHeightPx * 2) + (padding * 2) + 8
 
@@ -237,14 +255,14 @@ Rectangle {
 
                         background: Rectangle {
                             radius: 6
-                            color: goalAcceptButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                            border.color: "#ffffff"
+                            color: goalAcceptButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
                             border.width: 1
                         }
 
                         contentItem: Text {
-                            text: qsTr("ACEPTAR")
-                            color: "#ffffff"
+                            text: qsTr("CALCULAR")
+                            color: AppTheme.map.white
                             font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -263,14 +281,14 @@ Rectangle {
 
                         background: Rectangle {
                             radius: 6
-                            color: goalClearButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                            border.color: "#ffffff"
+                            color: goalClearButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
                             border.width: 1
                         }
 
                         contentItem: Text {
                             text: qsTr("BORRAR")
-                            color: "#ffffff"
+                            color: AppTheme.map.white
                             font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -282,19 +300,137 @@ Rectangle {
                 }
             }
 
+            Rectangle {
+                id: pathActionPanel
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.rightMargin: 21
+                anchors.bottomMargin: 21
+                color: AppTheme.map.panel
+                radius: 10
+                border.color: AppTheme.map.panelBorder
+                border.width: 2
+                z: 70
+                visible: mapAvailable && isNavigationStep && pathPlacementEnabled && !testStarted
+
+                property int padding: 10
+                property real buttonWidth: 200
+                property int buttonsSpacing: 8
+                width: buttonWidth + (padding * 2)
+                height: (root.buttonHeightPx * 3) + (buttonsSpacing * 2) + (padding * 2)
+
+                Column {
+                    anchors.fill: parent
+                    anchors.margins: pathActionPanel.padding
+                    spacing: pathActionPanel.buttonsSpacing
+
+                    Button {
+                        id: pathAcceptButton
+                        width: pathActionPanel.buttonWidth
+                        height: root.buttonHeightPx
+                        enabled: mapVisualizationManager &&
+                                 mapVisualizationManager.manualPathEditor &&
+                                 mapVisualizationManager.manualPathEditor.hasPath &&
+                                 mapVisualizationManager.manualPathEditor.isSegmented
+                        opacity: enabled ? 1.0 : 0.4
+
+                        background: Rectangle {
+                            radius: 6
+                            color: pathAcceptButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
+                            border.width: 1
+                        }
+
+                        contentItem: Text {
+                            text: qsTr("ACEPTAR")
+                            color: AppTheme.map.white
+                            font.pixelSize: 14
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: pathAcceptRequested()
+                    }
+
+                    Button {
+                        id: pathSegmentButton
+                        width: pathActionPanel.buttonWidth
+                        height: root.buttonHeightPx
+                        enabled: mapVisualizationManager &&
+                                 mapVisualizationManager.manualPathEditor &&
+                                 mapVisualizationManager.manualPathEditor.hasPath &&
+                                 !mapVisualizationManager.manualPathEditor.isSegmented
+                        opacity: enabled ? 1.0 : 0.4
+
+                        background: Rectangle {
+                            radius: 6
+                            color: pathSegmentButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
+                            border.width: 1
+                        }
+
+                        contentItem: Text {
+                            text: qsTr("SEGMENTAR")
+                            color: AppTheme.map.white
+                            font.pixelSize: 14
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: pathSegmentRequested()
+                    }
+
+                    Button {
+                        id: pathClearButton
+                        width: pathActionPanel.buttonWidth
+                        height: root.buttonHeightPx
+                        enabled: mapVisualizationManager &&
+                                 mapVisualizationManager.manualPathEditor &&
+                                 mapVisualizationManager.manualPathEditor.hasPath
+                        opacity: enabled ? 1.0 : 0.4
+
+                        background: Rectangle {
+                            radius: 6
+                            color: pathClearButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
+                            border.width: 1
+                        }
+
+                        contentItem: Text {
+                            text: qsTr("BORRAR")
+                            color: AppTheme.map.white
+                            font.pixelSize: 14
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: pathClearRequested()
+                    }
+                }
+            }
+
             MapLayerItem {
                 id: mapLayerItem
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
                 visible: mapAvailable
                 z: 1
-                isPanningEnabled: !placementEnabled && !goalPlacementEnabled && !testStarted
+                isPanningEnabled: !placementEnabled &&
+                                  !goalPlacementEnabled &&
+                                  !testStarted &&
+                                  (!pathPlacementEnabled || (manualPathAvailable && !pathDragHandler.active))
 
                 TapHandler {
                     acceptedButtons: Qt.LeftButton
                     gesturePolicy: TapHandler.DragThreshold
                     onTapped: {
                         if (testStarted) {
+                            return
+                        }
+                        if (mapAvailable && isNavigationStep && pathPlacementEnabled) {
                             return
                         }
                         if (mapAvailable && isNavigationStep && goalPlacementEnabled) {
@@ -313,6 +449,47 @@ Rectangle {
                     }
                 }
 
+                DragHandler {
+                    id: pathDragHandler
+                    target: null
+                    acceptedButtons: Qt.LeftButton
+                    dragThreshold: 0
+                    grabPermissions: PointerHandler.TakeOverForbidden
+                    enabled: mapAvailable &&
+                             isNavigationStep &&
+                             pathPlacementEnabled &&
+                             !testStarted &&
+                             (!manualPathAvailable || active)
+
+                    onActiveChanged: {
+                        if (active) {
+                            if (root.handlePathStrokeStart) {
+                                root.handlePathStrokeStart(centroid.position.x, centroid.position.y)
+                            }
+                        }
+                        else {
+                            if (root.handlePathStrokeEnd) {
+                                root.handlePathStrokeEnd()
+                            }
+                        }
+                    }
+
+                    onCentroidChanged: {
+                        if (!active) {
+                            return
+                        }
+                        if (root.handlePathStrokeMove) {
+                            root.handlePathStrokeMove(centroid.position.x, centroid.position.y)
+                        }
+                    }
+
+                    onCanceled: function() {
+                        if (root.handlePathStrokeEnd) {
+                            root.handlePathStrokeEnd()
+                        }
+                    }
+                }
+
                 Component.onCompleted: {
                     if (userSession.rosManager &&
                         userSession.rosManager.robotManager &&
@@ -327,9 +504,13 @@ Rectangle {
                 id: goalRobotLayerItem
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
-                visible: mapAvailable && isNavigationStep && goalPlacementEnabled && goalPointSet && !testStarted
+                visible: mapAvailable && isNavigationStep && !testStarted &&
+                         ((goalPlacementEnabled && goalPointSet) ||
+                          (pathPlacementEnabled && pathTerminalPoseSet))
                 z: 2
-                headColor: "#3b82f6"
+                headColor: AppTheme.map.pathHeadBlue
+                bodyColor: AppTheme.map.robotBody
+                wheelColor: AppTheme.map.robotWheel
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -347,7 +528,7 @@ Rectangle {
                 anchors.margins: mapContentMargin
                 visible: mapAvailable && isNavigationStep
                 z: 1.45
-                pathColor: "#9118DB"
+                pathColor: AppTheme.map.pathColorPrimary
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -360,12 +541,30 @@ Rectangle {
             }
 
             PathLayerItem {
+                id: manualDrawPathLayerItem
+                anchors.fill: parent
+                anchors.margins: mapContentMargin
+                visible: mapAvailable && isNavigationStep
+                z: 1.455
+                pathColor: AppTheme.map.pathColorSecondary
+
+                Component.onCompleted: {
+                    if (userSession.rosManager &&
+                        userSession.rosManager.robotManager &&
+                        userSession.rosManager.robotManager.mapVisualizationManager)
+                    {
+                        userSession.rosManager.robotManager.mapVisualizationManager.registerManualDrawPathLayerItem(manualDrawPathLayerItem)
+                    }
+                }
+            }
+
+            PathLayerItem {
                 id: livePathLayerItem
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
                 visible: mapAvailable && isNavigationStep
                 z: 1.46
-                pathColor: "#18DB22"
+                pathColor: AppTheme.map.pathColorTertiary
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -383,6 +582,7 @@ Rectangle {
                 anchors.margins: mapContentMargin
                 visible: mapAvailable && particleCloudAvailable && showParticleCloud
                 z: 1.4
+                particleColor: AppTheme.map.particle
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -394,284 +594,68 @@ Rectangle {
                 }
             }
 
-            Rectangle {
+            OrientationWheel {
                 id: rotationPanel
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.rightMargin: 21
                 anchors.bottomMargin: 21
-                color: orientationEnabled ? "#2c5f7c" : "#3b4a55"
-                radius: 13
-                border.color: orientationEnabled ? "#6aa3c8" : "#5f707d"
-                border.width: 3
                 z: 50
-                visible: mapAvailable && isOrientationStep && placementController && placementController.hasPosition
-                opacity: orientationEnabled ? 1.0 : 0.6
+                visiblePanel: mapAvailable && isOrientationStep && placementController && placementController.hasPosition
+                enabled: orientationEnabled
+                wheelSize: wheelSizePx > 0 ? wheelSizePx : Math.min(240, Math.min(parent.width, parent.height) * 0.32)
+                title: qsTr("Orientación")
+                angleDeg: placementController ? (placementController.theta * 180 / Math.PI) : 0
 
-                property int padding: 13
-                property real wheelSize: wheelSizePx > 0 ? wheelSizePx
-                                                       : Math.min(240, Math.min(parent.width, parent.height) * 0.32)
-
-                implicitWidth: panelContent.implicitWidth + (padding * 2)
-                implicitHeight: panelContent.implicitHeight + (padding * 2)
-
-                Column {
-                    id: panelContent
-                    anchors.fill: parent
-                    anchors.margins: rotationPanel.padding
-                    spacing: 10
-
-                    Rectangle {
-                        width: rotationPanel.wheelSize
-                        height: 36
-                        color: orientationEnabled ? "#1a3a4a" : "#2e3a43"
-                        radius: 6
-                        opacity: 0.9
-
-                        Text {
-                            anchors.centerIn: parent
-                            color: "#ffffff"
-                            font.pixelSize: 16
-                            font.bold: true
-                            text: qsTr("Orientación: %1°").arg(Math.round(((rotationOverlay.degrees + 360) % 360)))
-                        }
+                onAngleChanged: function(deg) {
+                    if (!placementController || !placementController.hasPosition || !orientationEnabled) {
+                        return
                     }
-
-                    Item {
-                        id: rotationOverlay
-                        width: rotationPanel.wheelSize
-                        height: width
-
-                        readonly property real orientationRad: placementController ? placementController.theta : 0.0
-                        readonly property real degrees: orientationRad * 180 / Math.PI
-                        property real radius: Math.max(0, (width * 0.5) - 14)
-
-                        function updateOrientationFromPoint(px, py) 
-                        {
-                            if (!placementController || !placementController.hasPosition || !orientationEnabled)
-                            {
-                                return
-                            }
-                            var dx = px - width / 2
-                            var dy = py - height / 2
-                            if (dx === 0 && dy === 0)
-                            {
-                                return
-                            }
-                            var angle = Math.atan2(-dy, dx)
-                            var deg = angle * 180 / Math.PI
-                            var current = rotationOverlay.degrees
-                            var delta = deg - current
-                            while (delta > 180) delta -= 360
-                            while (delta < -180) delta += 360
-                            var eased = current + (delta * 0.35)
-                            placementController.setOrientationDegrees(eased)
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: width / 2
-                            color: "transparent"
-                            border.color: orientationEnabled ? "#ffffff" : "#9aa8b1"
-                            border.width: 2
-                        }
-
-                        Canvas {
-                            id: directionMarker
-                            width: rotationPanel.wheelSize / 4
-                            height: width
-                            x: (rotationOverlay.width / 2) + radius * Math.cos(rotationOverlay.orientationRad) - width / 2
-                            y: (rotationOverlay.height / 2) - radius * Math.sin(rotationOverlay.orientationRad) - height / 2
-                            rotation: 90 - rotationOverlay.degrees
-                            transformOrigin: Item.Center
-
-                            onPaint: {
-                                var ctx = getContext("2d")
-                                ctx.clearRect(0, 0, width, height)
-                                ctx.fillStyle = orientationEnabled ? "#ffffff" : "#9aa8b1"
-                                var cx = width / 2
-                                var headY = 0
-                                var headW = width * 0.7
-                                var tailW = width * 0.35
-                                var tailY = height * 0.65
-                                ctx.beginPath()
-                                ctx.moveTo(cx, headY)
-                                ctx.lineTo(cx + headW / 2, tailY)
-                                ctx.lineTo(cx + tailW / 2, tailY)
-                                ctx.lineTo(cx + tailW / 2, height)
-                                ctx.lineTo(cx - tailW / 2, height)
-                                ctx.lineTo(cx - tailW / 2, tailY)
-                                ctx.lineTo(cx - headW / 2, tailY)
-                                ctx.closePath()
-                                ctx.fill()
-                            }
-                        }
-
-                        MultiPointTouchArea {
-                            anchors.fill: parent
-                            enabled: orientationEnabled
-                            minimumTouchPoints: 1
-                            maximumTouchPoints: 1
-                            onTouchUpdated: {
-                                if (touchPoints.length > 0) {
-                                    var p = touchPoints[0]
-                                    rotationOverlay.updateOrientationFromPoint(p.x, p.y)
-                                }
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            acceptedButtons: Qt.LeftButton
-                            onPressed: function(mouse) { rotationOverlay.updateOrientationFromPoint(mouse.x, mouse.y) }
-                            onPositionChanged: function(mouse) {
-                                if (pressed) {
-                                    rotationOverlay.updateOrientationFromPoint(mouse.x, mouse.y)
-                                }
-                            }
-                        }
-                    }
+                    placementController.setOrientationDegrees(deg)
                 }
             }
 
-            Rectangle {
+            OrientationWheel {
                 id: goalRotationPanel
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
                 anchors.leftMargin: 21
                 anchors.bottomMargin: 21
-                color: goalOrientationEnabled ? "#2c5f7c" : "#3b4a55"
-                radius: 13
-                border.color: goalOrientationEnabled ? "#6aa3c8" : "#5f707d"
-                border.width: 3
                 z: 50
-                visible: mapAvailable && isNavigationStep && goalPlacementEnabled && goalPointSet && !goalAccepted && !testStarted
-                opacity: goalOrientationEnabled ? 1.0 : 0.6
+                visiblePanel: mapAvailable && isNavigationStep && goalPlacementEnabled && goalPointSet && !goalAccepted && !testStarted
+                enabled: goalOrientationEnabled
+                wheelSize: wheelSizePx > 0 ? wheelSizePx : Math.min(240, Math.min(parent.width, parent.height) * 0.32)
+                title: qsTr("Orientación")
+                angleDeg: goalOrientationDeg
 
-                property int padding: 13
-                property real wheelSize: wheelSizePx > 0 ? wheelSizePx
-                                                       : Math.min(240, Math.min(parent.width, parent.height) * 0.32)
-
-                implicitWidth: goalPanelContent.implicitWidth + (padding * 2)
-                implicitHeight: goalPanelContent.implicitHeight + (padding * 2)
-
-                Column {
-                    id: goalPanelContent
-                    anchors.fill: parent
-                    anchors.margins: goalRotationPanel.padding
-                    spacing: 10
-
-                    Rectangle {
-                        width: goalRotationPanel.wheelSize
-                        height: 36
-                        color: goalOrientationEnabled ? "#1a3a4a" : "#2e3a43"
-                        radius: 6
-                        opacity: 0.9
-
-                        Text {
-                            anchors.centerIn: parent
-                            color: "#ffffff"
-                            font.pixelSize: 16
-                            font.bold: true
-                            text: qsTr("Orientación: %1°").arg(Math.round(((goalRotationOverlay.degrees + 360) % 360)))
-                        }
+                onAngleChanged: function(deg) {
+                    if (!goalOrientationEnabled) {
+                        return
                     }
+                    goalOrientationDeg = deg
+                    goalOrientationSet = true
+                }
+            }
 
-                    Item {
-                        id: goalRotationOverlay
-                        width: goalRotationPanel.wheelSize
-                        height: width
+            OrientationWheel {
+                id: pathRotationPanel
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                anchors.leftMargin: 21
+                anchors.bottomMargin: 21
+                z: 50
+                visiblePanel: mapAvailable && isNavigationStep && pathPlacementEnabled && pathTerminalPoseSet && !testStarted
+                enabled: pathTerminalPoseSet
+                wheelSize: wheelSizePx > 0 ? wheelSizePx : Math.min(240, Math.min(parent.width, parent.height) * 0.32)
+                title: qsTr("Orientación")
+                angleDeg: pathTerminalOrientationDeg
 
-                        readonly property real orientationRad: goalOrientationDeg * Math.PI / 180
-                        readonly property real degrees: goalOrientationDeg
-                        property real radius: Math.max(0, (width * 0.5) - 14)
-
-                        function updateOrientationFromPoint(px, py)
-                        {
-                            if (!goalOrientationEnabled)
-                            {
-                                return
-                            }
-                            var dx = px - width / 2
-                            var dy = py - height / 2
-                            if (dx === 0 && dy === 0)
-                            {
-                                return
-                            }
-                            var angle = Math.atan2(-dy, dx)
-                            var deg = angle * 180 / Math.PI
-                            var current = goalOrientationDeg
-                            var delta = deg - current
-                            while (delta > 180) delta -= 360
-                            while (delta < -180) delta += 360
-                            var eased = current + (delta * 0.35)
-                            goalOrientationDeg = eased
-                            goalOrientationSet = true
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: width / 2
-                            color: "transparent"
-                            border.color: goalOrientationEnabled ? "#ffffff" : "#9aa8b1"
-                            border.width: 2
-                        }
-
-                        Canvas {
-                            id: goalDirectionMarker
-                            width: goalRotationPanel.wheelSize / 4
-                            height: width
-                            x: (goalRotationOverlay.width / 2) + radius * Math.cos(goalRotationOverlay.orientationRad) - width / 2
-                            y: (goalRotationOverlay.height / 2) - radius * Math.sin(goalRotationOverlay.orientationRad) - height / 2
-                            rotation: 90 - goalRotationOverlay.degrees
-                            transformOrigin: Item.Center
-
-                            onPaint: {
-                                var ctx = getContext("2d")
-                                ctx.clearRect(0, 0, width, height)
-                                ctx.fillStyle = goalOrientationEnabled ? "#ffffff" : "#9aa8b1"
-                                var cx = width / 2
-                                var headY = 0
-                                var headW = width * 0.7
-                                var tailW = width * 0.35
-                                var tailY = height * 0.65
-                                ctx.beginPath()
-                                ctx.moveTo(cx, headY)
-                                ctx.lineTo(cx + headW / 2, tailY)
-                                ctx.lineTo(cx + tailW / 2, tailY)
-                                ctx.lineTo(cx + tailW / 2, height)
-                                ctx.lineTo(cx - tailW / 2, height)
-                                ctx.lineTo(cx - tailW / 2, tailY)
-                                ctx.lineTo(cx - headW / 2, tailY)
-                                ctx.closePath()
-                                ctx.fill()
-                            }
-                        }
-
-                        MultiPointTouchArea {
-                            anchors.fill: parent
-                            enabled: goalOrientationEnabled
-                            minimumTouchPoints: 1
-                            maximumTouchPoints: 1
-                            onTouchUpdated: {
-                                if (touchPoints.length > 0) {
-                                    var p = touchPoints[0]
-                                    goalRotationOverlay.updateOrientationFromPoint(p.x, p.y)
-                                }
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            acceptedButtons: Qt.LeftButton
-                            onPressed: function(mouse) { goalRotationOverlay.updateOrientationFromPoint(mouse.x, mouse.y) }
-                            onPositionChanged: function(mouse) {
-                                if (pressed) {
-                                    goalRotationOverlay.updateOrientationFromPoint(mouse.x, mouse.y)
-                                }
-                            }
-                        }
+                onAngleChanged: function(deg) {
+                    if (!pathTerminalPoseSet) {
+                        return
                     }
+                    pathTerminalOrientationDeg = deg
+                    pathTerminalOrientationOverride = true
                 }
             }
 
@@ -679,8 +663,8 @@ Rectangle {
                 id: emptyMapPlaceholder
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
-                color: "#1a3a4a"
-                border.color: "#2c5f7c"
+                color: AppTheme.map.panelHeader
+                border.color: AppTheme.map.panel
                 visible: !mapAvailable
                 z: 0
             }
@@ -688,7 +672,7 @@ Rectangle {
             Text {
                 anchors.centerIn: parent
                 text: qsTr("Esperando mapa...")
-                color: "#ffffff"
+                color: AppTheme.map.white
                 opacity: 0.7
                 font.pixelSize: 16
                 visible: !mapAvailable
@@ -699,7 +683,7 @@ Rectangle {
             id: bottomBar
             Layout.fillWidth: true
             Layout.preferredHeight: Math.max(60, root.buttonHeightPx + 16)
-            color: "#2c5f7c"
+            color: AppTheme.map.panel
             radius: 6
             visible: !isNavigationStep
 
@@ -724,14 +708,14 @@ Rectangle {
 
                         background: Rectangle {
                             radius: 6
-                            color: enablePlacementButton.checked ? "#1a3a4a" : "#3a7fa0"
-                            border.color: "#ffffff"
+                            color: enablePlacementButton.checked ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
                             border.width: 1
                         }
 
                         contentItem: Text {
                             text: qsTr("HABILITAR COLOCACIÓN")
-                            color: "#ffffff"
+                            color: AppTheme.map.white
                             font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -750,14 +734,14 @@ Rectangle {
 
                         background: Rectangle {
                             radius: 6
-                            color: clearPlacementButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                            border.color: "#ffffff"
+                            color: clearPlacementButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
                             border.width: 1
                         }
 
                         contentItem: Text {
                             text: qsTr("BORRAR")
-                            color: "#ffffff"
+                            color: AppTheme.map.white
                             font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -784,14 +768,14 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: autoLocalizationButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: autoLocalizationButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
                     contentItem: Text {
                         text: qsTr("AUTOLOCALIZAR")
-                        color: "#ffffff"
+                        color: AppTheme.map.white
                         font.pixelSize: 14
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -814,14 +798,14 @@ Rectangle {
                     enabled: true
                     background: Rectangle {
                         radius: 6
-                        color: orientationEnabled ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: orientationEnabled ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
                     contentItem: Text {
                         text: qsTr("HABILITAR ORIENTACIÓN")
-                        color: "#ffffff"
+                        color: AppTheme.map.white
                         font.pixelSize: 14
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -853,14 +837,14 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: backOrientationButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: backOrientationButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
                     contentItem: Text {
                         text: qsTr("ATRÁS")
-                        color: "#ffffff"
+                        color: AppTheme.map.white
                         font.pixelSize: 14
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -885,14 +869,14 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: confirmPlacementButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: confirmPlacementButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
                     contentItem: Text {
                         text: qsTr("CONFIRMAR")
-                        color: "#ffffff"
+                        color: AppTheme.map.white
                         font.pixelSize: 14
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -914,7 +898,7 @@ Rectangle {
             id: navigationBar
             Layout.fillWidth: true
             Layout.preferredHeight: Math.max(60, root.iconButtonSizePx + 16)
-            color: "#2c5f7c"
+            color: AppTheme.map.panel
             radius: 6
             visible: isNavigationStep
             opacity: mapAvailable ? 1.0 : 0.5
@@ -936,8 +920,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: parent.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: parent.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -959,8 +943,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: parent.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: parent.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -982,8 +966,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: parent.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: parent.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -1006,8 +990,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: followButton.checked ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: followButton.checked ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -1028,20 +1012,20 @@ Rectangle {
                     Layout.preferredWidth: 150
                     Layout.preferredHeight: root.buttonHeightPx
                     Layout.alignment: Qt.AlignVCenter
-                    visible: goalAccepted && !testStarted
-                    enabled: goalPathReady
+                    visible: ((goalPlacementEnabled && goalAccepted) || (pathPlacementEnabled && manualPathReady)) && !testStarted
+                    enabled: goalPlacementEnabled ? goalPathReady : (pathPlacementEnabled ? manualPathReady : false)
                     opacity: enabled ? 1.0 : 0.4
 
                     background: Rectangle {
                         radius: 6
-                        color: startTestButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: startTestButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
                     contentItem: Text {
                         text: qsTr("INICIAR TEST")
-                        color: "#ffffff"
+                        color: AppTheme.map.white
                         font.pixelSize: 14
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -1067,8 +1051,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: goalPlacementEnabled ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: goalPlacementEnabled ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -1082,7 +1066,13 @@ Rectangle {
                     }
 
                     onClicked: {
-                        goalPlacementEnabled = !goalPlacementEnabled
+                        if (goalPlacementEnabled) {
+                            goalPlacementEnabled = false
+                        }
+                        else {
+                            goalPlacementEnabled = true
+                            pathPlacementEnabled = false
+                        }
                     }
                 }
 
@@ -1090,13 +1080,13 @@ Rectangle {
                     id: pathModeButton
                     width: root.iconButtonSizePx
                     height: root.iconButtonSizePx
-                    enabled: false
-                    opacity: 0.5
+                    opacity: enabled ? 1.0 : 0.5
+                    enabled: mapAvailable && isNavigationStep
 
                     background: Rectangle {
                         radius: 6
-                        color: "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: pathPlacementEnabled ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -1108,23 +1098,16 @@ Rectangle {
                         fillMode: Image.PreserveAspectFit
                         smooth: true
                     }
-                }
 
-                Button {
-                    id: placeholderModeButton
-                    width: root.iconButtonSizePx
-                    height: root.iconButtonSizePx
-                    enabled: false
-                    opacity: 0.35
-
-                    background: Rectangle {
-                        radius: 6
-                        color: "#3a7fa0"
-                        border.color: "#ffffff"
-                        border.width: 1
+                    onClicked: {
+                        if (pathPlacementEnabled) {
+                            pathPlacementEnabled = false
+                        }
+                        else {
+                            pathPlacementEnabled = true
+                            goalPlacementEnabled = false
+                        }
                     }
-
-                    contentItem: Item {}
                 }
             }
 
@@ -1142,8 +1125,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: homeButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: homeButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 

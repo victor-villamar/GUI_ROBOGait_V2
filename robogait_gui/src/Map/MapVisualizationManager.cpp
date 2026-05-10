@@ -16,21 +16,24 @@ using namespace ROBOGait::map::manager;
 MapVisualizationManager::MapVisualizationManager() :
     parent_node_(nullptr),
     render_scene_(std::make_shared<ROBOGait::map::rendering::RenderScene>()),
+    render_camera_(std::make_shared<ROBOGait::map::rendering::RenderCamera>()),
     map_layer_(nullptr),
     robot_layer_(nullptr),
     goal_robot_layer_(nullptr),
     path_layer_(nullptr),
+    manual_draw_path_layer_(nullptr),
     live_path_layer_(nullptr),
     laser_layer_(nullptr),
     particle_layer_(nullptr),
-    render_camera_(std::make_shared<ROBOGait::map::rendering::RenderCamera>()),
     map_source_(std::make_shared<ROBOGait::map::source::MapSource>()),
     pose_source_(std::make_shared<ROBOGait::map::source::RobotPoseSource>()),
     goal_robot_pose_data_(nullptr),
     manual_path_data_(nullptr),
+    manual_draw_path_data_(nullptr),
     path_source_(std::make_shared<ROBOGait::map::source::PathSource>()),
     laser_source_(std::make_shared<ROBOGait::map::source::LaserSource>()),
     particle_source_(std::make_shared<ROBOGait::map::source::ParticleCloudSource>()),
+    manual_path_editor_(std::make_unique<ROBOGait::map::interaction::ManualPathEditor>()),
     selected_robot_namespace_(""),
     use_namespace_discovery_(true),
     is_initialized_(false),
@@ -45,6 +48,11 @@ MapVisualizationManager::MapVisualizationManager() :
     robot_size_(0.5),
     follow_robot_(false)
 {
+  if (manual_path_editor_)
+  {
+    manual_path_editor_->setMapVisualizationManager(this);
+  }
+
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
 
   if (yaml_loader.isLoaded())
@@ -63,6 +71,33 @@ MapVisualizationManager::MapVisualizationManager() :
   else
   {
     qWarning() << "[MapVisualizationManager::MapVisualizationManager] YAML not loaded, using default robot_size:" << robot_size_;
+  }
+
+  if (manual_path_editor_)
+  {
+    constexpr double DEFAULT_RESAMPLE_SPACING_PX = 5.0;
+    constexpr double DEFAULT_RDP_EPSILON_PX = 3.0;
+    constexpr int DEFAULT_SHORT_STRAW_WINDOW = 3;
+    constexpr double DEFAULT_SHORT_STRAW_MEDIAN_FACTOR = 0.95;
+    constexpr double DEFAULT_SHORT_STRAW_LINE_THRESHOLD = 0.95;
+
+    double resample_spacing_px = DEFAULT_RESAMPLE_SPACING_PX;
+    double rdp_epsilon_px = DEFAULT_RDP_EPSILON_PX;
+    int short_straw_window = DEFAULT_SHORT_STRAW_WINDOW;
+    double short_straw_median_factor = DEFAULT_SHORT_STRAW_MEDIAN_FACTOR;
+    double short_straw_line_threshold = DEFAULT_SHORT_STRAW_LINE_THRESHOLD;
+
+    if (yaml_loader.isLoaded())
+    {
+      resample_spacing_px = yaml_loader.getValue<double>("map.manual_path_segmentation.resample_spacing_px", resample_spacing_px);
+      rdp_epsilon_px = yaml_loader.getValue<double>("map.manual_path_segmentation.rdp_epsilon_px", rdp_epsilon_px);
+      short_straw_window = yaml_loader.getValue<int>("map.manual_path_segmentation.short_straw_window", short_straw_window);
+      short_straw_median_factor = yaml_loader.getValue<double>("map.manual_path_segmentation.short_straw_median_factor", short_straw_median_factor);
+      short_straw_line_threshold = yaml_loader.getValue<double>("map.manual_path_segmentation.short_straw_line_threshold", short_straw_line_threshold);
+    }
+
+    manual_path_editor_->setSegmentationTuningPx(resample_spacing_px, rdp_epsilon_px, short_straw_window, short_straw_median_factor,
+                                                 short_straw_line_threshold);
   }
 
   if (render_scene_ && render_scene_->getPipeline())
@@ -242,7 +277,7 @@ bool MapVisualizationManager::screenToMap(const QPointF& screen_point, QPointF& 
     return false;
   }
 
-  const QVector4D screen_vec(screen_point.x(), screen_point.y(), 0.0f, 1.0f);
+  const QVector4D screen_vec(static_cast<float>(screen_point.x()), static_cast<float>(screen_point.y()), 0.0f, 1.0f);
   const QVector4D world_vec = inv_transform * screen_vec;
 
   map_point = QPointF(world_vec.x(), world_vec.y());
@@ -282,9 +317,9 @@ void MapVisualizationManager::setManualRobotPose(double x, double y, double thet
   }
 
   ROBOGait::map::data::RobotPoseData::RobotPoseMetadata metadata;
-  metadata.x = x;
-  metadata.y = y;
-  metadata.theta = theta;
+  metadata.x_ = x;
+  metadata.y_ = y;
+  metadata.theta_ = theta;
   robot_pose_data->setPose(metadata);
 
   updateAvailability();
@@ -313,9 +348,9 @@ QVariantMap MapVisualizationManager::getRobotPose() const
   }
 
   const auto metadata = robot_pose_data->getMetadata();
-  pose["x"] = metadata.x;
-  pose["y"] = metadata.y;
-  pose["theta"] = metadata.theta;
+  pose["x"] = metadata.x_;
+  pose["y"] = metadata.y_;
+  pose["theta"] = metadata.theta_;
   pose["available"] = true;
   return pose;
 }
@@ -335,8 +370,8 @@ bool MapVisualizationManager::isMapPointInside(double x, double y) const
   }
 
   const auto map_metadata = map_layer_->getMapData()->getMetadata();
-  const double width_m = static_cast<double>(map_metadata.width) * map_metadata.resolution;
-  const double height_m = static_cast<double>(map_metadata.height) * map_metadata.resolution;
+  const double width_m = static_cast<double>(map_metadata.width_) * map_metadata.resolution_;
+  const double height_m = static_cast<double>(map_metadata.height_) * map_metadata.resolution_;
 
   if (width_m <= 0.0 || height_m <= 0.0)
   {
@@ -344,9 +379,9 @@ bool MapVisualizationManager::isMapPointInside(double x, double y) const
     return false;
   }
 
-  const double origin_x = map_metadata.origin_x;
-  const double origin_y = map_metadata.origin_y;
-  const double theta = map_metadata.origin_theta;
+  const double origin_x = map_metadata.origin_x_;
+  const double origin_y = map_metadata.origin_y_;
+  const double theta = map_metadata.origin_theta_;
 
   const double cos_t = std::cos(theta);
   const double sin_t = std::sin(theta);
@@ -359,6 +394,8 @@ bool MapVisualizationManager::isMapPointInside(double x, double y) const
 
   return (local_x >= 0.0 && local_x <= width_m && local_y >= 0.0 && local_y <= height_m);
 }
+
+ROBOGait::map::interaction::ManualPathEditor* MapVisualizationManager::getManualPathEditor() const { return manual_path_editor_.get(); }
 
 void MapVisualizationManager::activateSubscriptions()
 {
@@ -455,6 +492,12 @@ void MapVisualizationManager::destroySubscriptions()
   {
     path_layer_item_->update();
   }
+
+  if (manual_draw_path_layer_item_)
+  {
+    manual_draw_path_layer_item_->update();
+  }
+
   if (live_path_layer_item_)
   {
     live_path_layer_item_->update();
@@ -522,13 +565,52 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
   map_layer_item_->setRenderer(map_layer_);
   map_layer_item_->setCamera(render_camera_);
 
+  bool has_sync_overlay = false;
   if (robot_layer_item_)
   {
     map_layer_item_->setSyncItem(robot_layer_item_);
+    has_sync_overlay = true;
   }
-  else
+
+  if (goal_robot_layer_item_)
   {
-    qWarning() << "[MapVisualizationManager::registerMapLayerItem] Robot layer item not registered yet, MapLayerItem will be registered without sync item";
+    map_layer_item_->setSyncItem(goal_robot_layer_item_);
+    has_sync_overlay = true;
+  }
+
+  if (path_layer_item_)
+  {
+    map_layer_item_->setSyncItem(path_layer_item_);
+    has_sync_overlay = true;
+  }
+
+  if (manual_draw_path_layer_item_)
+  {
+    map_layer_item_->setSyncItem(manual_draw_path_layer_item_);
+    has_sync_overlay = true;
+  }
+
+  if (live_path_layer_item_)
+  {
+    map_layer_item_->setSyncItem(live_path_layer_item_);
+    has_sync_overlay = true;
+  }
+
+  if (laser_layer_item_)
+  {
+    map_layer_item_->setSyncItem(laser_layer_item_);
+    has_sync_overlay = true;
+  }
+
+  if (particle_layer_item_)
+  {
+    map_layer_item_->setSyncItem(particle_layer_item_);
+    has_sync_overlay = true;
+  }
+
+  if (!has_sync_overlay)
+  {
+    qWarning() << "[MapVisualizationManager::registerMapLayerItem] Overlay items not registered yet, MapLayerItem will be registered without sync overlays";
   }
 
   // clang-format off
@@ -668,6 +750,11 @@ void MapVisualizationManager::registerGoalRobotLayerItem(QObject* item)
   goal_robot_layer_item_->setRenderer(goal_robot_layer_);
   goal_robot_layer_item_->setCamera(render_camera_);
 
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(goal_robot_layer_item_);
+  }
+
   qInfo() << "[MapVisualizationManager::registerGoalRobotLayerItem] Item registered";
 }
 
@@ -716,7 +803,65 @@ void MapVisualizationManager::registerPathLayerItem(QObject* item)
   path_layer_item_->setRenderer(path_layer_);
   path_layer_item_->setCamera(render_camera_);
 
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(path_layer_item_);
+  }
+
   qInfo() << "[MapVisualizationManager::registerPathLayerItem] Item registered";
+}
+
+void MapVisualizationManager::registerManualDrawPathLayerItem(QObject* item)
+{
+  if (!item)
+  {
+    qCritical() << "[MapVisualizationManager::registerManualDrawPathLayerItem] Null item";
+    return;
+  }
+
+  auto* layer_item = qobject_cast<ROBOGait::map::item::PathLayerItem*>(item);
+  if (!layer_item)
+  {
+    qCritical() << "[MapVisualizationManager::registerManualDrawPathLayerItem] Invalid item type";
+    return;
+  }
+
+  manual_draw_path_layer_item_ = layer_item;
+
+  if (!manual_draw_path_layer_item_)
+  {
+    qCritical() << "[MapVisualizationManager::registerManualDrawPathLayerItem] Failed to register PathLayerItem";
+    return;
+  }
+
+  if (!render_scene_)
+  {
+    qCritical() << "[MapVisualizationManager::registerManualDrawPathLayerItem] Render scene not available, cannot set render scene for PathLayerItem";
+    return;
+  }
+
+  if (!manual_draw_path_layer_)
+  {
+    qCritical() << "[MapVisualizationManager::registerManualDrawPathLayerItem] Manual draw path layer not available, cannot set renderer for PathLayerItem";
+    return;
+  }
+
+  if (!render_camera_)
+  {
+    qCritical() << "[MapVisualizationManager::registerManualDrawPathLayerItem] Render camera not available, cannot set camera for PathLayerItem";
+    return;
+  }
+
+  manual_draw_path_layer_item_->setRenderScene(render_scene_);
+  manual_draw_path_layer_item_->setRenderer(manual_draw_path_layer_);
+  manual_draw_path_layer_item_->setCamera(render_camera_);
+
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(manual_draw_path_layer_item_);
+  }
+
+  qInfo() << "[MapVisualizationManager::registerManualDrawPathLayerItem] Item registered";
 }
 
 void MapVisualizationManager::registerLivePathLayerItem(QObject* item)
@@ -764,6 +909,11 @@ void MapVisualizationManager::registerLivePathLayerItem(QObject* item)
   live_path_layer_item_->setRenderer(live_path_layer_);
   live_path_layer_item_->setCamera(render_camera_);
 
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(live_path_layer_item_);
+  }
+
   qInfo() << "[MapVisualizationManager::registerLivePathLayerItem] Item registered";
 }
 
@@ -776,9 +926,9 @@ void MapVisualizationManager::setGoalRobotPose(double x, double y, double theta)
   }
 
   ROBOGait::map::data::RobotPoseData::RobotPoseMetadata metadata;
-  metadata.x = x;
-  metadata.y = y;
-  metadata.theta = theta;
+  metadata.x_ = x;
+  metadata.y_ = y;
+  metadata.theta_ = theta;
   goal_robot_pose_data_->setPose(metadata);
 
   goal_robot_layer_->update();
@@ -812,11 +962,6 @@ void MapVisualizationManager::clearGoalRobotPose()
 
 void MapVisualizationManager::setManualPathPoints(const QVariantList& points)
 {
-  if (!manual_path_data_)
-  {
-    return;
-  }
-
   ROBOGait::map::data::PathData::PathMetadata metadata;
   metadata.points.reserve(points.size());
 
@@ -838,13 +983,16 @@ void MapVisualizationManager::setManualPathPoints(const QVariantList& points)
     metadata.points.emplace_back(x, y);
   }
 
-  if (metadata.points.empty())
+  if (manual_path_data_)
   {
-    manual_path_data_->reset();
-  }
-  else
-  {
-    manual_path_data_->setPath(metadata);
+    if (metadata.points.empty())
+    {
+      manual_path_data_->reset();
+    }
+    else
+    {
+      manual_path_data_->setPath(metadata);
+    }
   }
 
   if (path_layer_)
@@ -859,12 +1007,10 @@ void MapVisualizationManager::setManualPathPoints(const QVariantList& points)
 
 void MapVisualizationManager::clearManualPath()
 {
-  if (!manual_path_data_)
+  if (manual_path_data_)
   {
-    return;
+    manual_path_data_->reset();
   }
-
-  manual_path_data_->reset();
 
   if (path_layer_)
   {
@@ -873,6 +1019,79 @@ void MapVisualizationManager::clearManualPath()
   if (path_layer_item_)
   {
     path_layer_item_->update();
+  }
+}
+
+void MapVisualizationManager::setManualDrawPathPoints(const QVariantList& points)
+{
+  ROBOGait::map::data::PathData::PathMetadata metadata;
+  metadata.points.reserve(points.size());
+
+  for (const auto& value : points)
+  {
+    if (!value.canConvert<QVariantMap>())
+    {
+      continue;
+    }
+
+    const QVariantMap map = value.toMap();
+    bool ok_x = false;
+    bool ok_y = false;
+    const double x = map.value("x").toDouble(&ok_x);
+    const double y = map.value("y").toDouble(&ok_y);
+
+    if (!ok_x || !ok_y)
+    {
+      continue;
+    }
+
+    metadata.points.emplace_back(x, y);
+  }
+
+  if (manual_draw_path_data_)
+  {
+    if (metadata.points.empty())
+    {
+      manual_draw_path_data_->reset();
+    }
+
+    else
+    {
+      manual_draw_path_data_->setPath(metadata);
+    }
+  }
+
+  if (manual_draw_path_layer_)
+  {
+    manual_draw_path_layer_->update();
+  }
+
+  if (manual_draw_path_layer_item_)
+  {
+    manual_draw_path_layer_item_->update();
+  }
+}
+
+void MapVisualizationManager::clearManualDrawPath()
+{
+  if (manual_draw_path_data_)
+  {
+    manual_draw_path_data_->reset();
+  }
+
+  if (manual_draw_path_layer_)
+  {
+    manual_draw_path_layer_->update();
+  }
+
+  if (manual_draw_path_layer_item_)
+  {
+    manual_draw_path_layer_item_->update();
+  }
+
+  if (manual_path_editor_)
+  {
+    manual_path_editor_->clearCachedPath();
   }
 }
 
@@ -921,6 +1140,11 @@ void MapVisualizationManager::registerLaserLayerItem(QObject* item)
   laser_layer_item_->setRenderer(laser_layer_);
   laser_layer_item_->setCamera(render_camera_);
 
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(laser_layer_item_);
+  }
+
   qInfo() << "[MapVisualizationManager::registerLaserLayerItem] Item registered";
 }
 
@@ -968,6 +1192,11 @@ void MapVisualizationManager::registerParticleCloudLayerItem(QObject* item)
   particle_layer_item_->setRenderScene(render_scene_);
   particle_layer_item_->setRenderer(particle_layer_);
   particle_layer_item_->setCamera(render_camera_);
+
+  if (map_layer_item_)
+  {
+    map_layer_item_->setSyncItem(particle_layer_item_);
+  }
 
   qInfo() << "[MapVisualizationManager::registerParticleCloudLayerItem] Item registered";
 }
@@ -1032,8 +1261,8 @@ void MapVisualizationManager::fitToView()
 
   setFollowRobot(false);
   const auto metadata = map_layer_->getMapData()->getMetadata();
-  const double width_m = static_cast<double>(metadata.width) * metadata.resolution;
-  const double height_m = static_cast<double>(metadata.height) * metadata.resolution;
+  const double width_m = static_cast<double>(metadata.width_) * metadata.resolution_;
+  const double height_m = static_cast<double>(metadata.height_) * metadata.resolution_;
 
   if (width_m <= 0.0 || height_m <= 0.0)
   {
@@ -1041,9 +1270,9 @@ void MapVisualizationManager::fitToView()
     return;
   }
 
-  const double origin_x = metadata.origin_x;
-  const double origin_y = metadata.origin_y;
-  const double theta = metadata.origin_theta;
+  const double origin_x = metadata.origin_x_;
+  const double origin_y = metadata.origin_y_;
+  const double theta = metadata.origin_theta_;
   const double cos_t = std::cos(theta);
   const double sin_t = std::sin(theta);
 
@@ -1208,6 +1437,12 @@ void MapVisualizationManager::createLayers()
   const auto particle_data = particle_source_->getParticleCloudData();
   goal_robot_pose_data_ = std::make_shared<ROBOGait::map::data::RobotPoseData>();
   manual_path_data_ = std::make_shared<ROBOGait::map::data::PathData>();
+  manual_draw_path_data_ = std::make_shared<ROBOGait::map::data::PathData>();
+
+  if (manual_path_editor_)
+  {
+    manual_path_editor_->clearCachedPath();
+  }
 
   map_layer_ = std::make_shared<ROBOGait::map::layer::MapLayer>();
   map_layer_->setMapData(map_data);
@@ -1223,6 +1458,9 @@ void MapVisualizationManager::createLayers()
   path_layer_ = std::make_shared<ROBOGait::map::layer::PathLayer>();
   path_layer_->setPathData(manual_path_data_);
 
+  manual_draw_path_layer_ = std::make_shared<ROBOGait::map::layer::PathLayer>();
+  manual_draw_path_layer_->setPathData(manual_draw_path_data_);
+
   live_path_layer_ = std::make_shared<ROBOGait::map::layer::PathLayer>();
   live_path_layer_->setPathData(live_path_data);
 
@@ -1232,7 +1470,7 @@ void MapVisualizationManager::createLayers()
   particle_layer_ = std::make_shared<ROBOGait::map::layer::ParticleCloudLayer>();
   particle_layer_->setParticleCloudData(particle_data);
 
-  if (!map_layer_ || !robot_layer_ || !goal_robot_layer_ || !path_layer_ || !live_path_layer_ || !laser_layer_ || !particle_layer_)
+  if (!map_layer_ || !robot_layer_ || !goal_robot_layer_ || !path_layer_ || !manual_draw_path_layer_ || !live_path_layer_ || !laser_layer_ || !particle_layer_)
   {
     qCritical() << "[MapVisualizationManager::createLayers] Failed to create render layers";
     return;
@@ -1252,14 +1490,24 @@ void MapVisualizationManager::createLayers()
 
 void MapVisualizationManager::destroyLayers()
 {
-  if (!map_layer_ && !robot_layer_ && !path_layer_ && !live_path_layer_ && !laser_layer_ && !particle_layer_)
+  if (!map_layer_ && !robot_layer_ && !path_layer_ && !manual_draw_path_layer_ && !live_path_layer_ && !laser_layer_ && !particle_layer_)
   {
+    if (manual_path_editor_)
+    {
+      manual_path_editor_->clearCachedPath();
+    }
+
     qWarning() << "[MapVisualizationManager::destroyLayers] No layers to destroy";
     return;
   }
 
   if (!render_scene_)
   {
+    if (manual_path_editor_)
+    {
+      manual_path_editor_->clearCachedPath();
+    }
+
     qWarning() << "[MapVisualizationManager::destroyLayers] Render scene not available, cannot properly disconnect layers from scene";
     return;
   }
@@ -1288,6 +1536,10 @@ void MapVisualizationManager::destroyLayers()
   {
     path_layer_item_->setRenderer(nullptr);
   }
+  if (manual_draw_path_layer_item_)
+  {
+    manual_draw_path_layer_item_->setRenderer(nullptr);
+  }
   if (live_path_layer_item_)
   {
     live_path_layer_item_->setRenderer(nullptr);
@@ -1305,9 +1557,17 @@ void MapVisualizationManager::destroyLayers()
   robot_layer_.reset();
   goal_robot_layer_.reset();
   path_layer_.reset();
+  manual_draw_path_layer_.reset();
   live_path_layer_.reset();
   goal_robot_pose_data_.reset();
   manual_path_data_.reset();
+  manual_draw_path_data_.reset();
+
+  if (manual_path_editor_)
+  {
+    manual_path_editor_->clearCachedPath();
+  }
+
   laser_layer_.reset();
   particle_layer_.reset();
   map_available_cache_ = false;
@@ -1373,7 +1633,7 @@ void MapVisualizationManager::updateMapResolution()
     const auto map_data = map_source_->getMapData();
     if (map_data)
     {
-      new_resolution = map_data->getMetadata().resolution;
+      new_resolution = map_data->getMetadata().resolution_;
     }
   }
 

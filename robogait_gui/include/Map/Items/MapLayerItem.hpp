@@ -6,6 +6,7 @@
 #include <QQuickItem>
 #include <QRectF>
 #include <QSGSimpleTextureNode>
+#include <QVector>
 
 #include "Map/Layer/MapLayer.hpp"
 #include "Map/Rendering/RenderCamera.hpp"
@@ -65,9 +66,9 @@ public:
   void setCamera(const std::shared_ptr<ROBOGait::map::rendering::RenderCamera>& camera);
 
   /**
-   * @brief Set the sync item for synchronizing with the QML scene
+   * @brief Register an item to be updated in sync with map interactions
    *
-   * @param item The sync item to set
+   * @param item The sync item to register
    */
   void setSyncItem(QQuickItem* item);
 
@@ -127,11 +128,16 @@ private:
    */
   void applyPanDelta(const QPointF& delta);
 
+  /**
+   * @brief Request update on all synchronized overlay items
+   */
+  void updateSyncItems();
+
   QPointer<ROBOGait::map::rendering::RenderPipeline> pipeline_;         /**< Render pipeline for the map item */
   std::shared_ptr<ROBOGait::map::rendering::RenderScene> render_scene_; /**< Render scene for the map item */
   std::shared_ptr<ROBOGait::map::layer::MapLayer> map_render_;          /**< Map layer for the map item */
   std::shared_ptr<ROBOGait::map::rendering::RenderCamera> camera_;      /**< Camera for the map item */
-  QPointer<QQuickItem> sync_item_;                                      /**< Sync item for the map item */
+  QVector<QPointer<QQuickItem>> sync_items_;                            /**< Sync items updated together with map interactions */
   qint64 last_image_key_;                                               /**< Last image key for the map item */
   QRectF map_rect_;                                                     /**< Last map rect in world coordinates */
   bool has_map_rect_;                                                   /**< Map rect availability flag */

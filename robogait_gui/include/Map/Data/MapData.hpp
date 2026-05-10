@@ -35,14 +35,14 @@ public:
    */
   struct MapMetadata
   {
-    double resolution;
-    uint32_t width;
-    uint32_t height;
-    double origin_x;
-    double origin_y;
-    double origin_theta;
+    double resolution_;
+    uint32_t width_;
+    uint32_t height_;
+    double origin_x_;
+    double origin_y_;
+    double origin_theta_;
 
-    MapMetadata() : resolution(0.05), width(0), height(0), origin_x(0.0), origin_y(0.0), origin_theta(0.0) {}
+    MapMetadata() : resolution_(0.05), width_(0), height_(0), origin_x_(0.0), origin_y_(0.0), origin_theta_(0.0) {}
   };
 
   /**

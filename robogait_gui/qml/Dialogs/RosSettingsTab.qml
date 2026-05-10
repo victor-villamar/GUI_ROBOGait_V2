@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 6.0
 import QtQuick.Window 2.15
+import AppTheme 1.0
 
 Item {
     id: root
@@ -46,13 +47,13 @@ Item {
             text: qsTr("Configuracion del uso del descubrimiento")
             font.pixelSize: 18
             font.bold: true
-            color: root.enabled ? "#045671" : "#999999"
+            color: root.enabled ? AppTheme.settings.primaryDark : AppTheme.settings.sectionTitleDisabled
             width: parent.width
         }
 
         Rectangle {
             height: 2
-            color: "#ffffff"
+            color: AppTheme.settings.white
             width: parent.width
         }
 
@@ -64,7 +65,7 @@ Item {
             label: Text {
                 text: namespaceGroup.title
                 font: namespaceGroup.font
-                color: "#000000"
+                color: AppTheme.settings.black
             }
 
             width: parent.width
@@ -76,7 +77,7 @@ Item {
                 Text {
                     text: qsTr("Habilitar descubrimiento de robots basado en namespaces")
                     font.pixelSize: 12
-                    color: "#666666"
+                    color: AppTheme.settings.groupDescription
                     width: parent.width
                     wrapMode: Text.WordWrap
                 }
@@ -96,14 +97,14 @@ Item {
                         x: namespaceCheckbox.leftPadding
                         y: parent.height / 2 - height / 2
                         radius: Math.round(root.checkboxIndicatorPx * 0.2)
-                        border.color: "#045671"
+                        border.color: AppTheme.settings.primaryDark
                         border.width: 2
-                        color: "#ffffff"
+                        color: AppTheme.settings.white
 
                         Text {
                             anchors.centerIn: parent
                             text: "✓"
-                            color: "#000000"
+                            color: AppTheme.settings.black
                             font.pixelSize: Math.round(root.checkboxIndicatorPx * 0.7)
                             font.bold: true
                             visible: namespaceCheckbox.checked
@@ -113,7 +114,7 @@ Item {
                     contentItem: Text {
                         text: namespaceCheckbox.text
                         font: namespaceCheckbox.font
-                        color: "#045671"
+                        color: AppTheme.settings.primaryDark
                         verticalAlignment: Text.AlignVCenter
                         leftPadding: namespaceCheckbox.indicator.width + namespaceCheckbox.spacing
                     }
@@ -138,7 +139,7 @@ Item {
                           qsTr("El descubrimiento de robots se realiza utilizando sus namespaces de ROS") :
                           qsTr("El descubrimiento por namespaces está deshabilitado")
                     font.pixelSize: 11
-                    color: checked ? "#2E7D32" : "#E65100"
+                    color: checked ? AppTheme.settings.statusOk : AppTheme.settings.statusWarning
                     width: parent.width
                     wrapMode: Text.WordWrap
                     font.bold: true
@@ -154,7 +155,7 @@ Item {
             label: Text {
                 text: topicFilterGroup.title
                 font: topicFilterGroup.font
-                color: "#000000"
+                color: AppTheme.settings.black
             }
 
             width: parent.width
@@ -166,7 +167,7 @@ Item {
                 Text {
                     text: qsTr("Habilitar filtrado por tópico para el descubrimiento")
                     font.pixelSize: 12
-                    color: "#666666"
+                    color: AppTheme.settings.groupDescription
                     width: parent.width
                     wrapMode: Text.WordWrap
                 }
@@ -186,14 +187,14 @@ Item {
                         x: topicFilterCheckbox.leftPadding
                         y: parent.height / 2 - height / 2
                         radius: Math.round(root.checkboxIndicatorPx * 0.2)
-                        border.color: "#045671"
+                        border.color: AppTheme.settings.primaryDark
                         border.width: 2
-                        color: "#ffffff"
+                        color: AppTheme.settings.white
 
                         Text {
                             anchors.centerIn: parent
                             text: "✓"
-                            color: "#000000"
+                            color: AppTheme.settings.black
                             font.pixelSize: Math.round(root.checkboxIndicatorPx * 0.7)
                             font.bold: true
                             visible: topicFilterCheckbox.checked
@@ -203,7 +204,7 @@ Item {
                     contentItem: Text {
                         text: topicFilterCheckbox.text
                         font: topicFilterCheckbox.font
-                        color: "#045671"
+                        color: AppTheme.settings.primaryDark
                         verticalAlignment: Text.AlignVCenter
                         leftPadding: topicFilterCheckbox.indicator.width + topicFilterCheckbox.spacing
                     }
@@ -226,7 +227,7 @@ Item {
                     text: checked ? qsTr("Activo: Los robots se filtran por /robot_status") :
                           qsTr("Inactivo: Detección de desconexión mediante análisis del grafo de ROS")
                     font.pixelSize: 11
-                    color: checked ? "#2E7D32" : "#E65100"
+                    color: checked ? AppTheme.settings.statusOk : AppTheme.settings.statusWarning
                     width: parent.width
                     wrapMode: Text.WordWrap
                     font.bold: true

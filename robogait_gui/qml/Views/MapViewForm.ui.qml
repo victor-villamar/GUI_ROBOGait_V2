@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import AppTheme 1.0
 import QtQuick.Layouts 1.15
 import MapRendering 1.0
 
@@ -8,7 +9,7 @@ import "qrc:/Controls"
 
 Rectangle {
     id: root
-    color: "#518bb7"
+    color: AppTheme.map.appBackground
 
     property alias infoButton: infoButton
     property alias emergencyButton: emergencyButton
@@ -70,7 +71,7 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: Math.max(60, root.iconButtonSizePx + 20)
-            color: "#2c5f7c"
+            color: AppTheme.map.panel
             radius: 8
 
             RowLayout {
@@ -128,7 +129,7 @@ Rectangle {
                     text: qsTr("Creacion del Mapa")
                     font.pixelSize: 24
                     font.bold: true
-                    color: "#ffffff"
+                    color: AppTheme.map.white
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -145,9 +146,9 @@ Rectangle {
             id: mapDisplayArea
             Layout.fillWidth: true
             Layout.fillHeight: true
-            color: "#1a3a4a"
+            color: AppTheme.map.panelHeader
             radius: 8
-            border.color: "#2c5f7c"
+            border.color: AppTheme.map.panel
             border.width: 2
             clip: true
 
@@ -157,9 +158,9 @@ Rectangle {
                 anchors.top: parent.top
                 anchors.leftMargin: 16
                 anchors.topMargin: 16
-                color: "#2c5f7c"
+                color: AppTheme.map.panel
                 radius: 6
-                border.color: "#6aa3c8"
+                border.color: AppTheme.map.panelBorder
                 border.width: 1
                 z: 80
                 visible: mapAvailable
@@ -174,7 +175,7 @@ Rectangle {
                     text: qsTr("Zoom: %1x").arg(Math.round(zoomLevel))
                     font.pixelSize: 12
                     font.bold: true
-                    color: "#ffffff"
+                    color: AppTheme.map.white
                 }
             }
 
@@ -184,9 +185,9 @@ Rectangle {
                 anchors.top: zoomBadge.bottom
                 anchors.leftMargin: 16
                 anchors.topMargin: 8
-                color: "#2c5f7c"
+                color: AppTheme.map.panel
                 radius: 6
-                border.color: "#6aa3c8"
+                border.color: AppTheme.map.panelBorder
                 border.width: 1
                 z: 80
                 visible: mapAvailable && scaleMeters > 0 && scalePixels > 0
@@ -218,7 +219,7 @@ Rectangle {
                         text: scaleBadge.pixels + " px | " + scaleBadge.formatMeters(scaleBadge.meters) + " m"
                         font.pixelSize: 12
                         font.bold: true
-                        color: "#ffffff"
+                        color: AppTheme.map.white
                     }
 
                     Rectangle {
@@ -226,7 +227,7 @@ Rectangle {
                         width: Math.max(24, scaleBadge.pixels)
                         height: 4
                         radius: 2
-                        color: "#ffffff"
+                        color: AppTheme.map.white
                     }
                 }
             }
@@ -245,8 +246,8 @@ Rectangle {
 
                 background: Rectangle {
                     radius: width / 2
-                    color: emergencyButton.checked ? "#7a8a93" : "transparent"
-                    border.color: emergencyButton.checked ? "#cbd6dc" : "transparent"
+                    color: emergencyButton.checked ? AppTheme.map.emergencyStopLatchedBg : "transparent"
+                    border.color: emergencyButton.checked ? AppTheme.map.emergencyStopLatchedBorder : "transparent"
                     border.width: emergencyButton.checked ? 2 : 0
                 }
 
@@ -301,6 +302,9 @@ Rectangle {
                 anchors.margins: mapContentMargin
                 visible: mapAvailable
                 z: 2
+                bodyColor: AppTheme.map.robotBody
+                wheelColor: AppTheme.map.robotWheel
+                headColor: AppTheme.map.robotHead
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -318,6 +322,7 @@ Rectangle {
                 anchors.margins: mapContentMargin
                 visible: mapAvailable && laserAvailable
                 z: 1.5
+                laserColor: AppTheme.map.laser
 
                 Component.onCompleted: {
                     if (userSession.rosManager &&
@@ -334,8 +339,8 @@ Rectangle {
                 id: emptyMapPlaceholder
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
-                color: "#1a3a4a"
-                border.color: "#2c5f7c"
+                color: AppTheme.map.panelHeader
+                border.color: AppTheme.map.panel
                 visible: !mapAvailable
                 z: 0
             }
@@ -347,9 +352,9 @@ Rectangle {
                 anchors.bottom: !hasFloatPosition ? parent.bottom : undefined
                 anchors.rightMargin: !hasFloatPosition ? 21 : 0
                 anchors.bottomMargin: !hasFloatPosition ? 21 : 0
-                color: "#2c5f7c"
+                color: AppTheme.map.panel
                 radius: 13
-                border.color: "#6aa3c8"
+                border.color: AppTheme.map.panelBorder
                 border.width: 3
                 z: 50
                 visible: mapAvailable
@@ -394,7 +399,7 @@ Rectangle {
                     Rectangle {
                         width: joystick.width
                         height: 36
-                        color: "#1a3a4a"
+                        color: AppTheme.map.panelHeader
                         radius: 6
                         visible: manualUnlocked
                         opacity: 0.9
@@ -405,7 +410,7 @@ Rectangle {
                                   .arg(linearValue.toFixed(2))
                                   .arg(angularValue.toFixed(2))
                             font.pixelSize: 16
-                            color: "#ffffff"
+                            color: AppTheme.map.white
                             font.bold: true
                         }
                     }
@@ -492,7 +497,7 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: Math.max(60, Math.max(root.iconButtonSizePx, root.buttonHeightPx) + 16)
-            color: "#2c5f7c"
+            color: AppTheme.map.panel
             radius: 6
 
             opacity: mapAvailable ? 1.0 : 0.5
@@ -512,8 +517,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: parent.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: parent.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -538,8 +543,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: parent.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: parent.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -564,8 +569,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: parent.pressed ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: parent.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -591,8 +596,8 @@ Rectangle {
 
                     background: Rectangle {
                         radius: 6
-                        color: followButton.checked ? "#1a3a4a" : "#3a7fa0"
-                        border.color: "#ffffff"
+                        color: followButton.checked ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                        border.color: AppTheme.map.white
                         border.width: 1
                     }
 
@@ -625,14 +630,14 @@ Rectangle {
 
                         background: Rectangle {
                             radius: 6
-                            color: saveMapButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                            border.color: "#ffffff"
+                            color: saveMapButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
                             border.width: 1
                         }
 
                         contentItem: Label {
                             text: qsTr("GUARDAR")
-                            color: "#ffffff"
+                            color: AppTheme.map.white
                             font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -648,14 +653,14 @@ Rectangle {
 
                         background: Rectangle {
                             radius: 6
-                            color: resetMapButton.pressed ? "#1a3a4a" : "#3a7fa0"
-                            border.color: "#ffffff"
+                            color: resetMapButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                            border.color: AppTheme.map.white
                             border.width: 1
                         }
 
                         contentItem: Label {
                             text: qsTr("RESETEAR")
-                            color: "#ffffff"
+                            color: AppTheme.map.white
                             font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -669,7 +674,7 @@ Rectangle {
                 Text {
                     text: qsTr("Pellizque para zoom • Arrastre para mover")
                     font.pixelSize: 12
-                    color: "#ffffff"
+                    color: AppTheme.map.white
                     opacity: 0.7
                 }
             }
@@ -703,7 +708,7 @@ Rectangle {
             + "<li><b>Libre (blanco):</b> Espacio navegable.</li>"
             + "<li><b>Desconocido (gris):</b> Área no explorada.</li>"
             + "</ul>"
-            + "<h2><span style='color:#c52020'>¡¡ADVERTENCIA!!</span></h2>"
+            + "<h2><span style='color:" + AppTheme.map.warningTitle + "'>¡¡ADVERTENCIA!!</span></h2>"
             + "<p>Este robot no cuenta con sistema de gestión de colisiones. Supervise el desplazamiento en todo momento "
             + "y evite obstáculos.</p>"
             + "<h2>¿Necesita ayuda?</h2>"

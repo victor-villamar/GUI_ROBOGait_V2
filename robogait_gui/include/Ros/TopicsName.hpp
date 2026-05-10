@@ -21,6 +21,7 @@
 
 // Actions
 #define A_NAVIGATE_TO_POSE                         "/navigate_to_pose"
+#define A_NAVIGATE_THROUGH_POSES                   "/navigate_through_poses"
 #define A_COMPUTE_PATH_TO_POSE                     "/compute_path_to_pose"
 #define A_COMPUTE_PATH_THROUGH_POSES               "/compute_path_through_poses"
 

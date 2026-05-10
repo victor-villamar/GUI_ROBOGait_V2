@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import AppTheme 1.0
 
 Item {
     id: root
@@ -19,12 +20,12 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: "#518bb7"
+        color: AppTheme.selection.background
 
         Text {
             id: titleText
             text: qsTr("SELECCIONE UN PACIENTE")
-            color: "#ffffff"
+            color: AppTheme.selection.white
             font.pixelSize: 30
             horizontalAlignment: Text.AlignHCenter
             anchors.top: parent.top
@@ -41,8 +42,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
 
             background: Rectangle {
-                color: "#ffffff"
-                border.color: "#cccccc"
+                color: AppTheme.selection.white
                 radius: 15
             }
 
@@ -52,7 +52,7 @@ Item {
                 Text {
                     text: qsTr("Añadir Paciente")
                     font.pixelSize: 22
-                    color: "#000000"
+                    color: AppTheme.selection.black
                     anchors.centerIn: parent
                 }
 
@@ -96,13 +96,12 @@ Item {
                         width: parent.width
                         height: root.listItemHeightPx
                         radius: 15
-                        color: patient_id === root.selectedPatientId ? "#aed2ea" : "#ffffff"
-                        border.color: "#cccccc"
+                        color: patient_id === root.selectedPatientId ? AppTheme.selection.lightBlue : AppTheme.selection.white
 
                         Text {
                             text: patient_display
                             font.pixelSize: 22
-                            color: "#000000"
+                            color: AppTheme.selection.black
                             anchors.centerIn: parent
                         }
 

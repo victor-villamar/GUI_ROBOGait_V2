@@ -72,7 +72,23 @@ void MapLayerItem::setCamera(const std::shared_ptr<ROBOGait::map::rendering::Ren
   update();
 }
 
-void MapLayerItem::setSyncItem(QQuickItem* item) { sync_item_ = item; }
+void MapLayerItem::setSyncItem(QQuickItem* item)
+{
+  if (!item)
+  {
+    return;
+  }
+
+  for (const auto& sync_item : sync_items_)
+  {
+    if (sync_item == item)
+    {
+      return;
+    }
+  }
+
+  sync_items_.append(item);
+}
 
 bool MapLayerItem::isPanningEnabled() const { return panning_enabled_; }
 
@@ -154,16 +170,16 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
   if (map_render_->getMapData())
   {
     auto metadata = map_render_->getMapData()->getMetadata();
-    const double width_m = static_cast<double>(metadata.width) * metadata.resolution;
-    const double height_m = static_cast<double>(metadata.height) * metadata.resolution;
+    const double width_m = static_cast<double>(metadata.width_) * metadata.resolution_;
+    const double height_m = static_cast<double>(metadata.height_) * metadata.resolution_;
 
     if (width_m > 0.0 && height_m > 0.0)
     {
       node->setRect(0.0, 0.0, width_m, height_m);
 
-      const double origin_x = metadata.origin_x;
-      const double origin_y = metadata.origin_y;
-      const double theta = metadata.origin_theta;
+      const double origin_x = metadata.origin_x_;
+      const double origin_y = metadata.origin_y_;
+      const double theta = metadata.origin_theta_;
       const double cos_t = std::cos(theta);
       const double sin_t = std::sin(theta);
 
@@ -181,8 +197,8 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
 
       map_rect = QRectF(QPointF(min_x, min_y), QPointF(max_x, max_y));
 
-      map_matrix.translate(origin_x, origin_y);
-      map_matrix.rotate(qRadiansToDegrees(theta), 0.0f, 0.0f, 1.0f);
+      map_matrix.translate(static_cast<float>(origin_x), static_cast<float>(origin_y));
+      map_matrix.rotate(static_cast<float>(qRadiansToDegrees(theta)), 0.0f, 0.0f, 1.0f);
     }
     else
     {
@@ -194,10 +210,7 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
       camera_->fitToRect(map_rect);
       fit_done_ = true;
       emit zoomChanged();
-      if (sync_item_)
-      {
-        sync_item_->update();
-      }
+      updateSyncItems();
     }
   }
   else
@@ -298,10 +311,7 @@ void MapLayerItem::wheelEvent(QWheelEvent* event)
   camera_->setViewCenter(clampCenterToMap(camera_->getViewCenter()));
   emit zoomChanged();
   update();
-  if (sync_item_)
-  {
-    sync_item_->update();
-  }
+  updateSyncItems();
   event->accept();
 }
 
@@ -342,10 +352,7 @@ void MapLayerItem::mouseMoveEvent(QMouseEvent* event)
   last_pan_pos_ = event->position();
   applyPanDelta(delta);
   update();
-  if (sync_item_)
-  {
-    sync_item_->update();
-  }
+  updateSyncItems();
   event->accept();
 }
 
@@ -411,10 +418,7 @@ void MapLayerItem::touchEvent(QTouchEvent* event)
           last_pan_pos_ = pos;
           applyPanDelta(delta);
           update();
-          if (sync_item_)
-          {
-            sync_item_->update();
-          }
+          updateSyncItems();
           event->accept();
           return;
         }
@@ -449,10 +453,7 @@ void MapLayerItem::touchEvent(QTouchEvent* event)
       camera_->setViewCenter(clampCenterToMap(camera_->getViewCenter()));
       emit zoomChanged();
       update();
-      if (sync_item_)
-      {
-        sync_item_->update();
-      }
+      updateSyncItems();
       event->accept();
       return;
     }
@@ -483,13 +484,26 @@ bool MapLayerItem::event(QEvent* event)
       camera_->setViewCenter(clampCenterToMap(camera_->getViewCenter()));
       emit zoomChanged();
       update();
-      if (sync_item_)
-      {
-        sync_item_->update();
-      }
+      updateSyncItems();
       return true;
     }
   }
 
   return QQuickItem::event(event);
+}
+
+void MapLayerItem::updateSyncItems()
+{
+  for (int i = static_cast<int>(sync_items_.size()) - 1; i >= 0; --i)
+  {
+    QQuickItem* item = sync_items_[i];
+
+    if (!item)
+    {
+      sync_items_.removeAt(i);
+      continue;
+    }
+
+    item->update();
+  }
 }

@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QString>
 #include <QUrl>
+#include <QVariantMap>
 #include <Qt>
 
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -13,6 +14,7 @@
 
 #include "Loader/YamlLoader.hpp"
 #include "Map/Utils/Utils.hpp"
+#include "Themes/AppTheme.hpp"
 
 namespace ROBOGait
 {
@@ -44,6 +46,11 @@ double deg2rad(double degrees) { return degrees * DEG2RAD; }
 
 QImage toQImage(const data::MapData& map_data)
 {
+  const auto& theme = ROBOGait::settings::AppTheme::getInstance();
+  const auto* map_theme = qobject_cast<const ROBOGait::settings::ThemeMap*>(theme.getMap());
+  const QRgb map_unknown_color = map_theme ? map_theme->getMapUnknown().rgb() : QColor("#1a3a4a").rgb();
+  const QRgb map_free_color = map_theme ? map_theme->getMapFree().rgb() : QColor("#a9cfe8").rgb();
+  const QRgb map_occupied_color = map_theme ? map_theme->getMapOccupied().rgb() : QColor("#ffffff").rgb();
 
   if (!map_data.isAvailable())
   {
@@ -54,8 +61,8 @@ QImage toQImage(const data::MapData& map_data)
   const auto metadata = map_data.getMetadata();
   const auto& occupancy_data = map_data.getOccupancyData();
 
-  const uint32_t width = metadata.width;
-  const uint32_t height = metadata.height;
+  const uint32_t width = metadata.width_;
+  const uint32_t height = metadata.height_;
 
   if (width == 0 || height == 0)
   {
@@ -91,17 +98,17 @@ QImage toQImage(const data::MapData& map_data)
       if (occupancy == UNKNOWN_OCCUPANCY)
       {
         // Unknown: dark blue-gray
-        color = DARK_BLUE_GRAY;
+        color = map_unknown_color;
       }
       else if (occupancy < FREE_SPACE_THRESHOLD)
       {
         // Free space: light blue
-        color = LIGHT_BLUE;
+        color = map_free_color;
       }
       else
       {
         // Occupied: white
-        color = WHITE;
+        color = map_occupied_color;
       }
 
       image.setPixel(x, y, color);
@@ -270,6 +277,63 @@ std::string sanitizeMapName(const std::string& map_name)
   }
 
   return out;
+}
+
+std::vector<WaypointInput> parseWaypointInputs(const QVariantList& points)
+{
+  std::vector<WaypointInput> out;
+  out.reserve(static_cast<size_t>(points.size()));
+
+  for (const QVariant& value : points)
+  {
+    if (!value.canConvert<QVariantMap>())
+    {
+      continue;
+    }
+
+    const QVariantMap point_map = value.toMap();
+
+    bool ok_x = false;
+    bool ok_y = false;
+    bool ok_theta = false;
+
+    const double x = point_map.value("x").toDouble(&ok_x);
+    const double y = point_map.value("y").toDouble(&ok_y);
+    const double theta = point_map.value("theta").toDouble(&ok_theta);
+
+    if (!ok_x || !ok_y || !std::isfinite(x) || !std::isfinite(y))
+    {
+      continue;
+    }
+
+    WaypointInput waypoint;
+    waypoint.x = x;
+    waypoint.y = y;
+
+    if (ok_theta && std::isfinite(theta))
+    {
+      waypoint.theta = theta;
+    }
+
+    out.push_back(std::move(waypoint));
+  }
+
+  return out;
+}
+
+geometry_msgs::msg::Quaternion buildWaypointOrientation(const WaypointInput& waypoint)
+{
+  if (waypoint.theta.has_value())
+  {
+    return createQuaternionFromYaw(waypoint.theta.value());
+  }
+
+  geometry_msgs::msg::Quaternion orientation;
+  orientation.x = 0.0;
+  orientation.y = 0.0;
+  orientation.z = 0.0;
+  orientation.w = 1.0;
+  return orientation;
 }
 
 } // namespace utils

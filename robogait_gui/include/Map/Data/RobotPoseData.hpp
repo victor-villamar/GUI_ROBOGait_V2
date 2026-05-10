@@ -21,17 +21,17 @@ public:
   /**
    * @brief Robot Pose Metadata
    *
-   * @param x Robot X position in meters
-   * @param y Robot Y position in meters
-   * @param theta Robot orientation in radians
+   * @param x_ Robot X position in meters
+   * @param y_ Robot Y position in meters
+   * @param theta_ Robot orientation in radians
    */
   struct RobotPoseMetadata
   {
-    double x;
-    double y;
-    double theta;
+    double x_;
+    double y_;
+    double theta_;
 
-    RobotPoseMetadata() : x(0.0), y(0.0), theta(0.0) {}
+    RobotPoseMetadata() : x_(0.0), y_(0.0), theta_(0.0) {}
   };
 
   /**

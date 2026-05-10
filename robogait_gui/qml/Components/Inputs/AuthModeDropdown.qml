@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
+import AppTheme 1.0
 
 Item {
     id: root
@@ -9,7 +10,7 @@ Item {
     property real controlHeight: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.dropdownHeight, 0) : 50
     property real popupItemHeight: controlHeight
     property int fontPixelSize: 26
-    property color textColor: "#ffffff"
+    property color textColor: AppTheme.auth.light
     property bool open: popup.opened
     property bool ignoreNextClick: false
 
@@ -42,14 +43,34 @@ Item {
         if (!popup.parent) {
             return
         }
+        repositionPopup()
+        popup.open()
+    }
+
+    function repositionPopup() {
+        if (!popup.parent) {
+            return
+        }
+
         var p = root.mapToItem(popup.parent, 0, root.height)
         popup.x = Math.round(p.x + (root.width - popup.width) / 2)
         popup.y = Math.round(p.y + 6)
-        popup.open()
     }
 
     function closePopup() {
         popup.close()
+    }
+
+    onVisibleChanged: {
+        if (!visible && popup.opened) {
+            closePopup()
+        }
+    }
+
+    Component.onDestruction: {
+        if (popup.opened) {
+            popup.close()
+        }
     }
 
     Timer {
@@ -127,7 +148,7 @@ Item {
     Popup {
         id: popup
         modal: false
-        focus: true
+        focus: false
         closePolicy: Popup.CloseOnEscape
         parent: Overlay.overlay
         padding: 0
@@ -136,14 +157,15 @@ Item {
         height: contentColumn.implicitHeight
 
         background: Rectangle {
-            color: "#ffffff"
+            color: AppTheme.auth.light
             radius: 12
-            border.color: "#045671"
+            border.color: AppTheme.auth.dropdownPrimary
             border.width: 2
         }
 
         onOpened: root.restartAutoCloseTimer()
         onClosed: autoCloseTimer.stop()
+
 
         contentItem: Column {
             id: contentColumn
@@ -157,12 +179,12 @@ Item {
                     property string modeValue: modelData
                     width: popup.width
                     height: root.popupItemHeight
-                    color: itemArea.pressed ? "#00C8FF" : "transparent"
+                    color: itemArea.pressed ? AppTheme.auth.dropdownPressedBackground : "transparent"
 
                     Text {
                         anchors.centerIn: parent
                         text: parent.dropdownRoot.labelForMode(parent.modeValue)
-                        color: "#045671"
+                        color: AppTheme.auth.dropdownPrimary
                         font.pixelSize: 18
                         font.bold: true
                     }
@@ -172,9 +194,19 @@ Item {
                         anchors.fill: parent
                         onPressed: dropdownRoot.restartAutoCloseTimer()
                         onClicked: {
+                            var keyboard_was_visible = Qt.inputMethod.visible
+                            var focused_item = root.Window.window ? root.Window.window.activeFocusItem : null
                             parent.dropdownRoot.currentMode = parent.modeValue
                             parent.dropdownRoot.closePopup()
                             parent.dropdownRoot.modeSelected(parent.modeValue)
+                            if (keyboard_was_visible) {
+                                Qt.callLater(function() {
+                                    if (focused_item && focused_item.forceActiveFocus) {
+                                        focused_item.forceActiveFocus()
+                                    }
+                                    Qt.inputMethod.show()
+                                })
+                            }
                         }
                     }
 
@@ -183,7 +215,7 @@ Item {
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
                         height: 1
-                        color: "#045671"
+                        color: AppTheme.auth.dropdownPrimary
                         opacity: 0.20
                         visible: index !== (parent.dropdownRoot.orderedModes().length - 1)
                     }
@@ -191,4 +223,5 @@ Item {
             }
         }
     }
+
 }

@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import AppTheme 1.0
 
 Dialog {
     id: root
@@ -11,7 +12,7 @@ Dialog {
 
     Overlay.modal: Rectangle {
         anchors.fill: parent
-        color: "#A0505050"
+        color: AppTheme.dialogsCommon.overlayDim
     }
 
     property string message: ""
@@ -51,8 +52,8 @@ Dialog {
     onParentChanged: reposition()
 
     background: Rectangle {
-        color: "#ffffff"
-        border.color: "#235c87"
+        color: AppTheme.dialogsCommon.light
+        border.color: AppTheme.dialogsCommon.panelAccentBorder
         border.width: 4
         radius: 15
     }
@@ -72,8 +73,8 @@ Dialog {
 
             background: Rectangle {
                 radius: 6
-                color: closeButton.down ? "#e8f0f6" : "#ffffff"
-                border.color: "#235c87"
+                color: closeButton.down ? AppTheme.dialogsCommon.infoHover : AppTheme.dialogsCommon.light
+                border.color: AppTheme.dialogsCommon.panelAccentBorder
                 border.width: 2
             }
 
@@ -117,7 +118,7 @@ Dialog {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: qsTr("Información")
-                color: "#1e4d70"
+                color: AppTheme.dialogsCommon.infoText
                 font.pixelSize: 28
                 font.bold: true
             }
@@ -137,7 +138,7 @@ Dialog {
             text: root.message
             textFormat: Text.RichText
             wrapMode: Text.Wrap
-            color: "#1e4d70"
+            color: AppTheme.dialogsCommon.infoText
             font.pixelSize: 15
             onLinkActivated: Qt.openUrlExternally(link)
         }

@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import AppTheme 1.0
 
 import "qrc:/Views"
 import "qrc:/Components"
@@ -13,7 +14,7 @@ Dialog {
 
     Overlay.modal: Rectangle {
         anchors.fill: parent
-        color: "#A0505050"
+        color: AppTheme.dialogsCommon.overlayDim
     }
 
     width: parent ? Math.min(900, parent.width * 0.96) : 900
@@ -31,8 +32,8 @@ Dialog {
     onOpened: forceActiveFocus()
 
     background: Rectangle {
-        color: "#a9cfe8"
-        border.color: "#ffffff"
+        color: AppTheme.dialogsCommon.panelBackground
+        border.color: AppTheme.dialogsCommon.light
         border.width: 2
         radius: 12
     }
@@ -52,7 +53,7 @@ Dialog {
 
                 Text {
                     text: qsTr("Cambiar usuario")
-                    color: "#045671"
+                    color: AppTheme.dialogsCommon.primary
                     font.pixelSize: 18
                     font.bold: true
                     anchors.left: parent.left
@@ -71,14 +72,14 @@ Dialog {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     background: Rectangle {
-                        color: closeButton.down ? "#518bb7" : "#ffffff"
+                        color: closeButton.down ? AppTheme.dialogsCommon.closeButtonPressed : AppTheme.dialogsCommon.light
                         radius: 8
-                        border.color: "#045671"
+                        border.color: AppTheme.dialogsCommon.primary
                         border.width: 2
                     }
                     contentItem: Label {
                         text: closeButton.text
-                        color: "#045671"
+                        color: AppTheme.dialogsCommon.primary
                         font.pixelSize: 16
                         font.bold: true
                         horizontalAlignment: Text.AlignHCenter
@@ -92,7 +93,7 @@ Dialog {
                 width: parent.width
                 height: 2
                 radius: 1
-                color: "#045671"
+                color: AppTheme.dialogsCommon.primary
                 opacity: 0.35
             }
 
