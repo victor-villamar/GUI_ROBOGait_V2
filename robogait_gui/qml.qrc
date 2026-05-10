@@ -40,6 +40,7 @@
 	  <file alias="DeveloperSettingsDialog.qml">qml/Dialogs/DeveloperSettingsDialog.qml</file>
     <file alias="DiagnosticDialog.qml">qml/Dialogs/DiagnosticDialog.qml</file>
 	  <file alias="ErrorRectangle.qml">qml/Dialogs/ErrorRectangle.qml</file>
+	  <file alias="ExperimentSaveDialog.qml">qml/Dialogs/ExperimentSaveDialog.qml</file>
 	  <file alias="InformationDialog.qml">qml/Dialogs/InformationDialog.qml</file>
 	  <file alias="MapDetailsDialog.qml">qml/Dialogs/MapDetailsDialog.qml</file>
     <file alias="MapRegisterDialog.qml">qml/Dialogs/MapRegisterDialog.qml</file>
@@ -60,8 +61,7 @@
 	  <file alias="SelectMapForm.ui.qml">qml/Views/Main/Map/SelectMapForm.ui.qml</file>
 	  <file alias="SelectPatient.qml">qml/Views/Main/Patient/SelectPatient.qml</file>
 		<file alias="SelectPatientForm.ui.qml">qml/Views/Main/Patient/SelectPatientForm.ui.qml</file>
-		<file alias="TestMapView.qml">qml/Views/Main/Test/TestMapView.qml</file>
-		<file alias="TestMapViewForm.ui.qml">qml/Views/Main/Test/TestMapViewForm.ui.qml</file>
+    <file alias="ExperimentBottomBar.qml">qml/Views/Main/Test/Experiment/ExperimentBottomBar.qml</file>
     <file alias="PlacementBottomBar.qml">qml/Views/Main/Test/Placement/PlacementBottomBar.qml</file>
     <file alias="PlacementOrientationPanel.qml">qml/Views/Main/Test/Placement/PlacementOrientationPanel.qml</file>
     <file alias="PlacementTapHandler.qml">qml/Views/Main/Test/Placement/PlacementTapHandler.qml</file>
@@ -70,6 +70,8 @@
     <file alias="TrajectoryPathActionPanel.qml">qml/Views/Main/Test/Trajectory/Path/TrajectoryPathActionPanel.qml</file>
     <file alias="TrajectoryPathOrientationPanel.qml">qml/Views/Main/Test/Trajectory/Path/TrajectoryPathOrientationPanel.qml</file>
     <file alias="TrajectoryBottomBar.qml">qml/Views/Main/Test/Trajectory/TrajectoryBottomBar.qml</file>
+		<file alias="TestMapView.qml">qml/Views/Main/Test/TestMapView.qml</file>
+		<file alias="TestMapViewForm.ui.qml">qml/Views/Main/Test/TestMapViewForm.ui.qml</file>
 		<file alias="MainMenu.qml">qml/Views/Main/MainMenu.qml</file>
 		<file alias="MainMenuForm.ui.qml">qml/Views/Main/MainMenuForm.ui.qml</file>
 		<file alias="RegisterPage.qml">qml/Views/Register/RegisterPage.qml</file>

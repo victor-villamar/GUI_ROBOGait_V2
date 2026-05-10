@@ -144,6 +144,27 @@ QtObject {
                 + qsTr("<p>Para asistencia técnica, contacte con ETSIDI en: <a href='mailto:correo.soporte@upm.es'>correo.soporte@upm.es</a></p>")
     }
 
+    function testMapExperimentMessage() {
+        return qsTr("<h2>Resumen</h2>")
+                + qsTr("<p>Esta fase ejecuta el experimento con la trayectoria ya calculada y permite supervisar la navegación del robot.</p>")
+                + qsTr("<h2>Controles de vista</h2>")
+                + qsTr("<ul>"
+                       + "<li><b>- / +:</b> reduce o aumenta el zoom del mapa.</li>"
+                       + "<li><b>Centrar robot:</b> activa o desactiva el seguimiento del robot en pantalla.</li>"
+                       + "<li><b>Ajustar vista:</b> encuadra el mapa completo en la pantalla.</li>"
+                       + "</ul>")
+                + qsTr("<h2>Botones de experimento</h2>")
+                + qsTr("<ul>"
+                       + "<li><b>TERMINAR EXPERIMENTO:</b> cancela la navegación y abre el flujo de cierre del experimento.</li>"
+                       + "<li><b>REPETIR EXPERIMENTO:</b> aparece al finalizar/cancelar para volver a la fase de cálculo de trayectoria.</li>"
+                       + "<li><b>HOME:</b> aparece cuando el robot completa la trayectoria para volver al punto inicial.</li>"
+                       + "</ul>")
+                + qsTr("<h2>Seguridad</h2>")
+                + qsTr("<p>En cualquier momento puede pulsar <b>Emergency Stop</b> para realizar una parada de emergencia si es necesario.</p>")
+                + qsTr("<h2>¿Necesita ayuda?</h2>")
+                + qsTr("<p>Para asistencia técnica, contacte con ETSIDI en: <a href='mailto:correo.soporte@upm.es'>correo.soporte@upm.es</a></p>")
+    }
+
     function defaultStepMessage() {
         return qsTr("<h2>Información</h2><p>Seleccione una fase para ver su ayuda detallada.</p>")
     }
