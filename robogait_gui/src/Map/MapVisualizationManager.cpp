@@ -73,6 +73,33 @@ MapVisualizationManager::MapVisualizationManager() :
     qWarning() << "[MapVisualizationManager::MapVisualizationManager] YAML not loaded, using default robot_size:" << robot_size_;
   }
 
+  if (manual_path_editor_)
+  {
+    constexpr double DEFAULT_RESAMPLE_SPACING_PX = 5.0;
+    constexpr double DEFAULT_RDP_EPSILON_PX = 3.0;
+    constexpr int DEFAULT_SHORT_STRAW_WINDOW = 3;
+    constexpr double DEFAULT_SHORT_STRAW_MEDIAN_FACTOR = 0.95;
+    constexpr double DEFAULT_SHORT_STRAW_LINE_THRESHOLD = 0.95;
+
+    double resample_spacing_px = DEFAULT_RESAMPLE_SPACING_PX;
+    double rdp_epsilon_px = DEFAULT_RDP_EPSILON_PX;
+    int short_straw_window = DEFAULT_SHORT_STRAW_WINDOW;
+    double short_straw_median_factor = DEFAULT_SHORT_STRAW_MEDIAN_FACTOR;
+    double short_straw_line_threshold = DEFAULT_SHORT_STRAW_LINE_THRESHOLD;
+
+    if (yaml_loader.isLoaded())
+    {
+      resample_spacing_px = yaml_loader.getValue<double>("map.manual_path_segmentation.resample_spacing_px", resample_spacing_px);
+      rdp_epsilon_px = yaml_loader.getValue<double>("map.manual_path_segmentation.rdp_epsilon_px", rdp_epsilon_px);
+      short_straw_window = yaml_loader.getValue<int>("map.manual_path_segmentation.short_straw_window", short_straw_window);
+      short_straw_median_factor = yaml_loader.getValue<double>("map.manual_path_segmentation.short_straw_median_factor", short_straw_median_factor);
+      short_straw_line_threshold = yaml_loader.getValue<double>("map.manual_path_segmentation.short_straw_line_threshold", short_straw_line_threshold);
+    }
+
+    manual_path_editor_->setSegmentationTuningPx(resample_spacing_px, rdp_epsilon_px, short_straw_window, short_straw_median_factor,
+                                                 short_straw_line_threshold);
+  }
+
   if (render_scene_ && render_scene_->getPipeline())
   {
     // clang-format off
