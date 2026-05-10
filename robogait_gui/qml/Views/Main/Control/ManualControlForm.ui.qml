@@ -3,12 +3,17 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import AppTheme 1.0
 
+import "qrc:/Components"
 import "qrc:/Controls"
 import "qrc:/Dialogs"
 
 Rectangle {
     id: rectangle
     color: AppTheme.manualControl.background
+
+    HelpContentProvider {
+        id: helpContent
+    }
     
     property alias joystick: joystick
     property alias infoButton: infoButton
@@ -129,7 +134,7 @@ Rectangle {
         }
     }
 
-    Button {
+    HelpButton {
         id: infoButton
         width: rectangle.iconButtonSizePx
         height: rectangle.iconButtonSizePx
@@ -137,30 +142,7 @@ Rectangle {
         anchors.bottom: information.bottom
         anchors.leftMargin: 10
         anchors.bottomMargin: 0
-
-        background: Rectangle {
-            radius: width / 2
-            color: "transparent"
-        }
-
-        contentItem: Image {
-            source: "qrc:/qmlresources/icons/white/circle_info_solid.svg"
-            width: rectangle.iconGlyphSizePx
-            height: rectangle.iconGlyphSizePx
-            anchors.centerIn: parent
-            fillMode: Image.PreserveAspectFit
-            smooth: true
-        }
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: 150
-                easing.type: Easing.OutQuad
-            }
-        }
-
-        onPressed: scale = 1.2
-        onReleased: scale = 1.0
+        glyphSize: rectangle.iconGlyphSizePx
     }
 
     Text {
@@ -204,28 +186,7 @@ Rectangle {
 
     InformationDialog {
         id: infoDialog
-        message: qsTr(
-            "<h2>Control Manual del Robot</h2>"
-            + "<p>Esta pantalla permite controlar el robot de forma manual utilizando el joystick virtual.</p>"
-            + "<h2>Desbloqueo del joystick</h2>"
-            + "<p>Pulse el candado a la derecha del joystick para desbloquearlo.</p>"
-            + "<h2>Movimiento del joystick</h2>"
-            + "<p>Una vez desbloqueado, desplace el círculo pequeño para comenzar a moverse. La velocidad de movimiento aumentará cuanto más se aleje del centro.</p>"
-            + "<ul>"
-            + "<li><b>Hacia adelante:</b> Avanza en línea recta.</li>"
-            + "<li><b>Hacia atrás:</b> Retrocede en línea recta.</li>"
-            + "<li><b>Hacia la izquierda:</b> Gira en sentido horario (hacia la derecha).</li>"
-            + "<li><b>Hacia la derecha:</b> Gira en sentido antihorario (hacia la izquierda).</li>"
-            + "<li><b>Posiciones intermedias:</b> El robot se moverá en una combinación de traslación y giro, ajustando su dirección según la inclinación del joystick.</li>"
-            + "</ul>"
-            + "<h2>Bloqueo del joystick</h2>"
-            + "<p>Pulse el candado a la derecha del joystick para bloquearlo.</p>"
-            + "<h2><span style='color:" + AppTheme.manualControl.warningTitle + "'>¡¡ADVERTENCIA!!</span></h2>"
-            + "<p>Este robot no cuenta con un sistema de gestión de colisiones. Asegúrese de evitar obstáculos y supervisar su desplazamiento en todo momento.</p>"
-            + "<h2>¿Necesita ayuda?</h2>"
-            + "<p>Para asistencia técnica, contacte con ETSIDI en: "
-            + "<a href='mailto:correo.soporte@upm.es'>correo.soporte@upm.es</a></p>"
-        )
+        message: helpContent.manualControlMessage()
     }
 }
 

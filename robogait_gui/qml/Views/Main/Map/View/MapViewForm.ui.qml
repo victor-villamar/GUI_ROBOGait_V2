@@ -4,12 +4,17 @@ import AppTheme 1.0
 import QtQuick.Layouts 1.15
 import MapRendering 1.0
 
+import "qrc:/Components"
 import "qrc:/Dialogs"
 import "qrc:/Controls"
 
 Rectangle {
     id: root
     color: AppTheme.map.appBackground
+
+    HelpContentProvider {
+        id: helpContent
+    }
 
     property alias infoButton: infoButton
     property alias emergencyButton: emergencyButton
@@ -84,44 +89,12 @@ Rectangle {
                     Layout.preferredHeight: root.iconButtonSizePx
                 }
 
-                Button {
+                HelpButton {
                     id: infoButton
                     Layout.preferredWidth: root.iconButtonSizePx
                     Layout.preferredHeight: root.iconButtonSizePx
                     Layout.alignment: Qt.AlignVCenter
-                    padding: 0
-                    leftPadding: 0
-                    rightPadding: 0
-                    topPadding: 0
-                    bottomPadding: 0
-
-                    background: Rectangle {
-                        radius: width / 2
-                        color: "transparent"
-                    }
-
-                    contentItem: Item {
-                        anchors.fill: parent
-
-                        Image {
-                            source: "qrc:/qmlresources/icons/white/circle_info_solid.svg"
-                            width: root.iconGlyphSizePx
-                            height: root.iconGlyphSizePx
-                            anchors.centerIn: parent
-                            fillMode: Image.PreserveAspectFit
-                            smooth: true
-                        }
-                    }
-
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 150
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-
-                    onPressed: scale = 1.2
-                    onReleased: scale = 1.0
+                    glyphSize: root.iconGlyphSizePx
                 }
 
                 Text {
@@ -686,34 +659,6 @@ Rectangle {
     // Information Dialog
     InformationDialog {
         id: infoDialog
-        message: qsTr(
-            "<h2>Visualización del Mapa</h2>"
-            + "<p>Esta pantalla muestra el mapa generado por SLAM y permite controlar el robot manualmente.</p>"
-            + "<h2>Requisitos</h2>"
-            + "<ul>"
-            + "<li><b>Robot seleccionado:</b> Debe haber un robot activo en el sistema.</li>"
-            + "<li><b>SLAM activo:</b> El robot debe estar ejecutando un nodo de SLAM (cartographer, slam_toolbox, etc.).</li>"
-            + "<li><b>Topic /map:</b> El robot debe publicar el mapa en el topic estándar.</li>"
-            + "</ul>"
-            + "<h2>Desbloqueo del joystick</h2>"
-            + "<p>Pulse el candado para desbloquear el joystick.</p>"
-            + "<h2>Movimiento del joystick</h2>"
-            + "<p>Arrastre el joystick para mover el robot (arriba=adelante, abajo=atrás, laterales=giro). "
-            + "La distancia desde el centro determina la velocidad de movimiento.</p>"
-            + "<h2>Bloqueo del joystick</h2>"
-            + "<p>Pulse nuevamente el candado para bloquear el joystick.</p>"
-            + "<h2>Estados del mapa</h2>"
-            + "<ul>"
-            + "<li><b>Ocupado (negro):</b> Obstáculo detectado.</li>"
-            + "<li><b>Libre (blanco):</b> Espacio navegable.</li>"
-            + "<li><b>Desconocido (gris):</b> Área no explorada.</li>"
-            + "</ul>"
-            + "<h2><span style='color:" + AppTheme.map.warningTitle + "'>¡¡ADVERTENCIA!!</span></h2>"
-            + "<p>Este robot no cuenta con sistema de gestión de colisiones. Supervise el desplazamiento en todo momento "
-            + "y evite obstáculos.</p>"
-            + "<h2>¿Necesita ayuda?</h2>"
-            + "<p>Para asistencia técnica, contacte con ETSIDI en: "
-            + "<a href='mailto:correo.soporte@upm.es'>correo.soporte@upm.es</a></p>"
-        )
+        message: helpContent.mapViewMessage()
     }
 }

@@ -3,6 +3,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 6.0
 import AppTheme 1.0
 
+import "qrc:/Components"
 import "qrc:/Dialogs"
 
 Item {
@@ -21,6 +22,10 @@ Item {
     readonly property bool canStartTest: (!isGuest && userSession && userSession.hasMapAssigned && userSession.hasPatientAssigned)
     property real iconButtonSizePx: 37
     property real iconGlyphSizePx: 37
+
+    HelpContentProvider {
+        id: helpContent
+    }
 
 	    Rectangle {
 	        anchors.fill: parent
@@ -218,27 +223,14 @@ Item {
             anchors.bottomMargin: 86
         }
 
-        Button {
+        HelpButton {
             id: infoButton
             width: root.iconButtonSizePx
             height: root.iconButtonSizePx
             anchors.verticalCenter: explain.verticalCenter
             anchors.left: explain.right
             anchors.leftMargin: 10
-
-            background: Rectangle {
-                radius: width / 2
-                color: "transparent"
-            }
-
-            contentItem: Image {
-                source: "qrc:/qmlresources/icons/white/circle_info_solid.svg"
-                width: root.iconGlyphSizePx
-                height: root.iconGlyphSizePx
-                anchors.centerIn: parent
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-            }
+            glyphSize: root.iconGlyphSizePx
 
             onClicked: infoDialog.openWithMessage(infoDialog.message)
         }
@@ -290,23 +282,7 @@ Item {
 
         InformationDialog {
             id: infoDialog
-            message: qsTr(
-                "<h2>Objetivo de la aplicación</h2>"
-                + "<p>Esta aplicación permite controlar el robot <b>ROBOGait</b> y realizar pruebas de la marcha humana para la evaluación de la movilidad.<br>"
-                + "Su uso facilita la detección de posibles alteraciones en la marcha y contribuye al diagnóstico clínico.</p>"
-                + "<h2>Cómo empezar</h2>"
-                + "<ol>"
-                + "<li><b>Seleccionar mapa</b> – Defina el entorno en el que se realizará la evaluación del paciente.</li>"
-                + "<li><b>Seleccionar paciente</b> – Asigne un paciente para registrar y analizar su patrón de marcha.</li>"
-                + "<li><b>Control manual</b> – Permite un manejo directo del robot para ajustes o pruebas preliminares.</li>"
-                + "<li><b>Prueba</b> – Inicia el análisis de la marcha del paciente con el robot.</li>"
-                + "</ol>"
-                + "<p>La selección del mapa y el paciente es obligatoria antes de iniciar una prueba.<br>"
-                + "Los nombres seleccionados aparecerán en la parte inferior de la pantalla.</p>"
-                + "<h2>¿Necesita ayuda?</h2>"
-                + "<p>Para asistencia técnica, contacte con la ETSIDI en: "
-                + "<a href='mailto:correo.soporte@upm.es'>correo.soporte@upm.es</a></p>"
-            )
+            message: helpContent.mainMenuMessage()
         }
     }
 }

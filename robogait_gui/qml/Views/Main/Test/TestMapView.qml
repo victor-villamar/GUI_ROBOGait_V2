@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import RobotServiceBridge 1.0
 
+import "qrc:/Components"
 import "qrc:/Dialogs"
 import "qrc:/Views"
 
@@ -84,6 +85,23 @@ TestMapViewForm {
     showParticleCloud: step === stepPosition
 
     showRobotPose: mapAvailable && ((placementController && placementController.hasPosition) || autoLocalizationCompleted || autoLocalizationActive)
+
+    HelpContentProvider {
+        id: helpContent
+    }
+
+    function buildInfoDialogMessageForCurrentStep() {
+        if (step === stepPosition) {
+            return helpContent.testMapPositionMessage()
+        }
+        if (step === stepOrientation) {
+            return helpContent.testMapOrientationMessage()
+        }
+        if (step === stepNavigation) {
+            return helpContent.testMapTrajectoryMessage()
+        }
+        return helpContent.defaultStepMessage()
+    }
 
     function resetManualPathFlow() {
         waitingManualPathResult = false
@@ -1133,52 +1151,38 @@ TestMapViewForm {
         step = stepPosition
     }
 
-    zoomInButton.onClicked: {
-        if (userSession.rosManager &&
-            userSession.rosManager.robotManager &&
-            userSession.rosManager.robotManager.mapVisualizationManager) {
-            userSession.rosManager.robotManager.mapVisualizationManager.followRobot = false
-            userSession.rosManager.robotManager.mapVisualizationManager.zoomIn()
+    onBackNavigationRequested: {
+        if (step !== stepNavigation || testStarted) {
+            return
         }
+
+        goalPlacementEnabled = false
+        pathPlacementEnabled = false
+        handleGoalClear()
+        handlePathClear()
+        step = stepOrientation
     }
 
-    zoomOutButton.onClicked: {
-        if (userSession.rosManager &&
-            userSession.rosManager.robotManager &&
-            userSession.rosManager.robotManager.mapVisualizationManager) {
-            userSession.rosManager.robotManager.mapVisualizationManager.followRobot = false
-            userSession.rosManager.robotManager.mapVisualizationManager.zoomOut()
+    onZoomInRequested: {
+        if (!mapVisualizationManager || !mapVisualizationManager.zoomIn) {
+            return
         }
+
+        if (mapVisualizationManager.followRobot !== undefined) {
+            mapVisualizationManager.followRobot = false
+        }
+        mapVisualizationManager.zoomIn()
     }
 
-    fitButton.onClicked: {
-        if (userSession.rosManager &&
-            userSession.rosManager.robotManager &&
-            userSession.rosManager.robotManager.mapVisualizationManager) {
-            userSession.rosManager.robotManager.mapVisualizationManager.followRobot = false
-            userSession.rosManager.robotManager.mapVisualizationManager.fitToView()
+    onZoomOutRequested: {
+        if (!mapVisualizationManager || !mapVisualizationManager.zoomOut) {
+            return
         }
-    }
 
-    followButton.onClicked: {
-        if (userSession.rosManager &&
-            userSession.rosManager.robotManager &&
-            userSession.rosManager.robotManager.mapVisualizationManager) {
-            var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
-            mapVizManager.followRobot = !mapVizManager.followRobot
+        if (mapVisualizationManager.followRobot !== undefined) {
+            mapVisualizationManager.followRobot = false
         }
-    }
-
-    Connections {
-        target: (userSession.rosManager &&
-                 userSession.rosManager.robotManager &&
-                 userSession.rosManager.robotManager.mapVisualizationManager)
-                ? userSession.rosManager.robotManager.mapVisualizationManager
-                : null
-
-        function onFollowRobotChanged() {
-            followButton.checked = target.followRobot
-        }
+        mapVisualizationManager.zoomOut()
     }
 
     Component.onDestruction: {
@@ -1199,7 +1203,7 @@ TestMapViewForm {
     }
 
     infoButton.onClicked: {
-        infoDialog.open()
+        infoDialog.openWithMessage(buildInfoDialogMessageForCurrentStep())
     }
 
     emergencyButton.onClicked: {
