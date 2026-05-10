@@ -9,9 +9,8 @@ Item {
     property real iconButtonSizePx: 50
     property real iconGlyphSizePx: 25
 
-    property bool isNavigationStep: false
+    property bool isTrajectoryStep: false
     property bool mapAvailable: false
-    property bool testStarted: false
     property bool goalPlacementEnabled: false
     property bool pathPlacementEnabled: false
     property bool goalAccepted: false
@@ -24,20 +23,18 @@ Item {
     signal goalModeRequested()
     signal pathModeRequested()
     signal startTestRequested()
-    signal goHomeRequested()
 
     Row {
         id: leftControls
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        visible: !root.testStarted
         spacing: 10
 
         Button {
             id: backButton
             width: 140
-            height: root.buttonHeightPx
-            enabled: root.isNavigationStep
+            height: root.iconButtonSizePx
+            enabled: root.isTrajectoryStep
             opacity: enabled ? 1.0 : 0.4
 
             background: Rectangle {
@@ -63,7 +60,7 @@ Item {
             id: zoomOutButton
             width: root.iconButtonSizePx
             height: root.iconButtonSizePx
-            enabled: root.mapAvailable && root.isNavigationStep
+            enabled: root.mapAvailable && root.isTrajectoryStep
             opacity: enabled ? 1.0 : 0.5
 
             background: Rectangle {
@@ -89,7 +86,7 @@ Item {
             id: zoomInButton
             width: root.iconButtonSizePx
             height: root.iconButtonSizePx
-            enabled: root.mapAvailable && root.isNavigationStep
+            enabled: root.mapAvailable && root.isTrajectoryStep
             opacity: enabled ? 1.0 : 0.5
 
             background: Rectangle {
@@ -113,17 +110,18 @@ Item {
     }
 
     Row {
-        id: navigationGoalButtons
+        id: trajectoryModeButtons
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
         spacing: 12
         z: 10
-        visible: !root.testStarted
 
         Button {
             id: goalModeButton
             width: root.iconButtonSizePx
             height: root.iconButtonSizePx
+            enabled: root.mapAvailable && root.isTrajectoryStep
+            opacity: enabled ? 1.0 : 0.5
 
             background: Rectangle {
                 radius: 6
@@ -148,8 +146,8 @@ Item {
             id: pathModeButton
             width: root.iconButtonSizePx
             height: root.iconButtonSizePx
+            enabled: root.mapAvailable && root.isTrajectoryStep
             opacity: enabled ? 1.0 : 0.5
-            enabled: root.mapAvailable && root.isNavigationStep
 
             background: Rectangle {
                 radius: 6
@@ -174,10 +172,10 @@ Item {
     Button {
         id: startTestButton
         width: 150
-        height: root.buttonHeightPx
+        height: root.iconButtonSizePx
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        visible: ((root.goalPlacementEnabled && root.goalAccepted) || (root.pathPlacementEnabled && root.manualPathReady)) && !root.testStarted
+        visible: ((root.goalPlacementEnabled && root.goalAccepted) || (root.pathPlacementEnabled && root.manualPathReady))
         enabled: root.goalPlacementEnabled ? root.goalPathReady : (root.pathPlacementEnabled ? root.manualPathReady : false)
         opacity: enabled ? 1.0 : 0.4
 
@@ -198,37 +196,5 @@ Item {
         }
 
         onClicked: root.startTestRequested()
-    }
-
-    Row {
-        id: navigationHomeButton
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
-        z: 10
-        visible: root.testStarted
-
-        Button {
-            id: homeButton
-            width: root.iconButtonSizePx
-            height: root.iconButtonSizePx
-
-            background: Rectangle {
-                radius: 6
-                color: homeButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
-                border.color: AppTheme.map.white
-                border.width: 1
-            }
-
-            contentItem: Image {
-                source: "qrc:/qmlresources/icons/white/home.svg"
-                width: root.iconGlyphSizePx
-                height: root.iconGlyphSizePx
-                anchors.centerIn: parent
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-            }
-
-            onClicked: root.goHomeRequested()
-        }
     }
 }

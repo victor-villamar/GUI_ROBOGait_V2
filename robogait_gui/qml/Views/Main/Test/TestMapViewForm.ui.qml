@@ -24,7 +24,9 @@ Rectangle {
     property int step: 0
     readonly property bool isPositionStep: step === 0
     readonly property bool isOrientationStep: step === 1
-    readonly property bool isNavigationStep: step === 2
+    readonly property bool isTrajectoryStep: step === 2
+    readonly property bool isExperimentStep: step === 3
+    readonly property bool isNavigationStep: isTrajectoryStep
     property real iconButtonSizePx: 0
     property real iconGlyphSizePx: 0
     property real headerTopInsetPx: 0
@@ -48,6 +50,11 @@ Rectangle {
     signal pathClearRequested()
     signal startTestRequested()
     signal goHomeRequested()
+    signal fitRequested()
+    signal followRequested()
+    signal finishExperimentRequested()
+    signal repeatExperimentRequested()
+    signal exitExperimentRequested()
 
     property bool mapAvailable: false
     property bool particleCloudAvailable: false
@@ -66,6 +73,10 @@ Rectangle {
     property bool pathTerminalPoseSet: false
     property bool pathTerminalOrientationOverride: false
     property bool testStarted: false
+    property bool experimentHomeVisible: false
+    property bool experimentRepeatVisible: false
+    property bool experimentExitMode: false
+    property bool followRobotChecked: false
     property real goalOrientationDeg: 0
     property var goalMapPosition: Qt.point(0, 0)
     property real pathTerminalOrientationDeg: 0
@@ -116,7 +127,9 @@ Rectangle {
                           ? qsTr("Posicionamiento del robot en el mapa: Posición")
                           : (isOrientationStep
                              ? qsTr("Posicionamiento del robot en el mapa: Orientación")
-                             : qsTr("Cálculo de trayectoria del robot"))
+                             : (isTrajectoryStep
+                                ? qsTr("Cálculo de trayectoria del robot")
+                                : qsTr("Ejecución del experimento")))
                     font.pixelSize: 24
                     font.bold: true
                     color: AppTheme.map.white
@@ -229,9 +242,8 @@ Rectangle {
                 visible: mapAvailable
                 z: 1
                 isPanningEnabled: !placementEnabled &&
-                                  !goalPlacementEnabled &&
-                                  !testStarted &&
-                                  (!pathPlacementEnabled || (manualPathAvailable && !pathDragHandler.active))
+                                  (!isTrajectoryStep || !goalPlacementEnabled) &&
+                                  (!isTrajectoryStep || !pathPlacementEnabled || (manualPathAvailable && !pathDragHandler.active))
 
                 PlacementTapHandler {
                     mapAvailable: root.mapAvailable
@@ -337,7 +349,7 @@ Rectangle {
                 id: pathLayerItem
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
-                visible: mapAvailable && isNavigationStep
+                visible: mapAvailable && (isTrajectoryStep || isExperimentStep)
                 z: 1.45
                 pathColor: AppTheme.map.pathColorPrimary
 
@@ -355,7 +367,7 @@ Rectangle {
                 id: manualDrawPathLayerItem
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
-                visible: mapAvailable && isNavigationStep
+                visible: mapAvailable && (isTrajectoryStep || isExperimentStep)
                 z: 1.455
                 pathColor: AppTheme.map.pathColorSecondary
 
@@ -373,7 +385,7 @@ Rectangle {
                 id: livePathLayerItem
                 anchors.fill: parent
                 anchors.margins: mapContentMargin
-                visible: mapAvailable && isNavigationStep
+                visible: mapAvailable && (isTrajectoryStep || isExperimentStep)
                 z: 1.46
                 pathColor: AppTheme.map.pathColorTertiary
 
@@ -471,7 +483,7 @@ Rectangle {
             Layout.preferredHeight: Math.max(60, root.buttonHeightPx + 16)
             color: AppTheme.map.panel
             radius: 6
-            visible: !isNavigationStep
+            visible: isPositionStep || isOrientationStep
 
             Item {
                 id: bottomBarContent
@@ -519,12 +531,12 @@ Rectangle {
         }
 
         Rectangle {
-            id: navigationBar
+            id: trajectoryBar
             Layout.fillWidth: true
             Layout.preferredHeight: Math.max(60, root.iconButtonSizePx + 16)
             color: AppTheme.map.panel
             radius: 6
-            visible: isNavigationStep
+            visible: isTrajectoryStep
             opacity: mapAvailable ? 1.0 : 0.5
             enabled: mapAvailable
 
@@ -534,9 +546,8 @@ Rectangle {
                 buttonHeightPx: root.buttonHeightPx
                 iconButtonSizePx: root.iconButtonSizePx
                 iconGlyphSizePx: root.iconGlyphSizePx
-                isNavigationStep: root.isNavigationStep
+                isTrajectoryStep: root.isTrajectoryStep
                 mapAvailable: root.mapAvailable
-                testStarted: root.testStarted
                 goalPlacementEnabled: root.goalPlacementEnabled
                 pathPlacementEnabled: root.pathPlacementEnabled
                 goalAccepted: root.goalAccepted
@@ -568,7 +579,39 @@ Rectangle {
                 }
 
                 onStartTestRequested: root.startTestRequested()
+            }
+        }
+
+        Rectangle {
+            id: experimentBar
+            Layout.fillWidth: true
+            Layout.preferredHeight: Math.max(60, root.iconButtonSizePx + 16)
+            color: AppTheme.map.panel
+            radius: 6
+            visible: isExperimentStep
+            opacity: mapAvailable ? 1.0 : 0.5
+            enabled: mapAvailable
+
+            ExperimentBottomBar {
+                anchors.fill: parent
+                anchors.margins: 8
+                buttonHeightPx: root.buttonHeightPx
+                iconButtonSizePx: root.iconButtonSizePx
+                iconGlyphSizePx: root.iconGlyphSizePx
+                mapAvailable: root.mapAvailable
+                followChecked: root.followRobotChecked
+                homeVisible: root.experimentHomeVisible
+                repeatVisible: root.experimentRepeatVisible
+                exitMode: root.experimentExitMode
+
+                onZoomOutRequested: root.zoomOutRequested()
+                onZoomInRequested: root.zoomInRequested()
+                onFitRequested: root.fitRequested()
+                onFollowRequested: root.followRequested()
                 onGoHomeRequested: root.goHomeRequested()
+                onRepeatRequested: root.repeatExperimentRequested()
+                onFinishRequested: root.finishExperimentRequested()
+                onExitRequested: root.exitExperimentRequested()
             }
         }
 

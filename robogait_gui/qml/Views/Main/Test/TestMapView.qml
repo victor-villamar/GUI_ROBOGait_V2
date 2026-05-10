@@ -22,9 +22,6 @@ TestMapViewForm {
     buttonHeightPx: computedButtonHeightPx
     wheelSizePx: computedWheelSizePx
 
-    property int experimentId: -1
-    property bool experimentRegistered: false
-
     property bool exiting: false
     property bool exitAndQuit: false
     property bool emergencyLatched: false
@@ -44,6 +41,12 @@ TestMapViewForm {
     property bool initialRobotPoseSaved: false
     property var initialRobotMapPosition: Qt.point(0, 0)
     property real initialRobotTheta: 0
+    property bool experimentNavigationSucceeded: false
+    property bool experimentNavigationFinished: false
+    property bool experimentShowRepeatButton: false
+    property bool experimentReturnHomeForRepeatPending: false
+    property bool experimentSaveFlowStarted: false
+    property bool experimentSavePromptPending: false
     property bool waitingGoalPathResult: false
     property bool waitingHomePathResult: false
     property bool waitingManualPathResult: false
@@ -62,7 +65,9 @@ TestMapViewForm {
 
     readonly property int stepPosition: 0
     readonly property int stepOrientation: 1
-    readonly property int stepNavigation: 2
+    readonly property int stepTrajectory: 2
+    readonly property int stepExperiment: 3
+    readonly property int stepNavigation: stepTrajectory
 
     step: stepPosition
 
@@ -85,6 +90,15 @@ TestMapViewForm {
     showParticleCloud: step === stepPosition
 
     showRobotPose: mapAvailable && ((placementController && placementController.hasPosition) || autoLocalizationCompleted || autoLocalizationActive)
+    followRobotChecked: mapVisualizationManager && mapVisualizationManager.followRobot !== undefined
+                        ? mapVisualizationManager.followRobot
+                        : false
+    experimentHomeVisible: step === stepExperiment &&
+                           initialRobotPoseSaved &&
+                           experimentNavigationSucceeded &&
+                           !experimentReturnHomeForRepeatPending
+    experimentRepeatVisible: step === stepExperiment && experimentShowRepeatButton
+    experimentExitMode: step === stepExperiment && experimentNavigationFinished
 
     HelpContentProvider {
         id: helpContent
@@ -97,10 +111,39 @@ TestMapViewForm {
         if (step === stepOrientation) {
             return helpContent.testMapOrientationMessage()
         }
-        if (step === stepNavigation) {
+        if (step === stepTrajectory) {
             return helpContent.testMapTrajectoryMessage()
         }
+        if (step === stepExperiment) {
+            return helpContent.testMapExperimentMessage()
+        }
         return helpContent.defaultStepMessage()
+    }
+
+    function resetExperimentPhaseState() {
+        experimentNavigationSucceeded = false
+        experimentNavigationFinished = false
+        experimentShowRepeatButton = false
+        experimentReturnHomeForRepeatPending = false
+        experimentSaveFlowStarted = false
+        experimentSavePromptPending = false
+        if (experimentSavePromptTimer.running) {
+            experimentSavePromptTimer.stop()
+        }
+        if (experimentFinishBusyDialog.visible) {
+            experimentFinishBusyDialog.close()
+        }
+    }
+
+    function startExperimentSaveFlowWithDelay(messageText) {
+        if (experimentSaveFlowStarted) {
+            return
+        }
+
+        experimentSaveFlowStarted = true
+        experimentSavePromptPending = true
+        experimentFinishBusyDialog.openWithMessage(messageText)
+        experimentSavePromptTimer.restart()
     }
 
     function resetManualPathFlow() {
@@ -112,6 +155,28 @@ TestMapViewForm {
         pathTerminalOrientationDeg = 0
         pathTerminalMapPosition = Qt.point(0, 0)
 
+        if (mapVisualizationManager && mapVisualizationManager.clearGoalRobotPose) {
+            mapVisualizationManager.clearGoalRobotPose()
+        }
+    }
+
+    function clearPathsAfterExperimentEnd() {
+        waitingGoalPathResult = false
+        waitingHomePathResult = false
+        waitingManualPathResult = false
+        goalPathReady = false
+        manualPathReady = false
+        manualPathNavigationPoints = []
+
+        if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+            mapVisualizationManager.setPathUpdatesEnabled(false)
+        }
+        if (mapVisualizationManager && mapVisualizationManager.clearManualPath) {
+            mapVisualizationManager.clearManualPath()
+        }
+        if (manualPathEditor && manualPathEditor.clear) {
+            manualPathEditor.clear()
+        }
         if (mapVisualizationManager && mapVisualizationManager.clearGoalRobotPose) {
             mapVisualizationManager.clearGoalRobotPose()
         }
@@ -195,6 +260,7 @@ TestMapViewForm {
         initialRobotPoseSaved = false
         initialRobotMapPosition = Qt.point(0, 0)
         initialRobotTheta = 0
+        resetExperimentPhaseState()
         waitingGoalPathResult = false
         waitingHomePathResult = false
         goalOrientationDeg = 0
@@ -402,12 +468,13 @@ TestMapViewForm {
             orientationOverride = false
         }
 
-        if (step !== stepNavigation) {
+        if (step !== stepTrajectory && step !== stepExperiment) {
             goalPlacementEnabled = false
             pathPlacementEnabled = false
             clearGoalSelection()
             goalPathReady = false
             resetManualPathFlow()
+            resetExperimentPhaseState()
             if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
                 mapVisualizationManager.setPathUpdatesEnabled(false)
             }
@@ -516,7 +583,7 @@ TestMapViewForm {
             return
         }
 
-        var enableUpdates = (step === stepNavigation) || autoLocalizationActive
+        var enableUpdates = (step === stepTrajectory) || (step === stepExperiment) || autoLocalizationActive
         mapVizManager.setRobotPoseUpdatesEnabled(enableUpdates)
     }
 
@@ -737,6 +804,25 @@ TestMapViewForm {
         return true
     }
 
+    function resetToTrajectoryPhase() {
+        if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+            mapVisualizationManager.setPathUpdatesEnabled(false)
+        }
+        if (mapVisualizationManager && mapVisualizationManager.followRobot !== undefined) {
+            mapVisualizationManager.followRobot = false
+        }
+
+        testStarted = false
+        resetExperimentPhaseState()
+
+        goalPlacementEnabled = false
+        pathPlacementEnabled = false
+        handleGoalClear()
+        handlePathClear()
+
+        step = stepTrajectory
+    }
+
     function beginExit() {
         if (exiting) {
             return
@@ -785,6 +871,13 @@ TestMapViewForm {
     function finalizeExit() {
         exiting = false
         busyDialog.close()
+        if (experimentSavePromptTimer.running) {
+            experimentSavePromptTimer.stop()
+        }
+        experimentSavePromptPending = false
+        if (experimentFinishBusyDialog.visible) {
+            experimentFinishBusyDialog.close()
+        }
 
         if (manualControl) {
             manualControl.updateVelocity(0.0, 0.0)
@@ -824,12 +917,6 @@ TestMapViewForm {
             if (mapVizManager) {
                 mapVizManager.destroySubscriptions()
             }
-        }
-
-        if (dbManager && experimentRegistered && experimentId > 0) {
-            dbManager.deleteExperiment(experimentId)
-            experimentRegistered = false
-            experimentId = -1
         }
 
         if (exitAndQuit) {
@@ -882,29 +969,6 @@ TestMapViewForm {
             }
         }
 
-        if (!dbManager || !userSession) {
-            busyDialog.close()
-            errorPopup.errorRectangleTextError.text = qsTr("Error: Sesión o base de datos no disponible")
-            errorPopup.open()
-            return
-        }
-
-        var patient = userSession.currentPatient
-        if (!patient) {
-            busyDialog.close()
-            errorPopup.errorRectangleTextError.text = qsTr("Error: No hay paciente seleccionado")
-            errorPopup.open()
-            return
-        }
-
-        var mapName = (userSession.currentMapName || "").trim()
-        if (mapName === "") {
-            busyDialog.close()
-            errorPopup.errorRectangleTextError.text = qsTr("Error: No hay mapa seleccionado")
-            errorPopup.open()
-            return
-        }
-
         if (!robotServiceBridge) {
             busyDialog.close()
             errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
@@ -912,16 +976,9 @@ TestMapViewForm {
             return
         }
 
-        var ok = dbManager.registerExperiment(patient.name, patient.lastName, mapName)
-        if (!ok) {
-            busyDialog.close()
-            errorPopup.errorRectangleTextError.text = qsTr("Error: %1").arg(dbManager.lastError)
-            errorPopup.open()
-            return
-        }
+        resetExperimentPhaseState()
 
-        experimentRegistered = true
-        experimentId = dbManager.lastExperimentId
+        var mapName = (userSession.currentMapName || "").trim()
 
         var okMap = robotServiceBridge.requestMapData(mapName)
         if (!okMap) {
@@ -1044,25 +1101,25 @@ TestMapViewForm {
             rm.publishInitialPose(pos.x, pos.y, placementController.theta)
         }
 
-        step = stepNavigation
+        step = stepTrajectory
     }
 
     onGoalAcceptRequested: {
-        if (step !== stepNavigation) {
+        if (step !== stepTrajectory) {
             return
         }
         handleGoalAccept()
     }
 
     onGoalClearRequested: {
-        if (step !== stepNavigation) {
+        if (step !== stepTrajectory) {
             return
         }
         handleGoalClear()
     }
 
     onPathClearRequested: {
-        if (step !== stepNavigation) {
+        if (step !== stepTrajectory) {
             return
         }
         if (pathPlacementEnabled) {
@@ -1071,21 +1128,21 @@ TestMapViewForm {
     }
 
     onPathAcceptRequested: {
-        if (step !== stepNavigation) {
+        if (step !== stepTrajectory) {
             return
         }
         handlePathAccept()
     }
 
     onPathSegmentRequested: {
-        if (step !== stepNavigation) {
+        if (step !== stepTrajectory) {
             return
         }
         handlePathSegment()
     }
 
     onStartTestRequested: {
-        if (step !== stepNavigation) {
+        if (step !== stepTrajectory) {
             return
         }
 
@@ -1109,7 +1166,7 @@ TestMapViewForm {
     }
 
     onGoHomeRequested: {
-        if (step !== stepNavigation || !testStarted || !initialRobotPoseSaved) {
+        if (step !== stepExperiment || !testStarted || !initialRobotPoseSaved) {
             return
         }
         if (!robotServiceBridge || !robotServiceBridge.computePathToPose) {
@@ -1152,7 +1209,7 @@ TestMapViewForm {
     }
 
     onBackNavigationRequested: {
-        if (step !== stepNavigation || testStarted) {
+        if (step !== stepTrajectory || testStarted) {
             return
         }
 
@@ -1161,6 +1218,30 @@ TestMapViewForm {
         handleGoalClear()
         handlePathClear()
         step = stepOrientation
+    }
+
+    onFinishExperimentRequested: {
+        if (step !== stepExperiment) {
+            return
+        }
+
+        finishExperimentConfirmDialog.openWithMessage(qsTr("¿Seguro que quieres terminar el experimento actual?"))
+    }
+
+    onRepeatExperimentRequested: {
+        if (step !== stepExperiment || experimentReturnHomeForRepeatPending) {
+            return
+        }
+
+        repeatExperimentConfirmDialog.openWithMessage(qsTr("¿Repetir experimento? El robot volverá al punto inicial."))
+    }
+
+    onExitExperimentRequested: {
+        if (step !== stepExperiment || !experimentNavigationFinished) {
+            return
+        }
+
+        beginExit()
     }
 
     onZoomInRequested: {
@@ -1183,6 +1264,25 @@ TestMapViewForm {
             mapVisualizationManager.followRobot = false
         }
         mapVisualizationManager.zoomOut()
+    }
+
+    onFitRequested: {
+        if (!mapVisualizationManager || !mapVisualizationManager.fitToView) {
+            return
+        }
+
+        if (mapVisualizationManager.followRobot !== undefined) {
+            mapVisualizationManager.followRobot = false
+        }
+        mapVisualizationManager.fitToView()
+    }
+
+    onFollowRequested: {
+        if (!mapVisualizationManager || mapVisualizationManager.followRobot === undefined) {
+            return
+        }
+
+        mapVisualizationManager.followRobot = !mapVisualizationManager.followRobot
     }
 
     Component.onDestruction: {
@@ -1217,6 +1317,130 @@ TestMapViewForm {
 
         onAccepted: {
             beginExit()
+        }
+    }
+
+    ConfirmationDialog {
+        id: finishExperimentConfirmDialog
+        holdToAccept: true
+        acceptText: qsTr("Terminar")
+
+        onAccepted: {
+            if (step !== stepExperiment) {
+                return
+            }
+
+            if (experimentNavigationFinished) {
+                return
+            }
+
+            if (testStarted && robotServiceBridge && robotServiceBridge.cancelNavigateToPose) {
+                robotServiceBridge.cancelNavigateToPose()
+            }
+
+            testStarted = false
+            experimentNavigationFinished = true
+            experimentShowRepeatButton = true
+            experimentNavigationSucceeded = false
+            clearPathsAfterExperimentEnd()
+            startExperimentSaveFlowWithDelay(qsTr("Terminando test..."))
+        }
+    }
+
+    ConfirmationDialog {
+        id: saveExperimentConfirmDialog
+        holdToAccept: false
+        acceptText: qsTr("Guardar")
+
+        onAccepted: {
+            if (!dbManager || !userSession) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: Sesión o base de datos no disponible")
+                errorPopup.open()
+                return
+            }
+
+            if (!userSession.currentPatient) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No hay paciente seleccionado")
+                errorPopup.open()
+                return
+            }
+
+            var mapName = (userSession.currentMapName || "").trim()
+            if (mapName === "") {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No hay mapa seleccionado")
+                errorPopup.open()
+                return
+            }
+
+            var patientName = ""
+            if (userSession.currentPatient) {
+                var p = userSession.currentPatient
+                patientName = (p.lastName + ", " + p.name).trim()
+            }
+
+            experimentSaveDialog.doctorName = dbManager.displayName
+            experimentSaveDialog.patientName = patientName
+            experimentSaveDialog.locationName = (userSession && userSession.currentMapName) ? userSession.currentMapName : ""
+            experimentSaveDialog.dateText = Qt.formatDateTime(new Date(), "dd/MM/yyyy HH:mm")
+            experimentSaveDialog.annotations = ""
+            experimentSaveDialog.open()
+        }
+
+        onRejected: {
+        }
+    }
+
+    ConfirmationDialog {
+        id: repeatExperimentConfirmDialog
+        holdToAccept: true
+        acceptText: qsTr("Repetir")
+
+        onAccepted: {
+            if (step !== stepExperiment || experimentReturnHomeForRepeatPending) {
+                return
+            }
+
+            if (!robotServiceBridge || !robotServiceBridge.navigateToPose) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
+                errorPopup.open()
+                return
+            }
+
+            if (!initialRobotPoseSaved) {
+                resetToTrajectoryPhase()
+                return
+            }
+
+            experimentReturnHomeForRepeatPending = true
+            var okRepeatHome = robotServiceBridge.navigateToPose(initialRobotMapPosition.x, initialRobotMapPosition.y, initialRobotTheta)
+            if (!okRepeatHome) {
+                experimentReturnHomeForRepeatPending = false
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo volver al punto inicial")
+                errorPopup.open()
+            }
+        }
+    }
+
+    ExperimentSaveDialog {
+        id: experimentSaveDialog
+
+        onSaveRequested: function(annotations) {
+            if (!dbManager || !userSession || !userSession.currentPatient) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No hay datos suficientes para guardar")
+                errorPopup.open()
+                return
+            }
+
+            var patient = userSession.currentPatient
+            var mapName = (userSession.currentMapName || "").trim()
+            var okSave = dbManager.saveExperiment(patient.name, patient.lastName, mapName, annotations)
+            if (!okSave) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: %1").arg(dbManager.lastError)
+                errorPopup.open()
+                return
+            }
+
+            experimentSaveDialog.close()
         }
     }
 
@@ -1371,6 +1595,34 @@ TestMapViewForm {
             goalPathReady = points && points.length > 1
         }
 
+        function onNavigationFinished(resultCode) {
+            if (step !== stepExperiment) {
+                return
+            }
+
+            if (experimentReturnHomeForRepeatPending) {
+                experimentReturnHomeForRepeatPending = false
+                if (resultCode !== RobotServiceBridge.NAV_SUCCEEDED) {
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo volver al punto inicial")
+                    errorPopup.open()
+                    return
+                }
+
+                resetToTrajectoryPhase()
+                return
+            }
+
+            testStarted = false
+            experimentNavigationFinished = true
+            experimentNavigationSucceeded = (resultCode === RobotServiceBridge.NAV_SUCCEEDED)
+            experimentShowRepeatButton = true
+            clearPathsAfterExperimentEnd()
+
+            if (!experimentSaveFlowStarted) {
+                startExperimentSaveFlowWithDelay(qsTr("Finalizando test..."))
+            }
+        }
+
     }
 
 
@@ -1390,7 +1642,7 @@ TestMapViewForm {
         holdToAccept: true
 
         onAccepted: {
-            if (step !== stepNavigation) {
+            if (step !== stepTrajectory) {
                 return
             }
 
@@ -1440,6 +1692,8 @@ TestMapViewForm {
             }
 
             testStarted = true
+            resetExperimentPhaseState()
+            step = stepExperiment
 
             if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
                 mapVisualizationManager.setPathUpdatesEnabled(true)
@@ -1456,7 +1710,7 @@ TestMapViewForm {
         holdToAccept: true
 
         onAccepted: {
-            if (step !== stepNavigation || !testStarted || !initialRobotPoseSaved) {
+            if (step !== stepExperiment || !testStarted || !initialRobotPoseSaved) {
                 return
             }
 
@@ -1492,6 +1746,24 @@ TestMapViewForm {
     }
 
     Timer {
+        id: experimentSavePromptTimer
+        interval: 3000
+        repeat: false
+        running: false
+        onTriggered: {
+            if (experimentFinishBusyDialog.visible) {
+                experimentFinishBusyDialog.close()
+            }
+
+            if (experimentSavePromptPending && !saveExperimentConfirmDialog.visible && !experimentSaveDialog.visible) {
+                saveExperimentConfirmDialog.openWithMessage(qsTr("¿Desea guardar el experimento?"))
+            }
+
+            experimentSavePromptPending = false
+        }
+    }
+
+    Timer {
         id: autoLocalizationStopTimer
         interval: autoLocalizationSpinMs
         repeat: false
@@ -1507,6 +1779,10 @@ TestMapViewForm {
 
     BusyDialog {
         id: busyDialog
+    }
+
+    BusyDialog {
+        id: experimentFinishBusyDialog
     }
 
     ErrorRectangle {
