@@ -2,9 +2,10 @@
 
 #include <QObject>
 #include <QPointF>
-#include <QSet>
 #include <QVariantList>
 #include <QVector>
+
+#include "Map/Utils/PathSegmentation.hpp"
 
 namespace ROBOGait
 {
@@ -109,6 +110,12 @@ public:
    */
   Q_INVOKABLE bool segmentPath();
 
+  /**
+   * @brief Override segmentation tuning in screen-space units
+   */
+  void setSegmentationTuningPx(double resample_spacing_px, double rdp_epsilon_px, int short_straw_window, double short_straw_median_factor,
+                               double short_straw_line_threshold);
+
 signals:
   void pathChanged();      // Emitted when path points change
   void drawingChanged();   // Emitted when drawing state changes
@@ -153,41 +160,9 @@ private:
   double pixelsToMetersDistance(double distance_px) const;
 
   /**
-   * @brief Resample a polyline at near-uniform spacing
-   */
-  QVector<QPointF> uniformResample(const QVector<QPointF>& points, double spacing_m) const;
-
-  /**
-   * @brief Detect corner indices using the ShortStraw heuristic
-   */
-  QVector<int> detectShortStrawCorners(const QVector<QPointF>& points, int window, double median_factor, double line_threshold) const;
-
-  /**
-   * @brief Simplify polyline with RDP while forcing locked corner indices
-   */
-  QVector<QPointF> simplifyWithLockedCorners(const QVector<QPointF>& points, const QVector<int>& locked_corner_indices, double epsilon_m) const;
-
-  /**
    * @brief Build a segmented polyline from raw freehand points
-   *
-   * This is the geometric commit pipeline (resample -> corners -> locked-RDP).
    */
   QVector<QPointF> buildSegmentedPolyline(const QVector<QPointF>& points) const;
-
-  /**
-   * @brief Distance from point to segment
-   */
-  static double pointToSegmentDistance(const QPointF& point, const QPointF& seg_a, const QPointF& seg_b);
-
-  /**
-   * @brief Per-segment RDP returning kept indices in [first,last]
-   */
-  QVector<int> collectRdpKeptIndices(const QVector<QPointF>& points, int first, int last, double epsilon_m) const;
-
-  /**
-   * @brief Line test used by ShortStraw refinement
-   */
-  static bool isLineSegmentApproximation(const QVector<QPointF>& points, int first, int last, double threshold_ratio);
 
   /**
    * @brief Append the current robot position as first point of the stroke
@@ -197,15 +172,9 @@ private:
   bool appendRobotStartPoint();
 
   /**
-   * @brief Configuration parameters for geometric segmentation
-   *
-   * @param resample_spacing_px Target resampling spacing in screen pixels
-   * @param rdp_epsilon_px RDP tolerance in screen pixels
-   * @param short_straw_window ShortStraw half-window size
-   * @param short_straw_median_factor ShortStraw median factor
-   * @param short_straw_line_threshold ShortStraw line test threshold
+   * @brief Segmentation tuning in screen-space units
    */
-  struct SegmentationConfig
+  struct SegmentationTuningPx
   {
     double resample_spacing_px = 5.0;
     double rdp_epsilon_px = 3.0;
@@ -221,7 +190,7 @@ private:
   bool drawing_;                                                               /**< True while drag stroke is active */
   bool stroke_blocked_by_outside_;                                             /**< True when pointer leaves map during a stroke */
   double min_point_distance_m_;                                                /**< Minimum distance between consecutive points */
-  SegmentationConfig segmentation_config_;                                     /**< Parameters for geometric segmentation */
+  SegmentationTuningPx segmentation_tuning_px_;                                /**< Segmentation tuning in screen-space units */
 
   static constexpr int MIN_VALID_PATH_POINTS = 2; /**< Minimum number of valid points required for a path */
 };
