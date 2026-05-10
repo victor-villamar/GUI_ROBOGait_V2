@@ -509,8 +509,6 @@ bool DataBaseManager::deletePatient(int patient_id)
   return true;
 }
 
-
-
 bool DataBaseManager::deleteExperiment(int experiment_id)
 {
   if (!db_.isOpen())
@@ -549,31 +547,33 @@ bool DataBaseManager::deleteExperiment(int experiment_id)
   return true;
 }
 
-bool DataBaseManager::registerExperiment(const QString& patient_name, const QString& patient_last_name, const QString& map_name)
+bool DataBaseManager::saveExperiment(const QString& patient_name, const QString& patient_last_name, const QString& map_name, const QString& annotations)
 {
   if (!db_.isOpen())
   {
-    qCritical() << "[DataBaseManager::registerExperiment] Database is not open";
+    qCritical() << "[DataBaseManager::saveExperiment] Database is not open";
     setLastError("La base de datos no esta abierta");
     return false;
   }
 
   if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::registerExperiment] Action not allowed for guest users";
+    qWarning() << "[DataBaseManager::saveExperiment] Action not allowed for guest users";
     setLastError("Accion no permitida para usuario invitado");
     return false;
   }
 
   if (patient_name.trimmed().isEmpty() || patient_last_name.trimmed().isEmpty() || map_name.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::registerExperiment] Patient name, last name or map name is empty";
+    qWarning() << "[DataBaseManager::saveExperiment] Patient name, last name or map name is empty";
     setLastError("Nombre del paciente, apellidos y mapa son obligatorios");
     return false;
   }
 
-  const auto result = experiment_repository_.insertExperiment(patient_name.trimmed(), patient_last_name.trimmed(), map_name.trimmed(), user_name_);
+  const QString trimmed_annotations = annotations.trimmed();
+  const std::optional<QString> comment = trimmed_annotations.isEmpty() ? std::nullopt : std::optional<QString>(trimmed_annotations);
 
+  const auto result = experiment_repository_.insertExperiment(patient_name.trimmed(), patient_last_name.trimmed(), map_name.trimmed(), user_name_, comment);
   if (!statusOk(result))
   {
     const auto error = std::get<DbError>(result);
@@ -585,7 +585,7 @@ bool DataBaseManager::registerExperiment(const QString& patient_name, const QStr
 
   setLastError("");
   setLastExperimentId(experiment_id);
-  qInfo() << "[DataBaseManager::registerExperiment] Experiment created successfully:" << experiment_id;
+  qInfo() << "[DataBaseManager::saveExperiment] Experiment saved successfully:" << experiment_id;
   return true;
 }
 

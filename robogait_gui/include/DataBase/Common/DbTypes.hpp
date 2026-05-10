@@ -15,7 +15,6 @@ static constexpr const char* USER = "user";
 static constexpr const char* PATIENT = "patient";
 static constexpr const char* MAP = "map";
 static constexpr const char* EXPERIMENTS = "experiments";
-static constexpr const char* RESULT = "result";
 } // namespace tables
 
 /**
@@ -101,6 +100,7 @@ struct MapRow
  * @param id_patient The unique identifier for the patient associated with the experiment
  * @param id_map The unique identifier for the map associated with the experiment
  * @param date The date when the experiment was conducted
+ * @param comment Optional annotations for the experiment
  * @param id_user The unique identifier for the user who conducted the experiment
  */
 struct ExperimentRow
@@ -109,6 +109,7 @@ struct ExperimentRow
   int id_patient = -1;
   int id_map = -1;
   QString date;
+  QString comment;
   std::optional<int> id_user;
 };
 

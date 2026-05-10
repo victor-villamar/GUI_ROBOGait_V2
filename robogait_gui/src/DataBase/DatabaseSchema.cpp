@@ -29,11 +29,6 @@ DbResultVoid DatabaseSchema::initializeSchema(const QSqlDatabase& db)
     return result;
   }
 
-  if (auto result = createResultTable(db); !statusOk(result))
-  {
-    return result;
-  }
-
   if (auto result = createPatientDoctorTable(db); !statusOk(result))
   {
     return result;
@@ -110,6 +105,7 @@ DbResultVoid DatabaseSchema::createExperimentsTable(const QSqlDatabase& db)
       id_patient INTEGER NOT NULL,
       id_map INTEGER NOT NULL,
       date TEXT NOT NULL,
+      comment TEXT,
       id_user INTEGER,
       FOREIGN KEY (id_patient) REFERENCES patient(id),
       FOREIGN KEY (id_map) REFERENCES map(id),
@@ -118,21 +114,6 @@ DbResultVoid DatabaseSchema::createExperimentsTable(const QSqlDatabase& db)
   )";
 
   return executeSql(db, sql, "experiments table");
-}
-
-DbResultVoid DatabaseSchema::createResultTable(const QSqlDatabase& db)
-{
-  const QString sql = R"(
-    CREATE TABLE IF NOT EXISTS result (
-      id INTEGER PRIMARY KEY NOT NULL UNIQUE,
-      path TEXT,
-      comment TEXT,
-      id_experiments INTEGER,
-      FOREIGN KEY (id_experiments) REFERENCES experiments(id)
-    )
-  )";
-
-  return executeSql(db, sql, "result table");
 }
 
 DbResultVoid DatabaseSchema::createPatientDoctorTable(const QSqlDatabase& db)

@@ -61,14 +61,6 @@ private:
   static DbResultVoid createExperimentsTable(const QSqlDatabase& db);
 
   /**
-   * @brief Create result table
-   *
-   * @param db Reference to the database
-   * @return DbResultVoid indicating success or failure
-   */
-  static DbResultVoid createResultTable(const QSqlDatabase& db);
-
-  /**
    * @brief Create patient_doctor junction table
    *
    * @param db Reference to the database
