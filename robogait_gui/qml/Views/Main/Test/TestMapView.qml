@@ -1166,7 +1166,7 @@ TestMapViewForm {
     }
 
     onGoHomeRequested: {
-        if (step !== stepExperiment || !testStarted || !initialRobotPoseSaved) {
+        if (step !== stepExperiment || !initialRobotPoseSaved) {
             return
         }
         if (!robotServiceBridge || !robotServiceBridge.computePathToPose) {
@@ -1233,7 +1233,7 @@ TestMapViewForm {
             return
         }
 
-        repeatExperimentConfirmDialog.openWithMessage(qsTr("¿Repetir experimento? El robot volverá al punto inicial."))
+        repeatExperimentConfirmDialog.openWithMessage(qsTr("¿Desea realizar el experimento nuevamente? El robot volverá al punto inicial."))
     }
 
     onExitExperimentRequested: {
@@ -1409,6 +1409,10 @@ TestMapViewForm {
             if (!initialRobotPoseSaved) {
                 resetToTrajectoryPhase()
                 return
+            }
+
+            if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+                mapVisualizationManager.setPathUpdatesEnabled(true)
             }
 
             experimentReturnHomeForRepeatPending = true
@@ -1710,8 +1714,12 @@ TestMapViewForm {
         holdToAccept: true
 
         onAccepted: {
-            if (step !== stepExperiment || !testStarted || !initialRobotPoseSaved) {
+            if (step !== stepExperiment || !initialRobotPoseSaved) {
                 return
+            }
+
+            if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+                mapVisualizationManager.setPathUpdatesEnabled(true)
             }
 
             if (!robotServiceBridge || !robotServiceBridge.navigateToPose) {
@@ -1725,10 +1733,6 @@ TestMapViewForm {
                 errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación a la posición inicial")
                 errorPopup.open()
                 return
-            }
-
-            if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
-                mapVisualizationManager.setPathUpdatesEnabled(true)
             }
         }
     }
