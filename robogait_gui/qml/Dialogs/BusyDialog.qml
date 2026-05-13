@@ -22,10 +22,50 @@ Dialog {
     y: parent ? (parent.height - height) / 2 : 0
 
     property string message: "Procesando..."
+    property int timeoutMs: 0
+    property bool autoCloseOnTimeout: true
 
-    function openWithMessage(text) {
+    signal timedOut()
+
+    function restartTimeout()
+    {
+        if (timeoutMs > 0)
+        {
+            timeoutTimer.interval = timeoutMs
+            timeoutTimer.restart()
+        }
+        else
+        {
+            timeoutTimer.stop()
+        }
+    }
+
+    function openWithMessage(text)
+    {
         message = text || ""
+        if (visible)
+        {
+            restartTimeout()
+            return
+        }
         open()
+    }
+
+    onOpened: restartTimeout()
+    onClosed: timeoutTimer.stop()
+
+    Timer {
+        id: timeoutTimer
+        interval: root.timeoutMs > 0 ? root.timeoutMs : 1
+        repeat: false
+        running: false
+        onTriggered: {
+            root.timedOut()
+            if (root.autoCloseOnTimeout)
+            {
+                root.close()
+            }
+        }
     }
 
     background: Rectangle {
