@@ -15,6 +15,7 @@ TestMapViewForm {
     readonly property real computedButtonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 44
     readonly property real computedJoystickStickSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.joystickStickSize, 0) : 34
     readonly property real computedWheelSizePx: computedJoystickStickSizePx * 4
+    readonly property int busyTimeoutMs: 10000
 
     iconButtonSizePx: computedIconButtonSizePx
     iconGlyphSizePx: computedIconGlyphSizePx
@@ -1456,13 +1457,12 @@ TestMapViewForm {
         function onStatusChanged() {
             if (autoLocalizationWaitingForNav)
             {
-                if (robotServiceBridge.activeCommandKey === "navigation"
-                    && robotServiceBridge.status === RobotServiceBridge.RUNNING)
+                var navStarting = (robotServiceBridge.activeCommandKey === "navigation")
+                if (navStarting && robotServiceBridge.status === RobotServiceBridge.RUNNING)
                 {
                     triggerGlobalLocalization()
                 }
-                else if (robotServiceBridge.activeCommandKey === "navigation"
-                           && robotServiceBridge.status === RobotServiceBridge.ERROR)
+                else if (robotServiceBridge.status === RobotServiceBridge.ERROR)
                 {
                     autoLocalizationWaitingForNav = false
                     failAutoLocalization(qsTr("Error: No se pudo iniciar la navegación"))
@@ -1471,8 +1471,8 @@ TestMapViewForm {
 
             if (waitingForNavigationStart)
             {
-                if (robotServiceBridge.activeCommandKey === "navigation"
-                    && robotServiceBridge.status === RobotServiceBridge.RUNNING)
+                var navPlacementStarting = (robotServiceBridge.activeCommandKey === "navigation")
+                if (navPlacementStarting && robotServiceBridge.status === RobotServiceBridge.RUNNING)
                 {
                     waitingForNavigationStart = false
                     busyDialog.close()
@@ -1482,8 +1482,7 @@ TestMapViewForm {
                     orientationOverride = false
                     step = stepOrientation
                 }
-                else if (robotServiceBridge.activeCommandKey === "navigation"
-                           && robotServiceBridge.status === RobotServiceBridge.ERROR)
+                else if (robotServiceBridge.status === RobotServiceBridge.ERROR)
                 {
                     waitingForNavigationStart = false
                     busyDialog.close()
@@ -1783,10 +1782,39 @@ TestMapViewForm {
 
     BusyDialog {
         id: busyDialog
+        timeoutMs: root.busyTimeoutMs
+
+        onTimedOut: {
+            if (autoLocalizationActive || autoLocalizationWaitingForNav || autoLocalizationWaitingForService) {
+                failAutoLocalization(qsTr("Error: Tiempo de espera agotado durante la autolocalización"))
+                return
+            }
+
+            if (waitingForNavigationStart) {
+                waitingForNavigationStart = false
+                errorPopup.errorRectangleTextError.text = qsTr("Error: Tiempo de espera agotado al iniciar la navegación")
+                errorPopup.open()
+                return
+            }
+
+            if (exiting) {
+                exiting = false
+                exitAndQuit = false
+                errorPopup.errorRectangleTextError.text = qsTr("Error: Tiempo de espera agotado al salir de la prueba")
+                errorPopup.open()
+                return
+            }
+
+            if (!mapAvailable) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: Tiempo de espera agotado al cargar el mapa")
+                errorPopup.open()
+            }
+        }
     }
 
     BusyDialog {
         id: experimentFinishBusyDialog
+        timeoutMs: 0
     }
 
     ErrorRectangle {
