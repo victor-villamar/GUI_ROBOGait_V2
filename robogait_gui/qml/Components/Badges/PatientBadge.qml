@@ -23,7 +23,7 @@ Item {
     property int segmentHeight: Math.round(badgeMenuItemHeightPx)
     property int segmentPadding: 16
     property int dividerSize: 2
-    property int segmentWidth: Math.max(120, diagnosticsText.implicitWidth + root.segmentPadding * 2)
+    property int segmentWidth: Math.max(120, Math.max(diagnosticsText.implicitWidth, testsText.implicitWidth) + root.segmentPadding * 2)
     property int menuWidth: Math.max(root.badgeWidth, root.segmentWidth)
 
     implicitHeight: Math.round(badgeHeightPx)
@@ -136,7 +136,7 @@ Item {
         id: dropDown
         z: 3
         width: root.menuWidth
-        height: root.dropDownOpen ? root.segmentHeight : 0
+        height: root.dropDownOpen ? root.segmentHeight * 2 : 0
         opacity: root.dropDownOpen ? 1 : 0
         radius: 14
         color: AppTheme.badges.light
@@ -188,10 +188,46 @@ Item {
                     }
                 }
             }
+
+            Rectangle {
+                width: parent.width
+                height: root.dividerSize
+                color: AppTheme.badges.primary
+            }
+
+            Rectangle {
+                id: testsSegment
+                width: parent.width
+                height: root.segmentHeight
+                color: testsArea.pressed ? AppTheme.badges.pressedBackground : "transparent"
+
+                Text {
+                    id: testsText
+                    anchors.centerIn: parent
+                    text: qsTr("Pruebas")
+                    color: AppTheme.badges.primary
+                    font.pixelSize: 12
+                    font.bold: true
+                }
+
+                MouseArea {
+                    id: testsArea
+                    anchors.fill: parent
+                    onPressed: root.restartAutoCloseTimer()
+                    onClicked: {
+                        root.dropDownOpen = false
+                        testsDialog.open()
+                    }
+                }
+            }
         }
     }
 
     DiagnosticDialog {
         id: diagnosticDialog
+    }
+
+    TestsDialog {
+        id: testsDialog
     }
 }
