@@ -49,6 +49,10 @@ public:
              READ getDoctorDiagnostics
              NOTIFY patientChanged
   )
+  Q_PROPERTY(QVariantList tests
+             READ getTests
+             NOTIFY patientChanged
+  )
 
   // clang-format on
 
@@ -102,6 +106,13 @@ public:
   QVariantList getDoctorDiagnostics() const;
 
   /**
+   * @brief Get tests for the patient
+   *
+   * @return List of patient tests
+   */
+  QVariantList getTests() const;
+
+  /**
    * @brief Select a patient.
    * @param id The patient ID.
    * @param name The patient name.
@@ -118,6 +129,13 @@ public:
   void setDoctorDiagnostics(const QVariantList& doctor_diagnostics);
 
   /**
+   * @brief Set tests list for the patient
+   *
+   * @param tests The tests list
+   */
+  void setTests(const QVariantList& tests);
+
+  /**
    * @brief Clear the patient selection.
    */
   void clear();
@@ -131,6 +149,7 @@ private:
   QString last_name_;               /**< The patient last name */
   QString display_name_;            /**< The patient display name */
   QVariantList doctor_diagnostics_; /**< The patient doctors diagnostics */
+  QVariantList tests_;              /**< The patient tests */
 };
 } // namespace user
 } // namespace ROBOGait

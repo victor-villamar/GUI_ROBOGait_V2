@@ -224,6 +224,7 @@ void UserSession::assignPatient(int patient_id, const QString& name, const QStri
     if (db_manager_)
     {
       current_patient_->setDoctorDiagnostics(db_manager_->getPatientDoctorDiagnostics(patient_id));
+      current_patient_->setTests(db_manager_->getPatientTests(patient_id));
     }
   }
 
