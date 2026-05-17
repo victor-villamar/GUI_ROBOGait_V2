@@ -55,6 +55,9 @@ public:
   Q_PROPERTY(QColor diagnosticDetailsBackground
              READ getDiagnosticDetailsBackground
              CONSTANT)
+  Q_PROPERTY(QColor black
+             READ getBlack
+             CONSTANT)
   // clang-format on
 
   explicit ThemeDialogsCommon(QObject* parent = nullptr);
@@ -73,6 +76,7 @@ public:
   QColor getErrorBorder() const;
   QColor getErrorText() const;
   QColor getDiagnosticDetailsBackground() const;
+  QColor getBlack() const;
 
 private:
   static constexpr const char* OVERLAY_DIM = "#A0505050";
@@ -89,6 +93,7 @@ private:
   static constexpr const char* ERROR_BORDER = "#f5c6cb";
   static constexpr const char* ERROR_TEXT = "#721c24";
   static constexpr const char* DIAGNOSTIC_DETAILS_BACKGROUND = "#e9e9e9";
+  static constexpr const char* BLACK = "#000000";
 };
 } // namespace settings
 } // namespace ROBOGait

@@ -50,6 +50,15 @@ public:
    * @return Success or failure result
    */
   DbResultVoid deleteExperimentByIdForUserName(int experiment_id, const QString& user_name);
+
+  /**
+   * @brief List patient tests visible for the requesting user and patient
+   *
+   * @param patient_id The patient ID
+   * @param user_name The requesting username
+   * @return Result containing test entries
+   */
+  DbResult<QVector<PatientTestInfo>> listPatientTestsByPatientIdForUserName(int patient_id, const QString& user_name);
 };
 } // namespace db
 } // namespace ROBOGait

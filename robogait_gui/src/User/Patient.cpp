@@ -4,7 +4,7 @@
 
 using namespace ROBOGait::user;
 
-Patient::Patient() : id_(-1), name_(""), last_name_(""), display_name_(""), doctor_diagnostics_() {}
+Patient::Patient() : id_(-1), name_(""), last_name_(""), display_name_(""), doctor_diagnostics_(), tests_() {}
 
 int Patient::getId() const { return id_; }
 
@@ -36,6 +36,8 @@ QString Patient::getStatusRichText() const
 
 QVariantList Patient::getDoctorDiagnostics() const { return doctor_diagnostics_; }
 
+QVariantList Patient::getTests() const { return tests_; }
+
 void Patient::selectPatient(int id, const QString& name, const QString& lastName, const QString& displayName)
 {
   id_ = id;
@@ -43,6 +45,7 @@ void Patient::selectPatient(int id, const QString& name, const QString& lastName
   last_name_ = lastName;
   display_name_ = displayName;
   doctor_diagnostics_.clear();
+  tests_.clear();
   emit patientChanged();
 }
 
@@ -55,6 +58,15 @@ void Patient::setDoctorDiagnostics(const QVariantList& doctor_diagnostics)
   }
 }
 
+void Patient::setTests(const QVariantList& tests)
+{
+  if (tests != tests_)
+  {
+    tests_ = tests;
+    emit patientChanged();
+  }
+}
+
 void Patient::clear()
 {
   id_ = -1;
@@ -62,5 +74,6 @@ void Patient::clear()
   last_name_.clear();
   display_name_.clear();
   doctor_diagnostics_.clear();
+  tests_.clear();
   emit patientChanged();
 }

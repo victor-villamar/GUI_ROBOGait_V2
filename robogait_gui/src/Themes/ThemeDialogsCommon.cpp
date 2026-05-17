@@ -31,3 +31,5 @@ QColor ThemeDialogsCommon::getErrorBorder() const { return QColor(ERROR_BORDER);
 QColor ThemeDialogsCommon::getErrorText() const { return QColor(ERROR_TEXT); }
 
 QColor ThemeDialogsCommon::getDiagnosticDetailsBackground() const { return QColor(DIAGNOSTIC_DETAILS_BACKGROUND); }
+
+QColor ThemeDialogsCommon::getBlack() const { return QColor(BLACK); }

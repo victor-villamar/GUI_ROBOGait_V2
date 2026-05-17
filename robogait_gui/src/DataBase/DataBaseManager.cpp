@@ -414,6 +414,61 @@ QVariantList DataBaseManager::getPatientDoctorDiagnostics(int patient_id)
   return diagnostics_list;
 }
 
+QVariantList DataBaseManager::getPatientTests(int patient_id)
+{
+  QVariantList tests_list;
+
+  if (!db_.isOpen())
+  {
+    qCritical() << "[DataBaseManager::getPatientTests] Database is not open";
+    setLastError("La base de datos no esta abierta");
+    return tests_list;
+  }
+
+  if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
+  {
+    qWarning() << "[DataBaseManager::getPatientTests] Action not allowed for guest users";
+    setLastError("Accion no permitida para usuario invitado");
+    return tests_list;
+  }
+
+  if (patient_id <= 0)
+  {
+    qWarning() << "[DataBaseManager::getPatientTests] Invalid patient ID";
+    setLastError("ID de paciente invalido");
+    return tests_list;
+  }
+
+  const auto result = experiment_repository_.listPatientTestsByPatientIdForUserName(patient_id, user_name_);
+
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return tests_list;
+  }
+
+  const auto tests = std::get<QVector<PatientTestInfo>>(result);
+  for (const auto& test : tests)
+  {
+    QVariantMap map;
+    map["experiment_id"] = test.experiment_id;
+    map["patient_name"] = test.patient_name;
+    map["patient_last_name"] = test.patient_last_name;
+    map["doctor_name"] = test.doctor_name;
+    map["doctor_last_name"] = test.doctor_last_name;
+    map["date"] = test.date;
+    map["map_name"] = test.map_name;
+    map["location"] = test.map_location;
+    map["comment"] = test.comment;
+    tests_list.append(map);
+  }
+
+  setLastError("");
+  qInfo() << "[DataBaseManager::getPatientTests] Retrieved" << tests.size() << "tests for patient ID:" << patient_id;
+  return tests_list;
+}
+
 bool DataBaseManager::registerPatient(const QString& name, const QString& last_name, int age, double weight, double height, const QString& description)
 {
   if (!db_.isOpen())
