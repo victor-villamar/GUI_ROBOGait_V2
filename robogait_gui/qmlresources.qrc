@@ -1,6 +1,7 @@
 <RCC>
   <qresource prefix="/qmlresources/icons/black">
     <file alias="xmark_solid.svg">resources/Icons/black/xmark_solid.svg</file>
+    <file alias="circle_info_solid.svg">resources/Icons/black/circle_info_solid.svg</file>
   </qresource>
   <qresource prefix="/qmlresources/icons/color">
     <file alias="battery_0.svg">resources/Icons/color/battery_0.svg</file>
