@@ -114,6 +114,32 @@ struct ExperimentRow
 };
 
 /**
+ * @brief Structure representing experiment information for patient test history
+ *
+ * @param experiment_id The unique identifier for the experiment
+ * @param patient_name The patient first name
+ * @param patient_last_name The patient last name
+ * @param doctor_name The doctor first name
+ * @param doctor_last_name The doctor last name
+ * @param date The experiment date
+ * @param map_name The map name
+ * @param map_location The map location
+ * @param comment Optional experiment comment
+ */
+struct PatientTestInfo
+{
+  int experiment_id = -1;
+  QString patient_name;
+  QString patient_last_name;
+  QString doctor_name;
+  QString doctor_last_name;
+  QString date;
+  QString map_name;
+  QString map_location;
+  QString comment;
+};
+
+/**
  * @brief Structure representing patient details, including user information
  *
  * @param patient The patient information

@@ -86,3 +86,59 @@ DbResultVoid ExperimentRepository::deleteExperimentByIdForUserName(int experimen
 
   return makeSuccess();
 }
+
+DbResult<QVector<PatientTestInfo>> ExperimentRepository::listPatientTestsByPatientIdForUserName(int patient_id, const QString& user_name)
+{
+  QSqlQuery query(getDataBase());
+
+  // clang-format off
+  const QString sql =
+      "SELECT e.id, p.name, p.lastname, u.name, u.lastname, e.date, m.name, m.location, COALESCE(e.comment, '') "
+      "FROM experiments e "
+      "JOIN patient p ON e.id_patient = p.id "
+      "JOIN map m ON e.id_map = m.id "
+      "LEFT JOIN \"user\" u ON e.id_user = u.id "
+      "WHERE e.id_patient = :patient_id "
+      "  AND EXISTS ("
+      "    SELECT 1 "
+      "    FROM patient_doctor pd "
+      "    JOIN \"user\" u2 ON pd.id_doctor = u2.id "
+      "    WHERE pd.id_patient = :patient_id "
+      "      AND u2.username = :username"
+      "  ) "
+      "ORDER BY e.date DESC, e.id DESC;";
+  // clang-format on
+
+  if (auto result = prepareQuery(query, sql); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<QVector<PatientTestInfo>>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  query.bindValue(":patient_id", patient_id);
+  query.bindValue(":username", user_name);
+
+  if (auto result = executeQuery(query); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<QVector<PatientTestInfo>>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  QVector<PatientTestInfo> tests_output;
+  while (query.next())
+  {
+    PatientTestInfo info;
+    info.experiment_id = query.value(0).toInt();
+    info.patient_name = query.value(1).toString();
+    info.patient_last_name = query.value(2).toString();
+    info.doctor_name = query.value(3).toString();
+    info.doctor_last_name = query.value(4).toString();
+    info.date = query.value(5).toString();
+    info.map_name = query.value(6).toString();
+    info.map_location = query.value(7).toString();
+    info.comment = query.value(8).toString();
+    tests_output.append(info);
+  }
+
+  return tests_output;
+}

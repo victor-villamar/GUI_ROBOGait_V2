@@ -219,6 +219,14 @@ public:
   Q_INVOKABLE QVariantList getPatientDoctorDiagnostics(int patient_id);
 
   /**
+   * @brief Get tests for a patient (requires current user to be linked)
+   *
+   * @param patient_id The patient ID
+   * @return A list of patient tests
+   */
+  Q_INVOKABLE QVariantList getPatientTests(int patient_id);
+
+  /**
    * @brief Register a new patient
    *
    * @param name The name of the patient
