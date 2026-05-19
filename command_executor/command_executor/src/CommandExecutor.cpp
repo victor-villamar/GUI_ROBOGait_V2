@@ -130,7 +130,7 @@ void CommandExecutor::handleGetMapData(const std::shared_ptr<command_executor_ms
   RCLCPP_INFO(get_logger(), "[CommandExecutor::handleGetMapData] Successfully retrieved map data for %s", map_name.c_str());
 }
 
-void CommandExecutor::callbackBatteryStatus(const sensor_msgs::msg::BatteryState::SharedPtr msg) { robot_info_.battery = msg->percentage * 100.0f; }
+void CommandExecutor::callbackBatteryStatus(const sensor_msgs::msg::BatteryState::SharedPtr msg) { robot_info_.battery = msg->percentage; }
 
 void CommandExecutor::mainLoop()
 {
