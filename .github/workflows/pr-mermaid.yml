@@ -12,23 +12,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Create Mermaid diagram and update PR body
+      - name: Update Mermaid diagram in PR body
         uses: actions/github-script@v7
         with:
           script: |
             const source = context.payload.pull_request.head.ref;
             const target = context.payload.pull_request.base.ref;
 
-            const mermaid = [
-              '---',
-              '```mermaid',
-              'graph TD;',
-              `  ${source} --> ${target};`,
-              '```',
-              '---'
-            ].join('\n');
+            const currentBody = context.payload.pull_request.body || '';
 
-            const updatedBody = `${mermaid}\n\n${context.payload.pull_request.body || ''}`;
+            const updatedBody = currentBody.replace(
+              'source_branch --> target_branch;',
+              `${source} --> ${target};`
+            );
 
             await github.rest.pulls.update({
               owner: context.repo.owner,
