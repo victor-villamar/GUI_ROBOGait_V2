@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import AppTheme 1.0
+import "qrc:/Components"
 
 Dialog {
     id: root
@@ -24,23 +25,16 @@ Dialog {
 
     signal saveRequested(string annotations)
 
-    function reposition() {
-        if (!parent) {
-            return
-        }
-        x = Math.round((parent.width - width) / 2)
-        y = Math.round((parent.height - height) / 2)
-    }
-
-    onOpened: reposition()
-    onWidthChanged: reposition()
-    onHeightChanged: reposition()
-    onParentChanged: reposition()
-
     width: parent ? Math.min(760, parent.width * 0.90) : 760
-    height: parent ? Math.min(520, parent.height * 0.88) : 520
+    height: keyboardHelper.computedHeight
     x: parent ? Math.round((parent.width - width) / 2) : 0
-    y: parent ? Math.round((parent.height - height) / 2) : 0
+    y: parent ? keyboardHelper.computedY : 0
+
+    KeyboardAwareHelper {
+        id: keyboardHelper
+        target: root
+        maxDialogHeight: parent ? Math.min(520, parent.height * 0.88) : 520
+    }
 
     Overlay.modal: Rectangle {
         anchors.fill: parent
