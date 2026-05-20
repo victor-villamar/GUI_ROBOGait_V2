@@ -30,6 +30,18 @@ Dialog {
     readonly property real dateColumnRatio: 0.60
     readonly property real locationColumnRatio: 0.40
 
+    function refreshTestsModel()
+    {
+        if (!dbManager || !userSession || !userSession.currentPatient || !userSession.currentPatient.isActive) {
+            testsModel = []
+            return
+        }
+
+        testsModel = dbManager.getPatientTests(userSession.currentPatient.id)
+    }
+
+    onOpened: refreshTestsModel()
+
     background: Rectangle {
         color: AppTheme.dialogsCommon.panelBackground
         border.color: AppTheme.dialogsCommon.light
