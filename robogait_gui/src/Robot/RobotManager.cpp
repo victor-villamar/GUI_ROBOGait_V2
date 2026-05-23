@@ -32,6 +32,7 @@ RobotManager::RobotManager() :
   map_visualization_manager_ = nullptr;
   robot_placement_controller_ = nullptr;
   robot_service_bridge_ = nullptr;
+  person_detection_monitor_ = nullptr;
 }
 
 RobotManager::~RobotManager()
@@ -100,6 +101,26 @@ ROBOGait::robot::RobotPlacementController* RobotManager::getRobotPlacementContro
   return robot_placement_controller_.get();
 }
 
+ROBOGait::perception::monitor::PersonDetectionMonitor* RobotManager::getPersonDetectionMonitor()
+{
+  if (!person_detection_monitor_)
+  {
+    person_detection_monitor_ = std::make_unique<ROBOGait::perception::monitor::PersonDetectionMonitor>();
+  }
+
+  if (parent_node_)
+  {
+    person_detection_monitor_->setROSNode(parent_node_);
+  }
+
+  if (!selected_robot_namespace_.isEmpty())
+  {
+    person_detection_monitor_->setSelectedRobot(selected_robot_namespace_, use_namespace_discovery_);
+  }
+
+  return person_detection_monitor_.get();
+}
+
 void RobotManager::setROSNode(rclcpp::Node* parent_node)
 {
   if (parent_node == nullptr)
@@ -118,6 +139,11 @@ void RobotManager::setROSNode(rclcpp::Node* parent_node)
   if (map_visualization_manager_)
   {
     map_visualization_manager_->setROSNode(parent_node);
+  }
+
+  if (person_detection_monitor_)
+  {
+    person_detection_monitor_->setROSNode(parent_node);
   }
 
   cb_group_ = parent_node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -194,10 +220,18 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
     if (context.setSelectedRobot(normalized_identifier, is_namespace))
     {
       ROBOGait::ros::service::RobotServiceClient::getInstance().setRobotContext(context);
+      if (person_detection_monitor_)
+      {
+        person_detection_monitor_->setSelectedRobot(normalized_identifier, is_namespace);
+      }
     }
     else
     {
       ROBOGait::ros::service::RobotServiceClient::getInstance().clearRobotContext();
+      if (person_detection_monitor_)
+      {
+        person_detection_monitor_->stopMonitoring();
+      }
     }
 
     if (use_topic_filter_)
@@ -214,6 +248,11 @@ void RobotManager::clearSelection()
   if (use_topic_filter_)
   {
     stopMonitoring();
+  }
+
+  if (person_detection_monitor_)
+  {
+    person_detection_monitor_->stopMonitoring();
   }
 
   if (!selected_robot_namespace_.isEmpty())

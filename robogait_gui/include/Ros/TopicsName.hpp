@@ -13,6 +13,7 @@
 #define T_SCAN                      "/scan"
 #define T_PARTICLE_CLOUD            "/particle_cloud"
 #define T_POSE_INITIALIZE           "/initialpose"
+#define T_USER_DETECTION            "/user_detection_filter"
 
 // Services
 #define S_CMD                                        COMMAND_EXECUTOR"/cmd"

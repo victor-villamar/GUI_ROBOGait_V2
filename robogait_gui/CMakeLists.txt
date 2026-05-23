@@ -20,6 +20,7 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(command_executor_msgs REQUIRED)
+find_package(navigation_pkg REQUIRED)
 
 find_package(Qt6 REQUIRED COMPONENTS
     Core
@@ -86,6 +87,7 @@ set(HEADERS
     include/Map/Utils/PathSegmentation.hpp
     include/Map/Utils/Utils.hpp
     include/Map/MapVisualizationManager.hpp
+    include/Perception/PersonDetectionMonitor.hpp
     include/Robot/ManualControl.hpp
     include/Robot/RobotDiscovery.hpp
     include/Robot/RobotManager.hpp
@@ -164,6 +166,7 @@ set(SOURCES
     src/Map/Utils/PathSegmentation.cpp
     src/Map/Utils/Utils.cpp
     src/Map/MapVisualizationManager.cpp
+    src/Perception/PersonDetectionMonitor.cpp
     src/Robot/ManualControl.cpp
     src/Robot/RobotDiscovery.cpp
     src/Robot/RobotManager.cpp
@@ -292,6 +295,7 @@ ament_target_dependencies(${PROJECT_NAME}
     tf2_geometry_msgs
     std_srvs
     command_executor_msgs
+    navigation_pkg
     yaml-cpp
 )
 

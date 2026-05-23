@@ -17,6 +17,7 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
 #include "Map/MapVisualizationManager.hpp"
+#include "Perception/PersonDetectionMonitor.hpp"
 #include "Robot/ManualControl.hpp"
 #include "Robot/RobotPlacementController.hpp"
 #include "Services/RobotServiceBridge.hpp"
@@ -81,6 +82,10 @@ public:
   Q_PROPERTY(ROBOGait::robot::RobotPlacementController* robotPlacementController
              READ getRobotPlacementController
              CONSTANT)
+
+  Q_PROPERTY(ROBOGait::perception::monitor::PersonDetectionMonitor* personDetectionMonitor
+             READ getPersonDetectionMonitor
+             CONSTANT)
   // clang-format on
 
   /**
@@ -133,6 +138,13 @@ public:
    * Creates the controller on first access
    */
   ROBOGait::robot::RobotPlacementController* getRobotPlacementController();
+
+  /**
+   * @brief Get the person detection monitor instance
+   *
+   * Creates the monitor on first access
+   */
+  ROBOGait::perception::monitor::PersonDetectionMonitor* getPersonDetectionMonitor();
 
   /**
    * @brief Set the ROS node for the RobotManager
@@ -277,10 +289,11 @@ private:
 
   rclcpp::Node* parent_node_; /**< Pointer to the parent ROS node */
 
-  std::unique_ptr<ROBOGait::robot::control::ManualControl> manual_control_;                    /**< Manual control instance */
-  std::unique_ptr<ROBOGait::map::manager::MapVisualizationManager> map_visualization_manager_; /**< Map visualization manager */
-  std::unique_ptr<ROBOGait::qml::service::RobotServiceBridge> robot_service_bridge_;           /**< Robot service bridge instance */
-  std::unique_ptr<ROBOGait::robot::RobotPlacementController> robot_placement_controller_;      /**< Robot placement controller instance */
+  std::unique_ptr<ROBOGait::robot::control::ManualControl> manual_control_;                         /**< Manual control instance */
+  std::unique_ptr<ROBOGait::map::manager::MapVisualizationManager> map_visualization_manager_;      /**< Map visualization manager */
+  std::unique_ptr<ROBOGait::qml::service::RobotServiceBridge> robot_service_bridge_;                /**< Robot service bridge instance */
+  std::unique_ptr<ROBOGait::robot::RobotPlacementController> robot_placement_controller_;           /**< Robot placement controller instance */
+  std::unique_ptr<ROBOGait::perception::monitor::PersonDetectionMonitor> person_detection_monitor_; /**< Person detection monitor */
 
   QString selected_robot_namespace_; /**< The namespace of the selected robot */
   bool use_namespace_discovery_;     /**< True if selected robot is identified by namespace, false if by node name */
