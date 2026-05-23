@@ -52,6 +52,7 @@ TestMapViewForm {
     property bool waitingHomePathResult: false
     property bool waitingManualPathResult: false
     property var manualPathNavigationPoints: []
+    property bool personDetectionInProgress: false
 
     readonly property var manualControl: (userSession && userSession.rosManager && userSession.rosManager.robotManager)
                                             ? userSession.rosManager.robotManager.manualControl
@@ -74,6 +75,9 @@ TestMapViewForm {
 
     readonly property var robotServiceBridge : (userSession && userSession.rosManager && userSession.rosManager.robotManager)
                                                   ? userSession.rosManager.robotManager.robotServiceBridge
+                                                  : null
+    readonly property var personDetectionMonitor: (userSession && userSession.rosManager && userSession.rosManager.robotManager)
+                                                  ? userSession.rosManager.robotManager.personDetectionMonitor
                                                   : null
 
     mapAvailable: (userSession.rosManager &&
@@ -100,6 +104,7 @@ TestMapViewForm {
                            !experimentReturnHomeForRepeatPending
     experimentRepeatVisible: step === stepExperiment && experimentShowRepeatButton
     experimentExitMode: step === stepExperiment && experimentNavigationFinished
+    personDetectionConfirmed: false
 
     HelpContentProvider {
         id: helpContent
@@ -159,6 +164,11 @@ TestMapViewForm {
         if (mapVisualizationManager && mapVisualizationManager.clearGoalRobotPose) {
             mapVisualizationManager.clearGoalRobotPose()
         }
+        personDetectionConfirmed = false
+        personDetectionInProgress = false
+        if (personDetectionMonitor && personDetectionMonitor.stopMonitoring) {
+            personDetectionMonitor.stopMonitoring()
+        }
     }
 
     function clearPathsAfterExperimentEnd() {
@@ -180,6 +190,42 @@ TestMapViewForm {
         }
         if (mapVisualizationManager && mapVisualizationManager.clearGoalRobotPose) {
             mapVisualizationManager.clearGoalRobotPose()
+        }
+        personDetectionInProgress = false
+        if (personDetectionMonitor && personDetectionMonitor.stopMonitoring) {
+            personDetectionMonitor.stopMonitoring()
+        }
+    }
+
+    function beginPersonDetection() {
+        if (!personDetectionMonitor || !personDetectionMonitor.startMonitoring) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: Monitor de detección no disponible")
+            errorPopup.open()
+            return
+        }
+
+        if (personDetectionInProgress) {
+            return
+        }
+
+        var okMonitoring = personDetectionMonitor.startMonitoring()
+        if (!okMonitoring) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la detección de persona")
+            errorPopup.open()
+            return
+        }
+
+        personDetectionInProgress = true
+        busyDialog.openWithMessage(qsTr("Detectando persona..."))
+    }
+
+    function stopPersonDetection() {
+        personDetectionInProgress = false
+        if (personDetectionMonitor && personDetectionMonitor.stopMonitoring) {
+            personDetectionMonitor.stopMonitoring()
+        }
+        if (busyDialog.visible) {
+            busyDialog.close()
         }
     }
 
@@ -476,6 +522,8 @@ TestMapViewForm {
             goalPathReady = false
             resetManualPathFlow()
             resetExperimentPhaseState()
+            personDetectionConfirmed = false
+            stopPersonDetection()
             if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
                 mapVisualizationManager.setPathUpdatesEnabled(false)
             }
@@ -820,6 +868,8 @@ TestMapViewForm {
         pathPlacementEnabled = false
         handleGoalClear()
         handlePathClear()
+        stopPersonDetection()
+        personDetectionConfirmed = false
 
         step = stepTrajectory
     }
@@ -1147,6 +1197,11 @@ TestMapViewForm {
             return
         }
 
+        if (!personDetectionConfirmed) {
+            beginPersonDetection()
+            return
+        }
+
         if (goalPlacementEnabled) {
             if (!goalPathReady) {
                 return
@@ -1214,6 +1269,8 @@ TestMapViewForm {
             return
         }
 
+        stopPersonDetection()
+        personDetectionConfirmed = false
         goalPlacementEnabled = false
         pathPlacementEnabled = false
         handleGoalClear()
@@ -1288,6 +1345,7 @@ TestMapViewForm {
 
     Component.onDestruction: {
         stopAutoLocalizationSpin()
+        stopPersonDetection()
 
         if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
             var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
@@ -1628,6 +1686,20 @@ TestMapViewForm {
 
     }
 
+    Connections {
+        target: personDetectionMonitor
+        ignoreUnknownSignals: true
+
+        function onPersonDetected(detections) {
+            if (step !== stepTrajectory || !personDetectionInProgress) {
+                return
+            }
+
+            stopPersonDetection()
+            personDetectedConfirmDialog.openWithMessage(qsTr("Persona detectada (%1). ¿Desea continuar con el test?").arg(detections))
+        }
+    }
+
 
     ConfirmationDialog {
         id: autoLocalizationConfirmDialog
@@ -1704,6 +1776,30 @@ TestMapViewForm {
         }
 
         onRejected: {
+        }
+    }
+
+    ConfirmationDialog {
+        id: personDetectedConfirmDialog
+        acceptText: qsTr("Aceptar")
+        rejectText: qsTr("Volver a detectar")
+        holdToAccept: false
+
+        onAccepted: {
+            if (step !== stepTrajectory) {
+                return
+            }
+
+            personDetectionConfirmed = true
+        }
+
+        onRejected: {
+            if (step !== stepTrajectory) {
+                return
+            }
+
+            personDetectionConfirmed = false
+            beginPersonDetection()
         }
     }
 
@@ -1785,6 +1881,13 @@ TestMapViewForm {
         timeoutMs: root.busyTimeoutMs
 
         onTimedOut: {
+            if (personDetectionInProgress) {
+                stopPersonDetection()
+                errorPopup.errorRectangleTextError.text = qsTr("Error: Tiempo de espera agotado durante la detección de persona")
+                errorPopup.open()
+                return
+            }
+
             if (autoLocalizationActive || autoLocalizationWaitingForNav || autoLocalizationWaitingForService) {
                 failAutoLocalization(qsTr("Error: Tiempo de espera agotado durante la autolocalización"))
                 return

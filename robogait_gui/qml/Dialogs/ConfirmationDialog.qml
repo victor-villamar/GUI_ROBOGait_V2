@@ -22,6 +22,7 @@ Dialog {
 
     property string message: ""
     property string acceptText: qsTr("Aceptar")
+    property string rejectText: qsTr("Cancelar")
     property bool holdToAccept: true
     property int acceptHoldMs: 900
     readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 44
@@ -87,7 +88,7 @@ Dialog {
             id: cancelButton
             width: (footerRow.width - footerRow.padding * 2 - footerRow.spacing) / 2
             height: root.buttonHeightPx
-            text: qsTr("Cancelar")
+            text: root.rejectText
 
             background: Rectangle {
                 color: cancelButton.down ? AppTheme.dialogsCommon.closeButtonPressed : AppTheme.dialogsCommon.light

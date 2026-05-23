@@ -70,6 +70,7 @@ Rectangle {
     property bool goalAccepted: false
     property bool goalPathReady: false
     property bool manualPathReady: false
+    property bool personDetectionConfirmed: false
     property bool pathTerminalPoseSet: false
     property bool pathTerminalOrientationOverride: false
     property bool testStarted: false
@@ -553,6 +554,7 @@ Rectangle {
                 goalAccepted: root.goalAccepted
                 goalPathReady: root.goalPathReady
                 manualPathReady: root.manualPathReady
+                personDetectionConfirmed: root.personDetectionConfirmed
 
                 onBackRequested: root.backNavigationRequested()
                 onZoomOutRequested: root.zoomOutRequested()

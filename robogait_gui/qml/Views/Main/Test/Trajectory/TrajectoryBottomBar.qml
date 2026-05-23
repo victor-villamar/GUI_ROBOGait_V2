@@ -16,6 +16,7 @@ Item {
     property bool goalAccepted: false
     property bool goalPathReady: false
     property bool manualPathReady: false
+    property bool personDetectionConfirmed: false
 
     signal backRequested()
     signal zoomOutRequested()
@@ -187,7 +188,7 @@ Item {
         }
 
         contentItem: Text {
-            text: qsTr("INICIAR TEST")
+            text: root.personDetectionConfirmed ? qsTr("INICIAR TEST") : qsTr("DETECTAR PERSONA")
             color: AppTheme.map.white
             font.pixelSize: 14
             font.bold: true

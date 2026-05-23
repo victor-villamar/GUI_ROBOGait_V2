@@ -21,6 +21,7 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>yaml-cpp</depend>
   <depend>command_executor_msgs</depend>
+  <depend>navigation_pkg</depend>
   <depend>std_srvs</depend>
 
   <!-- Optional: test dependencies -->
