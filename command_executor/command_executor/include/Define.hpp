@@ -1,18 +1,28 @@
 #pragma once
 
-//------ TIME DEFINITIONS ------
-// clang-format off
-#define TIME_MAIN_LOOP     1000 // ms (1 Hz)
+#include <cstdint>
+#include <string>
 
+namespace ROBOGait
+{
+namespace command
+{
+namespace define
+{
+// clang-format off
+//------ TIME DEFINITIONS ------
+extern const std::int32_t TIME_MAIN_LOOP; // ms (1 Hz)
 
 //----- NODE NAME -----
-#define COMMAND_EXECUTOR  "command_executor"
-#define ROVER_MINI        "rover_mini"
+extern const std::string  COMMAND_EXECUTOR;
+extern const std::string  ROVER_MINI;
 
 //----- TOPICS -----
-#define T_ROBOT_STATUS    COMMAND_EXECUTOR"/robot_status"
-#define T_BATTERY_STATUS  ROVER_MINI"/battery_status"
-#define S_CMD             COMMAND_EXECUTOR"/cmd"
-#define S_GET_MAP_DATA    COMMAND_EXECUTOR"/get_map_data"
-
+extern const std::string  T_ROBOT_STATUS;
+extern const std::string  T_BATTERY_STATUS;
+extern const std::string  S_CMD;
+extern const std::string  S_GET_MAP_DATA;
 // clang-format on
+} // namespace define
+} // namespace command
+} // namespace ROBOGait

@@ -21,6 +21,7 @@ include_directories(
 
 add_executable(${PROJECT_NAME}_node
     src/Functions.cpp
+    src/Define.cpp
     src/CommandExecutor.cpp
     src/ProcessManager.cpp
     src/QoSProfile.cpp

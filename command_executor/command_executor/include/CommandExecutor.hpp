@@ -17,7 +17,6 @@
 #include <sensor_msgs/msg/battery_state.hpp>
 
 #include "ProcessManager.hpp"
-#include "YamlLoader.hpp"
 
 namespace ROBOGait
 {

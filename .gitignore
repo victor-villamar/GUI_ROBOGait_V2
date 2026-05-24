@@ -57,5 +57,8 @@ log/
 # Combined compile commands
 combined_compile_commands.json
 
+# CodeGraph output
+.codegraph/
+
 # Ignore ROS 2 workspace files
 COLCON_IGNORE

@@ -14,10 +14,11 @@
 #include "Define.hpp"
 #include "Functions.hpp"
 #include "QoSProfile.hpp"
+#include "YamlLoader.hpp"
 
 using namespace ROBOGait::command;
 
-CommandExecutor::CommandExecutor(const rclcpp::NodeOptions& options) : Node(COMMAND_EXECUTOR, options)
+CommandExecutor::CommandExecutor(const rclcpp::NodeOptions& options) : Node(define::COMMAND_EXECUTOR, options)
 {
   RCLCPP_INFO(get_logger(), "[CommandExecutor::CommandExecutor] CommandExecutor created");
 }
@@ -218,18 +219,19 @@ std::string CommandExecutor::resolveConfigPath()
 
 bool CommandExecutor::createRosInterfaces()
 {
-  srv_cmd_ =
-      create_service<command_executor_msgs::srv::Cmd>(S_CMD, std::bind(&CommandExecutor::handleCommand, this, std::placeholders::_1, std::placeholders::_2));
+  srv_cmd_ = create_service<command_executor_msgs::srv::Cmd>(define::S_CMD,
+                                                             std::bind(&CommandExecutor::handleCommand, this, std::placeholders::_1, std::placeholders::_2));
 
   srv_get_map_data_ = create_service<command_executor_msgs::srv::GetMapData>(
-      S_GET_MAP_DATA, std::bind(&CommandExecutor::handleGetMapData, this, std::placeholders::_1, std::placeholders::_2));
+      define::S_GET_MAP_DATA, std::bind(&CommandExecutor::handleGetMapData, this, std::placeholders::_1, std::placeholders::_2));
 
-  pub_robot_status_ = create_publisher<command_executor_msgs::msg::RobotStatus>(T_ROBOT_STATUS, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT());
+  pub_robot_status_ = create_publisher<command_executor_msgs::msg::RobotStatus>(define::T_ROBOT_STATUS, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT());
 
-  sub_battery_status_ = create_subscription<sensor_msgs::msg::BatteryState>(T_BATTERY_STATUS, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(),
+  sub_battery_status_ = create_subscription<sensor_msgs::msg::BatteryState>(define::T_BATTERY_STATUS, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(),
                                                                             std::bind(&CommandExecutor::callbackBatteryStatus, this, std::placeholders::_1));
 
-  timer_ = create_wall_timer(std::chrono::milliseconds(TIME_MAIN_LOOP), std::bind(&CommandExecutor::mainLoop, this)); // one-shot: false, autostart: true
+  timer_ =
+      create_wall_timer(std::chrono::milliseconds(define::TIME_MAIN_LOOP), std::bind(&CommandExecutor::mainLoop, this)); // one-shot: false, autostart: true
 
   if (!srv_cmd_)
   {
