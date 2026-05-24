@@ -45,8 +45,8 @@ void MapSubscriber::start()
     return;
   }
 
-  const std::string map_topic = context_->resolveTopic(T_MAP);
-  const std::string map_updates_topic = context_->resolveTopic(T_MAP_UPDATES);
+  const std::string map_topic = context_->resolveTopic(ROBOGait::ros::topics::T_MAP);
+  const std::string map_updates_topic = context_->resolveTopic(ROBOGait::ros::topics::T_MAP_UPDATES);
 
   sub_map_ = parent_node_->create_subscription<nav_msgs::msg::OccupancyGrid>(map_topic, ROBOGait::ros::QosProfiles::QOS_RELIABLE_LATCH().keep_last(1),
                                                                              std::bind(&MapSubscriber::callbackMap, this, std::placeholders::_1));
@@ -81,7 +81,7 @@ void MapSubscriber::callbackMap(const nav_msgs::msg::OccupancyGrid::SharedPtr ms
   }
 
   data::MapData::MapMetadata metadata;
-  metadata.resolution_ = msg->info.resolution;
+  metadata.resolution_ = static_cast<double>(msg->info.resolution);
   metadata.width_ = msg->info.width;
   metadata.height_ = msg->info.height;
   metadata.origin_x_ = msg->info.origin.position.x;

@@ -5,7 +5,6 @@
 #include "Robot/ManualControl.hpp"
 #include "Ros/Define.hpp"
 #include "Ros/QoSProfiles.hpp"
-#include "Ros/TopicsName.hpp"
 
 using namespace ROBOGait::robot::control;
 
@@ -28,7 +27,7 @@ void ManualControl::setROSNode(rclcpp::Node* node)
   parent_node_ = node;
 
   // Create timer for publishing velocity commands
-  timer_cmd_vel_ = parent_node_->create_wall_timer(std::chrono::milliseconds(TIME_TO_PUBLISH_CMD_VEL),
+  timer_cmd_vel_ = parent_node_->create_wall_timer(ROBOGait::ros::define::TIME_TO_PUBLISH_CMD_VEL_MS,
                                                    std::bind(&ManualControl::publishVelocity, this)); // one-shot: false, autostart: false
   timer_cmd_vel_->cancel();
 }

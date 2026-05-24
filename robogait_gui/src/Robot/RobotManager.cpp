@@ -149,7 +149,7 @@ void RobotManager::setROSNode(rclcpp::Node* parent_node)
   cb_group_ = parent_node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
   timer_robot_timeout_ =
-      parent_node_->create_wall_timer(std::chrono::milliseconds(TIME_TO_ROBOT_TIMEOUT), std::bind(&RobotManager::callbackRobotTimeoutTimer, this),
+      parent_node_->create_wall_timer(ROBOGait::ros::define::TIME_TO_ROBOT_TIMEOUT_MS, std::bind(&RobotManager::callbackRobotTimeoutTimer, this),
                                       cb_group_); // one-shot=false, auto-start=false
   timer_robot_timeout_->cancel();                 // Disable auto-start
 
@@ -334,7 +334,7 @@ void RobotManager::enableManualControl()
     return;
   }
 
-  const QString topic_name = buildTopicName(QString::fromUtf8(T_CMD_VEL));
+  const QString topic_name = buildTopicName(QString::fromStdString(ROBOGait::ros::topics::T_CMD_VEL));
 
   manual_control_->setTopicName(topic_name);
 
@@ -371,14 +371,14 @@ void RobotManager::publishInitialPose(double x, double y, double theta)
 
   if (!pub_pose_initialize_)
   {
-    const QString topic_name = buildTopicName(QString::fromUtf8(T_POSE_INITIALIZE));
+    const QString topic_name = buildTopicName(QString::fromStdString(ROBOGait::ros::topics::T_POSE_INITIALIZE));
     pub_pose_initialize_ = parent_node_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(topic_name.toStdString(),
                                                                                                          ROBOGait::ros::QosProfiles::QOS_RELIABLE_LATCH());
   }
 
   auto msg = geometry_msgs::msg::PoseWithCovarianceStamped();
 
-  QString frame_id = buildTopicName("/" + QString::fromUtf8(TF_MAP_FRAME));
+  QString frame_id = buildTopicName("/" + QString::fromStdString(ROBOGait::ros::topics::TF_MAP_FRAME));
 
   msg.header.frame_id = frame_id.toStdString();
   msg.header.stamp = parent_node_->now();
@@ -519,7 +519,7 @@ void RobotManager::startMonitoring()
     return;
   }
 
-  const std::string full_topic = context.resolveTopic(T_ROBOT_STATUS);
+  const std::string full_topic = context.resolveTopic(ROBOGait::ros::topics::T_ROBOT_STATUS);
 
   qInfo() << "[RobotManager::startMonitoring] Starting monitoring for:" << full_topic.c_str()
           << "(mode:" << (use_namespace_discovery_ ? "namespace" : "node name") << ")";

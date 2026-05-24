@@ -15,7 +15,12 @@
 using namespace ROBOGait::map::subscribers;
 
 LaserScanSubscriber::LaserScanSubscriber() :
-    parent_node_(nullptr), laser_scan_data_(nullptr), map_frame_(TF_MAP_FRAME), active_(false), warn_logged_(false), context_(std::nullopt)
+    parent_node_(nullptr),
+    laser_scan_data_(nullptr),
+    map_frame_(ROBOGait::ros::topics::TF_MAP_FRAME),
+    active_(false),
+    warn_logged_(false),
+    context_(std::nullopt)
 {
 }
 
@@ -62,7 +67,7 @@ void LaserScanSubscriber::start()
   tf_buffer_->setUsingDedicatedThread(true);
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, parent_node_, false);
 
-  std::string scan_topic = T_SCAN;
+  std::string scan_topic = ROBOGait::ros::topics::T_SCAN;
 
   if (context_)
   {
@@ -194,7 +199,7 @@ ROBOGait::map::data::LaserScanData::LaserScanMetadata LaserScanSubscriber::trans
 
   metadata.points.reserve(msg->ranges.size());
 
-  double angle = msg->angle_min;
+  double angle = static_cast<double>(msg->angle_min);
   for (size_t i = 0; i < msg->ranges.size(); ++i)
   {
     const float range = msg->ranges[i];

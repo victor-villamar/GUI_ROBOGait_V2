@@ -343,7 +343,7 @@ bool RobotDiscovery::hasRobotStatusTopic(const std::string& robot_namespace) con
     return false;
   }
 
-  const std::string full_topic = robot_namespace + T_ROBOT_STATUS;
+  const std::string full_topic = robot_namespace + ROBOGait::ros::topics::T_ROBOT_STATUS;
 
   const auto topics = parent_node_->get_topic_names_and_types();
 

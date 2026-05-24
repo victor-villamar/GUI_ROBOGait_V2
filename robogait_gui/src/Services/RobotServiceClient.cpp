@@ -252,7 +252,7 @@ bool RobotServiceClient::requestMapData(const std::string& map_name)
   }
 
   auto occupancy_grid = occupancy_grid_opt.value();
-  occupancy_grid.header.frame_id = context_ ? context_->resolveFrame(std::string(TF_MAP_FRAME)) : std::string(TF_MAP_FRAME);
+  occupancy_grid.header.frame_id = context_ ? context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME) : ROBOGait::ros::topics::TF_MAP_FRAME;
 
   return publishMapDataOnce(occupancy_grid);
 }
@@ -347,7 +347,7 @@ bool RobotServiceClient::reinitializeGlobalLocalization()
     return false;
   }
 
-  if (!cli_global_localization_->wait_for_service(SERVICE_CALL_TIMEOUT))
+  if (!cli_global_localization_->wait_for_service(ROBOGait::ros::define::SERVICE_CALL_TIMEOUT))
   {
     qCritical() << "[RobotServiceClient::reinitializeGlobalLocalization] Service is not available after waiting";
     notifyRequestResult(false);
@@ -503,14 +503,14 @@ bool RobotServiceClient::computePathToPose(double x, double y, double theta)
     return false;
   }
 
-  if (!ac_compute_path_to_pose_->wait_for_action_server(SERVICE_CALL_TIMEOUT))
+  if (!ac_compute_path_to_pose_->wait_for_action_server(ROBOGait::ros::define::SERVICE_CALL_TIMEOUT))
   {
     qCritical() << "[RobotServiceClient::computePathToPose] Action server not available after waiting";
     return false;
   }
 
   nav2_msgs::action::ComputePathToPose::Goal goal_msg;
-  goal_msg.goal.header.frame_id = context_ ? context_->resolveFrame(std::string(TF_MAP_FRAME)) : std::string(TF_MAP_FRAME);
+  goal_msg.goal.header.frame_id = context_ ? context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME) : ROBOGait::ros::topics::TF_MAP_FRAME;
   goal_msg.goal.header.stamp = parent_node_->now();
   goal_msg.goal.pose.position.x = x;
   goal_msg.goal.pose.position.y = y;
@@ -544,7 +544,7 @@ bool RobotServiceClient::computePathThroughPoses(const QVariantList& points)
     return false;
   }
 
-  if (!ac_compute_path_through_poses_->wait_for_action_server(SERVICE_CALL_TIMEOUT))
+  if (!ac_compute_path_through_poses_->wait_for_action_server(ROBOGait::ros::define::SERVICE_CALL_TIMEOUT))
   {
     qCritical() << "[RobotServiceClient::computePathThroughPoses] Action server not available after waiting";
     return false;
@@ -558,7 +558,7 @@ bool RobotServiceClient::computePathThroughPoses(const QVariantList& points)
     return false;
   }
 
-  const std::string frame = context_ ? context_->resolveFrame(std::string(TF_MAP_FRAME)) : std::string(TF_MAP_FRAME);
+  const std::string frame = context_ ? context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME) : ROBOGait::ros::topics::TF_MAP_FRAME;
   const rclcpp::Time stamp = parent_node_->now();
 
   nav2_msgs::action::ComputePathThroughPoses::Goal goal_msg;
@@ -597,14 +597,14 @@ bool RobotServiceClient::navigateToPose(double x, double y, double theta)
     return false;
   }
 
-  if (!ac_navigate_to_pose_->wait_for_action_server(SERVICE_CALL_TIMEOUT))
+  if (!ac_navigate_to_pose_->wait_for_action_server(ROBOGait::ros::define::SERVICE_CALL_TIMEOUT))
   {
     qCritical() << "[RobotServiceClient::navigateToPose] Action server not available after waiting";
     return false;
   }
 
   nav2_msgs::action::NavigateToPose::Goal goal_msg;
-  goal_msg.pose.header.frame_id = context_ ? context_->resolveFrame(std::string(TF_MAP_FRAME)) : std::string(TF_MAP_FRAME);
+  goal_msg.pose.header.frame_id = context_ ? context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME) : ROBOGait::ros::topics::TF_MAP_FRAME;
   goal_msg.pose.header.stamp = parent_node_->now();
   goal_msg.pose.pose.position.x = x;
   goal_msg.pose.pose.position.y = y;
@@ -654,7 +654,7 @@ bool RobotServiceClient::navigateThroughPoses(const QVariantList& points)
     return false;
   }
 
-  if (!ac_navigate_through_poses_->wait_for_action_server(SERVICE_CALL_TIMEOUT))
+  if (!ac_navigate_through_poses_->wait_for_action_server(ROBOGait::ros::define::SERVICE_CALL_TIMEOUT))
   {
     qCritical() << "[RobotServiceClient::navigateThroughPoses] Action server not available after waiting";
     return false;
@@ -667,7 +667,7 @@ bool RobotServiceClient::navigateThroughPoses(const QVariantList& points)
     return false;
   }
 
-  const std::string frame = context_ ? context_->resolveFrame(std::string(TF_MAP_FRAME)) : std::string(TF_MAP_FRAME);
+  const std::string frame = context_ ? context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME) : ROBOGait::ros::topics::TF_MAP_FRAME;
   const rclcpp::Time stamp = parent_node_->now();
 
   nav2_msgs::action::NavigateThroughPoses::Goal goal_msg;
@@ -768,7 +768,7 @@ void RobotServiceClient::resetRobotServiceClient()
 bool RobotServiceClient::loadCommands()
 {
 
-  const std::filesystem::path share_path = ament_index_cpp::get_package_share_directory(ROBOGAIT_GUI);
+  const std::filesystem::path share_path = ament_index_cpp::get_package_share_directory(ROBOGait::ros::define::ROBOGAIT_GUI);
   const std::string config_path = (share_path / "params" / "commands.yaml").string();
 
   YAML::Node config = YAML::LoadFile(config_path);
@@ -815,7 +815,7 @@ bool RobotServiceClient::callCommandServiceAsync(const std::string& cmd, bool ex
     return false;
   }
 
-  if (!cli_cmd_->wait_for_service(SERVICE_CALL_TIMEOUT))
+  if (!cli_cmd_->wait_for_service(ROBOGait::ros::define::SERVICE_CALL_TIMEOUT))
   {
     qCritical() << "[RobotServiceClient::callCommandServiceAsync] Command service is not available after waiting";
     handleCommandResponse(context, false);
@@ -1022,7 +1022,7 @@ bool RobotServiceClient::callGetMapDataService(const std::string& map_name, std:
 
   const std::string full_map_directory = "$HOME" + map_path;
 
-  if (!cli_get_map_data_->wait_for_service(SERVICE_CALL_TIMEOUT))
+  if (!cli_get_map_data_->wait_for_service(ROBOGait::ros::define::SERVICE_CALL_TIMEOUT))
   {
     qCritical() << "[RobotServiceClient::callGetMapDataService] GetMapData service is not available after waiting";
     return false;
@@ -1033,7 +1033,7 @@ bool RobotServiceClient::callGetMapDataService(const std::string& map_name, std:
   request->map_name = safe_name;
 
   auto future = cli_get_map_data_->async_send_request(request);
-  std::future_status status = future.wait_for(SERVICE_CALL_TIMEOUT);
+  std::future_status status = future.wait_for(ROBOGait::ros::define::SERVICE_CALL_TIMEOUT);
 
   if (status == std::future_status::ready && future.valid())
   {
@@ -1121,8 +1121,8 @@ bool RobotServiceClient::rebuildClient()
     return false;
   }
 
-  cli_cmd_ = parent_node_->create_client<command_executor_msgs::srv::Cmd>(resolveServiceName(std::string(S_CMD)), ROBOGait::ros::QosProfiles::QOS_CLIENTS(),
-                                                                          cb_group_);
+  cli_cmd_ = parent_node_->create_client<command_executor_msgs::srv::Cmd>(resolveServiceName(ROBOGait::ros::topics::S_CMD),
+                                                                          ROBOGait::ros::QosProfiles::QOS_CLIENTS(), cb_group_);
 
   if (!cli_cmd_)
   {
@@ -1130,7 +1130,7 @@ bool RobotServiceClient::rebuildClient()
     return false;
   }
 
-  cli_get_map_data_ = parent_node_->create_client<command_executor_msgs::srv::GetMapData>(resolveServiceName(std::string(S_GET_MAP_DATA)),
+  cli_get_map_data_ = parent_node_->create_client<command_executor_msgs::srv::GetMapData>(resolveServiceName(ROBOGait::ros::topics::S_GET_MAP_DATA),
                                                                                           ROBOGait::ros::QosProfiles::QOS_CLIENTS(), cb_group_);
 
   if (!cli_get_map_data_)
@@ -1140,7 +1140,7 @@ bool RobotServiceClient::rebuildClient()
     return false;
   }
 
-  cli_global_localization_ = parent_node_->create_client<std_srvs::srv::Empty>(resolveServiceName(std::string(S_REINITIALIZE_GLOBAL_LOCALIZATION)),
+  cli_global_localization_ = parent_node_->create_client<std_srvs::srv::Empty>(resolveServiceName(ROBOGait::ros::topics::S_REINITIALIZE_GLOBAL_LOCALIZATION),
                                                                                ROBOGait::ros::QosProfiles::QOS_CLIENTS(), cb_group_);
 
   if (!cli_global_localization_)
@@ -1153,7 +1153,7 @@ bool RobotServiceClient::rebuildClient()
 
   ac_compute_path_through_poses_ = rclcpp_action::create_client<nav2_msgs::action::ComputePathThroughPoses>(
       parent_node_->get_node_base_interface(), parent_node_->get_node_graph_interface(), parent_node_->get_node_logging_interface(),
-      parent_node_->get_node_waitables_interface(), resolveServiceName(std::string(A_COMPUTE_PATH_THROUGH_POSES)), cb_group_);
+      parent_node_->get_node_waitables_interface(), resolveServiceName(ROBOGait::ros::topics::A_COMPUTE_PATH_THROUGH_POSES), cb_group_);
 
   if (!ac_compute_path_through_poses_)
   {
@@ -1166,7 +1166,7 @@ bool RobotServiceClient::rebuildClient()
 
   ac_compute_path_to_pose_ = rclcpp_action::create_client<nav2_msgs::action::ComputePathToPose>(
       parent_node_->get_node_base_interface(), parent_node_->get_node_graph_interface(), parent_node_->get_node_logging_interface(),
-      parent_node_->get_node_waitables_interface(), resolveServiceName(std::string(A_COMPUTE_PATH_TO_POSE)), cb_group_);
+      parent_node_->get_node_waitables_interface(), resolveServiceName(ROBOGait::ros::topics::A_COMPUTE_PATH_TO_POSE), cb_group_);
 
   if (!ac_compute_path_to_pose_)
   {
@@ -1180,7 +1180,7 @@ bool RobotServiceClient::rebuildClient()
 
   ac_navigate_to_pose_ = rclcpp_action::create_client<nav2_msgs::action::NavigateToPose>(
       parent_node_->get_node_base_interface(), parent_node_->get_node_graph_interface(), parent_node_->get_node_logging_interface(),
-      parent_node_->get_node_waitables_interface(), resolveServiceName(std::string(A_NAVIGATE_TO_POSE)), cb_group_);
+      parent_node_->get_node_waitables_interface(), resolveServiceName(ROBOGait::ros::topics::A_NAVIGATE_TO_POSE), cb_group_);
 
   if (!ac_navigate_to_pose_)
   {
@@ -1195,7 +1195,7 @@ bool RobotServiceClient::rebuildClient()
 
   ac_navigate_through_poses_ = rclcpp_action::create_client<nav2_msgs::action::NavigateThroughPoses>(
       parent_node_->get_node_base_interface(), parent_node_->get_node_graph_interface(), parent_node_->get_node_logging_interface(),
-      parent_node_->get_node_waitables_interface(), resolveServiceName(std::string(A_NAVIGATE_THROUGH_POSES)), cb_group_);
+      parent_node_->get_node_waitables_interface(), resolveServiceName(ROBOGait::ros::topics::A_NAVIGATE_THROUGH_POSES), cb_group_);
 
   if (!ac_navigate_through_poses_)
   {
@@ -1253,7 +1253,7 @@ bool RobotServiceClient::saveMap(const std::string& map_name)
 
   const RobotServiceClient::CommandInfo& cmd_info = commands_[KEY_MAP_SAVER];
 
-  std::string map_topic = context_ ? context_->resolveTopic(std::string(T_MAP)) : std::string(T_MAP);
+  std::string map_topic = context_ ? context_->resolveTopic(ROBOGait::ros::topics::T_MAP) : ROBOGait::ros::topics::T_MAP;
 
   std::string args = cmd_info.append_args;
 
@@ -1546,7 +1546,7 @@ bool RobotServiceClient::publishMapDataOnce(const nav_msgs::msg::OccupancyGrid& 
 
   if (!pub_map_data_)
   {
-    std::string topic_name = context_ ? context_->resolveTopic(std::string(T_MAP)) : std::string(T_MAP);
+    std::string topic_name = context_ ? context_->resolveTopic(ROBOGait::ros::topics::T_MAP) : ROBOGait::ros::topics::T_MAP;
     pub_map_data_ = parent_node_->create_publisher<nav_msgs::msg::OccupancyGrid>(topic_name, ROBOGait::ros::QosProfiles::QOS_RELIABLE_LATCH());
     if (!pub_map_data_)
     {

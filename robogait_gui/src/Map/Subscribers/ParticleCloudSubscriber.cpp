@@ -14,7 +14,12 @@
 using namespace ROBOGait::map::subscribers;
 
 ParticleCloudSubscriber::ParticleCloudSubscriber() :
-    parent_node_(nullptr), particle_cloud_data_(nullptr), map_frame_(TF_MAP_FRAME), active_(false), warn_logged_(false), context_(std::nullopt)
+    parent_node_(nullptr),
+    particle_cloud_data_(nullptr),
+    map_frame_(ROBOGait::ros::topics::TF_MAP_FRAME),
+    active_(false),
+    warn_logged_(false),
+    context_(std::nullopt)
 {
 }
 
@@ -61,7 +66,7 @@ void ParticleCloudSubscriber::start()
   tf_buffer_->setUsingDedicatedThread(true);
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, parent_node_, false);
 
-  std::string cloud_topic = T_PARTICLE_CLOUD;
+  std::string cloud_topic = ROBOGait::ros::topics::T_PARTICLE_CLOUD;
 
   if (context_)
   {

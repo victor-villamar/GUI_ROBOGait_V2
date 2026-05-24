@@ -57,7 +57,7 @@ bool PersonDetectionMonitor::startMonitoring()
     return false;
   }
 
-  const std::string full_topic = context.resolveTopic(T_USER_DETECTION);
+  const std::string full_topic = context.resolveTopic(ROBOGait::ros::topics::T_USER_DETECTION);
 
   sub_user_detection_ = parent_node_->create_subscription<navigation_pkg::msg::User>(
       full_topic, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(), std::bind(&PersonDetectionMonitor::callbackUserDetection, this, std::placeholders::_1));

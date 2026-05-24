@@ -5,7 +5,7 @@
 
 using namespace ROBOGait::map::source;
 
-RobotPoseSource::RobotPoseSource() : map_frame_(TF_MAP_FRAME), robot_frame_(TF_ROBOT_FRAME)
+RobotPoseSource::RobotPoseSource() : map_frame_(ROBOGait::ros::topics::TF_MAP_FRAME), robot_frame_(ROBOGait::ros::topics::TF_ROBOT_FRAME)
 {
   parent_node_ = nullptr;
   initialized_ = false;

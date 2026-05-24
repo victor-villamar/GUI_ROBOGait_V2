@@ -19,12 +19,9 @@
 #include "Map/Items/ParticleCloudLayerItem.hpp"
 #include "Map/Items/PathLayerItem.hpp"
 #include "Map/Items/RobotLayerItem.hpp"
-#include "Robot/ManualControl.hpp"
 #include "Robot/RobotDiscovery.hpp"
-#include "Robot/RobotManager.hpp"
 #include "Ros/Define.hpp"
 #include "Themes/AppTheme.hpp"
-#include "User/Patient.hpp"
 
 using namespace ROBOGait::core;
 
@@ -79,7 +76,7 @@ bool RoboGaitApplication::initialize()
 {
   // Load YAML configuration
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
-  const std::string config_path = ament_index_cpp::get_package_share_directory(ROBOGAIT_GUI) + "/params/config.yaml";
+  const std::string config_path = ament_index_cpp::get_package_share_directory(ROBOGait::ros::define::ROBOGAIT_GUI) + "/params/config.yaml";
 
   if (!yaml_loader.loadConfig(config_path))
   {

@@ -43,7 +43,7 @@ void PathSubscriber::start()
     return;
   }
 
-  const std::string path_topic = context_->resolveTopic(T_PLAN);
+  const std::string path_topic = context_->resolveTopic(ROBOGait::ros::topics::T_PLAN);
 
   sub_path_ = parent_node_->create_subscription<nav_msgs::msg::Path>(path_topic, ROBOGait::ros::QosProfiles::QOS_RELIABLE().keep_last(1),
                                                                      std::bind(&PathSubscriber::callbackPath, this, std::placeholders::_1));
