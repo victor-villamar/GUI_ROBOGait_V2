@@ -10,14 +10,17 @@ Rectangle {
     property bool isNavigationStep: false
     property bool pathPlacementEnabled: false
     property bool testStarted: false
-    property var manualPathEditor: null
+    property var splinePathEditor: null
 
     signal calculateRequested()
     signal smoothRequested()
+    signal editToggleRequested()
     signal clearRequested()
 
-    readonly property bool hasPath: root.manualPathEditor && root.manualPathEditor.hasPath
-    readonly property bool isSegmented: root.manualPathEditor && root.manualPathEditor.isSegmented
+    readonly property bool hasPath: root.splinePathEditor && root.splinePathEditor.hasPath
+    readonly property bool isSmoothed: root.splinePathEditor && root.splinePathEditor.isSmoothed
+    readonly property bool isEditMode: root.splinePathEditor && root.splinePathEditor.isEditMode
+    readonly property bool hasEditablePath: root.splinePathEditor && root.splinePathEditor.hasEditablePath
 
     anchors.right: parent.right
     anchors.bottom: parent.bottom
@@ -35,6 +38,7 @@ Rectangle {
     property int buttonsSpacing: 8
     readonly property int visibleButtons: (pathAcceptButton.visible ? 1 : 0) +
                                           (pathSegmentButton.visible ? 1 : 0) +
+                                          (pathEditButton.visible ? 1 : 0) +
                                           (pathClearButton.visible ? 1 : 0)
     width: buttonWidth + (padding * 2)
     height: (root.buttonHeightPx * visibleButtons) +
@@ -50,8 +54,8 @@ Rectangle {
             id: pathAcceptButton
             width: root.buttonWidth
             height: root.buttonHeightPx
-            visible: root.isSegmented
-            enabled: root.hasPath && root.isSegmented
+            visible: root.isSmoothed
+            enabled: root.hasEditablePath
             opacity: enabled ? 1.0 : 0.4
 
             background: Rectangle {
@@ -77,8 +81,8 @@ Rectangle {
             id: pathSegmentButton
             width: root.buttonWidth
             height: root.buttonHeightPx
-            visible: !root.isSegmented
-            enabled: root.hasPath && !root.isSegmented
+            visible: !root.isSmoothed
+            enabled: root.hasPath && !root.isSmoothed
             opacity: enabled ? 1.0 : 0.4
 
             background: Rectangle {
@@ -98,6 +102,33 @@ Rectangle {
             }
 
             onClicked: root.smoothRequested()
+        }
+
+        Button {
+            id: pathEditButton
+            width: root.buttonWidth
+            height: root.buttonHeightPx
+            visible: root.isSmoothed
+            enabled: root.hasEditablePath
+            opacity: enabled ? 1.0 : 0.4
+
+            background: Rectangle {
+                radius: 6
+                color: root.isEditMode || pathEditButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                border.color: AppTheme.map.white
+                border.width: 1
+            }
+
+            contentItem: Text {
+                text: root.isEditMode ? qsTr("FINALIZAR EDICIÓN") : qsTr("EDITAR")
+                color: AppTheme.map.white
+                font.pixelSize: 14
+                font.bold: true
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+
+            onClicked: root.editToggleRequested()
         }
 
         Button {

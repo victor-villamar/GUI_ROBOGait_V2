@@ -77,9 +77,9 @@ public:
    */
   QMatrix4x4 getMatrix() const;
 
-  static constexpr double ZOOM_FACTOR = 1.1;                 /**< Zoom factor for camera */
-  static constexpr double VIEWPORT_FACTOR = 0.5;             /**< Viewport factor for camera */
-  static constexpr double SCALE_BAR_TARGET_LENGTH_PX = 70.0; /**< Default scale bar length for rendering */
+  static constexpr double ZOOM_FACTOR = 1.1;              /**< Zoom factor for camera */
+  static constexpr double VIEWPORT_FACTOR = 0.5;          /**< Viewport factor for camera */
+  static constexpr int SCALE_BAR_TARGET_LENGTH_PX = 70.0; /**< Default scale bar length for rendering */
 
 private:
   /**

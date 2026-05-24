@@ -88,6 +88,7 @@ public:
 
 signals:
   void zoomChanged();           // Emitted when the zoom level changes
+  void viewTransformChanged();  // Emitted when map camera transform changes (pan/zoom/fit)
   void panningEnabledChanged(); // Emitted when the panning enabled state changes
 
 protected:

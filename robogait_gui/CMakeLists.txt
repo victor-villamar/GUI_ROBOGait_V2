@@ -58,7 +58,10 @@ set(HEADERS
     include/Map/Data/ParticleCloudData.hpp
     include/Map/Data/PathData.hpp
     include/Map/Data/RobotPoseData.hpp
-    include/Map/Interaction/ManualPathEditor.hpp
+    include/Map/Interaction/Geometry/BezierSplineModel.hpp
+    include/Map/Interaction/Geometry/SplineFitter.hpp
+    include/Map/Interaction/Geometry/StrokeProcessor.hpp
+    include/Map/Interaction/SplinePathEditor.hpp
     include/Map/Items/LaserLayerItem.hpp
     include/Map/Items/MapLayerItem.hpp
     include/Map/Items/ParticleCloudLayerItem.hpp
@@ -139,7 +142,10 @@ set(SOURCES
     src/Map/Data/ParticleCloudData.cpp
     src/Map/Data/PathData.cpp
     src/Map/Data/RobotPoseData.cpp
-    src/Map/Interaction/ManualPathEditor.cpp
+    src/Map/Interaction/Geometry/BezierSplineModel.cpp
+    src/Map/Interaction/Geometry/SplineFitter.cpp
+    src/Map/Interaction/Geometry/StrokeProcessor.cpp
+    src/Map/Interaction/SplinePathEditor.cpp
     src/Map/Items/LaserLayerItem.cpp
     src/Map/Items/MapLayerItem.cpp
     src/Map/Items/ParticleCloudLayerItem.cpp

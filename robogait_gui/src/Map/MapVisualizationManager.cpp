@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QPointF>
 #include <QRectF>
+#include <QVector4D>
 #include <QtGlobal>
 
 #include "Context/RobotContext.hpp"
@@ -33,7 +34,7 @@ MapVisualizationManager::MapVisualizationManager() :
     path_source_(std::make_shared<ROBOGait::map::source::PathSource>()),
     laser_source_(std::make_shared<ROBOGait::map::source::LaserSource>()),
     particle_source_(std::make_shared<ROBOGait::map::source::ParticleCloudSource>()),
-    manual_path_editor_(std::make_unique<ROBOGait::map::interaction::ManualPathEditor>()),
+    spline_path_editor_(std::make_unique<ROBOGait::map::interaction::SplinePathEditor>()),
     selected_robot_namespace_(""),
     use_namespace_discovery_(true),
     is_initialized_(false),
@@ -48,9 +49,9 @@ MapVisualizationManager::MapVisualizationManager() :
     robot_size_(0.5),
     follow_robot_(false)
 {
-  if (manual_path_editor_)
+  if (spline_path_editor_)
   {
-    manual_path_editor_->setMapVisualizationManager(this);
+    spline_path_editor_->setMapVisualizationManager(this);
   }
 
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
@@ -73,31 +74,34 @@ MapVisualizationManager::MapVisualizationManager() :
     qWarning() << "[MapVisualizationManager::MapVisualizationManager] YAML not loaded, using default robot_size:" << robot_size_;
   }
 
-  if (manual_path_editor_)
+  if (spline_path_editor_)
   {
-    constexpr double DEFAULT_RESAMPLE_SPACING_PX = 5.0;
-    constexpr double DEFAULT_RDP_EPSILON_PX = 3.0;
-    constexpr int DEFAULT_SHORT_STRAW_WINDOW = 3;
-    constexpr double DEFAULT_SHORT_STRAW_MEDIAN_FACTOR = 0.95;
-    constexpr double DEFAULT_SHORT_STRAW_LINE_THRESHOLD = 0.95;
+    constexpr double DEFAULT_SPLINE_RESAMPLE_SPACING_PX = 5.0;
+    constexpr int DEFAULT_SPLINE_SMOOTHING_WINDOW_RADIUS = 2;
+    constexpr double DEFAULT_SPLINE_CATMULL_ALPHA = 0.5;
+    constexpr double DEFAULT_SPLINE_SAMPLE_SPACING_PX = 4.0;
+    constexpr double DEFAULT_SPLINE_SIMPLIFY_TOLERANCE_PX = 8.0;
+    constexpr int DEFAULT_SPLINE_MAX_ANCHOR_POINTS = 28;
 
-    double resample_spacing_px = DEFAULT_RESAMPLE_SPACING_PX;
-    double rdp_epsilon_px = DEFAULT_RDP_EPSILON_PX;
-    int short_straw_window = DEFAULT_SHORT_STRAW_WINDOW;
-    double short_straw_median_factor = DEFAULT_SHORT_STRAW_MEDIAN_FACTOR;
-    double short_straw_line_threshold = DEFAULT_SHORT_STRAW_LINE_THRESHOLD;
+    double resample_spacing_px = DEFAULT_SPLINE_RESAMPLE_SPACING_PX;
+    int smoothing_window_radius = DEFAULT_SPLINE_SMOOTHING_WINDOW_RADIUS;
+    double catmull_alpha = DEFAULT_SPLINE_CATMULL_ALPHA;
+    double sample_spacing_px = DEFAULT_SPLINE_SAMPLE_SPACING_PX;
+    double simplify_tolerance_px = DEFAULT_SPLINE_SIMPLIFY_TOLERANCE_PX;
+    int max_anchor_points = DEFAULT_SPLINE_MAX_ANCHOR_POINTS;
 
     if (yaml_loader.isLoaded())
     {
-      resample_spacing_px = yaml_loader.getValue<double>("map.manual_path_segmentation.resample_spacing_px", resample_spacing_px);
-      rdp_epsilon_px = yaml_loader.getValue<double>("map.manual_path_segmentation.rdp_epsilon_px", rdp_epsilon_px);
-      short_straw_window = yaml_loader.getValue<int>("map.manual_path_segmentation.short_straw_window", short_straw_window);
-      short_straw_median_factor = yaml_loader.getValue<double>("map.manual_path_segmentation.short_straw_median_factor", short_straw_median_factor);
-      short_straw_line_threshold = yaml_loader.getValue<double>("map.manual_path_segmentation.short_straw_line_threshold", short_straw_line_threshold);
+      resample_spacing_px = yaml_loader.getValue<double>("map.spline_path.resample_spacing_px", resample_spacing_px);
+      smoothing_window_radius = yaml_loader.getValue<int>("map.spline_path.smoothing_window_radius", smoothing_window_radius);
+      catmull_alpha = yaml_loader.getValue<double>("map.spline_path.catmull_alpha", catmull_alpha);
+      sample_spacing_px = yaml_loader.getValue<double>("map.spline_path.sample_spacing_px", sample_spacing_px);
+      simplify_tolerance_px = yaml_loader.getValue<double>("map.spline_path.simplify_tolerance_px", simplify_tolerance_px);
+      max_anchor_points = yaml_loader.getValue<int>("map.spline_path.max_anchor_points", max_anchor_points);
     }
 
-    manual_path_editor_->setSegmentationTuningPx(resample_spacing_px, rdp_epsilon_px, short_straw_window, short_straw_median_factor,
-                                                 short_straw_line_threshold);
+    spline_path_editor_->setSmoothingTuningPx(resample_spacing_px, smoothing_window_radius, catmull_alpha, sample_spacing_px);
+    spline_path_editor_->setEditReductionTuningPx(simplify_tolerance_px, max_anchor_points);
   }
 
   if (render_scene_ && render_scene_->getPipeline())
@@ -280,7 +284,29 @@ bool MapVisualizationManager::screenToMap(const QPointF& screen_point, QPointF& 
   const QVector4D screen_vec(static_cast<float>(screen_point.x()), static_cast<float>(screen_point.y()), 0.0f, 1.0f);
   const QVector4D world_vec = inv_transform * screen_vec;
 
-  map_point = QPointF(world_vec.x(), world_vec.y());
+  map_point = QPointF(static_cast<qreal>(world_vec.x()), static_cast<qreal>(world_vec.y()));
+  return true;
+}
+
+bool MapVisualizationManager::mapToScreen(const QPointF& map_point, QPointF& screen_point) const
+{
+  if (!map_layer_ || !render_camera_ || !render_scene_)
+  {
+    qCritical() << "[MapVisualizationManager::mapToScreen] Cannot convert map to screen coordinates because render layers or camera are not available";
+    return false;
+  }
+
+  const auto map_data = map_layer_->getMapData();
+  if (!map_data || !map_data->isAvailable())
+  {
+    qCritical() << "[MapVisualizationManager::mapToScreen] Cannot convert map to screen coordinates because map data is not available";
+    return false;
+  }
+
+  const QVector4D map_vec(static_cast<float>(map_point.x()), static_cast<float>(map_point.y()), 0.0f, 1.0f);
+  const QVector4D screen_vec = render_camera_->getMatrix() * map_vec;
+
+  screen_point = QPointF(static_cast<qreal>(screen_vec.x()), static_cast<qreal>(screen_vec.y()));
   return true;
 }
 
@@ -298,6 +324,23 @@ QVariantMap MapVisualizationManager::screenToMap(double screen_x, double screen_
   result["available"] = true;
   result["x"] = map_point.x();
   result["y"] = map_point.y();
+  return result;
+}
+
+QVariantMap MapVisualizationManager::mapToScreen(double map_x, double map_y) const
+{
+  QVariantMap result;
+  result["available"] = false;
+
+  QPointF screen_point;
+  if (!mapToScreen(QPointF(map_x, map_y), screen_point))
+  {
+    return result;
+  }
+
+  result["available"] = true;
+  result["x"] = screen_point.x();
+  result["y"] = screen_point.y();
   return result;
 }
 
@@ -395,7 +438,7 @@ bool MapVisualizationManager::isMapPointInside(double x, double y) const
   return (local_x >= 0.0 && local_x <= width_m && local_y >= 0.0 && local_y <= height_m);
 }
 
-ROBOGait::map::interaction::ManualPathEditor* MapVisualizationManager::getManualPathEditor() const { return manual_path_editor_.get(); }
+ROBOGait::map::interaction::SplinePathEditor* MapVisualizationManager::getSplinePathEditor() const { return spline_path_editor_.get(); }
 
 void MapVisualizationManager::activateSubscriptions()
 {
@@ -618,6 +661,12 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
           &ROBOGait::map::item::MapLayerItem::zoomChanged,
           this,
           &MapVisualizationManager::zoomLevelChanged,
+          Qt::QueuedConnection);
+
+  connect(map_layer_item_,
+          &ROBOGait::map::item::MapLayerItem::viewTransformChanged,
+          this,
+          &MapVisualizationManager::viewTransformChanged,
           Qt::QueuedConnection);
   // clang-format on
 
@@ -973,7 +1022,7 @@ void MapVisualizationManager::clearGoalRobotPose()
 void MapVisualizationManager::setManualPathPoints(const QVariantList& points)
 {
   ROBOGait::map::data::PathData::PathMetadata metadata;
-  metadata.points.reserve(points.size());
+  metadata.points.reserve(static_cast<size_t>(points.size()));
 
   for (const auto& value : points)
   {
@@ -1035,7 +1084,7 @@ void MapVisualizationManager::clearManualPath()
 void MapVisualizationManager::setManualDrawPathPoints(const QVariantList& points)
 {
   ROBOGait::map::data::PathData::PathMetadata metadata;
-  metadata.points.reserve(points.size());
+  metadata.points.reserve(static_cast<size_t>(points.size()));
 
   for (const auto& value : points)
   {
@@ -1099,9 +1148,9 @@ void MapVisualizationManager::clearManualDrawPath()
     manual_draw_path_layer_item_->update();
   }
 
-  if (manual_path_editor_)
+  if (spline_path_editor_)
   {
-    manual_path_editor_->clearCachedPath();
+    spline_path_editor_->clearCachedPath();
   }
 }
 
@@ -1223,6 +1272,7 @@ void MapVisualizationManager::zoomIn()
   render_camera_->zoomByFactor(rendering::RenderCamera::ZOOM_FACTOR);
 
   emit zoomLevelChanged();
+  emit viewTransformChanged();
 
   updateScale();
 
@@ -1248,6 +1298,7 @@ void MapVisualizationManager::zoomOut()
   render_camera_->zoomByFactor(1.0 / rendering::RenderCamera::ZOOM_FACTOR);
 
   emit zoomLevelChanged();
+  emit viewTransformChanged();
 
   updateScale();
 
@@ -1302,6 +1353,7 @@ void MapVisualizationManager::fitToView()
   render_camera_->fitToRect(map_rect);
 
   emit zoomLevelChanged();
+  emit viewTransformChanged();
 
   updateScale();
 
@@ -1449,9 +1501,9 @@ void MapVisualizationManager::createLayers()
   manual_path_data_ = std::make_shared<ROBOGait::map::data::PathData>();
   manual_draw_path_data_ = std::make_shared<ROBOGait::map::data::PathData>();
 
-  if (manual_path_editor_)
+  if (spline_path_editor_)
   {
-    manual_path_editor_->clearCachedPath();
+    spline_path_editor_->clearCachedPath();
   }
 
   map_layer_ = std::make_shared<ROBOGait::map::layer::MapLayer>();
@@ -1502,9 +1554,9 @@ void MapVisualizationManager::destroyLayers()
 {
   if (!map_layer_ && !robot_layer_ && !path_layer_ && !manual_draw_path_layer_ && !live_path_layer_ && !laser_layer_ && !particle_layer_)
   {
-    if (manual_path_editor_)
+    if (spline_path_editor_)
     {
-      manual_path_editor_->clearCachedPath();
+      spline_path_editor_->clearCachedPath();
     }
 
     qWarning() << "[MapVisualizationManager::destroyLayers] No layers to destroy";
@@ -1513,9 +1565,9 @@ void MapVisualizationManager::destroyLayers()
 
   if (!render_scene_)
   {
-    if (manual_path_editor_)
+    if (spline_path_editor_)
     {
-      manual_path_editor_->clearCachedPath();
+      spline_path_editor_->clearCachedPath();
     }
 
     qWarning() << "[MapVisualizationManager::destroyLayers] Render scene not available, cannot properly disconnect layers from scene";
@@ -1573,9 +1625,9 @@ void MapVisualizationManager::destroyLayers()
   manual_path_data_.reset();
   manual_draw_path_data_.reset();
 
-  if (manual_path_editor_)
+  if (spline_path_editor_)
   {
-    manual_path_editor_->clearCachedPath();
+    spline_path_editor_->clearCachedPath();
   }
 
   laser_layer_.reset();
@@ -1693,6 +1745,7 @@ void MapVisualizationManager::updateFollowRobotCamera()
 
   const auto pose = robot_layer_->getInterpolatedPose();
   render_camera_->setViewCenter(QPointF(pose.x, pose.y));
+  emit viewTransformChanged();
   if (map_layer_item_)
   {
     map_layer_item_->update();

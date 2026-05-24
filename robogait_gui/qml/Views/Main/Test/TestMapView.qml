@@ -61,8 +61,8 @@ TestMapViewForm {
     readonly property var mapVisualizationManager: (userSession && userSession.rosManager && userSession.rosManager.robotManager)
                                                    ? userSession.rosManager.robotManager.mapVisualizationManager
                                                    : null
-    readonly property var manualPathEditor: (mapVisualizationManager && mapVisualizationManager.manualPathEditor)
-                                            ? mapVisualizationManager.manualPathEditor
+    readonly property var splinePathEditor: (mapVisualizationManager && mapVisualizationManager.splinePathEditor)
+                                            ? mapVisualizationManager.splinePathEditor
                                             : null
 
     readonly property int stepPosition: 0
@@ -185,8 +185,8 @@ TestMapViewForm {
         if (mapVisualizationManager && mapVisualizationManager.clearManualPath) {
             mapVisualizationManager.clearManualPath()
         }
-        if (manualPathEditor && manualPathEditor.clear) {
-            manualPathEditor.clear()
+        if (splinePathEditor && splinePathEditor.clear) {
+            splinePathEditor.clear()
         }
         if (mapVisualizationManager && mapVisualizationManager.clearGoalRobotPose) {
             mapVisualizationManager.clearGoalRobotPose()
@@ -273,12 +273,12 @@ TestMapViewForm {
     }
 
     function updatePathTerminalPoseFromEditor(preserveManualOrientation) {
-        if (!manualPathEditor || !manualPathEditor.getPathPoints) {
-            return false
+        if (splinePathEditor && splinePathEditor.getPathPoints) {
+            var splinePoints = splinePathEditor.getPathPoints()
+            return updatePathTerminalPoseFromPoints(splinePoints, preserveManualOrientation)
         }
 
-        var points = manualPathEditor.getPathPoints()
-        return updatePathTerminalPoseFromPoints(points, preserveManualOrientation)
+        return false
     }
 
     function buildManualPathWaypointsForService(points) {
@@ -411,25 +411,41 @@ TestMapViewForm {
             mapVisualizationManager.clearManualPath()
         }
 
-        if (manualPathEditor && manualPathEditor.clear) {
-            manualPathEditor.clear()
+        if (splinePathEditor && splinePathEditor.clear) {
+            splinePathEditor.clear()
         }
     }
 
     function handlePathSegment() {
-        if (!manualPathEditor || !manualPathEditor.segmentPath) {
+        if (!splinePathEditor || !splinePathEditor.smoothPath) {
             return
         }
 
-        var segmented = manualPathEditor.segmentPath()
-        if (segmented) {
+        var smoothed = splinePathEditor.smoothPath()
+        if (smoothed) {
+            if (splinePathEditor.setEditModeEnabled) {
+                splinePathEditor.setEditModeEnabled(false)
+            }
             updatePathTerminalPoseFromEditor(true)
         }
     }
 
+    function handlePathEditToggle() {
+        if (!splinePathEditor || !splinePathEditor.setEditModeEnabled) {
+            return
+        }
+
+        if (!splinePathEditor.isSmoothed) {
+            return
+        }
+
+        splinePathEditor.setEditModeEnabled(!splinePathEditor.isEditMode)
+        updatePathTerminalPoseFromEditor(true)
+    }
+
     function handlePathAccept() {
-        if (!manualPathEditor || !manualPathEditor.getPathPoints || !manualPathEditor.isSegmented) {
-            errorPopup.errorRectangleTextError.text = qsTr("Error: Segmenta el path antes de aceptar")
+        if (!splinePathEditor || !splinePathEditor.getPathPointsForCompute || !splinePathEditor.hasEditablePath) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: Suaviza y edita el path antes de aceptar")
             errorPopup.open()
             return
         }
@@ -440,9 +456,9 @@ TestMapViewForm {
             return
         }
 
-        var points = manualPathEditor.getPathPoints()
+        var points = splinePathEditor.getPathPointsForCompute()
         if (!points || points.length < 2) {
-            errorPopup.errorRectangleTextError.text = qsTr("Error: Path segmentado inválido")
+            errorPopup.errorRectangleTextError.text = qsTr("Error: Path suavizado inválido")
             errorPopup.open()
             return
         }
@@ -456,7 +472,7 @@ TestMapViewForm {
         manualPathReady = false
         manualPathNavigationPoints = buildManualPathWaypointsForService(points)
         if (!manualPathNavigationPoints || manualPathNavigationPoints.length < 2) {
-            errorPopup.errorRectangleTextError.text = qsTr("Error: Path segmentado inválido")
+            errorPopup.errorRectangleTextError.text = qsTr("Error: Path suavizado inválido")
             errorPopup.open()
             return
         }
@@ -477,27 +493,27 @@ TestMapViewForm {
     }
 
     function handlePathStrokeStart(screenX, screenY) {
-        if (!mapAvailable || !pathPlacementEnabled || !manualPathEditor || !manualPathEditor.beginStrokeFromScreen) {
+        if (!mapAvailable || !pathPlacementEnabled || !splinePathEditor || !splinePathEditor.beginStrokeFromScreen) {
             return
         }
 
-        manualPathEditor.beginStrokeFromScreen(screenX, screenY)
+        splinePathEditor.beginStrokeFromScreen(screenX, screenY)
     }
 
     function handlePathStrokeMove(screenX, screenY) {
-        if (!mapAvailable || !pathPlacementEnabled || !manualPathEditor || !manualPathEditor.appendPointFromScreen) {
+        if (!mapAvailable || !pathPlacementEnabled || !splinePathEditor || !splinePathEditor.appendPointFromScreen) {
             return
         }
 
-        manualPathEditor.appendPointFromScreen(screenX, screenY)
+        splinePathEditor.appendPointFromScreen(screenX, screenY)
     }
 
     function handlePathStrokeEnd() {
-        if (!manualPathEditor || !manualPathEditor.endStroke) {
+        if (!splinePathEditor || !splinePathEditor.endStroke) {
             return
         }
 
-        manualPathEditor.endStroke()
+        splinePathEditor.endStroke()
         updatePathTerminalPoseFromEditor(false)
     }
 
@@ -959,8 +975,8 @@ TestMapViewForm {
         if (mapVisualizationManager && mapVisualizationManager.clearGoalRobotPose) {
             mapVisualizationManager.clearGoalRobotPose()
         }
-        if (manualPathEditor && manualPathEditor.clear) {
-            manualPathEditor.clear()
+        if (splinePathEditor && splinePathEditor.clear) {
+            splinePathEditor.clear()
         }
 
         if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
@@ -1190,6 +1206,13 @@ TestMapViewForm {
             return
         }
         handlePathSegment()
+    }
+
+    onPathEditToggleRequested: {
+        if (step !== stepTrajectory) {
+            return
+        }
+        handlePathEditToggle()
     }
 
     onStartTestRequested: {
