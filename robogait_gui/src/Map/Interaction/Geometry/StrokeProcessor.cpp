@@ -3,14 +3,8 @@
 
 #include "Map/Interaction/Geometry/StrokeProcessor.hpp"
 
-namespace ROBOGait
-{
-namespace map
-{
-namespace interaction
-{
-namespace geometry
-{
+using namespace ROBOGait::map::interaction::geometry;
+
 QVector<QPointF> StrokeProcessor::removeDuplicatedPoints(const QVector<QPointF>& points, double min_distance_m)
 {
   if (points.size() < MIN_VALID_PATH_POINTS)
@@ -253,7 +247,3 @@ QVector<QPointF> StrokeProcessor::limitPointCount(const QVector<QPointF>& points
   reduced.append(points.constLast());
   return removeDuplicatedPoints(reduced, 1e-9);
 }
-} // namespace geometry
-} // namespace interaction
-} // namespace map
-} // namespace ROBOGait
