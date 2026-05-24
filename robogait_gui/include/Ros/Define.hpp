@@ -1,19 +1,27 @@
 #pragma once
 
 #include <chrono>
+#include <string>
+
+namespace ROBOGait
+{
+namespace ros
+{
+namespace define
+{
 
 //------ TIME DEFINITIONS ------
-// clang-format off
-#define TIME_TO_ROBOT_POSE_UPDATE     100 // ms (10 Hz)
-#define TIME_TO_ROBOT_TIMEOUT         500 // ms (2 Hz)
-#define TIME_TO_PUBLISH_CMD_VEL       100  // ms (20 Hz)
-
+extern const std::chrono::milliseconds TIME_TO_ROBOT_POSE_UPDATE_MS; // (10 Hz)
+extern const std::chrono::milliseconds TIME_TO_ROBOT_TIMEOUT_MS;     // (2 Hz)
+extern const std::chrono::milliseconds TIME_TO_PUBLISH_CMD_VEL_MS;   // (20 Hz)
 
 //------ NODES NAME DEFINITIONS ------
-#define ROBOGAIT_GUI                  "robogait_gui"
-#define COMMAND_EXECUTOR              "command_executor"
-
-// clang-format on
+extern const std::string ROBOGAIT_GUI;
+extern const std::string COMMAND_EXECUTOR;
 
 // Max time to wait for service response
-#define SERVICE_CALL_TIMEOUT std::chrono::seconds(2)
+extern const std::chrono::seconds SERVICE_CALL_TIMEOUT;
+
+} // namespace define
+} // namespace ros
+} // namespace ROBOGait

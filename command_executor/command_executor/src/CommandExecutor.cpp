@@ -230,8 +230,7 @@ bool CommandExecutor::createRosInterfaces()
   sub_battery_status_ = create_subscription<sensor_msgs::msg::BatteryState>(define::T_BATTERY_STATUS, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(),
                                                                             std::bind(&CommandExecutor::callbackBatteryStatus, this, std::placeholders::_1));
 
-  timer_ =
-      create_wall_timer(std::chrono::milliseconds(define::TIME_MAIN_LOOP), std::bind(&CommandExecutor::mainLoop, this)); // one-shot: false, autostart: true
+  timer_ = create_wall_timer(define::TIME_MAIN_LOOP_MS, std::bind(&CommandExecutor::mainLoop, this)); // one-shot: false, autostart: true
 
   if (!srv_cmd_)
   {

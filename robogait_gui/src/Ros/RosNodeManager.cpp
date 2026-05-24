@@ -14,7 +14,7 @@
 using namespace ROBOGait::ros::manager;
 
 RosNodeManager::RosNodeManager() :
-    node_name_(ROBOGAIT_GUI),
+    node_name_(QString::fromStdString(ROBOGait::ros::define::ROBOGAIT_GUI)),
     context_(nullptr),
     ros_node_(nullptr),
     executor_(nullptr),

@@ -1,33 +1,38 @@
 #pragma once
 
-#include "Define.hpp"
+#include <string>
 
-// clang-format off
-
+namespace ROBOGait
+{
+namespace ros
+{
+namespace topics
+{
 // Topics
-#define T_CMD_VEL                   "/cmd_vel"
-#define T_ROBOT_STATUS              "/" COMMAND_EXECUTOR"/robot_status"
-#define T_MAP                       "/map"
-#define T_MAP_UPDATES               "/map_updates"
-#define T_PLAN                      "/plan"
-#define T_SCAN                      "/scan"
-#define T_PARTICLE_CLOUD            "/particle_cloud"
-#define T_POSE_INITIALIZE           "/initialpose"
-#define T_USER_DETECTION            "/user_detection_filter"
+extern const std::string T_CMD_VEL;
+extern const std::string T_ROBOT_STATUS;
+extern const std::string T_MAP;
+extern const std::string T_MAP_UPDATES;
+extern const std::string T_PLAN;
+extern const std::string T_SCAN;
+extern const std::string T_PARTICLE_CLOUD;
+extern const std::string T_POSE_INITIALIZE;
+extern const std::string T_USER_DETECTION;
 
 // Services
-#define S_CMD                                        COMMAND_EXECUTOR"/cmd"
-#define S_GET_MAP_DATA                               COMMAND_EXECUTOR"/get_map_data"
-#define S_REINITIALIZE_GLOBAL_LOCALIZATION           "/reinitialize_global_localization"
+extern const std::string S_CMD;
+extern const std::string S_GET_MAP_DATA;
+extern const std::string S_REINITIALIZE_GLOBAL_LOCALIZATION;
 
 // Actions
-#define A_NAVIGATE_TO_POSE                         "/navigate_to_pose"
-#define A_NAVIGATE_THROUGH_POSES                   "/navigate_through_poses"
-#define A_COMPUTE_PATH_TO_POSE                     "/compute_path_to_pose"
-#define A_COMPUTE_PATH_THROUGH_POSES               "/compute_path_through_poses"
+extern const std::string A_NAVIGATE_TO_POSE;
+extern const std::string A_NAVIGATE_THROUGH_POSES;
+extern const std::string A_COMPUTE_PATH_TO_POSE;
+extern const std::string A_COMPUTE_PATH_THROUGH_POSES;
 
 // TF Frames
-#define TF_MAP_FRAME                "map"
-#define TF_ROBOT_FRAME              "base_link"
-
-// clang-format on
+extern const std::string TF_MAP_FRAME;
+extern const std::string TF_ROBOT_FRAME;
+} // namespace topics
+} // namespace ros
+} // namespace ROBOGait

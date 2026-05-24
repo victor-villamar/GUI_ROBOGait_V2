@@ -171,8 +171,10 @@ set(SOURCES
     src/Robot/RobotDiscovery.cpp
     src/Robot/RobotManager.cpp
     src/Robot/RobotPlacementController.cpp
+    src/Ros/Define.cpp
     src/Ros/QoSProfiles.cpp
     src/Ros/RosNodeManager.cpp
+    src/Ros/TopicsName.cpp
     src/Services/RobotServiceBridge.cpp
     src/Services/RobotServiceClient.cpp
     src/Settings/DeveloperSettings.cpp
