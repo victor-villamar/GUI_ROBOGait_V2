@@ -87,7 +87,6 @@ set(HEADERS
     include/Map/Subscribers/ParticleCloudSubscriber.hpp
     include/Map/Subscribers/PathSubscriber.hpp
     include/Map/Subscribers/TFSubscriber.hpp
-    include/Map/Utils/PathSegmentation.hpp
     include/Map/Utils/Utils.hpp
     include/Map/MapVisualizationManager.hpp
     include/Perception/PersonDetectionMonitor.hpp
@@ -169,7 +168,6 @@ set(SOURCES
     src/Map/Subscribers/ParticleCloudSubscriber.cpp
     src/Map/Subscribers/PathSubscriber.cpp
     src/Map/Subscribers/TFSubscriber.cpp
-    src/Map/Utils/PathSegmentation.cpp
     src/Map/Utils/Utils.cpp
     src/Map/MapVisualizationManager.cpp
     src/Perception/PersonDetectionMonitor.cpp
