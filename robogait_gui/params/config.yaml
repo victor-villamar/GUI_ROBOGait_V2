@@ -46,9 +46,10 @@ map:
   robot_size: 0.32 # turtlebot3 waffle
   image_path: ".local/robogait/maps/" # local path where map images are stored
   map_path:   "/maps/" # path used in service calls (relative to the robot's home directory)
-  manual_path_segmentation:
+  spline_path:
     resample_spacing_px: 5.0
-    rdp_epsilon_px: 3.0
-    short_straw_window: 3
-    short_straw_median_factor: 0.95
-    short_straw_line_threshold: 0.95
+    smoothing_window_radius: 2
+    catmull_alpha: 0.5
+    sample_spacing_px: 4.0
+    simplify_tolerance_px: 8.0
+    max_anchor_points: 28

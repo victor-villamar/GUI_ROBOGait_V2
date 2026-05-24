@@ -11,7 +11,7 @@
 #include <rclcpp/node.hpp>
 
 #include "Map/Data/RobotPoseData.hpp"
-#include "Map/Interaction/ManualPathEditor.hpp"
+#include "Map/Interaction/SplinePathEditor.hpp"
 #include "Map/Items/LaserLayerItem.hpp"
 #include "Map/Items/MapLayerItem.hpp"
 #include "Map/Items/ParticleCloudLayerItem.hpp"
@@ -86,8 +86,8 @@ class MapVisualizationManager : public QObject
              WRITE setFollowRobot
              NOTIFY followRobotChanged)
 
-  Q_PROPERTY(ROBOGait::map::interaction::ManualPathEditor* manualPathEditor
-             READ getManualPathEditor
+  Q_PROPERTY(ROBOGait::map::interaction::SplinePathEditor* splinePathEditor
+             READ getSplinePathEditor
              CONSTANT)
   // clang-format on
 
@@ -207,6 +207,16 @@ public:
   bool screenToMap(const QPointF& screen_point, QPointF& map_point) const;
 
   /**
+   * @brief Convert map coordinates to screen coordinates
+   *
+   * @param map_point Point in map coordinates
+   * @param screen_point Output parameter for point in screen coordinates
+   *
+   * @return true if conversion was successful, false otherwise
+   */
+  bool mapToScreen(const QPointF& map_point, QPointF& screen_point) const;
+
+  /**
    * @brief Convert screen coordinates to map coordinates
    *
    * @param screen_x Screen x-coordinate
@@ -215,6 +225,16 @@ public:
    * @return QVariantMap with keys available, x, y
    */
   Q_INVOKABLE QVariantMap screenToMap(double screen_x, double screen_y) const;
+
+  /**
+   * @brief Convert map coordinates to screen coordinates
+   *
+   * @param map_x Map x-coordinate
+   * @param map_y Map y-coordinate
+   *
+   * @return QVariantMap with keys available, x, y
+   */
+  Q_INVOKABLE QVariantMap mapToScreen(double map_x, double map_y) const;
 
   /**
    * @brief Set the robot's pose manually for visualization
@@ -243,9 +263,9 @@ public:
   bool isMapPointInside(double x, double y) const;
 
   /**
-   * @brief Get manual path editor
+   * @brief Get spline path editor
    */
-  ROBOGait::map::interaction::ManualPathEditor* getManualPathEditor() const;
+  ROBOGait::map::interaction::SplinePathEditor* getSplinePathEditor() const;
 
   /**
    * @brief Activate subscriptions for data sources
@@ -411,6 +431,7 @@ signals:
   void laserAvailableChanged();         // Emitted when laser availability changes
   void particleCloudAvailableChanged(); // Emitted when particle cloud availability changes
   void zoomLevelChanged();              // Emitted when zoom level changes
+  void viewTransformChanged();          // Emitted when camera transform (pan/zoom/center) changes
   void mapResolutionChanged();          // Emitted when map resolution changes
   void scaleChanged();                  // Emitted when scale changes
   void followRobotChanged();            // Emitted when follow mode changes
@@ -475,7 +496,7 @@ private:
   std::shared_ptr<ROBOGait::map::source::PathSource> path_source_;                   /**< Path source */
   std::shared_ptr<ROBOGait::map::source::LaserSource> laser_source_;                 /**< Laser source */
   std::shared_ptr<ROBOGait::map::source::ParticleCloudSource> particle_source_;      /**< Particle cloud source */
-  std::unique_ptr<ROBOGait::map::interaction::ManualPathEditor> manual_path_editor_; /**< Manual path editor */
+  std::unique_ptr<ROBOGait::map::interaction::SplinePathEditor> spline_path_editor_; /**< Spline path editor */
 
   QString selected_robot_namespace_;    /**< Selected robot namespace */
   bool use_namespace_discovery_;        /**< Use namespace-based topic discovery */

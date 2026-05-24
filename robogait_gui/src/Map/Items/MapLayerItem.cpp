@@ -210,6 +210,7 @@ QSGNode* MapLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* d
       camera_->fitToRect(map_rect);
       fit_done_ = true;
       emit zoomChanged();
+      emit viewTransformChanged();
       updateSyncItems();
     }
   }
@@ -295,7 +296,15 @@ void MapLayerItem::applyPanDelta(const QPointF& delta)
 
   const QPointF center = camera_->getViewCenter();
   const QPointF new_center(center.x() - delta.x() / zoom, center.y() + delta.y() / zoom);
-  camera_->setViewCenter(clampCenterToMap(new_center));
+  const QPointF clamped_center = clampCenterToMap(new_center);
+
+  if (QLineF(center, clamped_center).length() <= 1e-9)
+  {
+    return;
+  }
+
+  camera_->setViewCenter(clamped_center);
+  emit viewTransformChanged();
 }
 
 void MapLayerItem::wheelEvent(QWheelEvent* event)
@@ -310,6 +319,7 @@ void MapLayerItem::wheelEvent(QWheelEvent* event)
   camera_->zoomByFactor(delta);
   camera_->setViewCenter(clampCenterToMap(camera_->getViewCenter()));
   emit zoomChanged();
+  emit viewTransformChanged();
   update();
   updateSyncItems();
   event->accept();
@@ -452,6 +462,7 @@ void MapLayerItem::touchEvent(QTouchEvent* event)
       camera_->setZoom(pinch_start_zoom_ * scale);
       camera_->setViewCenter(clampCenterToMap(camera_->getViewCenter()));
       emit zoomChanged();
+      emit viewTransformChanged();
       update();
       updateSyncItems();
       event->accept();
@@ -483,6 +494,7 @@ bool MapLayerItem::event(QEvent* event)
       camera_->setZoom(pinch_start_zoom_ * scale);
       camera_->setViewCenter(clampCenterToMap(camera_->getViewCenter()));
       emit zoomChanged();
+      emit viewTransformChanged();
       update();
       updateSyncItems();
       return true;
