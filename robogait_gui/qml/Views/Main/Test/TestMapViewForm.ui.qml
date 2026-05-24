@@ -47,6 +47,7 @@ Rectangle {
     signal goalClearRequested()
     signal pathAcceptRequested()
     signal pathSegmentRequested()
+    signal pathEditToggleRequested()
     signal pathClearRequested()
     signal startTestRequested()
     signal goHomeRequested()
@@ -88,9 +89,149 @@ Rectangle {
     property bool showRobotPose: false
     property bool showParticleCloud: false
     readonly property bool manualPathAvailable: mapVisualizationManager &&
-                                                mapVisualizationManager.manualPathEditor &&
-                                                mapVisualizationManager.manualPathEditor.hasPath
+                                                mapVisualizationManager.splinePathEditor &&
+                                                mapVisualizationManager.splinePathEditor.hasPath
+    property var pathEditControlPoints: []
+    property real pathAnchorHandleSizePx: 14
+    property real pathTangentHandleSizePx: 10
+    property real pathHandleHitPaddingPx: 12
+    property bool pathControlDragActive: false
+    property int pathControlDragType: -1
+    property int pathControlDragIndex: -1
+    property real pathControlDragOverlayX: 0
+    property real pathControlDragOverlayY: 0
+    readonly property bool pathEditHandlesVisible: mapAvailable &&
+                                                   isNavigationStep &&
+                                                   pathPlacementEnabled &&
+                                                   mapVisualizationManager &&
+                                                   mapVisualizationManager.splinePathEditor &&
+                                                   mapVisualizationManager.splinePathEditor.isSmoothed &&
+                                                   mapVisualizationManager.splinePathEditor.isEditMode
 
+    function refreshPathEditControlPoints(forceRefresh) {
+        if (pathControlDragActive && !forceRefresh) {
+            return
+        }
+
+        if (!pathEditHandlesVisible ||
+            !mapVisualizationManager ||
+            !mapVisualizationManager.splinePathEditor ||
+            !mapVisualizationManager.splinePathEditor.getControlPoints ||
+            !mapVisualizationManager.mapToScreen) {
+            pathEditControlPoints = []
+            return
+        }
+
+        var controls = mapVisualizationManager.splinePathEditor.getControlPoints()
+        if (!controls || controls.length === 0) {
+            pathEditControlPoints = []
+            return
+        }
+
+        var projected = []
+        for (var i = 0; i < controls.length; ++i) {
+            var cp = controls[i]
+            var screenPoint = mapVisualizationManager.mapToScreen(cp.x, cp.y)
+            if (!screenPoint || !screenPoint.available) {
+                continue
+            }
+
+            projected.push({
+                              "type": cp.type,
+                              "index": cp.index,
+                              "mapX": cp.x,
+                              "mapY": cp.y,
+                              "screenX": screenPoint.x,
+                              "screenY": screenPoint.y
+                          })
+        }
+
+        pathEditControlPoints = projected
+    }
+
+    function beginSplineControlPointDrag(controlType, controlIndex) {
+        pathControlDragActive = true
+        pathControlDragType = controlType
+        pathControlDragIndex = controlIndex
+    }
+
+    function dragSplineControlPoint(overlayX, overlayY) {
+        if (!pathControlDragActive) {
+            return
+        }
+
+        pathControlDragOverlayX = overlayX
+        pathControlDragOverlayY = overlayY
+        handleSplineControlPointDrag(pathControlDragType,
+                                     pathControlDragIndex,
+                                     overlayX,
+                                     overlayY)
+    }
+
+    function endSplineControlPointDrag() {
+        if (!pathControlDragActive) {
+            return
+        }
+
+        pathControlDragActive = false
+        pathControlDragType = -1
+        pathControlDragIndex = -1
+        pathControlDragOverlayX = 0
+        pathControlDragOverlayY = 0
+        refreshPathEditControlPoints(true)
+    }
+
+    function handleSplineControlPointDrag(controlType, controlIndex, overlayX, overlayY) {
+        if (!mapVisualizationManager ||
+            !mapVisualizationManager.splinePathEditor ||
+            !mapVisualizationManager.splinePathEditor.moveControlPoint ||
+            !mapVisualizationManager.screenToMap) {
+            return
+        }
+
+        var mapPoint = mapVisualizationManager.screenToMap(overlayX, overlayY)
+        if (!mapPoint || !mapPoint.available) {
+            return
+        }
+
+        mapVisualizationManager.splinePathEditor.moveControlPoint(controlType, controlIndex, mapPoint.x, mapPoint.y)
+    }
+
+    onPathEditHandlesVisibleChanged: {
+        refreshPathEditControlPoints(true)
+    }
+
+    Connections {
+        target: root.mapVisualizationManager && root.mapVisualizationManager.splinePathEditor
+                ? root.mapVisualizationManager.splinePathEditor
+                : null
+        ignoreUnknownSignals: true
+
+        function onPathChanged() {
+            root.refreshPathEditControlPoints()
+        }
+
+        function onEditModeChanged() {
+            root.refreshPathEditControlPoints(true)
+        }
+
+        function onSmoothedChanged() {
+            root.refreshPathEditControlPoints(true)
+        }
+    }
+
+    Connections {
+        target: root.mapVisualizationManager ? root.mapVisualizationManager : null
+        ignoreUnknownSignals: true
+
+        function onZoomLevelChanged() {
+            root.refreshPathEditControlPoints()
+        }
+
+        function onViewTransformChanged() {
+            root.refreshPathEditControlPoints()
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -227,12 +368,13 @@ Rectangle {
                 isNavigationStep: root.isNavigationStep
                 pathPlacementEnabled: root.pathPlacementEnabled
                 testStarted: root.testStarted
-                manualPathEditor: (root.mapVisualizationManager && root.mapVisualizationManager.manualPathEditor)
-                                  ? root.mapVisualizationManager.manualPathEditor
+                splinePathEditor: (root.mapVisualizationManager && root.mapVisualizationManager.splinePathEditor)
+                                  ? root.mapVisualizationManager.splinePathEditor
                                   : null
 
                 onCalculateRequested: root.pathAcceptRequested()
                 onSmoothRequested: root.pathSegmentRequested()
+                onEditToggleRequested: root.pathEditToggleRequested()
                 onClearRequested: root.pathClearRequested()
             }
 
@@ -244,7 +386,8 @@ Rectangle {
                 z: 1
                 isPanningEnabled: !placementEnabled &&
                                   (!isTrajectoryStep || !goalPlacementEnabled) &&
-                                  (!isTrajectoryStep || !pathPlacementEnabled || (manualPathAvailable && !pathDragHandler.active))
+                                  (!isTrajectoryStep || !pathPlacementEnabled || (manualPathAvailable && !pathDragHandler.active)) &&
+                                  !root.pathEditHandlesVisible
 
                 PlacementTapHandler {
                     mapAvailable: root.mapAvailable
@@ -396,6 +539,75 @@ Rectangle {
                         userSession.rosManager.robotManager.mapVisualizationManager)
                     {
                         userSession.rosManager.robotManager.mapVisualizationManager.registerLivePathLayerItem(livePathLayerItem)
+                    }
+                }
+            }
+
+            Item {
+                id: splineEditOverlay
+                anchors.fill: parent
+                anchors.margins: mapContentMargin
+                visible: root.pathEditHandlesVisible
+                z: 1.47
+
+                Repeater {
+                    model: root.pathEditControlPoints
+
+                    delegate: Rectangle {
+                        id: controlPointHandle
+
+                        required property var modelData
+                        readonly property int controlType: modelData.type
+                        readonly property int controlIndex: modelData.index
+                        readonly property bool isAnchor: controlType === 0
+                        readonly property bool isDraggedControlPoint: root.pathControlDragActive &&
+                                                                     (root.pathControlDragType === controlType) &&
+                                                                     (root.pathControlDragIndex === controlIndex)
+                        readonly property real handleSize: isAnchor ? root.pathAnchorHandleSizePx : root.pathTangentHandleSizePx
+                        readonly property real handleScreenX: isDraggedControlPoint ? root.pathControlDragOverlayX : modelData.screenX
+                        readonly property real handleScreenY: isDraggedControlPoint ? root.pathControlDragOverlayY : modelData.screenY
+
+                        width: handleSize
+                        height: handleSize
+                        radius: width * 0.5
+                        color: isAnchor ? AppTheme.map.pathColorSecondary : AppTheme.map.pathColorPrimary
+                        border.color: AppTheme.map.white
+                        border.width: 1
+                        x: handleScreenX - (width * 0.5)
+                        y: handleScreenY - (height * 0.5)
+                        visible: root.pathEditHandlesVisible
+
+                        MouseArea {
+                            id: dragMouseArea
+                            anchors.fill: parent
+                            anchors.margins: -root.pathHandleHitPaddingPx
+                            acceptedButtons: Qt.LeftButton
+                            preventStealing: true
+                            cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+
+                            onPressed: function(mouse) {
+                                var overlayPointPressed = dragMouseArea.mapToItem(splineEditOverlay, mouse.x, mouse.y)
+                                root.beginSplineControlPointDrag(controlPointHandle.controlType, controlPointHandle.controlIndex)
+                                root.dragSplineControlPoint(overlayPointPressed.x, overlayPointPressed.y)
+                            }
+
+                            onPositionChanged: function(mouse) {
+                                if (!(mouse.buttons & Qt.LeftButton)) {
+                                    return
+                                }
+
+                                var overlayPoint = dragMouseArea.mapToItem(splineEditOverlay, mouse.x, mouse.y)
+                                root.dragSplineControlPoint(overlayPoint.x, overlayPoint.y)
+                            }
+
+                            onReleased: {
+                                root.endSplineControlPointDrag()
+                            }
+
+                            onCanceled: {
+                                root.endSplineControlPointDrag()
+                            }
+                        }
                     }
                 }
             }
