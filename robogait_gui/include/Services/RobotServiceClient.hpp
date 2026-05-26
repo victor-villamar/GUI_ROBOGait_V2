@@ -595,7 +595,7 @@ private:
   static constexpr const char* KEY_NAVIGATION = "navigation";     /**< Key for the navigation command */
 
   static constexpr std::chrono::milliseconds HEALTH_CHECK_PERIOD = std::chrono::milliseconds(100);                 /**< Health check period */
-  static constexpr std::chrono::seconds START_STOP_TIMEOUT = std::chrono::seconds(5);                              /**< Start/stop timeout */
+  static constexpr std::chrono::seconds START_STOP_TIMEOUT = std::chrono::seconds(25);                             /**< Start/stop timeout */
   static constexpr std::chrono::milliseconds MAP_SAVER_FORCE_STOP_DELAY = std::chrono::milliseconds(2000);         /**< Map saver force stop delay */
   static constexpr std::chrono::milliseconds MAP_SAVER_STARTUP_ASSUME_STOP_DELAY = std::chrono::milliseconds(500); /**< Map saver startup assume stop delay */
 };
