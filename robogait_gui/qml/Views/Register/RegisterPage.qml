@@ -8,8 +8,8 @@ RegisterPageForm {
         var win = Qt.application.activeWindow
         return win && win.keyboardVisible ? win.keyboardHeight : 0
     }
-    property int defaultIdleTimeoutMs: 10000
-    property int signInIdleTimeoutMs: 60000
+    property int defaultIdleTimeoutMs: timeoutSettings ? timeoutSettings.registerDefaultIdleTimeoutMs : 10000
+    property int signInIdleTimeoutMs: timeoutSettings ? timeoutSettings.registerSignInIdleTimeoutMs : 60000
     property int baseCenterOffset: -80
     property int topPadding: 20
     property int keyboardPadding: 12

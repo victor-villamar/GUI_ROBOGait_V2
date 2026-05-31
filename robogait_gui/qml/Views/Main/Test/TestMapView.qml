@@ -15,7 +15,7 @@ TestMapViewForm {
     readonly property real computedButtonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 44
     readonly property real computedJoystickStickSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.joystickStickSize, 0) : 34
     readonly property real computedWheelSizePx: computedJoystickStickSizePx * 4
-    readonly property int busyTimeoutMs: 10000
+    readonly property int busyTimeoutMs: timeoutSettings ? timeoutSettings.testBusyTimeoutMs : 10000
 
     iconButtonSizePx: computedIconButtonSizePx
     iconGlyphSizePx: computedIconGlyphSizePx
@@ -37,7 +37,7 @@ TestMapViewForm {
     property bool autoLocalizationCompleted: false
     property bool autoLocalizationServiceDone: false
     property bool autoLocalizationSpinDone: false
-    property int autoLocalizationSpinMs: 30000
+    property int autoLocalizationSpinMs: timeoutSettings ? timeoutSettings.autoLocalizationSpinTimeoutMs : 30000
     property real autoLocalizationAngularSpeed: 0.75
     property bool initialRobotPoseSaved: false
     property var initialRobotMapPosition: Qt.point(0, 0)
@@ -1857,7 +1857,7 @@ TestMapViewForm {
 
     Timer {
         id: autoLocalizationSpinTimer
-        interval: 100
+        interval: timeoutSettings ? timeoutSettings.autoLocalizationSpinPublishPeriodMs : 100
         repeat: true
         running: false
         onTriggered: {
@@ -1869,7 +1869,7 @@ TestMapViewForm {
 
     Timer {
         id: experimentSavePromptTimer
-        interval: 3000
+        interval: timeoutSettings ? timeoutSettings.experimentSavePromptDelayMs : 3000
         repeat: false
         running: false
         onTriggered: {

@@ -41,6 +41,22 @@ ros2:
   use_namespace_discovery: true
   use_topic_filter: true
 
+# Timeout Configuration
+timeouts:
+  start_stop_timeout_s: 25
+  qml:
+    app_shutdown_delay_ms: 3000
+    auth_mode_dropdown_auto_close_ms: 4000
+    register_default_idle_timeout_ms: 10000
+    register_sign_in_idle_timeout_ms: 60000
+    badge_auto_close_ms: 3000
+    robot_badge_auto_close_ms: 6000
+    error_rectangle_delayed_close_ms: 5000
+    test_busy_timeout_ms: 10000
+    auto_localization_spin_timeout_ms: 30000
+    auto_localization_spin_publish_period_ms: 100
+    experiment_save_prompt_delay_ms: 3000
+
 # Map Rendering Configuration
 map:
   robot_size: 0.32 # turtlebot3 waffle

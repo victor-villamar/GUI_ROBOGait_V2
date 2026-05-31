@@ -335,6 +335,13 @@ private:
   bool loadCommands();
 
   /**
+   * @brief Load timeout configuration from YAML configuration file
+   *
+   * @return true if timeouts were loaded successfully, false otherwise
+   */
+  bool loadTimeouts();
+
+  /**
    * @brief Call a command service
    *
    * @param cmd The command to call
@@ -588,6 +595,8 @@ private:
   bool nav_goal_active_;          /**< Flag indicating if there is an active navigation goal */
   bool cancel_requested_;         /**< Flag indicating if a cancel has been requested for the active navigation goal */
   bool cancel_in_progress_;       /**< Flag indicating if a cancel is in progress for the active navigation goal */
+
+  std::chrono::seconds start_stop_timeout_s_; /**< Configurable timeout for STARTING/STOPPING transitions */
 
   static constexpr const char* KEY_CARTOGRAPHER = "cartographer"; /**< Key for the cartographer command */
   static constexpr const char* KEY_MAP_SAVER = "map_saver";       /**< Key for the map saver command */

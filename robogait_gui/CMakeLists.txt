@@ -101,6 +101,7 @@ set(HEADERS
     include/Services/RobotServiceBridge.hpp
     include/Services/RobotServiceClient.hpp
     include/Settings/DeveloperSettings.hpp
+    include/Settings/TimeoutSettings.hpp
     include/Settings/UiSizingSettings.hpp
     include/Themes/AppTheme.hpp
     include/Themes/ThemeAuth.hpp
@@ -182,6 +183,7 @@ set(SOURCES
     src/Services/RobotServiceBridge.cpp
     src/Services/RobotServiceClient.cpp
     src/Settings/DeveloperSettings.cpp
+    src/Settings/TimeoutSettings.cpp
     src/Settings/UiSizingSettings.cpp
     src/Themes/AppTheme.cpp
     src/Themes/ThemeAuth.cpp

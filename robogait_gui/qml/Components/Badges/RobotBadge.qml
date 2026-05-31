@@ -31,7 +31,7 @@ Item {
 
     Timer {
         id: autoCloseTimer
-        interval: 6000
+        interval: timeoutSettings ? timeoutSettings.robotBadgeAutoCloseMs : 6000
         repeat: false
         onTriggered: root.detailsOpen = false
     }

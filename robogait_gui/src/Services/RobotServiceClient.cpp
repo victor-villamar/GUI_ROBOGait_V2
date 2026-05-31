@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <filesystem>
 #include <optional>
 #include <vector>
@@ -33,7 +34,8 @@ RobotServiceClient::RobotServiceClient() :
     map_saver_stop_requested_(false),
     nav_goal_active_(false),
     cancel_requested_(false),
-    cancel_in_progress_(false)
+    cancel_in_progress_(false),
+    start_stop_timeout_s_(START_STOP_TIMEOUT)
 {
 }
 
@@ -61,6 +63,12 @@ bool RobotServiceClient::initialize(rclcpp::Node* parent_node)
   if (!loadCommands())
   {
     qCritical() << "[RobotServiceClient::initialize] Failed to load commands";
+    return false;
+  }
+
+  if (!loadTimeouts())
+  {
+    qCritical() << "[RobotServiceClient::initialize] Failed to load timeouts";
     return false;
   }
 
@@ -799,6 +807,17 @@ bool RobotServiceClient::loadCommands()
   return !commands_.empty();
 }
 
+bool RobotServiceClient::loadTimeouts()
+{
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+  const int default_start_stop_timeout_s = static_cast<int>(START_STOP_TIMEOUT.count());
+  const int configured_start_stop_timeout_s = yaml_loader.getValue<int>("timeouts.start_stop_timeout_s", default_start_stop_timeout_s);
+  const int sanitized_start_stop_timeout_s = std::max(1, configured_start_stop_timeout_s);
+
+  start_stop_timeout_s_ = std::chrono::seconds(sanitized_start_stop_timeout_s);
+  return true;
+}
+
 bool RobotServiceClient::callCommandServiceAsync(const std::string& cmd, bool execute, const CommandRequestContext& context)
 {
   if (!initialized_)
@@ -1430,7 +1449,7 @@ void RobotServiceClient::onHealthTimer()
         {
           setCommandState(key, RobotServiceClient::CommandStatus::STOPPED, state.full_cmd);
         }
-        else if (elapsed > START_STOP_TIMEOUT)
+        else if (elapsed > start_stop_timeout_s_)
         {
           setCommandState(key, RobotServiceClient::CommandStatus::ERROR, state.full_cmd);
         }
@@ -1446,7 +1465,7 @@ void RobotServiceClient::onHealthTimer()
         {
           setCommandState(key, RobotServiceClient::CommandStatus::STOPPED, state.full_cmd);
         }
-        else if (elapsed > START_STOP_TIMEOUT)
+        else if (elapsed > start_stop_timeout_s_)
         {
           setCommandState(key, RobotServiceClient::CommandStatus::ERROR, state.full_cmd);
         }

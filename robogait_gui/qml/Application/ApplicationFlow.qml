@@ -123,7 +123,7 @@ ApplicationFlowForm {
 
     Timer {
         id: shutdownTimer
-        interval: 3000
+        interval: timeoutSettings ? timeoutSettings.appShutdownDelayMs : 3000
         repeat: false
         onTriggered: Qt.quit()
     }

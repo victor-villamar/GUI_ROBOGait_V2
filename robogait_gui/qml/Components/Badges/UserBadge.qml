@@ -50,7 +50,7 @@ Item {
 
     Timer {
         id: autoCloseTimer
-        interval: 3000
+        interval: timeoutSettings ? timeoutSettings.badgeAutoCloseMs : 3000
         repeat: false
         onTriggered: root.dropDownOpen = false
     }
