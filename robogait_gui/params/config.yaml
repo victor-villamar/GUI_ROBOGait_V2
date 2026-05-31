@@ -41,6 +41,11 @@ ros2:
   use_namespace_discovery: true
   use_topic_filter: true
 
+# Robot Configuration
+robot:
+  max_linear_velocity: 0.22
+  max_angular_velocity: 2.84
+
 # Timeout Configuration
 timeouts:
   start_stop_timeout_s: 25
