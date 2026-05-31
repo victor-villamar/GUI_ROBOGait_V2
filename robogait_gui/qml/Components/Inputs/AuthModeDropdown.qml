@@ -75,7 +75,7 @@ Item {
 
     Timer {
         id: autoCloseTimer
-        interval: 4000
+        interval: timeoutSettings ? timeoutSettings.authModeDropdownAutoCloseMs : 4000
         repeat: false
         onTriggered: root.closePopup()
     }

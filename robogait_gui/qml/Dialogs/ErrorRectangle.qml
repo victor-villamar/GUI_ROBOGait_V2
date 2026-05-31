@@ -26,7 +26,7 @@ Popup {
     closePolicy: mode === "instant" ? Popup.CloseOnPressOutside : Popup.NoAutoClose
     Timer {
         id: delayTimer
-        interval: 5000 // 5 segundos
+        interval: timeoutSettings ? timeoutSettings.errorRectangleDelayedCloseMs : 5000
         running: false
         repeat: false
         onTriggered: {
