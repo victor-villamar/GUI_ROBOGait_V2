@@ -20,7 +20,9 @@ MapViewForm {
     buttonHeightPx: computedButtonHeightPx
     joystickAreaSizePx: computedJoystickAreaSizePx
 
-    property real maxLinearVelocity: 0.22
+    property real maxLinearVelocity: (userSession.rosManager && userSession.rosManager.robotManager && userSession.rosManager.robotManager.manualControl)
+                                     ? userSession.rosManager.robotManager.manualControl.maxLinearVelocity
+                                     : 0.22
     property bool confirmBackNavigation: false
     property string mapName: ""
     property string mapLocation: ""

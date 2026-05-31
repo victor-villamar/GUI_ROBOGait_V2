@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include <QObject>
 #include <QString>
 
@@ -44,9 +42,20 @@ public:
              READ getLinearVelocity
              NOTIFY velocityChanged
   )
+
   Q_PROPERTY(double angularVelocity
              READ getAngularVelocity
              NOTIFY velocityChanged
+  )
+
+  Q_PROPERTY(double maxLinearVelocity
+             READ getMaxLinearVelocity
+             NOTIFY velocityLimitsChanged
+  )
+
+  Q_PROPERTY(double maxAngularVelocity
+             READ getMaxAngularVelocity
+             NOTIFY velocityLimitsChanged
   )
   // clang-format on
 
@@ -84,6 +93,20 @@ public:
   double getAngularVelocity() const;
 
   /**
+   * @brief Gets the configured maximum linear velocity
+   *
+   * @return Maximum linear velocity in m/s
+   */
+  double getMaxLinearVelocity() const;
+
+  /**
+   * @brief Gets the configured maximum angular velocity
+   *
+   * @return Maximum angular velocity in rad/s
+   */
+  double getMaxAngularVelocity() const;
+
+  /**
    * @brief Updates the robot velocity
    *
    * @param linear Linear velocity in m/s
@@ -102,7 +125,8 @@ public:
   Q_INVOKABLE void stopPublishing();
 
 signals:
-  void velocityChanged(); // Signal emitted when the velocity is updated
+  void velocityChanged();       // Signal emitted when the velocity is updated
+  void velocityLimitsChanged(); // Signal emitted when velocity limits are updated
 
 private:
   /**
@@ -115,14 +139,22 @@ private:
    */
   void publishVelocity();
 
+  /**
+   * @brief Load velocity limits from YAML with fallback to defaults
+   */
+  bool loadVelocityLimits();
+
   rclcpp::Node* parent_node_;                                           /**< Pointer to the ROS node */
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_vel_; /**< Publisher for cmd_vel topic */
   rclcpp::TimerBase::SharedPtr timer_cmd_vel_;                          /**< Timer for publishing velocity commands */
 
-  QString topic_name_;      /**< Complete topic name */
-  double linear_velocity_;  /**< Current linear velocity in m/s */
-  double angular_velocity_; /**< Current angular velocity in rad/s */
-  bool timer_active_;       /**< Flag to indicate if the timer is active */
+  QString topic_name_;          /**< Complete topic name */
+  double linear_velocity_;      /**< Current linear velocity in m/s */
+  double angular_velocity_;     /**< Current angular velocity in rad/s */
+  double max_linear_velocity_;  /**< Maximum linear velocity in m/s */
+  double max_angular_velocity_; /**< Maximum angular velocity in rad/s */
+  bool velocity_limits_loaded_; /**< Flag to indicate if velocity limits were loaded from YAML */
+  bool timer_active_;           /**< Flag to indicate if the timer is active */
 
   static constexpr double MAX_LINEAR_VELOCITY = 0.22;  /**< Maximum linear velocity */
   static constexpr double MAX_ANGULAR_VELOCITY = 2.84; /**< Maximum angular velocity */
