@@ -11,6 +11,7 @@
 #include "DataBase/DataBaseManager.hpp"
 #include "Ros/RosNodeManager.hpp"
 #include "Settings/DeveloperSettings.hpp"
+#include "Settings/TimeoutSettings.hpp"
 #include "Settings/UiSizingSettings.hpp"
 #include "User/UserSession.hpp"
 
@@ -71,42 +72,56 @@ public:
 
   /**
    * @brief Get the ROS node manager instance
+   *
    * @return Pointer to RosNodeManager
    */
   ROBOGait::ros::manager::RosNodeManager* rosNodeManager();
 
   /**
    * @brief Get the database manager singleton instance
+   *
    * @return Pointer to DataBaseManager
    */
   ROBOGait::db::DataBaseManager* databaseManager();
 
   /**
    * @brief Get the user session instance
+   *
    * @return Pointer to UserSession
    */
   ROBOGait::session::UserSession* userSession();
 
   /**
    * @brief Get the developer settings singleton instance
+   *
    * @return Pointer to DeveloperSettings
    */
   ROBOGait::settings::DeveloperSettings* developerSettings();
 
   /**
    * @brief Get the UI sizing settings singleton instance
+   *
    * @return Pointer to UiSizingSettings
    */
   ROBOGait::settings::UiSizingSettings* uiSizingSettings();
 
   /**
+   * @brief Get the timeout settings singleton instance
+   *
+   * @return Pointer to TimeoutSettings
+   */
+  ROBOGait::settings::TimeoutSettings* timeoutSettings();
+
+  /**
    * @brief Get the QML application engine
+
    * @return Pointer to QQmlApplicationEngine
    */
   QQmlApplicationEngine* qmlEngine();
 
   /**
    * @brief Get the singleton instance of RoboGaitApplication
+   *
    * @return Pointer to the application instance
    */
   static RoboGaitApplication* instance();
@@ -130,6 +145,7 @@ private:
    * @brief Setup database (copy template if needed and initialize)
    *
    * @param db_path Path to the database file from configuration
+   *
    * @return true if setup succeeded, false otherwise
    */
   bool setupDatabase(const QString& db_path);
