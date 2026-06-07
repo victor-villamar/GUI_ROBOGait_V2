@@ -9,9 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(ament_cmake_ros REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(ament_index_cpp REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
-find_package(yaml-cpp REQUIRED)
 find_package(command_executor_msgs REQUIRED)
 
 # Set include directories
@@ -25,13 +23,11 @@ add_executable(${PROJECT_NAME}_node
     src/CommandExecutor.cpp
     src/ProcessManager.cpp
     src/QoSProfile.cpp
-    src/YamlLoader.cpp
     src/main.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME}_node
     rclcpp
-    ament_index_cpp
     command_executor_msgs
     sensor_msgs
 )
@@ -43,7 +39,6 @@ target_include_directories(${PROJECT_NAME}_node PRIVATE
 target_link_libraries(${PROJECT_NAME}_node
     Boost::system
     Boost::filesystem
-    yaml-cpp
 )
 
 install(TARGETS ${PROJECT_NAME}_node
@@ -68,13 +63,6 @@ if(BUILD_TESTING)
   target_link_libraries(test_functions
     Boost::system
     Boost::filesystem
-  )
-
-  # Test for YamlLoader
-  ament_add_ros_isolated_gtest(test_yaml_loader test/test_yaml_loader.cpp src/YamlLoader.cpp)
-  target_include_directories(test_yaml_loader PRIVATE include)
-  target_link_libraries(test_yaml_loader
-    yaml-cpp
   )
 endif()
 
