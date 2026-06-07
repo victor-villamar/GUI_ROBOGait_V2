@@ -4,8 +4,10 @@
 #include <string>
 #include <vector>
 
+#include <rclcpp/exceptions.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/node_options.hpp>
+#include <rclcpp/parameter.hpp>
 #include <rclcpp/publisher.hpp>
 #include <rclcpp/service.hpp>
 #include <rclcpp/subscription.hpp>
@@ -91,7 +93,7 @@ private:
    *
    * @param msg The battery status message
    */
-  void callbackBatteryStatus(const sensor_msgs::msg::BatteryState::SharedPtr msg);
+  void callbackBatteryStatus(const sensor_msgs::msg::BatteryState::ConstSharedPtr msg);
 
   /**
    * @brief Main loop for processing commands
@@ -117,18 +119,11 @@ private:
   static std::string ltrimCopy(const std::string& value);
 
   /**
-   * @brief Load configuration from YAML file
+   * @brief Load configuration parameters from the ROS parameter
    *
    * @return true if loading was successful, false otherwise
    */
   bool loadConfig();
-
-  /**
-   * @brief Resolve the configuration file path
-   *
-   * @return The resolved configuration file path
-   */
-  static std::string resolveConfigPath();
 
   /**
    * @brief Create ROS interfaces (service, publisher, subscriber)
@@ -136,6 +131,16 @@ private:
    * @return true if creation was successful, false otherwise
    */
   bool createRosInterfaces();
+
+  /**
+   * @brief Declare or get a parameter
+   *
+   * @tparam ParameterT The type of the parameter
+   * @param parameter_name The name of the parameter
+   *
+   * @return The value of the parameter
+   */
+  template <typename ParameterT> ParameterT declareOrGetParameter(const std::string& parameter_name);
 
   /**
    * @brief Check if a command is a delete command
@@ -157,5 +162,24 @@ private:
   RobotInfo robot_info_;                /**< Robot information */
   ProcessManager process_manager_;      /**< Process manager */
 };
+
+template <typename ParameterT> ParameterT CommandExecutor::declareOrGetParameter(const std::string& parameter_name)
+{
+  if (has_parameter(parameter_name))
+  {
+    return get_parameter(parameter_name).template get_value<ParameterT>();
+  }
+
+  const rclcpp::ParameterType param_type = rclcpp::ParameterValue(ParameterT{}).get_type();
+  const rclcpp::ParameterValue parameter = declare_parameter(parameter_name, param_type);
+
+  if (parameter.get_type() == rclcpp::ParameterType::PARAMETER_NOT_SET)
+  {
+    const std::string description = "Required parameter '" + parameter_name + "' is missing. Pass config.yaml with --ros-args --params-file";
+    throw rclcpp::exceptions::InvalidParameterValueException(description.c_str());
+  }
+
+  return parameter.template get<ParameterT>();
+}
 } // namespace command
 } // namespace ROBOGait

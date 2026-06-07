@@ -9,9 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(ament_cmake_ros REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(ament_index_cpp REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
-find_package(yaml-cpp REQUIRED)
 find_package(command_executor_msgs REQUIRED)
 
 # Set include directories
@@ -19,31 +17,40 @@ include_directories(
     include
 )
 
-add_executable(${PROJECT_NAME}_node
+# Add library
+add_library(${PROJECT_NAME}_lib STATIC
     src/Functions.cpp
     src/Define.cpp
     src/CommandExecutor.cpp
     src/ProcessManager.cpp
     src/QoSProfile.cpp
-    src/YamlLoader.cpp
+)
+
+ament_target_dependencies(${PROJECT_NAME}_lib
+    rclcpp
+    command_executor_msgs
+    sensor_msgs
+)
+
+target_include_directories(${PROJECT_NAME}_lib PUBLIC
+    include
+)
+
+target_link_libraries(${PROJECT_NAME}_lib
+    Boost::system
+    Boost::filesystem
+)
+
+add_executable(${PROJECT_NAME}_node
     src/main.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME}_node
     rclcpp
-    ament_index_cpp
-    command_executor_msgs
-    sensor_msgs
-)
-
-target_include_directories(${PROJECT_NAME}_node PRIVATE
-    include
 )
 
 target_link_libraries(${PROJECT_NAME}_node
-    Boost::system
-    Boost::filesystem
-    yaml-cpp
+    ${PROJECT_NAME}_lib
 )
 
 install(TARGETS ${PROJECT_NAME}_node
@@ -70,11 +77,15 @@ if(BUILD_TESTING)
     Boost::filesystem
   )
 
-  # Test for YamlLoader
-  ament_add_ros_isolated_gtest(test_yaml_loader test/test_yaml_loader.cpp src/YamlLoader.cpp)
-  target_include_directories(test_yaml_loader PRIVATE include)
-  target_link_libraries(test_yaml_loader
-    yaml-cpp
+  ament_add_ros_isolated_gtest(test_command_executor_ros test/test_command_executor_ros.cpp)
+  target_include_directories(test_command_executor_ros PRIVATE include)
+  ament_target_dependencies(test_command_executor_ros
+    rclcpp
+    command_executor_msgs
+    sensor_msgs
+  )
+  target_link_libraries(test_command_executor_ros
+    ${PROJECT_NAME}_lib
   )
 endif()
 
