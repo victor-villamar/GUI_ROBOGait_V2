@@ -1,11 +1,12 @@
+#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstdint>
+#include <utility>
 
 #include <QDebug>
 #include <QDir>
 #include <QFile>
-#include <QLineF>
 #include <QString>
 #include <QUrl>
 #include <QVariantMap>
@@ -16,7 +17,6 @@
 #include <tf2/LinearMath/Quaternion.h>
 
 #include "Loader/YamlLoader.hpp"
-#include "Map/Interaction/Geometry/StrokeProcessor.hpp"
 #include "Map/Utils/Utils.hpp"
 #include "Themes/AppTheme.hpp"
 
@@ -26,6 +26,51 @@ namespace map
 {
 namespace utils
 {
+namespace
+{
+double distanceSquared(const WaypointInput& first, const WaypointInput& second)
+{
+  const double dx = first.x - second.x;
+  const double dy = first.y - second.y;
+  return dx * dx + dy * dy;
+}
+
+std::optional<double> calculateWaypointYaw(const std::vector<WaypointInput>& points, size_t index)
+{
+  if (points.size() < 2)
+  {
+    return std::nullopt;
+  }
+
+  const size_t last_index = points.size() - 1U;
+  const size_t clamped_index = std::min(index, last_index);
+  const size_t previous_index = clamped_index > 0U ? clamped_index - 1U : clamped_index;
+  const size_t next_index = clamped_index < last_index ? clamped_index + 1U : clamped_index;
+
+  WaypointInput direction_start;
+  WaypointInput direction_end;
+  if (clamped_index > 0U)
+  {
+    direction_start = points[previous_index];
+    direction_end = points[clamped_index];
+  }
+  else
+  {
+    direction_start = points[clamped_index];
+    direction_end = points[next_index];
+  }
+
+  const double dx = direction_end.x - direction_start.x;
+  const double dy = direction_end.y - direction_start.y;
+  if (std::abs(dx) <= 1e-9 && std::abs(dy) <= 1e-9)
+  {
+    return std::nullopt;
+  }
+
+  return std::atan2(dy, dx);
+}
+} // namespace
+
 double getYaw(const geometry_msgs::msg::Quaternion& quaternion)
 {
   tf2::Quaternion tf_quat(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
@@ -284,125 +329,20 @@ std::string sanitizeMapName(const std::string& map_name)
   return out;
 }
 
-QVector<QPointF> removeCloseInteriorWaypoints(const QVector<QPointF>& points, double min_spacing_m)
-{
-  if (points.size() <= ROBOGait::map::interaction::geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
-  {
-    return points;
-  }
-
-  QVector<QPointF> filtered;
-  filtered.reserve(points.size());
-  filtered.append(points.constFirst());
-
-  for (int i = 1; i < points.size() - 1; ++i)
-  {
-    if (QLineF(filtered.constLast(), points[i]).length() >= min_spacing_m)
-    {
-      filtered.append(points[i]);
-    }
-  }
-
-  if (QLineF(filtered.constLast(), points.constLast()).length() > 1e-9)
-  {
-    filtered.append(points.constLast());
-  }
-
-  if (filtered.size() < ROBOGait::map::interaction::geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
-  {
-    return points;
-  }
-
-  return filtered;
-}
-
-QVector<QPointF> insertIntermediateWaypoints(const QVector<QPointF>& points, double max_spacing_m)
-{
-  if (points.size() < ROBOGait::map::interaction::geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
-  {
-    return points;
-  }
-
-  const double spacing = qMax(max_spacing_m, 1e-6);
-  QVector<QPointF> expanded;
-  expanded.reserve(points.size());
-  expanded.append(points.constFirst());
-
-  for (int i = 1; i < points.size(); ++i)
-  {
-    const QPointF start = points[i - 1];
-    const QPointF end = points[i];
-    const QLineF segment(start, end);
-    const double segment_length = segment.length();
-
-    if (segment_length <= 1e-9)
-    {
-      continue;
-    }
-
-    const int interior_samples = static_cast<int>(std::floor(segment_length / spacing));
-    for (int sample = 1; sample <= interior_samples; ++sample)
-    {
-      const double distance = static_cast<double>(sample) * spacing;
-      if (distance >= segment_length)
-      {
-        continue;
-      }
-
-      const double ratio = distance / segment_length;
-      const QPointF interpolated(start.x() + (end.x() - start.x()) * ratio, start.y() + (end.y() - start.y()) * ratio);
-      expanded.append(interpolated);
-    }
-
-    expanded.append(end);
-  }
-
-  return ROBOGait::map::interaction::geometry::StrokeProcessor::removeDuplicatedPoints(expanded, 1e-9);
-}
-
-double calculateWaypointYaw(const QVector<QPointF>& points, int index)
-{
-  if (points.size() < ROBOGait::map::interaction::geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
-  {
-    return 0.0;
-  }
-
-  const int last_index = static_cast<int>(points.size()) - 1;
-  const int previous_index = qMax(0, index - 1);
-  const int next_index = qMin(last_index, index + 1);
-
-  QPointF direction = points[next_index] - points[previous_index];
-  if (std::abs(direction.x()) <= 1e-9 && std::abs(direction.y()) <= 1e-9)
-  {
-    if (index < last_index)
-    {
-      direction = points[index + 1] - points[index];
-    }
-    else
-    {
-      direction = points[index] - points[index - 1];
-    }
-  }
-
-  if (std::abs(direction.x()) <= 1e-9 && std::abs(direction.y()) <= 1e-9)
-  {
-    return 0.0;
-  }
-
-  return std::atan2(direction.y(), direction.x());
-}
-
-QVariantList toWaypointVariantList(const QVector<QPointF>& points)
+QVariantList toWaypointVariantList(const std::vector<WaypointInput>& points)
 {
   QVariantList points_list;
-  points_list.reserve(points.size());
+  points_list.reserve(static_cast<int>(points.size()));
 
-  for (int i = 0; i < points.size(); ++i)
+  for (const auto& waypoint : points)
   {
     QVariantMap point_map;
-    point_map["x"] = points[i].x();
-    point_map["y"] = points[i].y();
-    point_map["theta"] = calculateWaypointYaw(points, i);
+    point_map["x"] = waypoint.x;
+    point_map["y"] = waypoint.y;
+    if (waypoint.theta.has_value())
+    {
+      point_map["theta"] = waypoint.theta.value();
+    }
     points_list.append(point_map);
   }
 
@@ -449,6 +389,124 @@ std::vector<WaypointInput> parseWaypointInputs(const QVariantList& points)
   }
 
   return out;
+}
+
+double getFollowPathMinInitialSpacingM()
+{
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+  if (!yaml_loader.isLoaded())
+  {
+    return DEFAULT_FOLLOW_PATH_MIN_INITIAL_SPACING_M;
+  }
+
+  const double configured_spacing =
+      yaml_loader.getValue<double>("map.spline_path.follow_path_min_initial_spacing_m", DEFAULT_FOLLOW_PATH_MIN_INITIAL_SPACING_M);
+  if (!std::isfinite(configured_spacing) || configured_spacing < 0.0)
+  {
+    qWarning() << "[utils::getFollowPathMinInitialSpacingM] Invalid follow_path_min_initial_spacing_m, using default:"
+               << DEFAULT_FOLLOW_PATH_MIN_INITIAL_SPACING_M;
+    return DEFAULT_FOLLOW_PATH_MIN_INITIAL_SPACING_M;
+  }
+
+  return configured_spacing;
+}
+
+double getFollowPathMinPointSpacingM()
+{
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+  if (!yaml_loader.isLoaded())
+  {
+    return DEFAULT_FOLLOW_PATH_MIN_POINT_SPACING_M;
+  }
+
+  const double configured_spacing = yaml_loader.getValue<double>("map.spline_path.follow_path_min_point_spacing_m", DEFAULT_FOLLOW_PATH_MIN_POINT_SPACING_M);
+  if (!std::isfinite(configured_spacing) || configured_spacing < 0.0)
+  {
+    qWarning() << "[utils::getFollowPathMinPointSpacingM] Invalid follow_path_min_point_spacing_m, using default:" << DEFAULT_FOLLOW_PATH_MIN_POINT_SPACING_M;
+    return DEFAULT_FOLLOW_PATH_MIN_POINT_SPACING_M;
+  }
+
+  return configured_spacing;
+}
+
+std::vector<WaypointInput> normalizeFollowPathWaypoints(const std::vector<WaypointInput>& waypoints, const WaypointInput& robot_pose,
+                                                        double min_initial_spacing_m)
+{
+  if (waypoints.size() < 2)
+  {
+    return waypoints;
+  }
+
+  std::vector<WaypointInput> ordered_waypoints = waypoints;
+  const double first_distance_squared = distanceSquared(robot_pose, ordered_waypoints.front());
+  const double last_distance_squared = distanceSquared(robot_pose, ordered_waypoints.back());
+  const bool should_reverse_path = last_distance_squared < first_distance_squared;
+  const std::optional<double> terminal_theta = should_reverse_path ? ordered_waypoints.front().theta : ordered_waypoints.back().theta;
+
+  if (should_reverse_path)
+  {
+    std::reverse(ordered_waypoints.begin(), ordered_waypoints.end());
+  }
+
+  const double min_spacing = std::max(0.0, min_initial_spacing_m);
+  const double min_spacing_squared = min_spacing * min_spacing;
+  const double min_point_spacing = std::max(0.0, getFollowPathMinPointSpacingM());
+  const double min_point_spacing_squared = min_point_spacing * min_point_spacing;
+
+  std::vector<WaypointInput> normalized_waypoints;
+  normalized_waypoints.reserve(ordered_waypoints.size() + 1U);
+  normalized_waypoints.push_back(robot_pose);
+
+  for (size_t i = 0; i < ordered_waypoints.size(); ++i)
+  {
+    const auto& waypoint = ordered_waypoints[i];
+    const bool is_final_input_point = i + 1U == ordered_waypoints.size();
+
+    if (distanceSquared(robot_pose, waypoint) < min_spacing_squared)
+    {
+      continue;
+    }
+
+    if (!normalized_waypoints.empty() && distanceSquared(normalized_waypoints.back(), waypoint) <= 1e-9)
+    {
+      continue;
+    }
+
+    if (!is_final_input_point && distanceSquared(normalized_waypoints.back(), waypoint) < min_point_spacing_squared)
+    {
+      continue;
+    }
+
+    normalized_waypoints.push_back(waypoint);
+  }
+
+  if (normalized_waypoints.size() < 2U)
+  {
+    const auto& fallback_target = ordered_waypoints.back();
+    if (distanceSquared(robot_pose, fallback_target) > 1e-9)
+    {
+      normalized_waypoints.push_back(fallback_target);
+    }
+  }
+
+  if (normalized_waypoints.size() < 2U)
+  {
+    return normalized_waypoints;
+  }
+
+  for (size_t i = 0; i < normalized_waypoints.size(); ++i)
+  {
+    const bool is_final_point = i + 1U == normalized_waypoints.size();
+    if (is_final_point && terminal_theta.has_value())
+    {
+      normalized_waypoints[i].theta = terminal_theta;
+      continue;
+    }
+
+    normalized_waypoints[i].theta = calculateWaypointYaw(normalized_waypoints, i);
+  }
+
+  return normalized_waypoints;
 }
 
 geometry_msgs::msg::Quaternion buildWaypointOrientation(const WaypointInput& waypoint)

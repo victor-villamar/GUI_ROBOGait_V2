@@ -6,10 +6,8 @@
 #include <vector>
 
 #include <QImage>
-#include <QPointF>
 #include <QString>
 #include <QVariantList>
-#include <QVector>
 
 #include <tf2/LinearMath/Quaternion.h>
 
@@ -25,11 +23,13 @@ namespace map
 namespace utils
 {
 
-static constexpr double RAD2DEG = 180.0 / M_PI;    /**< Radians to degrees conversion factor */
-static constexpr double DEG2RAD = M_PI / 180.0;    /**< Degrees to radians conversion factor */
-static constexpr int8_t UNKNOWN_OCCUPANCY = -1;    /**< Unknown occupancy value */
-static constexpr int8_t FREE_SPACE_THRESHOLD = 50; /**< Free space threshold */
-static constexpr int IMAGE_QUALITY = 100;          /**< Image quality */
+static constexpr double RAD2DEG = 180.0 / M_PI;                           /**< Radians to degrees conversion factor */
+static constexpr double DEG2RAD = M_PI / 180.0;                           /**< Degrees to radians conversion factor */
+static constexpr int8_t UNKNOWN_OCCUPANCY = -1;                           /**< Unknown occupancy value */
+static constexpr int8_t FREE_SPACE_THRESHOLD = 50;                        /**< Free space threshold */
+static constexpr int IMAGE_QUALITY = 100;                                 /**< Image quality */
+static constexpr double DEFAULT_FOLLOW_PATH_MIN_INITIAL_SPACING_M = 0.08; /**< Default initial spacing for FollowPath normalization */
+static constexpr double DEFAULT_FOLLOW_PATH_MIN_POINT_SPACING_M = 0.05;   /**< Default point spacing for FollowPath normalization */
 
 /**
  * @brief Waypoint input structure for navigation goals
@@ -142,39 +142,37 @@ std::string sanitizeMapName(const std::string& map_name);
 std::vector<WaypointInput> parseWaypointInputs(const QVariantList& points);
 
 /**
- * @brief Remove planner waypoints that are too close to the previous accepted waypoint while preserving endpoints
+ * @brief Read FollowPath initial spacing from configuration
  *
- * @param points Path points in map frame
- * @param min_spacing_m Minimum allowed spacing in meters
- * @return Filtered waypoint list
+ * @return Initial spacing in meters
  */
-QVector<QPointF> removeCloseInteriorWaypoints(const QVector<QPointF>& points, double min_spacing_m);
+double getFollowPathMinInitialSpacingM();
 
 /**
- * @brief Insert intermediate waypoints so planner waypoint segments do not exceed max spacing
+ * @brief Read FollowPath point spacing from configuration
  *
- * @param points Path points in map frame
- * @param max_spacing_m Maximum segment spacing in meters
- * @return Expanded waypoint list
+ * @return Point spacing in meters
  */
-QVector<QPointF> insertIntermediateWaypoints(const QVector<QPointF>& points, double max_spacing_m);
+double getFollowPathMinPointSpacingM();
 
 /**
- * @brief Calculate waypoint yaw from local path tangent
+ * @brief Normalize path waypoints so FollowPath starts at the current robot pose and follows the nearest direction
  *
- * @param points Path points in map frame
- * @param index Waypoint index
- * @return Yaw angle in radians
+ * @param waypoints Path waypoints in map frame
+ * @param robot_pose Current robot pose in map frame
+ * @param min_initial_spacing_m Minimum spacing from robot pose before keeping path points
+ * @return Normalized waypoint list ready to convert to nav_msgs::Path
  */
-double calculateWaypointYaw(const QVector<QPointF>& points, int index);
+std::vector<WaypointInput> normalizeFollowPathWaypoints(const std::vector<WaypointInput>& waypoints, const WaypointInput& robot_pose,
+                                                        double min_initial_spacing_m);
 
 /**
- * @brief Convert map-frame waypoints to QVariantList entries containing x, y and theta
+ * @brief Convert parsed waypoint inputs to QVariantList entries containing x, y and optional theta
  *
- * @param points Path points in map frame
- * @return QVariantList with {x, y, theta}
+ * @param points Parsed waypoint inputs in map frame
+ * @return QVariantList with {x, y, theta when available}
  */
-QVariantList toWaypointVariantList(const QVector<QPointF>& points);
+QVariantList toWaypointVariantList(const std::vector<WaypointInput>& points);
 
 /**
  * @brief Build waypoint orientation quaternion

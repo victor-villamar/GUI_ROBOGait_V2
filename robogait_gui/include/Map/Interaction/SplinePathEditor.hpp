@@ -32,10 +32,6 @@ public:
   static constexpr double DEFAULT_SPLINE_SAMPLE_SPACING_PX = 4.0;
   static constexpr double DEFAULT_SPLINE_SIMPLIFY_TOLERANCE_PX = 8.0;
   static constexpr int DEFAULT_SPLINE_MAX_ANCHOR_POINTS = 28;
-  static constexpr double DEFAULT_PLANNER_SIMPLIFY_TOLERANCE_M = 0.08;
-  static constexpr double DEFAULT_PLANNER_MIN_WAYPOINT_SPACING_M = 0.35;
-  static constexpr double DEFAULT_PLANNER_MAX_WAYPOINT_SPACING_M = 0.80;
-  static constexpr int DEFAULT_PLANNER_MAX_WAYPOINTS = 18;
 
   /**
    * @brief Smoothing tuning in screen-space units
@@ -71,28 +67,6 @@ public:
 
     double simplify_tolerance_px;
     int max_anchor_points;
-  };
-
-  /**
-   * @brief Reduction tuning for planner waypoints in map-frame units
-   */
-  struct PlannerWaypointTuning
-  {
-    explicit PlannerWaypointTuning(double simplify_tolerance_m_value = DEFAULT_PLANNER_SIMPLIFY_TOLERANCE_M,
-                                   double min_waypoint_spacing_m_value = DEFAULT_PLANNER_MIN_WAYPOINT_SPACING_M,
-                                   double max_waypoint_spacing_m_value = DEFAULT_PLANNER_MAX_WAYPOINT_SPACING_M,
-                                   int max_waypoints_value = DEFAULT_PLANNER_MAX_WAYPOINTS) :
-        simplify_tolerance_m(simplify_tolerance_m_value),
-        min_waypoint_spacing_m(min_waypoint_spacing_m_value),
-        max_waypoint_spacing_m(max_waypoint_spacing_m_value),
-        max_waypoints(max_waypoints_value)
-    {
-    }
-
-    double simplify_tolerance_m;
-    double min_waypoint_spacing_m;
-    double max_waypoint_spacing_m;
-    int max_waypoints;
   };
 
   enum ControlPointType
@@ -168,11 +142,6 @@ public:
   void setEditReductionTuningPx(const EditReductionTuningPx& tuning);
 
   /**
-   * @brief Override planner waypoint reduction tuning
-   */
-  void setPlannerWaypointTuning(const PlannerWaypointTuning& tuning);
-
-  /**
    * @brief Start a new stroke and clear previous spline/path
    */
   bool beginStroke();
@@ -232,13 +201,6 @@ public:
    */
   Q_INVOKABLE QVariantList getPathPointsForCompute() const;
 
-  /**
-   * @brief Get waypoints to be used by planner flow
-   *
-   * @return QVariantList of {x, y} for each waypoint
-   */
-  Q_INVOKABLE QVariantList getPlannerWaypointsForCompute() const;
-
 signals:
   void pathChanged();         // Emitted when raw path points change
   void drawingChanged();      // Emitted when drawing state changes (beginStroke/endStroke)
@@ -270,7 +232,6 @@ private:
   double min_point_distance_m_;                                                /**< Minimum distance between consecutive points */
   SmoothingTuningPx smoothing_tuning_px_;                                      /**< Smoothing tuning values */
   EditReductionTuningPx edit_reduction_tuning_px_;                             /**< Anchor density reduction tuning values */
-  PlannerWaypointTuning planner_waypoint_tuning_;                              /**< Planner waypoint reduction tuning values */
 };
 } // namespace interaction
 } // namespace map

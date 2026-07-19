@@ -1,10 +1,12 @@
 #include <string>
+#include <vector>
 
 #include <QMetaObject>
 #include <QVariantMap>
 
 #include <nav_msgs/msg/path.hpp>
 
+#include "Map/Utils/Utils.hpp"
 #include "Services/RobotServiceBridge.hpp"
 
 using namespace ROBOGait::qml::service;
@@ -98,20 +100,32 @@ bool RobotServiceBridge::computePathToPose(double x, double y, double theta)
   return ROBOGait::ros::service::RobotServiceClient::getInstance().computePathToPose(x, y, theta);
 }
 
-bool RobotServiceBridge::computePathThroughPoses(const QVariantList& points)
-{
-  return ROBOGait::ros::service::RobotServiceClient::getInstance().computePathThroughPoses(points);
-}
-
 bool RobotServiceBridge::navigateToPose(double x, double y, double theta)
 {
   return ROBOGait::ros::service::RobotServiceClient::getInstance().navigateToPose(x, y, theta);
 }
 
-bool RobotServiceBridge::navigateThroughPoses(const QVariantList& points)
+QVariantList RobotServiceBridge::normalizeManualFollowPath(const QVariantList& points, double robot_x, double robot_y, double robot_theta)
 {
-  return ROBOGait::ros::service::RobotServiceClient::getInstance().navigateThroughPoses(points);
+  ROBOGait::map::utils::WaypointInput robot_pose;
+  robot_pose.x = robot_x;
+  robot_pose.y = robot_y;
+  robot_pose.theta = robot_theta;
+
+  const std::vector<ROBOGait::map::utils::WaypointInput> waypoints = ROBOGait::map::utils::parseWaypointInputs(points);
+  const double min_initial_spacing_m = ROBOGait::map::utils::getFollowPathMinInitialSpacingM();
+  const std::vector<ROBOGait::map::utils::WaypointInput> normalized_waypoints =
+      ROBOGait::map::utils::normalizeFollowPathWaypoints(waypoints, robot_pose, min_initial_spacing_m);
+
+  return ROBOGait::map::utils::toWaypointVariantList(normalized_waypoints);
 }
+
+bool RobotServiceBridge::setManualFollowPath(const QVariantList& points)
+{
+  return ROBOGait::ros::service::RobotServiceClient::getInstance().setManualFollowPath(points);
+}
+
+bool RobotServiceBridge::followLastComputedPath() { return ROBOGait::ros::service::RobotServiceClient::getInstance().followLastComputedPath(); }
 
 bool RobotServiceBridge::cancelNavigateToPose() { return ROBOGait::ros::service::RobotServiceClient::getInstance().cancelNavigateToPose(); }
 

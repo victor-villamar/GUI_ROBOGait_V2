@@ -26,8 +26,7 @@ SplinePathEditor::SplinePathEditor(QObject* parent) :
     stroke_blocked_by_outside_(false),
     min_point_distance_m_(0.02),
     smoothing_tuning_px_(),
-    edit_reduction_tuning_px_(),
-    planner_waypoint_tuning_()
+    edit_reduction_tuning_px_()
 {
 }
 
@@ -109,55 +108,6 @@ void SplinePathEditor::setEditReductionTuningPx(const EditReductionTuningPx& tun
   }
 
   edit_reduction_tuning_px_ = tuned;
-}
-
-void SplinePathEditor::setPlannerWaypointTuning(const PlannerWaypointTuning& tuning)
-{
-  PlannerWaypointTuning tuned = planner_waypoint_tuning_;
-
-  if (tuning.simplify_tolerance_m > 0.0)
-  {
-    tuned.simplify_tolerance_m = tuning.simplify_tolerance_m;
-  }
-  else
-  {
-    qWarning() << "[SplinePathEditor::setPlannerWaypointTuning] Invalid simplify_tolerance_m, keeping previous value:" << tuned.simplify_tolerance_m;
-  }
-
-  if (tuning.min_waypoint_spacing_m > 0.0)
-  {
-    tuned.min_waypoint_spacing_m = tuning.min_waypoint_spacing_m;
-  }
-  else
-  {
-    qWarning() << "[SplinePathEditor::setPlannerWaypointTuning] Invalid min_waypoint_spacing_m, keeping previous value:" << tuned.min_waypoint_spacing_m;
-  }
-
-  if (tuning.max_waypoint_spacing_m > 0.0)
-  {
-    tuned.max_waypoint_spacing_m = tuning.max_waypoint_spacing_m;
-  }
-  else
-  {
-    qWarning() << "[SplinePathEditor::setPlannerWaypointTuning] Invalid max_waypoint_spacing_m, keeping previous value:" << tuned.max_waypoint_spacing_m;
-  }
-
-  if (tuned.max_waypoint_spacing_m < tuned.min_waypoint_spacing_m)
-  {
-    qWarning() << "[SplinePathEditor::setPlannerWaypointTuning] max_waypoint_spacing_m lower than min_waypoint_spacing_m, clamping to min value";
-    tuned.max_waypoint_spacing_m = tuned.min_waypoint_spacing_m;
-  }
-
-  if (tuning.max_waypoints >= geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
-  {
-    tuned.max_waypoints = tuning.max_waypoints;
-  }
-  else
-  {
-    qWarning() << "[SplinePathEditor::setPlannerWaypointTuning] Invalid max_waypoints, keeping previous value:" << tuned.max_waypoints;
-  }
-
-  planner_waypoint_tuning_ = tuned;
 }
 
 bool SplinePathEditor::beginStroke()
@@ -418,27 +368,6 @@ QVariantList SplinePathEditor::getPathPointsForCompute() const
   }
 
   return toVariantList(smoothed_path_points_);
-}
-
-QVariantList SplinePathEditor::getPlannerWaypointsForCompute() const
-{
-  if (!hasEditablePath())
-  {
-    return QVariantList();
-  }
-
-  QVector<QPointF> waypoints = geometry::StrokeProcessor::removeDuplicatedPoints(smoothed_path_points_, 1e-6);
-  waypoints = geometry::StrokeProcessor::simplifyDouglasPeucker(waypoints, planner_waypoint_tuning_.simplify_tolerance_m);
-  waypoints = ROBOGait::map::utils::removeCloseInteriorWaypoints(waypoints, planner_waypoint_tuning_.min_waypoint_spacing_m);
-  waypoints = ROBOGait::map::utils::insertIntermediateWaypoints(waypoints, planner_waypoint_tuning_.max_waypoint_spacing_m);
-  waypoints = geometry::StrokeProcessor::limitPointCount(waypoints, planner_waypoint_tuning_.max_waypoints);
-
-  if (waypoints.size() < geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
-  {
-    return QVariantList();
-  }
-
-  return ROBOGait::map::utils::toWaypointVariantList(waypoints);
 }
 
 bool SplinePathEditor::ensureMapVisualizationManager() const

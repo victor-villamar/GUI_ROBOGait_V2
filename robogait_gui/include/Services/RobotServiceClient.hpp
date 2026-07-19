@@ -18,9 +18,8 @@
 
 #include <command_executor_msgs/srv/cmd.hpp>
 #include <command_executor_msgs/srv/get_map_data.hpp>
-#include <nav2_msgs/action/compute_path_through_poses.hpp>
 #include <nav2_msgs/action/compute_path_to_pose.hpp>
-#include <nav2_msgs/action/navigate_through_poses.hpp>
+#include <nav2_msgs/action/follow_path.hpp>
 #include <nav2_msgs/action/navigate_to_pose.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/path.hpp>
@@ -240,15 +239,6 @@ public:
   bool computePathToPose(double x, double y, double theta);
 
   /**
-   * @brief Request a path computation through multiple poses
-   *
-   * @param points Goal poses in map frame as list of maps with keys x, y, and optional theta
-   *
-   * @return true if the request was sent, false otherwise
-   */
-  bool computePathThroughPoses(const QVariantList& points);
-
-  /**
    * @brief Navigate to a target pose
    *
    * @param x Goal x in map frame
@@ -260,16 +250,17 @@ public:
   bool navigateToPose(double x, double y, double theta);
 
   /**
-   * @brief Navigate through multiple target poses
-   *
-   * @param points Goal poses in map frame as list of maps with keys x, y, and optional theta
-   *
-   * @return true if the request was sent, false otherwise
+   * @brief Store the edited manual spline as a path for FollowPath execution
    */
-  bool navigateThroughPoses(const QVariantList& points);
+  bool setManualFollowPath(const QVariantList& points);
 
   /**
-   * @brief Cancel the active navigate to pose action
+   * @brief Follow the last prepared path from the manual path flow
+   */
+  bool followLastComputedPath();
+
+  /**
+   * @brief Cancel active navigation actions
    */
   bool cancelNavigateToPose();
 
@@ -541,11 +532,6 @@ private:
   void resultComputePathToPoseCallback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::ComputePathToPose>::WrappedResult& result);
 
   /**
-   * @brief Callback for compute path through poses action results
-   */
-  void resultComputePathThroughPosesCallback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::ComputePathThroughPoses>::WrappedResult& result);
-
-  /**
    * @brief Callback for navigate to pose goal response
    */
   void goalResponseNavigateToPoseCallback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr& goal_handle);
@@ -561,23 +547,34 @@ private:
   void resultNavigateToPoseCallback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::WrappedResult& result);
 
   /**
-   * @brief Callback for navigate through poses action results
+   * @brief Callback for follow path goal response
    */
-  void resultNavigateThroughPosesCallback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateThroughPoses>::WrappedResult& result);
+  void goalResponseFollowPathCallback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::FollowPath>::SharedPtr& goal_handle);
+
+  /**
+   * @brief Callback for follow path cancel response
+   */
+  void cancelFollowPathCallback(typename rclcpp_action::Client<nav2_msgs::action::FollowPath>::CancelResponse::SharedPtr response);
+
+  /**
+   * @brief Callback for follow path action results
+   */
+  void resultFollowPathCallback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::FollowPath>::WrappedResult& result);
 
   rclcpp::Node* parent_node_;                                                          /**< The parent ROS2 node */
   rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedPtr cli_cmd_;                 /**< The command service client */
   rclcpp::Client<command_executor_msgs::srv::GetMapData>::SharedPtr cli_get_map_data_; /**< The get map data service client */
   rclcpp::Client<std_srvs::srv::Empty>::SharedPtr cli_global_localization_;            /**< Global localization service client */
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_map_data_;            /**< Publisher for map data */
-  rclcpp_action::Client<nav2_msgs::action::ComputePathThroughPoses>::SharedPtr
-      ac_compute_path_through_poses_;                                                                   /**< Action client for compute path through poses */
-  rclcpp_action::Client<nav2_msgs::action::ComputePathToPose>::SharedPtr ac_compute_path_to_pose_;      /**< Action client for compute path to pose */
-  rclcpp_action::Client<nav2_msgs::action::NavigateThroughPoses>::SharedPtr ac_navigate_through_poses_; /**< Action client for navigate through poses */
+
+  rclcpp_action::Client<nav2_msgs::action::ComputePathToPose>::SharedPtr ac_compute_path_to_pose_; /**< Action client for compute path to pose */
   rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr ac_navigate_to_pose_;             /**< Action client for navigate to pose */
-  rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr nav_goal_handle_;       /**< Active navigate to pose goal handle */
-  rclcpp::CallbackGroup::SharedPtr cb_group_;                                                           /**< The callback group for the command executor */
-  rclcpp::TimerBase::SharedPtr timer_health_;                                                           /**< The health timer */
+  rclcpp_action::Client<nav2_msgs::action::FollowPath>::SharedPtr ac_follow_path_;                      /**< Action client for follow path */
+
+  rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr nav_goal_handle_;     /**< Active navigate to pose goal handle */
+  rclcpp_action::ClientGoalHandle<nav2_msgs::action::FollowPath>::SharedPtr follow_path_goal_handle_; /**< Active follow path goal handle */
+  rclcpp::CallbackGroup::SharedPtr cb_group_;                                                         /**< The callback group for the command executor */
+  rclcpp::TimerBase::SharedPtr timer_health_;                                                         /**< The health timer */
 
   std::function<void(bool)> request_callback_;                                 /**< Callback to notify the result of command service requests */
   std::function<void(bool, const nav_msgs::msg::Path&)> path_result_callback_; /**< Callback for compute path results */
@@ -588,6 +585,8 @@ private:
   std::unordered_map<std::string, CommandInfo> commands_; /**< Map of command names to their info. Keys are command names, values are CommandInfo structs. */
   std::unordered_map<std::string, CommandState>
       command_states_; /**< Map of command names to their states. Keys are command names, values are CommandState structs. */
+
+  std::optional<nav_msgs::msg::Path> manual_follow_path_; /**< The last prepared manual path, if any */
 
   bool initialized_;              /**< Flag indicating if the client is initialized */
   bool pending_stop_after_save_;  /**< Flag indicating if a stop is pending after save */

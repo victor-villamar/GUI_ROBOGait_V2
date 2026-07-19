@@ -145,15 +145,6 @@ public:
   Q_INVOKABLE bool computePathToPose(double x, double y, double theta);
 
   /**
-   * @brief Compute path through multiple poses
-   *
-   * @param points Goal poses in map frame as list of maps with keys x, y, and optional theta
-   *
-   * @return true if the request was sent, false otherwise
-   */
-  Q_INVOKABLE bool computePathThroughPoses(const QVariantList& points);
-
-  /**
    * @brief Navigate to a goal pose
    *
    * @param x Goal x in map frame
@@ -165,16 +156,28 @@ public:
   Q_INVOKABLE bool navigateToPose(double x, double y, double theta);
 
   /**
-   * @brief Navigate through multiple poses
+   * @brief Normalize manual path points for FollowPath execution and visualization
    *
-   * @param points Goal poses in map frame as list of maps with keys x, y, and optional theta
+   * @return Normalized list of path points
+   */
+  Q_INVOKABLE QVariantList normalizeManualFollowPath(const QVariantList& points, double robot_x, double robot_y, double robot_theta);
+
+  /**
+   * @brief Store the edited manual spline as a path for FollowPath execution
+   *
+   * @return true if the path was stored, false otherwise
+   */
+  Q_INVOKABLE bool setManualFollowPath(const QVariantList& points);
+
+  /**
+   * @brief Follow the last prepared manual path
    *
    * @return true if the request was sent, false otherwise
    */
-  Q_INVOKABLE bool navigateThroughPoses(const QVariantList& points);
+  Q_INVOKABLE bool followLastComputedPath();
 
   /**
-   * @brief Cancel the active navigate to pose action
+   * @brief Cancel active navigation actions
    *
    * @return true if the cancel request was sent successfully, false otherwise
    */

@@ -142,7 +142,7 @@ bool RoboGaitApplication::initialize()
     args_char_ptr.append(arg.data());
   }
 
-  ros_node_manager_->initialize(argc, args_char_ptr.data(), developer_settings.getRosDomainId());
+  ros_node_manager_->initialize(argc, args_char_ptr.data(), static_cast<uint8_t>(developer_settings.getRosDomainId()));
 
   ros_node_manager_->setUseNamespaceDiscovery(developer_settings.getUseNamespaceDiscovery());
   ros_node_manager_->setUseTopicFilter(developer_settings.getUseTopicFilter());
@@ -295,7 +295,7 @@ void RoboGaitApplication::onDeveloperSettingsApplied()
 {
 
   auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
-  const uint8_t new_domain_id = developer_settings.getRosDomainId();
+  const auto new_domain_id = static_cast<uint8_t>(developer_settings.getRosDomainId());
   const bool use_topic_filter = developer_settings.getUseTopicFilter();
 
   if (ros_node_manager_ == nullptr)

@@ -1,6 +1,9 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <vector>
 
 #include <QObject>
 #include <QPointF>
@@ -368,6 +371,23 @@ public:
   void clearManualDrawPath();
 
   /**
+   * @brief Clear only the manual freehand drawing layer, preserving the editor state
+   */
+  Q_INVOKABLE void clearManualDrawPathVisualization();
+
+  /**
+   * @brief Start GUI-side live visualization for a manually followed path
+   *
+   * @param points List of {x,y} maps in map frame
+   */
+  Q_INVOKABLE void startManualLivePath(const QVariantList& points);
+
+  /**
+   * @brief Stop GUI-side live visualization for a manually followed path
+   */
+  Q_INVOKABLE void stopManualLivePath();
+
+  /**
    * @brief Register LaserLayerItem created in QML
    *
    * @param item Pointer to LaserLayerItem created in QML
@@ -467,6 +487,21 @@ private:
    */
   void updateFollowRobotCamera();
 
+  /**
+   * @brief Update remaining live path for manually followed paths
+   */
+  void updateManualLivePath();
+
+  /**
+   * @brief Convert a QVariantList of map points into PathData points
+   */
+  std::vector<ROBOGait::map::data::PathData::PathPoint> pathPointsFromVariantList(const QVariantList& points) const;
+
+  /**
+   * @brief Repaint the live path layer after data changes
+   */
+  void updateLivePathLayer();
+
   rclcpp::Node* parent_node_; /**< Parent ROS node pointer */
 
   std::shared_ptr<ROBOGait::map::rendering::RenderScene> render_scene_;       /**< Render scene  */
@@ -498,19 +533,23 @@ private:
   std::shared_ptr<ROBOGait::map::source::ParticleCloudSource> particle_source_;      /**< Particle cloud source */
   std::unique_ptr<ROBOGait::map::interaction::SplinePathEditor> spline_path_editor_; /**< Spline path editor */
 
-  QString selected_robot_namespace_;    /**< Selected robot namespace */
-  bool use_namespace_discovery_;        /**< Use namespace-based topic discovery */
-  bool is_initialized_;                 /**< Initialization flag */
-  bool subscriptions_active_;           /**< Subscriptions active flag */
-  bool map_available_cache_;            /**< Cached map availability state */
-  bool robot_pose_available_cache_;     /**< Cached robot pose availability state */
-  bool laser_available_cache_;          /**< Cached laser availability state */
-  bool particle_cloud_available_cache_; /**< Cached particle cloud availability state */
-  double map_resolution_cache_;         /**< Cached map resolution (meters per pixel) */
-  double scale_meters_cache_;           /**< Cached scale bar meters value */
-  int scale_pixels_cache_;              /**< Cached scale bar pixel length */
-  double robot_size_;                   /**< Robot diameter used for rendering (meters) */
-  bool follow_robot_;                   /**< Whether the camera follows the robot */
+  QString selected_robot_namespace_;                                              /**< Selected robot namespace */
+  bool use_namespace_discovery_;                                                  /**< Use namespace-based topic discovery */
+  bool is_initialized_;                                                           /**< Initialization flag */
+  bool subscriptions_active_;                                                     /**< Subscriptions active flag */
+  bool map_available_cache_;                                                      /**< Cached map availability state */
+  bool robot_pose_available_cache_;                                               /**< Cached robot pose availability state */
+  bool laser_available_cache_;                                                    /**< Cached laser availability state */
+  bool particle_cloud_available_cache_;                                           /**< Cached particle cloud availability state */
+  double map_resolution_cache_;                                                   /**< Cached map resolution (meters per pixel) */
+  double scale_meters_cache_;                                                     /**< Cached scale bar meters value */
+  int scale_pixels_cache_;                                                        /**< Cached scale bar pixel length */
+  double robot_size_;                                                             /**< Robot diameter used for rendering (meters) */
+  bool follow_robot_;                                                             /**< Whether the camera follows the robot */
+  std::vector<ROBOGait::map::data::PathData::PathPoint> manual_live_path_points_; /**< Manual path used for GUI-side live progress */
+  std::size_t manual_live_path_progress_index_;                                   /**< Current progress index in manual live path */
+  uint64_t manual_live_path_last_pose_stamp_;                                     /**< Last pose stamp used to update manual live path */
+  bool manual_live_path_enabled_;                                                 /**< Whether manual live path progress is active */
 };
 
 } // namespace manager
