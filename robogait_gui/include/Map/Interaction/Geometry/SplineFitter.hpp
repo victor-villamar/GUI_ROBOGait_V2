@@ -20,6 +20,11 @@ class SplineFitter
 {
 public:
   /**
+   * @brief Deleted constructor to prevent instantiation
+   */
+  SplineFitter() = delete;
+
+  /**
    * @brief Fit centripetal Catmull-Rom and convert to cubic Bezier segments
    */
   static QVector<CubicBezierSegment> fitCentripetalCatmullRom(const QVector<QPointF>& points, double alpha);

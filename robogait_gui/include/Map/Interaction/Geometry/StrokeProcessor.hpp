@@ -18,6 +18,11 @@ class StrokeProcessor
 {
 public:
   /**
+   * @brief Deleted constructor to prevent instantiation
+   */
+  StrokeProcessor() = delete;
+
+  /**
    * @brief Remove consecutive duplicates or near-duplicates
    */
   static QVector<QPointF> removeDuplicatedPoints(const QVector<QPointF>& points, double min_distance_m);
@@ -42,7 +47,6 @@ public:
    */
   static QVector<QPointF> limitPointCount(const QVector<QPointF>& points, int max_points);
 
-private:
   static constexpr int MIN_VALID_PATH_POINTS = 2; /**< Minimum number of points required to form a path */
 };
 } // namespace geometry
