@@ -9,6 +9,7 @@
 #include "Map/Interaction/Geometry/StrokeProcessor.hpp"
 #include "Map/Interaction/SplinePathEditor.hpp"
 #include "Map/MapVisualizationManager.hpp"
+#include "Map/Utils/Utils.hpp"
 
 using namespace ROBOGait::map::interaction;
 
@@ -29,7 +30,7 @@ SplinePathEditor::SplinePathEditor(QObject* parent) :
 {
 }
 
-bool SplinePathEditor::hasPath() const { return getActivePathPoints().size() >= MIN_VALID_PATH_POINTS; }
+bool SplinePathEditor::hasPath() const { return getActivePathPoints().size() >= geometry::StrokeProcessor::MIN_VALID_PATH_POINTS; }
 
 bool SplinePathEditor::isSmoothed() const { return is_smoothed_ && !smoothed_path_points_.isEmpty(); }
 
@@ -37,42 +38,44 @@ bool SplinePathEditor::isEditMode() const { return is_edit_mode_; }
 
 bool SplinePathEditor::hasEditablePath() const { return has_editable_path_; }
 
+void SplinePathEditor::setEditMode(bool enabled) { setEditModeEnabled(enabled); }
+
 void SplinePathEditor::setMapVisualizationManager(ROBOGait::map::manager::MapVisualizationManager* manager) { map_visualization_manager_ = manager; }
 
-void SplinePathEditor::setSmoothingTuningPx(double resample_spacing_px, int smoothing_window_radius, double catmull_alpha, double sample_spacing_px)
+void SplinePathEditor::setSmoothingTuningPx(const SmoothingTuningPx& tuning)
 {
   SmoothingTuningPx tuned = smoothing_tuning_px_;
 
-  if (resample_spacing_px > 0.0)
+  if (tuning.resample_spacing_px > 0.0)
   {
-    tuned.resample_spacing_px = resample_spacing_px;
+    tuned.resample_spacing_px = tuning.resample_spacing_px;
   }
   else
   {
     qWarning() << "[SplinePathEditor::setSmoothingTuningPx] Invalid resample_spacing_px, keeping previous value:" << tuned.resample_spacing_px;
   }
 
-  if (smoothing_window_radius >= 0)
+  if (tuning.smoothing_window_radius >= 0)
   {
-    tuned.smoothing_window_radius = smoothing_window_radius;
+    tuned.smoothing_window_radius = tuning.smoothing_window_radius;
   }
   else
   {
     qWarning() << "[SplinePathEditor::setSmoothingTuningPx] Invalid smoothing_window_radius, keeping previous value:" << tuned.smoothing_window_radius;
   }
 
-  if (catmull_alpha >= 0.0 && catmull_alpha <= 1.0)
+  if (tuning.catmull_alpha >= 0.0 && tuning.catmull_alpha <= 1.0)
   {
-    tuned.catmull_alpha = catmull_alpha;
+    tuned.catmull_alpha = tuning.catmull_alpha;
   }
   else
   {
     qWarning() << "[SplinePathEditor::setSmoothingTuningPx] Invalid catmull_alpha, keeping previous value:" << tuned.catmull_alpha;
   }
 
-  if (sample_spacing_px > 0.0)
+  if (tuning.sample_spacing_px > 0.0)
   {
-    tuned.sample_spacing_px = sample_spacing_px;
+    tuned.sample_spacing_px = tuning.sample_spacing_px;
   }
   else
   {
@@ -82,22 +85,22 @@ void SplinePathEditor::setSmoothingTuningPx(double resample_spacing_px, int smoo
   smoothing_tuning_px_ = tuned;
 }
 
-void SplinePathEditor::setEditReductionTuningPx(double simplify_tolerance_px, int max_anchor_points)
+void SplinePathEditor::setEditReductionTuningPx(const EditReductionTuningPx& tuning)
 {
   EditReductionTuningPx tuned = edit_reduction_tuning_px_;
 
-  if (simplify_tolerance_px > 0.0)
+  if (tuning.simplify_tolerance_px > 0.0)
   {
-    tuned.simplify_tolerance_px = simplify_tolerance_px;
+    tuned.simplify_tolerance_px = tuning.simplify_tolerance_px;
   }
   else
   {
     qWarning() << "[SplinePathEditor::setEditReductionTuningPx] Invalid simplify_tolerance_px, keeping previous value:" << tuned.simplify_tolerance_px;
   }
 
-  if (max_anchor_points >= MIN_VALID_PATH_POINTS)
+  if (tuning.max_anchor_points >= geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
   {
-    tuned.max_anchor_points = max_anchor_points;
+    tuned.max_anchor_points = tuning.max_anchor_points;
   }
   else
   {
@@ -135,6 +138,35 @@ bool SplinePathEditor::beginStroke()
   return true;
 }
 
+void SplinePathEditor::clear()
+{
+  if (map_visualization_manager_)
+  {
+    map_visualization_manager_->clearManualDrawPath();
+    return;
+  }
+
+  clearCachedPath();
+}
+
+void SplinePathEditor::clearCachedPath()
+{
+  const bool had_path = hasPath();
+  raw_path_points_.clear();
+  smoothed_path_points_.clear();
+  spline_model_.clear();
+  stroke_blocked_by_outside_ = false;
+  setSmoothedState(false);
+  setEditablePathState(false);
+  setEditModeState(false);
+  setDrawing(false);
+
+  if (had_path)
+  {
+    emit pathChanged();
+  }
+}
+
 void SplinePathEditor::beginStrokeFromScreen(double screen_x, double screen_y)
 {
   if (!beginStroke())
@@ -169,7 +201,7 @@ void SplinePathEditor::appendPointFromScreen(double screen_x, double screen_y)
 
   if (!map_visualization_manager_->isMapPointInside(map_point.x(), map_point.y()))
   {
-    if (raw_path_points_.size() >= MIN_VALID_PATH_POINTS)
+    if (raw_path_points_.size() >= geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
     {
       stroke_blocked_by_outside_ = true;
     }
@@ -214,7 +246,7 @@ bool SplinePathEditor::smoothPath()
     return false;
   }
 
-  if (raw_path_points_.size() < MIN_VALID_PATH_POINTS)
+  if (raw_path_points_.size() < geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
   {
     return false;
   }
@@ -227,7 +259,7 @@ bool SplinePathEditor::smoothPath()
   processed = geometry::StrokeProcessor::simplifyDouglasPeucker(processed, simplify_tolerance_m);
   processed = geometry::StrokeProcessor::limitPointCount(processed, edit_reduction_tuning_px_.max_anchor_points);
 
-  if (processed.size() < MIN_VALID_PATH_POINTS)
+  if (processed.size() < geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
   {
     return false;
   }
@@ -242,7 +274,7 @@ bool SplinePathEditor::smoothPath()
   const double sample_spacing_m = qMax(pixelsToMetersDistance(smoothing_tuning_px_.sample_spacing_px), 1e-6);
   smoothed_path_points_ = spline_model_.sampleByDistance(sample_spacing_m);
 
-  if (smoothed_path_points_.size() < MIN_VALID_PATH_POINTS)
+  if (smoothed_path_points_.size() < geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
   {
     spline_model_.clear();
     smoothed_path_points_.clear();
@@ -290,7 +322,7 @@ bool SplinePathEditor::moveControlPoint(int type, int index, double map_x, doubl
 
   const double sample_spacing_m = qMax(pixelsToMetersDistance(smoothing_tuning_px_.sample_spacing_px), 1e-6);
   smoothed_path_points_ = spline_model_.sampleByDistance(sample_spacing_m);
-  setEditablePathState(smoothed_path_points_.size() >= MIN_VALID_PATH_POINTS);
+  setEditablePathState(smoothed_path_points_.size() >= geometry::StrokeProcessor::MIN_VALID_PATH_POINTS);
   emit pathChanged();
   syncPathToVisualization();
   return true;
@@ -337,37 +369,6 @@ QVariantList SplinePathEditor::getPathPointsForCompute() const
 
   return toVariantList(smoothed_path_points_);
 }
-
-void SplinePathEditor::clear()
-{
-  if (map_visualization_manager_)
-  {
-    map_visualization_manager_->clearManualDrawPath();
-    return;
-  }
-
-  clearCachedPath();
-}
-
-void SplinePathEditor::clearCachedPath()
-{
-  const bool had_path = hasPath();
-  raw_path_points_.clear();
-  smoothed_path_points_.clear();
-  spline_model_.clear();
-  stroke_blocked_by_outside_ = false;
-  setSmoothedState(false);
-  setEditablePathState(false);
-  setEditModeState(false);
-  setDrawing(false);
-
-  if (had_path)
-  {
-    emit pathChanged();
-  }
-}
-
-void SplinePathEditor::setEditMode(bool enabled) { setEditModeEnabled(enabled); }
 
 bool SplinePathEditor::ensureMapVisualizationManager() const
 {

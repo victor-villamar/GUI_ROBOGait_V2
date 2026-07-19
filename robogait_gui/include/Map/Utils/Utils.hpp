@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cmath>
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -24,11 +23,13 @@ namespace map
 namespace utils
 {
 
-static constexpr double RAD2DEG = 180.0 / M_PI;    /**< Radians to degrees conversion factor */
-static constexpr double DEG2RAD = M_PI / 180.0;    /**< Degrees to radians conversion factor */
-static constexpr int8_t UNKNOWN_OCCUPANCY = -1;    /**< Unknown occupancy value */
-static constexpr int8_t FREE_SPACE_THRESHOLD = 50; /**< Free space threshold */
-static constexpr int IMAGE_QUALITY = 100;          /**< Image quality */
+static constexpr double RAD2DEG = 180.0 / M_PI;                           /**< Radians to degrees conversion factor */
+static constexpr double DEG2RAD = M_PI / 180.0;                           /**< Degrees to radians conversion factor */
+static constexpr int8_t UNKNOWN_OCCUPANCY = -1;                           /**< Unknown occupancy value */
+static constexpr int8_t FREE_SPACE_THRESHOLD = 50;                        /**< Free space threshold */
+static constexpr int IMAGE_QUALITY = 100;                                 /**< Image quality */
+static constexpr double DEFAULT_FOLLOW_PATH_MIN_INITIAL_SPACING_M = 0.08; /**< Default initial spacing for FollowPath normalization */
+static constexpr double DEFAULT_FOLLOW_PATH_MIN_POINT_SPACING_M = 0.05;   /**< Default point spacing for FollowPath normalization */
 
 /**
  * @brief Waypoint input structure for navigation goals
@@ -139,6 +140,39 @@ std::string sanitizeMapName(const std::string& map_name);
  * @return Parsed and validated waypoint list
  */
 std::vector<WaypointInput> parseWaypointInputs(const QVariantList& points);
+
+/**
+ * @brief Read FollowPath initial spacing from configuration
+ *
+ * @return Initial spacing in meters
+ */
+double getFollowPathMinInitialSpacingM();
+
+/**
+ * @brief Read FollowPath point spacing from configuration
+ *
+ * @return Point spacing in meters
+ */
+double getFollowPathMinPointSpacingM();
+
+/**
+ * @brief Normalize path waypoints so FollowPath starts at the current robot pose and follows the nearest direction
+ *
+ * @param waypoints Path waypoints in map frame
+ * @param robot_pose Current robot pose in map frame
+ * @param min_initial_spacing_m Minimum spacing from robot pose before keeping path points
+ * @return Normalized waypoint list ready to convert to nav_msgs::Path
+ */
+std::vector<WaypointInput> normalizeFollowPathWaypoints(const std::vector<WaypointInput>& waypoints, const WaypointInput& robot_pose,
+                                                        double min_initial_spacing_m);
+
+/**
+ * @brief Convert parsed waypoint inputs to QVariantList entries containing x, y and optional theta
+ *
+ * @param points Parsed waypoint inputs in map frame
+ * @return QVariantList with {x, y, theta when available}
+ */
+QVariantList toWaypointVariantList(const std::vector<WaypointInput>& points);
 
 /**
  * @brief Build waypoint orientation quaternion

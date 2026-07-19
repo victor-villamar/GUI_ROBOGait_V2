@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <limits>
 
 #include <QDebug>
 #include <QPointF>
@@ -13,6 +15,44 @@
 #include "Map/Utils/Utils.hpp"
 
 using namespace ROBOGait::map::manager;
+
+namespace
+{
+using SplinePathEditor = ROBOGait::map::interaction::SplinePathEditor;
+
+constexpr double MANUAL_LIVE_PATH_FINISH_DISTANCE_M = 0.20;
+
+SplinePathEditor::SmoothingTuningPx loadSmoothingTuningPx(const ROBOGait::loader::YamlLoader& yaml_loader)
+{
+  SplinePathEditor::SmoothingTuningPx tuning;
+
+  if (!yaml_loader.isLoaded())
+  {
+    return tuning;
+  }
+
+  tuning.resample_spacing_px = yaml_loader.getValue<double>("map.spline_path.resample_spacing_px", tuning.resample_spacing_px);
+  tuning.smoothing_window_radius = yaml_loader.getValue<int>("map.spline_path.smoothing_window_radius", tuning.smoothing_window_radius);
+  tuning.catmull_alpha = yaml_loader.getValue<double>("map.spline_path.catmull_alpha", tuning.catmull_alpha);
+  tuning.sample_spacing_px = yaml_loader.getValue<double>("map.spline_path.sample_spacing_px", tuning.sample_spacing_px);
+  return tuning;
+}
+
+SplinePathEditor::EditReductionTuningPx loadEditReductionTuningPx(const ROBOGait::loader::YamlLoader& yaml_loader)
+{
+  SplinePathEditor::EditReductionTuningPx tuning;
+
+  if (!yaml_loader.isLoaded())
+  {
+    return tuning;
+  }
+
+  tuning.simplify_tolerance_px = yaml_loader.getValue<double>("map.spline_path.simplify_tolerance_px", tuning.simplify_tolerance_px);
+  tuning.max_anchor_points = yaml_loader.getValue<int>("map.spline_path.max_anchor_points", tuning.max_anchor_points);
+  return tuning;
+}
+
+} // namespace
 
 MapVisualizationManager::MapVisualizationManager() :
     parent_node_(nullptr),
@@ -47,7 +87,10 @@ MapVisualizationManager::MapVisualizationManager() :
     scale_meters_cache_(0.0),
     scale_pixels_cache_(0),
     robot_size_(0.5),
-    follow_robot_(false)
+    follow_robot_(false),
+    manual_live_path_progress_index_(0U),
+    manual_live_path_last_pose_stamp_(0U),
+    manual_live_path_enabled_(false)
 {
   if (spline_path_editor_)
   {
@@ -76,32 +119,8 @@ MapVisualizationManager::MapVisualizationManager() :
 
   if (spline_path_editor_)
   {
-    constexpr double DEFAULT_SPLINE_RESAMPLE_SPACING_PX = 5.0;
-    constexpr int DEFAULT_SPLINE_SMOOTHING_WINDOW_RADIUS = 2;
-    constexpr double DEFAULT_SPLINE_CATMULL_ALPHA = 0.5;
-    constexpr double DEFAULT_SPLINE_SAMPLE_SPACING_PX = 4.0;
-    constexpr double DEFAULT_SPLINE_SIMPLIFY_TOLERANCE_PX = 8.0;
-    constexpr int DEFAULT_SPLINE_MAX_ANCHOR_POINTS = 28;
-
-    double resample_spacing_px = DEFAULT_SPLINE_RESAMPLE_SPACING_PX;
-    int smoothing_window_radius = DEFAULT_SPLINE_SMOOTHING_WINDOW_RADIUS;
-    double catmull_alpha = DEFAULT_SPLINE_CATMULL_ALPHA;
-    double sample_spacing_px = DEFAULT_SPLINE_SAMPLE_SPACING_PX;
-    double simplify_tolerance_px = DEFAULT_SPLINE_SIMPLIFY_TOLERANCE_PX;
-    int max_anchor_points = DEFAULT_SPLINE_MAX_ANCHOR_POINTS;
-
-    if (yaml_loader.isLoaded())
-    {
-      resample_spacing_px = yaml_loader.getValue<double>("map.spline_path.resample_spacing_px", resample_spacing_px);
-      smoothing_window_radius = yaml_loader.getValue<int>("map.spline_path.smoothing_window_radius", smoothing_window_radius);
-      catmull_alpha = yaml_loader.getValue<double>("map.spline_path.catmull_alpha", catmull_alpha);
-      sample_spacing_px = yaml_loader.getValue<double>("map.spline_path.sample_spacing_px", sample_spacing_px);
-      simplify_tolerance_px = yaml_loader.getValue<double>("map.spline_path.simplify_tolerance_px", simplify_tolerance_px);
-      max_anchor_points = yaml_loader.getValue<int>("map.spline_path.max_anchor_points", max_anchor_points);
-    }
-
-    spline_path_editor_->setSmoothingTuningPx(resample_spacing_px, smoothing_window_radius, catmull_alpha, sample_spacing_px);
-    spline_path_editor_->setEditReductionTuningPx(simplify_tolerance_px, max_anchor_points);
+    spline_path_editor_->setSmoothingTuningPx(loadSmoothingTuningPx(yaml_loader));
+    spline_path_editor_->setEditReductionTuningPx(loadEditReductionTuningPx(yaml_loader));
   }
 
   if (render_scene_ && render_scene_->getPipeline())
@@ -690,6 +709,11 @@ void MapVisualizationManager::setPathUpdatesEnabled(bool enabled)
     return;
   }
 
+  manual_live_path_enabled_ = false;
+  manual_live_path_points_.clear();
+  manual_live_path_progress_index_ = 0U;
+  manual_live_path_last_pose_stamp_ = 0U;
+
   if (enabled)
   {
     path_source_->start();
@@ -708,6 +732,35 @@ void MapVisualizationManager::setPathUpdatesEnabled(bool enabled)
       live_path_layer_item_->update();
     }
   }
+}
+
+std::vector<ROBOGait::map::data::PathData::PathPoint> MapVisualizationManager::pathPointsFromVariantList(const QVariantList& points) const
+{
+  std::vector<ROBOGait::map::data::PathData::PathPoint> path_points;
+  path_points.reserve(static_cast<size_t>(points.size()));
+
+  for (const auto& value : points)
+  {
+    if (!value.canConvert<QVariantMap>())
+    {
+      continue;
+    }
+
+    const QVariantMap map = value.toMap();
+    bool ok_x = false;
+    bool ok_y = false;
+    const double x = map.value("x").toDouble(&ok_x);
+    const double y = map.value("y").toDouble(&ok_y);
+
+    if (!ok_x || !ok_y)
+    {
+      continue;
+    }
+
+    path_points.emplace_back(x, y);
+  }
+
+  return path_points;
 }
 
 void MapVisualizationManager::registerRobotLayerItem(QObject* item)
@@ -1022,25 +1075,7 @@ void MapVisualizationManager::clearGoalRobotPose()
 void MapVisualizationManager::setManualPathPoints(const QVariantList& points)
 {
   ROBOGait::map::data::PathData::PathMetadata metadata;
-  metadata.points.reserve(static_cast<size_t>(points.size()));
-
-  for (const auto& value : points)
-  {
-    if (!value.canConvert<QVariantMap>())
-    {
-      continue;
-    }
-    const QVariantMap map = value.toMap();
-    bool ok_x = false;
-    bool ok_y = false;
-    const double x = map.value("x").toDouble(&ok_x);
-    const double y = map.value("y").toDouble(&ok_y);
-    if (!ok_x || !ok_y)
-    {
-      continue;
-    }
-    metadata.points.emplace_back(x, y);
-  }
+  metadata.points = pathPointsFromVariantList(points);
 
   if (manual_path_data_)
   {
@@ -1084,28 +1119,7 @@ void MapVisualizationManager::clearManualPath()
 void MapVisualizationManager::setManualDrawPathPoints(const QVariantList& points)
 {
   ROBOGait::map::data::PathData::PathMetadata metadata;
-  metadata.points.reserve(static_cast<size_t>(points.size()));
-
-  for (const auto& value : points)
-  {
-    if (!value.canConvert<QVariantMap>())
-    {
-      continue;
-    }
-
-    const QVariantMap map = value.toMap();
-    bool ok_x = false;
-    bool ok_y = false;
-    const double x = map.value("x").toDouble(&ok_x);
-    const double y = map.value("y").toDouble(&ok_y);
-
-    if (!ok_x || !ok_y)
-    {
-      continue;
-    }
-
-    metadata.points.emplace_back(x, y);
-  }
+  metadata.points = pathPointsFromVariantList(points);
 
   if (manual_draw_path_data_)
   {
@@ -1151,6 +1165,85 @@ void MapVisualizationManager::clearManualDrawPath()
   if (spline_path_editor_)
   {
     spline_path_editor_->clearCachedPath();
+  }
+}
+
+void MapVisualizationManager::clearManualDrawPathVisualization()
+{
+  if (manual_draw_path_data_)
+  {
+    manual_draw_path_data_->reset();
+  }
+
+  if (manual_draw_path_layer_)
+  {
+    manual_draw_path_layer_->update();
+  }
+
+  if (manual_draw_path_layer_item_)
+  {
+    manual_draw_path_layer_item_->update();
+  }
+}
+
+void MapVisualizationManager::startManualLivePath(const QVariantList& points)
+{
+  if (path_source_ && path_source_->isActive())
+  {
+    path_source_->stop();
+  }
+
+  manual_live_path_points_ = pathPointsFromVariantList(points);
+  manual_live_path_progress_index_ = 0U;
+  manual_live_path_last_pose_stamp_ = 0U;
+  manual_live_path_enabled_ = manual_live_path_points_.size() >= 2U;
+
+  auto live_path_data = path_source_ ? path_source_->getPathData() : nullptr;
+  if (!live_path_data)
+  {
+    manual_live_path_enabled_ = false;
+    return;
+  }
+
+  if (!manual_live_path_enabled_)
+  {
+    live_path_data->reset();
+    updateLivePathLayer();
+    return;
+  }
+
+  ROBOGait::map::data::PathData::PathMetadata metadata;
+  metadata.points = manual_live_path_points_;
+  live_path_data->setPath(metadata);
+  updateLivePathLayer();
+}
+
+void MapVisualizationManager::stopManualLivePath()
+{
+  manual_live_path_enabled_ = false;
+  manual_live_path_points_.clear();
+  manual_live_path_progress_index_ = 0U;
+  manual_live_path_last_pose_stamp_ = 0U;
+
+  const auto live_path_data = path_source_ ? path_source_->getPathData() : nullptr;
+  if (live_path_data)
+  {
+    live_path_data->reset();
+  }
+
+  updateLivePathLayer();
+}
+
+void MapVisualizationManager::updateLivePathLayer()
+{
+  if (live_path_layer_)
+  {
+    live_path_layer_->update();
+  }
+
+  if (live_path_layer_item_)
+  {
+    live_path_layer_item_->update();
   }
 }
 
@@ -1469,7 +1562,78 @@ void MapVisualizationManager::resetParticleCloud()
 void MapVisualizationManager::onFrameReady()
 {
   updateFollowRobotCamera();
+  updateManualLivePath();
   updateAvailability();
+}
+
+void MapVisualizationManager::updateManualLivePath()
+{
+  if (!manual_live_path_enabled_ || manual_live_path_points_.size() < 2U)
+  {
+    return;
+  }
+
+  const auto robot_pose_data = pose_source_ ? pose_source_->getRobotPoseData() : nullptr;
+  if (!robot_pose_data || !robot_pose_data->isAvailable())
+  {
+    return;
+  }
+
+  const uint64_t pose_stamp = robot_pose_data->getUpdateStamp();
+  if (pose_stamp == manual_live_path_last_pose_stamp_)
+  {
+    return;
+  }
+
+  manual_live_path_last_pose_stamp_ = pose_stamp;
+  const auto robot_pose = robot_pose_data->getMetadata();
+
+  std::size_t nearest_index = manual_live_path_progress_index_;
+  double nearest_distance_squared = std::numeric_limits<double>::max();
+
+  for (std::size_t i = manual_live_path_progress_index_; i < manual_live_path_points_.size(); ++i)
+  {
+    const double dx = manual_live_path_points_[i].x_ - robot_pose.x_;
+    const double dy = manual_live_path_points_[i].y_ - robot_pose.y_;
+    const double distance_squared = dx * dx + dy * dy;
+
+    if (distance_squared < nearest_distance_squared)
+    {
+      nearest_distance_squared = distance_squared;
+      nearest_index = i;
+    }
+  }
+
+  manual_live_path_progress_index_ = nearest_index;
+
+  const double finish_distance_squared = MANUAL_LIVE_PATH_FINISH_DISTANCE_M * MANUAL_LIVE_PATH_FINISH_DISTANCE_M;
+  if (nearest_index + 1U >= manual_live_path_points_.size() && nearest_distance_squared <= finish_distance_squared)
+  {
+    stopManualLivePath();
+    return;
+  }
+
+  ROBOGait::map::data::PathData::PathMetadata metadata;
+  metadata.points.reserve(manual_live_path_points_.size() - nearest_index + 1U);
+  metadata.points.emplace_back(robot_pose.x_, robot_pose.y_);
+
+  if (nearest_index + 1U < manual_live_path_points_.size())
+  {
+    metadata.points.insert(metadata.points.end(), manual_live_path_points_.begin() + static_cast<std::ptrdiff_t>(nearest_index + 1U),
+                           manual_live_path_points_.end());
+  }
+  else
+  {
+    metadata.points.push_back(manual_live_path_points_.back());
+  }
+
+  const auto live_path_data = path_source_ ? path_source_->getPathData() : nullptr;
+  if (live_path_data)
+  {
+    live_path_data->setPath(metadata);
+  }
+
+  updateLivePathLayer();
 }
 
 void MapVisualizationManager::createLayers()

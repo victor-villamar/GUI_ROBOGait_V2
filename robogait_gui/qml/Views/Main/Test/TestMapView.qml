@@ -16,6 +16,7 @@ TestMapViewForm {
     readonly property real computedJoystickStickSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.joystickStickSize, 0) : 34
     readonly property real computedWheelSizePx: computedJoystickStickSizePx * 4
     readonly property int busyTimeoutMs: timeoutSettings ? timeoutSettings.testBusyTimeoutMs : 10000
+    readonly property real manualFollowPathCompletionToleranceM: 0.60
 
     iconButtonSizePx: computedIconButtonSizePx
     iconGlyphSizePx: computedIconGlyphSizePx
@@ -51,7 +52,7 @@ TestMapViewForm {
     property bool waitingGoalPathResult: false
     property bool waitingHomePathResult: false
     property bool waitingManualPathResult: false
-    property var manualPathNavigationPoints: []
+    property var manualFollowPathPoints: []
     property bool personDetectionInProgress: false
 
     readonly property var manualControl: (userSession && userSession.rosManager && userSession.rosManager.robotManager)
@@ -152,15 +153,83 @@ TestMapViewForm {
         experimentSavePromptTimer.restart()
     }
 
+    function manualFollowPathReachedEndpointAfterAbort(resultCode) {
+        if (resultCode !== RobotServiceBridge.NAV_ABORTED || !pathPlacementEnabled) {
+            return false
+        }
+
+        if (!manualFollowPathPoints || manualFollowPathPoints.length < 1) {
+            return false
+        }
+
+        if (!mapVisualizationManager || !mapVisualizationManager.getRobotPose) {
+            return false
+        }
+
+        var robotPose = mapVisualizationManager.getRobotPose()
+        if (!robotPose.available) {
+            return false
+        }
+
+        var finalPoint = manualFollowPathPoints[manualFollowPathPoints.length - 1]
+        var dx = robotPose.x - finalPoint.x
+        var dy = robotPose.y - finalPoint.y
+        var distanceSquared = dx * dx + dy * dy
+        var toleranceSquared = manualFollowPathCompletionToleranceM * manualFollowPathCompletionToleranceM
+        if (distanceSquared > toleranceSquared) {
+            return false
+        }
+
+        return true
+    }
+
+    function navigationFailureMessage(resultCode) {
+        if (resultCode === RobotServiceBridge.NAV_ABORTED) {
+            if (pathPlacementEnabled) {
+                return qsTr("Error: La navegación se abortó antes de llegar al final del path")
+            }
+            return qsTr("Error: La navegación se abortó antes de llegar al objetivo")
+        }
+
+        if (resultCode === RobotServiceBridge.NAV_CANCELED) {
+            return qsTr("Navegación cancelada")
+        }
+
+        return qsTr("Error: La navegación finalizó sin éxito")
+    }
+
+    function invalidateManualComputedPath() {
+        if (!pathPlacementEnabled || testStarted) {
+            return
+        }
+
+        if (!manualPathReady && (!manualFollowPathPoints || manualFollowPathPoints.length === 0)) {
+            return
+        }
+
+        manualPathReady = false
+        manualFollowPathPoints = []
+
+        if (mapVisualizationManager && mapVisualizationManager.stopManualLivePath) {
+            mapVisualizationManager.stopManualLivePath()
+        }
+        if (mapVisualizationManager && mapVisualizationManager.clearManualPath) {
+            mapVisualizationManager.clearManualPath()
+        }
+    }
+
     function resetManualPathFlow() {
         waitingManualPathResult = false
         manualPathReady = false
-        manualPathNavigationPoints = []
+        manualFollowPathPoints = []
         pathTerminalPoseSet = false
         pathTerminalOrientationOverride = false
         pathTerminalOrientationDeg = 0
         pathTerminalMapPosition = Qt.point(0, 0)
 
+        if (mapVisualizationManager && mapVisualizationManager.stopManualLivePath) {
+            mapVisualizationManager.stopManualLivePath()
+        }
         if (mapVisualizationManager && mapVisualizationManager.clearGoalRobotPose) {
             mapVisualizationManager.clearGoalRobotPose()
         }
@@ -177,10 +246,13 @@ TestMapViewForm {
         waitingManualPathResult = false
         goalPathReady = false
         manualPathReady = false
-        manualPathNavigationPoints = []
+        manualFollowPathPoints = []
 
         if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
             mapVisualizationManager.setPathUpdatesEnabled(false)
+        }
+        if (mapVisualizationManager && mapVisualizationManager.stopManualLivePath) {
+            mapVisualizationManager.stopManualLivePath()
         }
         if (mapVisualizationManager && mapVisualizationManager.clearManualPath) {
             mapVisualizationManager.clearManualPath()
@@ -281,20 +353,23 @@ TestMapViewForm {
         return false
     }
 
-    function buildManualPathWaypointsForService(points) {
-        var waypoints = []
+    function buildManualFollowPathPoints(points) {
+        var pathPoints = []
         if (!points || points.length < 2) {
-            return waypoints
+            return pathPoints
         }
 
         for (var i = 0; i < points.length; ++i) {
             var waypoint = { "x": points[i].x, "y": points[i].y }
+            if (points[i].theta !== undefined && isFinite(points[i].theta)) {
+                waypoint["theta"] = points[i].theta
+            }
             if (i === points.length - 1) {
                 waypoint["theta"] = pathTerminalOrientationDeg * Math.PI / 180
             }
-            waypoints.push(waypoint)
+            pathPoints.push(waypoint)
         }
-        return waypoints
+        return pathPoints
     }
 
     function clearGoalSelection() {
@@ -450,46 +525,92 @@ TestMapViewForm {
             return
         }
 
-        if (!robotServiceBridge || !robotServiceBridge.computePathThroughPoses) {
+        if (!robotServiceBridge || !robotServiceBridge.setManualFollowPath) {
             errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
             errorPopup.open()
             return
         }
 
-        var points = splinePathEditor.getPathPointsForCompute()
-        if (!points || points.length < 2) {
+        var visualPoints = splinePathEditor.getPathPointsForCompute()
+        if (!visualPoints || visualPoints.length < 2) {
             errorPopup.errorRectangleTextError.text = qsTr("Error: Path suavizado inválido")
             errorPopup.open()
             return
         }
 
-        if (!updatePathTerminalPoseFromPoints(points, true)) {
+        if (!updatePathTerminalPoseFromPoints(visualPoints, true)) {
             errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo obtener la orientación final")
             errorPopup.open()
             return
         }
 
         manualPathReady = false
-        manualPathNavigationPoints = buildManualPathWaypointsForService(points)
-        if (!manualPathNavigationPoints || manualPathNavigationPoints.length < 2) {
-            errorPopup.errorRectangleTextError.text = qsTr("Error: Path suavizado inválido")
+        manualFollowPathPoints = buildManualFollowPathPoints(visualPoints)
+        if (!manualFollowPathPoints || manualFollowPathPoints.length < 2) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: Path manual inválido")
             errorPopup.open()
             return
         }
-        waitingManualPathResult = true
+
+        if (!mapVisualizationManager || !mapVisualizationManager.getRobotPose) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo obtener la posición actual del robot")
+            errorPopup.open()
+            return
+        }
+
+        var currentRobotPose = mapVisualizationManager.getRobotPose()
+        if (!currentRobotPose.available) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo obtener la posición actual del robot")
+            errorPopup.open()
+            return
+        }
+
+        if (!robotServiceBridge.normalizeManualFollowPath) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo normalizar la ruta manual")
+            errorPopup.open()
+            return
+        }
+
+        manualFollowPathPoints = robotServiceBridge.normalizeManualFollowPath(
+                    manualFollowPathPoints,
+                    currentRobotPose.x,
+                    currentRobotPose.y,
+                    currentRobotPose.theta)
+        if (!manualFollowPathPoints || manualFollowPathPoints.length < 2) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: Path manual normalizado inválido")
+            errorPopup.open()
+            return
+        }
+        waitingManualPathResult = false
         waitingGoalPathResult = false
         waitingHomePathResult = false
 
         if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
             mapVisualizationManager.setPathUpdatesEnabled(false)
         }
-
-        var okCompute = robotServiceBridge.computePathThroughPoses(manualPathNavigationPoints)
-        if (!okCompute) {
-            resetManualPathFlow()
-            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo calcular la ruta del path")
-            errorPopup.open()
+        if (mapVisualizationManager && mapVisualizationManager.stopManualLivePath) {
+            mapVisualizationManager.stopManualLivePath()
         }
+        if (mapVisualizationManager && mapVisualizationManager.clearManualPath) {
+            mapVisualizationManager.clearManualPath()
+        }
+
+        var okPrepare = robotServiceBridge.setManualFollowPath(manualFollowPathPoints)
+        if (!okPrepare) {
+            resetManualPathFlow()
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo preparar la ruta manual")
+            errorPopup.open()
+            return
+        }
+
+        if (mapVisualizationManager && mapVisualizationManager.setManualPathPoints) {
+            mapVisualizationManager.setManualPathPoints(manualFollowPathPoints)
+        }
+        if (mapVisualizationManager && mapVisualizationManager.clearManualDrawPathVisualization) {
+            mapVisualizationManager.clearManualDrawPathVisualization()
+        }
+
+        manualPathReady = true
     }
 
     function handlePathStrokeStart(screenX, screenY) {
@@ -1532,6 +1653,15 @@ TestMapViewForm {
 
 
     Connections {
+        target: splinePathEditor
+        ignoreUnknownSignals: true
+
+        function onPathChanged() {
+            invalidateManualComputedPath()
+        }
+    }
+
+    Connections {
         target: robotServiceBridge
         ignoreUnknownSignals: true
 
@@ -1652,7 +1782,7 @@ TestMapViewForm {
                 }
                 if (fromManualRequest) {
                     manualPathReady = false
-                    manualPathNavigationPoints = []
+                    manualFollowPathPoints = []
                     errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo calcular la ruta del path")
                     errorPopup.open()
                 }
@@ -1696,11 +1826,21 @@ TestMapViewForm {
                 return
             }
 
+            var effectiveResultCode = manualFollowPathReachedEndpointAfterAbort(resultCode)
+                    ? RobotServiceBridge.NAV_SUCCEEDED
+                    : resultCode
+
             testStarted = false
             experimentNavigationFinished = true
-            experimentNavigationSucceeded = (resultCode === RobotServiceBridge.NAV_SUCCEEDED)
+            experimentNavigationSucceeded = (effectiveResultCode === RobotServiceBridge.NAV_SUCCEEDED)
             experimentShowRepeatButton = true
             clearPathsAfterExperimentEnd()
+
+            if (!experimentNavigationSucceeded) {
+                errorPopup.errorRectangleTextError.text = navigationFailureMessage(effectiveResultCode)
+                errorPopup.open()
+                return
+            }
 
             if (!experimentSaveFlowStarted) {
                 startExperimentSaveFlowWithDelay(qsTr("Finalizando test..."))
@@ -1769,19 +1909,61 @@ TestMapViewForm {
                 }
             }
             else if (pathPlacementEnabled) {
-                if (!manualPathReady || !manualPathNavigationPoints || manualPathNavigationPoints.length < 2) {
+                if (!manualPathReady) {
                     errorPopup.errorRectangleTextError.text = qsTr("Error: Ruta manual no preparada")
                     errorPopup.open()
                     return
                 }
 
-                if (!robotServiceBridge || !robotServiceBridge.navigateThroughPoses) {
+                if (!robotServiceBridge || !robotServiceBridge.followLastComputedPath) {
                     errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
                     errorPopup.open()
                     return
                 }
 
-                var okStartPath = robotServiceBridge.navigateThroughPoses(manualPathNavigationPoints)
+                if (!mapVisualizationManager || !mapVisualizationManager.getRobotPose) {
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo obtener la posición actual del robot")
+                    errorPopup.open()
+                    return
+                }
+
+                var startRobotPose = mapVisualizationManager.getRobotPose()
+                if (!startRobotPose.available) {
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo obtener la posición actual del robot")
+                    errorPopup.open()
+                    return
+                }
+
+                if (!robotServiceBridge.normalizeManualFollowPath || !robotServiceBridge.setManualFollowPath) {
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo preparar la ruta manual")
+                    errorPopup.open()
+                    return
+                }
+
+                var startFollowPathPoints = robotServiceBridge.normalizeManualFollowPath(
+                            manualFollowPathPoints,
+                            startRobotPose.x,
+                            startRobotPose.y,
+                            startRobotPose.theta)
+                if (!startFollowPathPoints || startFollowPathPoints.length < 2) {
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: Path manual normalizado inválido")
+                    errorPopup.open()
+                    return
+                }
+
+                var okPrepareStartPath = robotServiceBridge.setManualFollowPath(startFollowPathPoints)
+                if (!okPrepareStartPath) {
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo preparar la ruta manual")
+                    errorPopup.open()
+                    return
+                }
+
+                manualFollowPathPoints = startFollowPathPoints
+                if (mapVisualizationManager.setManualPathPoints) {
+                    mapVisualizationManager.setManualPathPoints(manualFollowPathPoints)
+                }
+
+                var okStartPath = robotServiceBridge.followLastComputedPath()
                 if (!okStartPath) {
                     errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación por ruta")
                     errorPopup.open()
@@ -1793,8 +1975,16 @@ TestMapViewForm {
             resetExperimentPhaseState()
             step = stepExperiment
 
-            if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+            if (goalPlacementEnabled && mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
                 mapVisualizationManager.setPathUpdatesEnabled(true)
+            }
+            else if (pathPlacementEnabled && mapVisualizationManager) {
+                if (mapVisualizationManager.setPathUpdatesEnabled) {
+                    mapVisualizationManager.setPathUpdatesEnabled(false)
+                }
+                if (mapVisualizationManager.startManualLivePath) {
+                    mapVisualizationManager.startManualLivePath(manualFollowPathPoints)
+                }
             }
         }
 

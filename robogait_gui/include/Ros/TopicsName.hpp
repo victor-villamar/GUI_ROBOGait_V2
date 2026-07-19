@@ -26,9 +26,8 @@ extern const std::string S_REINITIALIZE_GLOBAL_LOCALIZATION;
 
 // Actions
 extern const std::string A_NAVIGATE_TO_POSE;
-extern const std::string A_NAVIGATE_THROUGH_POSES;
 extern const std::string A_COMPUTE_PATH_TO_POSE;
-extern const std::string A_COMPUTE_PATH_THROUGH_POSES;
+extern const std::string A_FOLLOW_PATH;
 
 // TF Frames
 extern const std::string TF_MAP_FRAME;

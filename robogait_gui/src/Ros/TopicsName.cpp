@@ -26,9 +26,8 @@ const std::string S_REINITIALIZE_GLOBAL_LOCALIZATION = "/reinitialize_global_loc
 
 // Actions
 const std::string A_NAVIGATE_TO_POSE =                 "/navigate_to_pose";
-const std::string A_NAVIGATE_THROUGH_POSES =           "/navigate_through_poses";
 const std::string A_COMPUTE_PATH_TO_POSE =             "/compute_path_to_pose";
-const std::string A_COMPUTE_PATH_THROUGH_POSES =       "/compute_path_through_poses";
+const std::string A_FOLLOW_PATH =                      "/follow_path";
 
 // TF Frames
 const std::string TF_MAP_FRAME =                       "map";
