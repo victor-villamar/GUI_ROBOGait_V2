@@ -51,7 +51,7 @@ TestMapViewForm {
     property bool waitingGoalPathResult: false
     property bool waitingHomePathResult: false
     property bool waitingManualPathResult: false
-    property var manualPathNavigationPoints: []
+    property var manualPlannerWaypoints: []
     property bool personDetectionInProgress: false
 
     readonly property var manualControl: (userSession && userSession.rosManager && userSession.rosManager.robotManager)
@@ -155,7 +155,7 @@ TestMapViewForm {
     function resetManualPathFlow() {
         waitingManualPathResult = false
         manualPathReady = false
-        manualPathNavigationPoints = []
+        manualPlannerWaypoints = []
         pathTerminalPoseSet = false
         pathTerminalOrientationOverride = false
         pathTerminalOrientationDeg = 0
@@ -177,7 +177,7 @@ TestMapViewForm {
         waitingManualPathResult = false
         goalPathReady = false
         manualPathReady = false
-        manualPathNavigationPoints = []
+        manualPlannerWaypoints = []
 
         if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
             mapVisualizationManager.setPathUpdatesEnabled(false)
@@ -444,7 +444,8 @@ TestMapViewForm {
     }
 
     function handlePathAccept() {
-        if (!splinePathEditor || !splinePathEditor.getPathPointsForCompute || !splinePathEditor.hasEditablePath) {
+        if (!splinePathEditor || !splinePathEditor.getPathPointsForCompute || !splinePathEditor.getPlannerWaypointsForCompute ||
+            !splinePathEditor.hasEditablePath) {
             errorPopup.errorRectangleTextError.text = qsTr("Error: Suaviza y edita el path antes de aceptar")
             errorPopup.open()
             return
@@ -456,23 +457,30 @@ TestMapViewForm {
             return
         }
 
-        var points = splinePathEditor.getPathPointsForCompute()
-        if (!points || points.length < 2) {
+        var visualPoints = splinePathEditor.getPathPointsForCompute()
+        if (!visualPoints || visualPoints.length < 2) {
             errorPopup.errorRectangleTextError.text = qsTr("Error: Path suavizado inválido")
             errorPopup.open()
             return
         }
 
-        if (!updatePathTerminalPoseFromPoints(points, true)) {
+        if (!updatePathTerminalPoseFromPoints(visualPoints, true)) {
             errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo obtener la orientación final")
             errorPopup.open()
             return
         }
 
+        var plannerPoints = splinePathEditor.getPlannerWaypointsForCompute()
+        if (!plannerPoints || plannerPoints.length < 2) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: Waypoints de planificación inválidos")
+            errorPopup.open()
+            return
+        }
+
         manualPathReady = false
-        manualPathNavigationPoints = buildManualPathWaypointsForService(points)
-        if (!manualPathNavigationPoints || manualPathNavigationPoints.length < 2) {
-            errorPopup.errorRectangleTextError.text = qsTr("Error: Path suavizado inválido")
+        manualPlannerWaypoints = buildManualPathWaypointsForService(plannerPoints)
+        if (!manualPlannerWaypoints || manualPlannerWaypoints.length < 2) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: Waypoints de planificación inválidos")
             errorPopup.open()
             return
         }
@@ -484,7 +492,7 @@ TestMapViewForm {
             mapVisualizationManager.setPathUpdatesEnabled(false)
         }
 
-        var okCompute = robotServiceBridge.computePathThroughPoses(manualPathNavigationPoints)
+        var okCompute = robotServiceBridge.computePathThroughPoses(manualPlannerWaypoints)
         if (!okCompute) {
             resetManualPathFlow()
             errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo calcular la ruta del path")
@@ -1652,7 +1660,7 @@ TestMapViewForm {
                 }
                 if (fromManualRequest) {
                     manualPathReady = false
-                    manualPathNavigationPoints = []
+                    manualPlannerWaypoints = []
                     errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo calcular la ruta del path")
                     errorPopup.open()
                 }
@@ -1769,7 +1777,7 @@ TestMapViewForm {
                 }
             }
             else if (pathPlacementEnabled) {
-                if (!manualPathReady || !manualPathNavigationPoints || manualPathNavigationPoints.length < 2) {
+                if (!manualPathReady || !manualPlannerWaypoints || manualPlannerWaypoints.length < 2) {
                     errorPopup.errorRectangleTextError.text = qsTr("Error: Ruta manual no preparada")
                     errorPopup.open()
                     return
@@ -1781,7 +1789,7 @@ TestMapViewForm {
                     return
                 }
 
-                var okStartPath = robotServiceBridge.navigateThroughPoses(manualPathNavigationPoints)
+                var okStartPath = robotServiceBridge.navigateThroughPoses(manualPlannerWaypoints)
                 if (!okStartPath) {
                     errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación por ruta")
                     errorPopup.open()
