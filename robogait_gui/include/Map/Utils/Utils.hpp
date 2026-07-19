@@ -1,14 +1,15 @@
 #pragma once
 
 #include <cmath>
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include <QImage>
+#include <QPointF>
 #include <QString>
 #include <QVariantList>
+#include <QVector>
 
 #include <tf2/LinearMath/Quaternion.h>
 
@@ -139,6 +140,41 @@ std::string sanitizeMapName(const std::string& map_name);
  * @return Parsed and validated waypoint list
  */
 std::vector<WaypointInput> parseWaypointInputs(const QVariantList& points);
+
+/**
+ * @brief Remove planner waypoints that are too close to the previous accepted waypoint while preserving endpoints
+ *
+ * @param points Path points in map frame
+ * @param min_spacing_m Minimum allowed spacing in meters
+ * @return Filtered waypoint list
+ */
+QVector<QPointF> removeCloseInteriorWaypoints(const QVector<QPointF>& points, double min_spacing_m);
+
+/**
+ * @brief Insert intermediate waypoints so planner waypoint segments do not exceed max spacing
+ *
+ * @param points Path points in map frame
+ * @param max_spacing_m Maximum segment spacing in meters
+ * @return Expanded waypoint list
+ */
+QVector<QPointF> insertIntermediateWaypoints(const QVector<QPointF>& points, double max_spacing_m);
+
+/**
+ * @brief Calculate waypoint yaw from local path tangent
+ *
+ * @param points Path points in map frame
+ * @param index Waypoint index
+ * @return Yaw angle in radians
+ */
+double calculateWaypointYaw(const QVector<QPointF>& points, int index);
+
+/**
+ * @brief Convert map-frame waypoints to QVariantList entries containing x, y and theta
+ *
+ * @param points Path points in map frame
+ * @return QVariantList with {x, y, theta}
+ */
+QVariantList toWaypointVariantList(const QVector<QPointF>& points);
 
 /**
  * @brief Build waypoint orientation quaternion

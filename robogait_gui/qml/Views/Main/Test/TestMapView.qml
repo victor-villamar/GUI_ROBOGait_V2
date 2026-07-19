@@ -289,6 +289,9 @@ TestMapViewForm {
 
         for (var i = 0; i < points.length; ++i) {
             var waypoint = { "x": points[i].x, "y": points[i].y }
+            if (points[i].theta !== undefined && isFinite(points[i].theta)) {
+                waypoint["theta"] = points[i].theta
+            }
             if (i === points.length - 1) {
                 waypoint["theta"] = pathTerminalOrientationDeg * Math.PI / 180
             }

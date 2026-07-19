@@ -1,18 +1,22 @@
 #include <cctype>
+#include <cmath>
 #include <cstdint>
 
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QLineF>
 #include <QString>
 #include <QUrl>
 #include <QVariantMap>
 #include <Qt>
+#include <QtGlobal>
 
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 
 #include "Loader/YamlLoader.hpp"
+#include "Map/Interaction/Geometry/StrokeProcessor.hpp"
 #include "Map/Utils/Utils.hpp"
 #include "Themes/AppTheme.hpp"
 
@@ -78,7 +82,7 @@ QImage toQImage(const data::MapData& map_data)
     return QImage();
   }
 
-  QImage image(width, height, QImage::Format_RGB888);
+  QImage image(static_cast<int>(width), static_cast<int>(height), QImage::Format_RGB888);
 
   if (image.isNull())
   {
@@ -111,7 +115,7 @@ QImage toQImage(const data::MapData& map_data)
         color = map_occupied_color;
       }
 
-      image.setPixel(x, y, color);
+      image.setPixel(static_cast<int>(x), static_cast<int>(y), color);
     }
   }
 
@@ -252,10 +256,11 @@ std::string sanitizeMapName(const std::string& map_name)
 
   bool last_was_separator = true;
 
-  for (unsigned char ch : map_name)
+  for (const char ch : map_name)
   {
-    const bool is_space = std::isspace(ch);
-    const bool is_allowed = std::isalnum(ch) != 0 || ch == '-' || ch == '_';
+    const unsigned char unsigned_ch = static_cast<unsigned char>(ch);
+    const bool is_space = std::isspace(unsigned_ch) != 0;
+    const bool is_allowed = std::isalnum(unsigned_ch) != 0 || ch == '-' || ch == '_';
 
     if (is_space || !is_allowed)
     {
@@ -277,6 +282,131 @@ std::string sanitizeMapName(const std::string& map_name)
   }
 
   return out;
+}
+
+QVector<QPointF> removeCloseInteriorWaypoints(const QVector<QPointF>& points, double min_spacing_m)
+{
+  if (points.size() <= ROBOGait::map::interaction::geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
+  {
+    return points;
+  }
+
+  QVector<QPointF> filtered;
+  filtered.reserve(points.size());
+  filtered.append(points.constFirst());
+
+  for (int i = 1; i < points.size() - 1; ++i)
+  {
+    if (QLineF(filtered.constLast(), points[i]).length() >= min_spacing_m)
+    {
+      filtered.append(points[i]);
+    }
+  }
+
+  if (QLineF(filtered.constLast(), points.constLast()).length() > 1e-9)
+  {
+    filtered.append(points.constLast());
+  }
+
+  if (filtered.size() < ROBOGait::map::interaction::geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
+  {
+    return points;
+  }
+
+  return filtered;
+}
+
+QVector<QPointF> insertIntermediateWaypoints(const QVector<QPointF>& points, double max_spacing_m)
+{
+  if (points.size() < ROBOGait::map::interaction::geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
+  {
+    return points;
+  }
+
+  const double spacing = qMax(max_spacing_m, 1e-6);
+  QVector<QPointF> expanded;
+  expanded.reserve(points.size());
+  expanded.append(points.constFirst());
+
+  for (int i = 1; i < points.size(); ++i)
+  {
+    const QPointF start = points[i - 1];
+    const QPointF end = points[i];
+    const QLineF segment(start, end);
+    const double segment_length = segment.length();
+
+    if (segment_length <= 1e-9)
+    {
+      continue;
+    }
+
+    const int interior_samples = static_cast<int>(std::floor(segment_length / spacing));
+    for (int sample = 1; sample <= interior_samples; ++sample)
+    {
+      const double distance = static_cast<double>(sample) * spacing;
+      if (distance >= segment_length)
+      {
+        continue;
+      }
+
+      const double ratio = distance / segment_length;
+      const QPointF interpolated(start.x() + (end.x() - start.x()) * ratio, start.y() + (end.y() - start.y()) * ratio);
+      expanded.append(interpolated);
+    }
+
+    expanded.append(end);
+  }
+
+  return ROBOGait::map::interaction::geometry::StrokeProcessor::removeDuplicatedPoints(expanded, 1e-9);
+}
+
+double calculateWaypointYaw(const QVector<QPointF>& points, int index)
+{
+  if (points.size() < ROBOGait::map::interaction::geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
+  {
+    return 0.0;
+  }
+
+  const int last_index = static_cast<int>(points.size()) - 1;
+  const int previous_index = qMax(0, index - 1);
+  const int next_index = qMin(last_index, index + 1);
+
+  QPointF direction = points[next_index] - points[previous_index];
+  if (std::abs(direction.x()) <= 1e-9 && std::abs(direction.y()) <= 1e-9)
+  {
+    if (index < last_index)
+    {
+      direction = points[index + 1] - points[index];
+    }
+    else
+    {
+      direction = points[index] - points[index - 1];
+    }
+  }
+
+  if (std::abs(direction.x()) <= 1e-9 && std::abs(direction.y()) <= 1e-9)
+  {
+    return 0.0;
+  }
+
+  return std::atan2(direction.y(), direction.x());
+}
+
+QVariantList toWaypointVariantList(const QVector<QPointF>& points)
+{
+  QVariantList points_list;
+  points_list.reserve(points.size());
+
+  for (int i = 0; i < points.size(); ++i)
+  {
+    QVariantMap point_map;
+    point_map["x"] = points[i].x();
+    point_map["y"] = points[i].y();
+    point_map["theta"] = calculateWaypointYaw(points, i);
+    points_list.append(point_map);
+  }
+
+  return points_list;
 }
 
 std::vector<WaypointInput> parseWaypointInputs(const QVariantList& points)

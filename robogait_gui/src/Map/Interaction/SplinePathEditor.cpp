@@ -9,87 +9,9 @@
 #include "Map/Interaction/Geometry/StrokeProcessor.hpp"
 #include "Map/Interaction/SplinePathEditor.hpp"
 #include "Map/MapVisualizationManager.hpp"
+#include "Map/Utils/Utils.hpp"
 
 using namespace ROBOGait::map::interaction;
-
-namespace
-{
-QVector<QPointF> removeCloseInteriorWaypoints(const QVector<QPointF>& points, double min_spacing_m)
-{
-  if (points.size() <= geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
-  {
-    return points;
-  }
-
-  QVector<QPointF> filtered;
-  filtered.reserve(points.size());
-  filtered.append(points.constFirst());
-
-  for (int i = 1; i < points.size() - 1; ++i)
-  {
-    if (QLineF(filtered.constLast(), points[i]).length() >= min_spacing_m)
-    {
-      filtered.append(points[i]);
-    }
-  }
-
-  if (QLineF(filtered.constLast(), points.constLast()).length() > 1e-9)
-  {
-    filtered.append(points.constLast());
-  }
-
-  if (filtered.size() < geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
-  {
-    return points;
-  }
-
-  return filtered;
-}
-
-QVector<QPointF> insertIntermediateWaypoints(const QVector<QPointF>& points, double max_spacing_m)
-{
-  if (points.size() < 2)
-  {
-    return points;
-  }
-
-  const double spacing = qMax(max_spacing_m, 1e-6);
-  QVector<QPointF> expanded;
-  expanded.reserve(points.size());
-  expanded.append(points.constFirst());
-
-  for (int i = 1; i < points.size(); ++i)
-  {
-    const QPointF start = points[i - 1];
-    const QPointF end = points[i];
-    const QLineF segment(start, end);
-    const double segment_length = segment.length();
-
-    if (segment_length <= 1e-9)
-    {
-      continue;
-    }
-
-    const int interior_samples = static_cast<int>(std::floor(segment_length / spacing));
-    for (int sample = 1; sample <= interior_samples; ++sample)
-    {
-      const double distance = static_cast<double>(sample) * spacing;
-      if (distance >= segment_length)
-      {
-        continue;
-      }
-
-      const double ratio = distance / segment_length;
-      const QPointF interpolated(start.x() + (end.x() - start.x()) * ratio, start.y() + (end.y() - start.y()) * ratio);
-      expanded.append(interpolated);
-    }
-
-    expanded.append(end);
-  }
-
-  return geometry::StrokeProcessor::removeDuplicatedPoints(expanded, 1e-9);
-}
-} // namespace
 
 SplinePathEditor::SplinePathEditor(QObject* parent) :
     QObject(parent),
@@ -507,8 +429,8 @@ QVariantList SplinePathEditor::getPlannerWaypointsForCompute() const
 
   QVector<QPointF> waypoints = geometry::StrokeProcessor::removeDuplicatedPoints(smoothed_path_points_, 1e-6);
   waypoints = geometry::StrokeProcessor::simplifyDouglasPeucker(waypoints, planner_waypoint_tuning_.simplify_tolerance_m);
-  waypoints = removeCloseInteriorWaypoints(waypoints, planner_waypoint_tuning_.min_waypoint_spacing_m);
-  waypoints = insertIntermediateWaypoints(waypoints, planner_waypoint_tuning_.max_waypoint_spacing_m);
+  waypoints = ROBOGait::map::utils::removeCloseInteriorWaypoints(waypoints, planner_waypoint_tuning_.min_waypoint_spacing_m);
+  waypoints = ROBOGait::map::utils::insertIntermediateWaypoints(waypoints, planner_waypoint_tuning_.max_waypoint_spacing_m);
   waypoints = geometry::StrokeProcessor::limitPointCount(waypoints, planner_waypoint_tuning_.max_waypoints);
 
   if (waypoints.size() < geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
@@ -516,7 +438,7 @@ QVariantList SplinePathEditor::getPlannerWaypointsForCompute() const
     return QVariantList();
   }
 
-  return toVariantList(waypoints);
+  return ROBOGait::map::utils::toWaypointVariantList(waypoints);
 }
 
 bool SplinePathEditor::ensureMapVisualizationManager() const
