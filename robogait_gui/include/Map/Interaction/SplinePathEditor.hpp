@@ -26,6 +26,75 @@ class SplinePathEditor : public QObject
   Q_OBJECT
 
 public:
+  static constexpr double DEFAULT_SPLINE_RESAMPLE_SPACING_PX = 5.0;
+  static constexpr int DEFAULT_SPLINE_SMOOTHING_WINDOW_RADIUS = 2;
+  static constexpr double DEFAULT_SPLINE_CATMULL_ALPHA = 0.5;
+  static constexpr double DEFAULT_SPLINE_SAMPLE_SPACING_PX = 4.0;
+  static constexpr double DEFAULT_SPLINE_SIMPLIFY_TOLERANCE_PX = 8.0;
+  static constexpr int DEFAULT_SPLINE_MAX_ANCHOR_POINTS = 28;
+  static constexpr double DEFAULT_PLANNER_SIMPLIFY_TOLERANCE_M = 0.08;
+  static constexpr double DEFAULT_PLANNER_MIN_WAYPOINT_SPACING_M = 0.35;
+  static constexpr double DEFAULT_PLANNER_MAX_WAYPOINT_SPACING_M = 0.80;
+  static constexpr int DEFAULT_PLANNER_MAX_WAYPOINTS = 18;
+
+  /**
+   * @brief Smoothing tuning in screen-space units
+   */
+  struct SmoothingTuningPx
+  {
+    explicit SmoothingTuningPx(double resample_spacing_px_value = DEFAULT_SPLINE_RESAMPLE_SPACING_PX,
+                               int smoothing_window_radius_value = DEFAULT_SPLINE_SMOOTHING_WINDOW_RADIUS,
+                               double catmull_alpha_value = DEFAULT_SPLINE_CATMULL_ALPHA, double sample_spacing_px_value = DEFAULT_SPLINE_SAMPLE_SPACING_PX) :
+        resample_spacing_px(resample_spacing_px_value),
+        smoothing_window_radius(smoothing_window_radius_value),
+        catmull_alpha(catmull_alpha_value),
+        sample_spacing_px(sample_spacing_px_value)
+    {
+    }
+
+    double resample_spacing_px;
+    int smoothing_window_radius;
+    double catmull_alpha;
+    double sample_spacing_px;
+  };
+
+  /**
+   * @brief Reduction tuning for editable anchors density
+   */
+  struct EditReductionTuningPx
+  {
+    explicit EditReductionTuningPx(double simplify_tolerance_px_value = DEFAULT_SPLINE_SIMPLIFY_TOLERANCE_PX,
+                                   int max_anchor_points_value = DEFAULT_SPLINE_MAX_ANCHOR_POINTS) :
+        simplify_tolerance_px(simplify_tolerance_px_value), max_anchor_points(max_anchor_points_value)
+    {
+    }
+
+    double simplify_tolerance_px;
+    int max_anchor_points;
+  };
+
+  /**
+   * @brief Reduction tuning for planner waypoints in map-frame units
+   */
+  struct PlannerWaypointTuning
+  {
+    explicit PlannerWaypointTuning(double simplify_tolerance_m_value = DEFAULT_PLANNER_SIMPLIFY_TOLERANCE_M,
+                                   double min_waypoint_spacing_m_value = DEFAULT_PLANNER_MIN_WAYPOINT_SPACING_M,
+                                   double max_waypoint_spacing_m_value = DEFAULT_PLANNER_MAX_WAYPOINT_SPACING_M,
+                                   int max_waypoints_value = DEFAULT_PLANNER_MAX_WAYPOINTS) :
+        simplify_tolerance_m(simplify_tolerance_m_value),
+        min_waypoint_spacing_m(min_waypoint_spacing_m_value),
+        max_waypoint_spacing_m(max_waypoint_spacing_m_value),
+        max_waypoints(max_waypoints_value)
+    {
+    }
+
+    double simplify_tolerance_m;
+    double min_waypoint_spacing_m;
+    double max_waypoint_spacing_m;
+    int max_waypoints;
+  };
+
   enum ControlPointType
   {
     Anchor = 0,
@@ -79,6 +148,11 @@ public:
   bool hasEditablePath() const;
 
   /**
+   * @brief Set edit mode from property assignment
+   */
+  void setEditMode(bool enabled);
+
+  /**
    * @brief Set map visualization manager for coordinate conversion and rendering sync
    */
   void setMapVisualizationManager(ROBOGait::map::manager::MapVisualizationManager* manager);
@@ -86,17 +160,32 @@ public:
   /**
    * @brief Override smoothing tuning in screen-space units
    */
-  void setSmoothingTuningPx(double resample_spacing_px, int smoothing_window_radius, double catmull_alpha, double sample_spacing_px);
+  void setSmoothingTuningPx(const SmoothingTuningPx& tuning);
 
   /**
    * @brief Override editor reduction tuning in screen-space units
    */
-  void setEditReductionTuningPx(double simplify_tolerance_px, int max_anchor_points);
+  void setEditReductionTuningPx(const EditReductionTuningPx& tuning);
+
+  /**
+   * @brief Override planner waypoint reduction tuning
+   */
+  void setPlannerWaypointTuning(const PlannerWaypointTuning& tuning);
 
   /**
    * @brief Start a new stroke and clear previous spline/path
    */
   bool beginStroke();
+
+  /**
+   * @brief Clear current path/spline and stop drawing/edit mode
+   */
+  Q_INVOKABLE void clear();
+
+  /**
+   * @brief Clear cached points from external clear operation
+   */
+  void clearCachedPath();
 
   /**
    * @brief Start a new stroke and append first point from screen coordinates
@@ -144,19 +233,11 @@ public:
   Q_INVOKABLE QVariantList getPathPointsForCompute() const;
 
   /**
-   * @brief Clear current path/spline and stop drawing/edit mode
+   * @brief Get waypoints to be used by planner flow
+   *
+   * @return QVariantList of {x, y} for each waypoint
    */
-  Q_INVOKABLE void clear();
-
-  /**
-   * @brief Clear cached points from external clear operation
-   */
-  void clearCachedPath();
-
-  /**
-   * @brief Set edit mode from property assignment
-   */
-  void setEditMode(bool enabled);
+  Q_INVOKABLE QVariantList getPlannerWaypointsForCompute() const;
 
 signals:
   void pathChanged();         // Emitted when raw path points change
@@ -177,26 +258,6 @@ private:
   double pixelsToMetersDistance(double distance_px) const;
   static QVariantList toVariantList(const QVector<QPointF>& points);
 
-  /**
-   * @brief Smoothing tuning in screen-space units
-   */
-  struct SmoothingTuningPx
-  {
-    double resample_spacing_px = 5.0;
-    int smoothing_window_radius = 2;
-    double catmull_alpha = 0.5;
-    double sample_spacing_px = 4.0;
-  };
-
-  /**
-   * @brief Reduction tuning for editable anchors density
-   */
-  struct EditReductionTuningPx
-  {
-    double simplify_tolerance_px = 8.0;
-    int max_anchor_points = 28;
-  };
-
   ROBOGait::map::manager::MapVisualizationManager* map_visualization_manager_; /**< Map visualization manager pointer */
   QVector<QPointF> raw_path_points_;                                           /**< Raw freehand points captured while drawing */
   QVector<QPointF> smoothed_path_points_;                                      /**< Sampled points generated from spline model */
@@ -209,8 +270,7 @@ private:
   double min_point_distance_m_;                                                /**< Minimum distance between consecutive points */
   SmoothingTuningPx smoothing_tuning_px_;                                      /**< Smoothing tuning values */
   EditReductionTuningPx edit_reduction_tuning_px_;                             /**< Anchor density reduction tuning values */
-
-  static constexpr int MIN_VALID_PATH_POINTS = 2; /**< Minimum number of points required for a valid path */
+  PlannerWaypointTuning planner_waypoint_tuning_;                              /**< Planner waypoint reduction tuning values */
 };
 } // namespace interaction
 } // namespace map

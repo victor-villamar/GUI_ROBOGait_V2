@@ -74,3 +74,7 @@ map:
     sample_spacing_px: 4.0
     simplify_tolerance_px: 8.0
     max_anchor_points: 28
+    planner_simplify_tolerance_m: 0.08
+    planner_min_waypoint_spacing_m: 0.35
+    planner_max_waypoint_spacing_m: 0.80
+    planner_max_waypoints: 18

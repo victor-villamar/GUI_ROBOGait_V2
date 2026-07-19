@@ -14,6 +14,57 @@
 
 using namespace ROBOGait::map::manager;
 
+namespace
+{
+using SplinePathEditor = ROBOGait::map::interaction::SplinePathEditor;
+
+SplinePathEditor::SmoothingTuningPx loadSmoothingTuningPx(const ROBOGait::loader::YamlLoader& yaml_loader)
+{
+  SplinePathEditor::SmoothingTuningPx tuning;
+
+  if (!yaml_loader.isLoaded())
+  {
+    return tuning;
+  }
+
+  tuning.resample_spacing_px = yaml_loader.getValue<double>("map.spline_path.resample_spacing_px", tuning.resample_spacing_px);
+  tuning.smoothing_window_radius = yaml_loader.getValue<int>("map.spline_path.smoothing_window_radius", tuning.smoothing_window_radius);
+  tuning.catmull_alpha = yaml_loader.getValue<double>("map.spline_path.catmull_alpha", tuning.catmull_alpha);
+  tuning.sample_spacing_px = yaml_loader.getValue<double>("map.spline_path.sample_spacing_px", tuning.sample_spacing_px);
+  return tuning;
+}
+
+SplinePathEditor::EditReductionTuningPx loadEditReductionTuningPx(const ROBOGait::loader::YamlLoader& yaml_loader)
+{
+  SplinePathEditor::EditReductionTuningPx tuning;
+
+  if (!yaml_loader.isLoaded())
+  {
+    return tuning;
+  }
+
+  tuning.simplify_tolerance_px = yaml_loader.getValue<double>("map.spline_path.simplify_tolerance_px", tuning.simplify_tolerance_px);
+  tuning.max_anchor_points = yaml_loader.getValue<int>("map.spline_path.max_anchor_points", tuning.max_anchor_points);
+  return tuning;
+}
+
+SplinePathEditor::PlannerWaypointTuning loadPlannerWaypointTuning(const ROBOGait::loader::YamlLoader& yaml_loader)
+{
+  SplinePathEditor::PlannerWaypointTuning tuning;
+
+  if (!yaml_loader.isLoaded())
+  {
+    return tuning;
+  }
+
+  tuning.simplify_tolerance_m = yaml_loader.getValue<double>("map.spline_path.planner_simplify_tolerance_m", tuning.simplify_tolerance_m);
+  tuning.min_waypoint_spacing_m = yaml_loader.getValue<double>("map.spline_path.planner_min_waypoint_spacing_m", tuning.min_waypoint_spacing_m);
+  tuning.max_waypoint_spacing_m = yaml_loader.getValue<double>("map.spline_path.planner_max_waypoint_spacing_m", tuning.max_waypoint_spacing_m);
+  tuning.max_waypoints = yaml_loader.getValue<int>("map.spline_path.planner_max_waypoints", tuning.max_waypoints);
+  return tuning;
+}
+} // namespace
+
 MapVisualizationManager::MapVisualizationManager() :
     parent_node_(nullptr),
     render_scene_(std::make_shared<ROBOGait::map::rendering::RenderScene>()),
@@ -76,32 +127,9 @@ MapVisualizationManager::MapVisualizationManager() :
 
   if (spline_path_editor_)
   {
-    constexpr double DEFAULT_SPLINE_RESAMPLE_SPACING_PX = 5.0;
-    constexpr int DEFAULT_SPLINE_SMOOTHING_WINDOW_RADIUS = 2;
-    constexpr double DEFAULT_SPLINE_CATMULL_ALPHA = 0.5;
-    constexpr double DEFAULT_SPLINE_SAMPLE_SPACING_PX = 4.0;
-    constexpr double DEFAULT_SPLINE_SIMPLIFY_TOLERANCE_PX = 8.0;
-    constexpr int DEFAULT_SPLINE_MAX_ANCHOR_POINTS = 28;
-
-    double resample_spacing_px = DEFAULT_SPLINE_RESAMPLE_SPACING_PX;
-    int smoothing_window_radius = DEFAULT_SPLINE_SMOOTHING_WINDOW_RADIUS;
-    double catmull_alpha = DEFAULT_SPLINE_CATMULL_ALPHA;
-    double sample_spacing_px = DEFAULT_SPLINE_SAMPLE_SPACING_PX;
-    double simplify_tolerance_px = DEFAULT_SPLINE_SIMPLIFY_TOLERANCE_PX;
-    int max_anchor_points = DEFAULT_SPLINE_MAX_ANCHOR_POINTS;
-
-    if (yaml_loader.isLoaded())
-    {
-      resample_spacing_px = yaml_loader.getValue<double>("map.spline_path.resample_spacing_px", resample_spacing_px);
-      smoothing_window_radius = yaml_loader.getValue<int>("map.spline_path.smoothing_window_radius", smoothing_window_radius);
-      catmull_alpha = yaml_loader.getValue<double>("map.spline_path.catmull_alpha", catmull_alpha);
-      sample_spacing_px = yaml_loader.getValue<double>("map.spline_path.sample_spacing_px", sample_spacing_px);
-      simplify_tolerance_px = yaml_loader.getValue<double>("map.spline_path.simplify_tolerance_px", simplify_tolerance_px);
-      max_anchor_points = yaml_loader.getValue<int>("map.spline_path.max_anchor_points", max_anchor_points);
-    }
-
-    spline_path_editor_->setSmoothingTuningPx(resample_spacing_px, smoothing_window_radius, catmull_alpha, sample_spacing_px);
-    spline_path_editor_->setEditReductionTuningPx(simplify_tolerance_px, max_anchor_points);
+    spline_path_editor_->setSmoothingTuningPx(loadSmoothingTuningPx(yaml_loader));
+    spline_path_editor_->setEditReductionTuningPx(loadEditReductionTuningPx(yaml_loader));
+    spline_path_editor_->setPlannerWaypointTuning(loadPlannerWaypointTuning(yaml_loader));
   }
 
   if (render_scene_ && render_scene_->getPipeline())
