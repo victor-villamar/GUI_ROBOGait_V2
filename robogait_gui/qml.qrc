@@ -49,6 +49,7 @@
 	  <file alias="RosDomainIdTab.qml">qml/Dialogs/RosDomainIdTab.qml</file>
 	  <file alias="RosSettingsTab.qml">qml/Dialogs/RosSettingsTab.qml</file>
     <file alias="TestsDialog.qml">qml/Dialogs/TestsDialog.qml</file>
+    <file alias="TracedRoutesDialog.qml">qml/Dialogs/TracedRoutesDialog.qml</file>
 	  <file alias="UserSwitchDialog.qml">qml/Dialogs/UserSwitchDialog.qml</file>
 	</qresource>
 	<qresource prefix="/Views">
