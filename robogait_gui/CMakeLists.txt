@@ -58,6 +58,7 @@ set(HEADERS
     include/Map/Data/ParticleCloudData.hpp
     include/Map/Data/PathData.hpp
     include/Map/Data/RobotPoseData.hpp
+    include/Map/History/TracedRouteHistory.hpp
     include/Map/Interaction/Geometry/BezierSplineModel.hpp
     include/Map/Interaction/Geometry/SplineFitter.hpp
     include/Map/Interaction/Geometry/StrokeProcessor.hpp
@@ -142,6 +143,7 @@ set(SOURCES
     src/Map/Data/ParticleCloudData.cpp
     src/Map/Data/PathData.cpp
     src/Map/Data/RobotPoseData.cpp
+    src/Map/History/TracedRouteHistory.cpp
     src/Map/Interaction/Geometry/BezierSplineModel.cpp
     src/Map/Interaction/Geometry/SplineFitter.cpp
     src/Map/Interaction/Geometry/StrokeProcessor.cpp

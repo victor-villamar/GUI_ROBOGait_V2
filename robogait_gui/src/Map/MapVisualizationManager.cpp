@@ -75,6 +75,7 @@ MapVisualizationManager::MapVisualizationManager() :
     laser_source_(std::make_shared<ROBOGait::map::source::LaserSource>()),
     particle_source_(std::make_shared<ROBOGait::map::source::ParticleCloudSource>()),
     spline_path_editor_(std::make_unique<ROBOGait::map::interaction::SplinePathEditor>()),
+    traced_route_history_(std::make_unique<ROBOGait::map::history::TracedRouteHistory>()),
     selected_robot_namespace_(""),
     use_namespace_discovery_(true),
     is_initialized_(false),
@@ -458,6 +459,8 @@ bool MapVisualizationManager::isMapPointInside(double x, double y) const
 }
 
 ROBOGait::map::interaction::SplinePathEditor* MapVisualizationManager::getSplinePathEditor() const { return spline_path_editor_.get(); }
+
+ROBOGait::map::history::TracedRouteHistory* MapVisualizationManager::getTracedRouteHistory() const { return traced_route_history_.get(); }
 
 void MapVisualizationManager::activateSubscriptions()
 {
