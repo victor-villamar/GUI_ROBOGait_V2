@@ -53,6 +53,7 @@ TestMapViewForm {
     property bool waitingHomePathResult: false
     property bool waitingManualPathResult: false
     property var manualFollowPathPoints: []
+    property bool repeatedExperimentMode: false
     property bool personDetectionInProgress: false
 
     readonly property var manualControl: (userSession && userSession.rosManager && userSession.rosManager.robotManager)
@@ -65,6 +66,9 @@ TestMapViewForm {
     readonly property var splinePathEditor: (mapVisualizationManager && mapVisualizationManager.splinePathEditor)
                                             ? mapVisualizationManager.splinePathEditor
                                             : null
+    readonly property var tracedRouteHistory: (mapVisualizationManager && mapVisualizationManager.tracedRouteHistory)
+                                               ? mapVisualizationManager.tracedRouteHistory
+                                               : null
 
     readonly property int stepPosition: 0
     readonly property int stepOrientation: 1
@@ -106,6 +110,7 @@ TestMapViewForm {
     experimentRepeatVisible: step === stepExperiment && experimentShowRepeatButton
     experimentExitMode: step === stepExperiment && experimentNavigationFinished
     personDetectionConfirmed: false
+    tracedRoutesAvailable: tracedRouteHistory && !tracedRouteHistory.isEmpty && !testStarted
 
     HelpContentProvider {
         id: helpContent
@@ -370,6 +375,149 @@ TestMapViewForm {
             pathPoints.push(waypoint)
         }
         return pathPoints
+    }
+
+    function buildInitialRobotPoseRecord() {
+        return {
+            "x": initialRobotMapPosition.x,
+            "y": initialRobotMapPosition.y,
+            "theta": initialRobotTheta
+        }
+    }
+
+    function storeCurrentTestRoute() {
+        if (!tracedRouteHistory || !initialRobotPoseSaved) {
+            return
+        }
+
+        if (goalPlacementEnabled && goalPointSet && goalOrientationSet) {
+            tracedRouteHistory.addGoalRoute(goalMapPosition.x,
+                                            goalMapPosition.y,
+                                            goalOrientationDeg * Math.PI / 180,
+                                            buildInitialRobotPoseRecord())
+            return
+        }
+
+        if (pathPlacementEnabled && manualFollowPathPoints && manualFollowPathPoints.length >= 2) {
+            tracedRouteHistory.addPathRoute(manualFollowPathPoints,
+                                            pathTerminalOrientationDeg * Math.PI / 180,
+                                            buildInitialRobotPoseRecord())
+        }
+    }
+
+    function clearGoalRouteState() {
+        goalPointSet = false
+        goalOrientationEnabled = false
+        goalOrientationSet = false
+        goalAccepted = false
+        goalPathReady = false
+        goalOrientationDeg = 0
+        goalMapPosition = Qt.point(0, 0)
+        waitingGoalPathResult = false
+
+        if (mapVisualizationManager && mapVisualizationManager.clearGoalRobotPose) {
+            mapVisualizationManager.clearGoalRobotPose()
+        }
+    }
+
+    function restoreTracedRoute(route) {
+        if (!route || !route.type) {
+            return
+        }
+
+        if (tracedRouteHistory && tracedRouteHistory.selectRoute) {
+            tracedRouteHistory.selectRoute(route.id !== undefined ? route.id : -1)
+        }
+        stopPersonDetection()
+        personDetectionConfirmed = false
+
+        if (route.type === "goal") {
+            restoreTracedGoal(route)
+            return
+        }
+
+        if (route.type === "path") {
+            restoreTracedPath(route)
+        }
+    }
+
+    function restoreTracedGoal(route) {
+        if (!route.goal) {
+            return
+        }
+
+        if (pathPlacementEnabled) {
+            pathPlacementEnabled = false
+        }
+
+        goalPlacementEnabled = true
+        resetManualPathFlow()
+
+        goalMapPosition = Qt.point(route.goal.x, route.goal.y)
+        goalOrientationDeg = route.goal.theta * 180 / Math.PI
+        goalPointSet = true
+        goalOrientationSet = true
+        goalOrientationEnabled = true
+        goalAccepted = false
+        goalPathReady = false
+        waitingGoalPathResult = false
+        waitingHomePathResult = false
+        waitingManualPathResult = false
+
+        if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+            mapVisualizationManager.setPathUpdatesEnabled(false)
+        }
+        if (mapVisualizationManager && mapVisualizationManager.clearManualPath) {
+            mapVisualizationManager.clearManualPath()
+        }
+        if (mapVisualizationManager && mapVisualizationManager.setGoalRobotPose) {
+            mapVisualizationManager.setGoalRobotPose(goalMapPosition.x, goalMapPosition.y, goalOrientationDeg * Math.PI / 180)
+        }
+    }
+
+    function restoreTracedPath(route) {
+        if (!route.points || route.points.length < 2 || !splinePathEditor || !splinePathEditor.loadPathPoints) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo cargar la ruta trazada")
+            errorPopup.open()
+            return
+        }
+
+        if (goalPlacementEnabled) {
+            goalPlacementEnabled = false
+        }
+        clearGoalRouteState()
+
+        pathPlacementEnabled = true
+        manualPathReady = false
+        manualFollowPathPoints = []
+        waitingGoalPathResult = false
+        waitingHomePathResult = false
+        waitingManualPathResult = false
+
+        if (mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+            mapVisualizationManager.setPathUpdatesEnabled(false)
+        }
+        if (mapVisualizationManager && mapVisualizationManager.stopManualLivePath) {
+            mapVisualizationManager.stopManualLivePath()
+        }
+        if (mapVisualizationManager && mapVisualizationManager.clearManualPath) {
+            mapVisualizationManager.clearManualPath()
+        }
+
+        pathTerminalOrientationDeg = route.terminalTheta !== undefined && isFinite(route.terminalTheta)
+                ? route.terminalTheta * 180 / Math.PI
+                : 0
+        pathTerminalOrientationOverride = route.terminalTheta !== undefined && isFinite(route.terminalTheta)
+
+        var loaded = splinePathEditor.loadPathPoints(route.points)
+        if (!loaded) {
+            resetManualPathFlow()
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo cargar la ruta trazada")
+            errorPopup.open()
+            return
+        }
+
+        updatePathTerminalPoseFromEditor(true)
     }
 
     function clearGoalSelection() {
@@ -1336,6 +1484,14 @@ TestMapViewForm {
         handlePathEditToggle()
     }
 
+    onTracedRoutesRequested: {
+        if (!tracedRouteHistory || tracedRouteHistory.isEmpty || testStarted) {
+            return
+        }
+
+        tracedRoutesDialog.openWithRoutes(tracedRouteHistory.routes, tracedRouteHistory.selectedRouteId)
+    }
+
     onStartTestRequested: {
         if (step !== stepTrajectory) {
             return
@@ -1488,6 +1644,10 @@ TestMapViewForm {
     }
 
     Component.onDestruction: {
+        if (tracedRouteHistory && tracedRouteHistory.clear) {
+            tracedRouteHistory.clear()
+        }
+        repeatedExperimentMode = false
         stopAutoLocalizationSpin()
         stopPersonDetection()
 
@@ -1611,6 +1771,7 @@ TestMapViewForm {
 
             if (!initialRobotPoseSaved) {
                 resetToTrajectoryPhase()
+                repeatedExperimentMode = tracedRouteHistory && !tracedRouteHistory.isEmpty
                 return
             }
 
@@ -1823,6 +1984,7 @@ TestMapViewForm {
                 }
 
                 resetToTrajectoryPhase()
+                repeatedExperimentMode = tracedRouteHistory && !tracedRouteHistory.isEmpty
                 return
             }
 
@@ -1860,6 +2022,14 @@ TestMapViewForm {
 
             stopPersonDetection()
             personDetectedConfirmDialog.openWithMessage(qsTr("Persona detectada (%1). ¿Desea continuar con el test?").arg(detections))
+        }
+    }
+
+    TracedRoutesDialog {
+        id: tracedRoutesDialog
+
+        onRouteSelected: function(route) {
+            restoreTracedRoute(route)
         }
     }
 
@@ -1971,6 +2141,7 @@ TestMapViewForm {
                 }
             }
 
+            storeCurrentTestRoute()
             testStarted = true
             resetExperimentPhaseState()
             step = stepExperiment

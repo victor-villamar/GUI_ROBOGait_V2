@@ -152,6 +152,11 @@ public:
   Q_INVOKABLE void clear();
 
   /**
+   * @brief Load map-frame path points as an editable spline
+   */
+  Q_INVOKABLE bool loadPathPoints(const QVariantList& points);
+
+  /**
    * @brief Clear cached points from external clear operation
    */
   void clearCachedPath();

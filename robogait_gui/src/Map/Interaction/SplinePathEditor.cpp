@@ -9,7 +9,6 @@
 #include "Map/Interaction/Geometry/StrokeProcessor.hpp"
 #include "Map/Interaction/SplinePathEditor.hpp"
 #include "Map/MapVisualizationManager.hpp"
-#include "Map/Utils/Utils.hpp"
 
 using namespace ROBOGait::map::interaction;
 
@@ -165,6 +164,85 @@ void SplinePathEditor::clearCachedPath()
   {
     emit pathChanged();
   }
+}
+
+bool SplinePathEditor::loadPathPoints(const QVariantList& points)
+{
+  if (!ensureMapVisualizationManager())
+  {
+    return false;
+  }
+
+  QVector<QPointF> loaded_points;
+  loaded_points.reserve(points.size());
+
+  for (const QVariant& value : points)
+  {
+    if (!value.canConvert<QVariantMap>())
+    {
+      continue;
+    }
+
+    const QVariantMap point_map = value.toMap();
+    bool ok_x = false;
+    bool ok_y = false;
+    const double x = point_map.value("x").toDouble(&ok_x);
+    const double y = point_map.value("y").toDouble(&ok_y);
+
+    if (!ok_x || !ok_y || !std::isfinite(x) || !std::isfinite(y))
+    {
+      continue;
+    }
+
+    loaded_points.append(QPointF(x, y));
+  }
+
+  loaded_points = geometry::StrokeProcessor::removeDuplicatedPoints(loaded_points, 1e-6);
+
+  if (loaded_points.size() < geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
+  {
+    qWarning() << "[SplinePathEditor::loadPathPoints] Not enough valid points to load path";
+    return false;
+  }
+
+  QVector<QPointF> editable_points = loaded_points;
+  const double simplify_tolerance_m = qMax(pixelsToMetersDistance(edit_reduction_tuning_px_.simplify_tolerance_px), 1e-6);
+  editable_points = geometry::StrokeProcessor::simplifyDouglasPeucker(editable_points, simplify_tolerance_m);
+  editable_points = geometry::StrokeProcessor::limitPointCount(editable_points, edit_reduction_tuning_px_.max_anchor_points);
+
+  if (editable_points.size() < geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
+  {
+    qWarning() << "[SplinePathEditor::loadPathPoints] Not enough editable points to rebuild spline";
+    return false;
+  }
+
+  const QVector<geometry::CubicBezierSegment> segments = geometry::SplineFitter::fitCentripetalCatmullRom(editable_points, smoothing_tuning_px_.catmull_alpha);
+
+  if (segments.isEmpty() || !spline_model_.setFromSegments(segments))
+  {
+    qWarning() << "[SplinePathEditor::loadPathPoints] Failed to rebuild editable spline";
+    return false;
+  }
+
+  const double sample_spacing_m = qMax(pixelsToMetersDistance(smoothing_tuning_px_.sample_spacing_px), 1e-6);
+  const QVector<QPointF> sampled_points = spline_model_.sampleByDistance(sample_spacing_m);
+
+  if (sampled_points.size() < geometry::StrokeProcessor::MIN_VALID_PATH_POINTS)
+  {
+    qWarning() << "[SplinePathEditor::loadPathPoints] Rebuilt spline produced an invalid path";
+    return false;
+  }
+
+  raw_path_points_ = loaded_points;
+  smoothed_path_points_ = sampled_points;
+  stroke_blocked_by_outside_ = false;
+  setDrawing(false);
+  setSmoothedState(true);
+  setEditablePathState(true);
+  setEditModeState(false);
+  emit pathChanged();
+  syncPathToVisualization();
+  return true;
 }
 
 void SplinePathEditor::beginStrokeFromScreen(double screen_x, double screen_y)

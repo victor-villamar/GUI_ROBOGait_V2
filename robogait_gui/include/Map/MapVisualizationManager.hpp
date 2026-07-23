@@ -14,6 +14,7 @@
 #include <rclcpp/node.hpp>
 
 #include "Map/Data/RobotPoseData.hpp"
+#include "Map/History/TracedRouteHistory.hpp"
 #include "Map/Interaction/SplinePathEditor.hpp"
 #include "Map/Items/LaserLayerItem.hpp"
 #include "Map/Items/MapLayerItem.hpp"
@@ -91,6 +92,10 @@ class MapVisualizationManager : public QObject
 
   Q_PROPERTY(ROBOGait::map::interaction::SplinePathEditor* splinePathEditor
              READ getSplinePathEditor
+             CONSTANT)
+
+  Q_PROPERTY(ROBOGait::map::history::TracedRouteHistory* tracedRouteHistory
+             READ getTracedRouteHistory
              CONSTANT)
   // clang-format on
 
@@ -269,6 +274,11 @@ public:
    * @brief Get spline path editor
    */
   ROBOGait::map::interaction::SplinePathEditor* getSplinePathEditor() const;
+
+  /**
+   * @brief Get traced route history
+   */
+  ROBOGait::map::history::TracedRouteHistory* getTracedRouteHistory() const;
 
   /**
    * @brief Activate subscriptions for data sources
@@ -532,6 +542,7 @@ private:
   std::shared_ptr<ROBOGait::map::source::LaserSource> laser_source_;                 /**< Laser source */
   std::shared_ptr<ROBOGait::map::source::ParticleCloudSource> particle_source_;      /**< Particle cloud source */
   std::unique_ptr<ROBOGait::map::interaction::SplinePathEditor> spline_path_editor_; /**< Spline path editor */
+  std::unique_ptr<ROBOGait::map::history::TracedRouteHistory> traced_route_history_; /**< Traced route history */
 
   QString selected_robot_namespace_;                                              /**< Selected robot namespace */
   bool use_namespace_discovery_;                                                  /**< Use namespace-based topic discovery */
