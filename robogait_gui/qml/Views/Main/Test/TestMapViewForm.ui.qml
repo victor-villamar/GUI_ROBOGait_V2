@@ -49,6 +49,7 @@ Rectangle {
     signal pathSegmentRequested()
     signal pathEditToggleRequested()
     signal pathClearRequested()
+    signal tracedRoutesRequested()
     signal startTestRequested()
     signal goHomeRequested()
     signal fitRequested()
@@ -71,6 +72,7 @@ Rectangle {
     property bool goalAccepted: false
     property bool goalPathReady: false
     property bool manualPathReady: false
+    property bool tracedRoutesAvailable: false
     property bool personDetectionConfirmed: false
     property bool pathTerminalPoseSet: false
     property bool pathTerminalOrientationOverride: false
@@ -766,6 +768,7 @@ Rectangle {
                 goalAccepted: root.goalAccepted
                 goalPathReady: root.goalPathReady
                 manualPathReady: root.manualPathReady
+                tracedRoutesAvailable: root.tracedRoutesAvailable
                 personDetectionConfirmed: root.personDetectionConfirmed
 
                 onBackRequested: root.backNavigationRequested()
@@ -793,6 +796,7 @@ Rectangle {
                 }
 
                 onStartTestRequested: root.startTestRequested()
+                onTracedRoutesRequested: root.tracedRoutesRequested()
             }
         }
 

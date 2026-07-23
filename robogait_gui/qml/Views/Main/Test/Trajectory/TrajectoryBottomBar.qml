@@ -16,6 +16,7 @@ Item {
     property bool goalAccepted: false
     property bool goalPathReady: false
     property bool manualPathReady: false
+    property bool tracedRoutesAvailable: false
     property bool personDetectionConfirmed: false
 
     signal backRequested()
@@ -23,6 +24,7 @@ Item {
     signal zoomInRequested()
     signal goalModeRequested()
     signal pathModeRequested()
+    signal tracedRoutesRequested()
     signal startTestRequested()
 
     Row {
@@ -170,32 +172,64 @@ Item {
         }
     }
 
-    Button {
-        id: startTestButton
-        width: 150
-        height: root.iconButtonSizePx
+    Row {
+        id: rightControls
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        visible: ((root.goalPlacementEnabled && root.goalAccepted) || (root.pathPlacementEnabled && root.manualPathReady))
-        enabled: root.goalPlacementEnabled ? root.goalPathReady : (root.pathPlacementEnabled ? root.manualPathReady : false)
-        opacity: enabled ? 1.0 : 0.4
+        spacing: 10
 
-        background: Rectangle {
-            radius: 6
-            color: startTestButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
-            border.color: AppTheme.map.white
-            border.width: 1
+        Button {
+            id: tracedRoutesButton
+            width: 190
+            height: root.iconButtonSizePx
+            visible: root.tracedRoutesAvailable
+            enabled: root.mapAvailable && root.isTrajectoryStep
+            opacity: enabled ? 1.0 : 0.4
+
+            background: Rectangle {
+                radius: 6
+                color: tracedRoutesButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                border.color: AppTheme.map.white
+                border.width: 1
+            }
+
+            contentItem: Text {
+                text: qsTr("VER RUTAS TRAZADAS")
+                color: AppTheme.map.white
+                font.pixelSize: 13
+                font.bold: true
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+
+            onClicked: root.tracedRoutesRequested()
         }
 
-        contentItem: Text {
-            text: root.personDetectionConfirmed ? qsTr("INICIAR TEST") : qsTr("DETECTAR PERSONA")
-            color: AppTheme.map.white
-            font.pixelSize: 14
-            font.bold: true
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-        }
+        Button {
+            id: startTestButton
+            width: 150
+            height: root.iconButtonSizePx
+            visible: ((root.goalPlacementEnabled && root.goalAccepted) || (root.pathPlacementEnabled && root.manualPathReady))
+            enabled: root.goalPlacementEnabled ? root.goalPathReady : (root.pathPlacementEnabled ? root.manualPathReady : false)
+            opacity: enabled ? 1.0 : 0.4
 
-        onClicked: root.startTestRequested()
+            background: Rectangle {
+                radius: 6
+                color: startTestButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
+                border.color: AppTheme.map.white
+                border.width: 1
+            }
+
+            contentItem: Text {
+                text: root.personDetectionConfirmed ? qsTr("INICIAR TEST") : qsTr("DETECTAR PERSONA")
+                color: AppTheme.map.white
+                font.pixelSize: 14
+                font.bold: true
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+
+            onClicked: root.startTestRequested()
+        }
     }
 }
