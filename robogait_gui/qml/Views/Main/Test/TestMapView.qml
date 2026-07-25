@@ -16,7 +16,6 @@ TestMapViewForm {
     readonly property real computedJoystickStickSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.joystickStickSize, 0) : 34
     readonly property real computedWheelSizePx: computedJoystickStickSizePx * 4
     readonly property int busyTimeoutMs: timeoutSettings ? timeoutSettings.testBusyTimeoutMs : 10000
-    readonly property real manualFollowPathCompletionToleranceM: 0.60
 
     iconButtonSizePx: computedIconButtonSizePx
     iconGlyphSizePx: computedIconGlyphSizePx
@@ -156,36 +155,6 @@ TestMapViewForm {
         experimentSavePromptPending = true
         experimentFinishBusyDialog.openWithMessage(messageText)
         experimentSavePromptTimer.restart()
-    }
-
-    function manualFollowPathReachedEndpointAfterAbort(resultCode) {
-        if (resultCode !== RobotServiceBridge.NAV_ABORTED || !pathPlacementEnabled) {
-            return false
-        }
-
-        if (!manualFollowPathPoints || manualFollowPathPoints.length < 1) {
-            return false
-        }
-
-        if (!mapVisualizationManager || !mapVisualizationManager.getRobotPose) {
-            return false
-        }
-
-        var robotPose = mapVisualizationManager.getRobotPose()
-        if (!robotPose.available) {
-            return false
-        }
-
-        var finalPoint = manualFollowPathPoints[manualFollowPathPoints.length - 1]
-        var dx = robotPose.x - finalPoint.x
-        var dy = robotPose.y - finalPoint.y
-        var distanceSquared = dx * dx + dy * dy
-        var toleranceSquared = manualFollowPathCompletionToleranceM * manualFollowPathCompletionToleranceM
-        if (distanceSquared > toleranceSquared) {
-            return false
-        }
-
-        return true
     }
 
     function navigationFailureMessage(resultCode) {
@@ -1516,7 +1485,8 @@ TestMapViewForm {
                 return
             }
 
-            startTestConfirmDialog.openWithMessage(qsTr("¿Iniciar navegación con esta ruta?"))
+            startTestConfirmDialog.openWithMessage(qsTr("¿Iniciar test con esta ruta?"))
+            return
         }
 
     }
@@ -1988,18 +1958,14 @@ TestMapViewForm {
                 return
             }
 
-            var effectiveResultCode = manualFollowPathReachedEndpointAfterAbort(resultCode)
-                    ? RobotServiceBridge.NAV_SUCCEEDED
-                    : resultCode
-
             testStarted = false
             experimentNavigationFinished = true
-            experimentNavigationSucceeded = (effectiveResultCode === RobotServiceBridge.NAV_SUCCEEDED)
+            experimentNavigationSucceeded = (resultCode === RobotServiceBridge.NAV_SUCCEEDED)
             experimentShowRepeatButton = true
             clearPathsAfterExperimentEnd()
 
             if (!experimentNavigationSucceeded) {
-                errorPopup.errorRectangleTextError.text = navigationFailureMessage(effectiveResultCode)
+                errorPopup.errorRectangleTextError.text = navigationFailureMessage(resultCode)
                 errorPopup.open()
                 return
             }
@@ -2080,7 +2046,7 @@ TestMapViewForm {
             }
             else if (pathPlacementEnabled) {
                 if (!manualPathReady) {
-                    errorPopup.errorRectangleTextError.text = qsTr("Error: Ruta manual no preparada")
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: No hay ruta manual calculada")
                     errorPopup.open()
                     return
                 }
@@ -2089,48 +2055,6 @@ TestMapViewForm {
                     errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
                     errorPopup.open()
                     return
-                }
-
-                if (!mapVisualizationManager || !mapVisualizationManager.getRobotPose) {
-                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo obtener la posición actual del robot")
-                    errorPopup.open()
-                    return
-                }
-
-                var startRobotPose = mapVisualizationManager.getRobotPose()
-                if (!startRobotPose.available) {
-                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo obtener la posición actual del robot")
-                    errorPopup.open()
-                    return
-                }
-
-                if (!robotServiceBridge.normalizeManualFollowPath || !robotServiceBridge.setManualFollowPath) {
-                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo preparar la ruta manual")
-                    errorPopup.open()
-                    return
-                }
-
-                var startFollowPathPoints = robotServiceBridge.normalizeManualFollowPath(
-                            manualFollowPathPoints,
-                            startRobotPose.x,
-                            startRobotPose.y,
-                            startRobotPose.theta)
-                if (!startFollowPathPoints || startFollowPathPoints.length < 2) {
-                    errorPopup.errorRectangleTextError.text = qsTr("Error: Path manual normalizado inválido")
-                    errorPopup.open()
-                    return
-                }
-
-                var okPrepareStartPath = robotServiceBridge.setManualFollowPath(startFollowPathPoints)
-                if (!okPrepareStartPath) {
-                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo preparar la ruta manual")
-                    errorPopup.open()
-                    return
-                }
-
-                manualFollowPathPoints = startFollowPathPoints
-                if (mapVisualizationManager.setManualPathPoints) {
-                    mapVisualizationManager.setManualPathPoints(manualFollowPathPoints)
                 }
 
                 var okStartPath = robotServiceBridge.followLastComputedPath()
