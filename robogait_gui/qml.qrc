@@ -46,6 +46,7 @@
     <file alias="MapRegisterDialog.qml">qml/Dialogs/MapRegisterDialog.qml</file>
 	  <file alias="PatientDetailsDialog.qml">qml/Dialogs/PatientDetailsDialog.qml</file>
 	  <file alias="PatientRegisterDialog.qml">qml/Dialogs/PatientRegisterDialog.qml</file>
+    <file alias="PersonDetectionDialog.qml">qml/Dialogs/PersonDetectionDialog.qml</file>
 	  <file alias="RosDomainIdTab.qml">qml/Dialogs/RosDomainIdTab.qml</file>
 	  <file alias="RosSettingsTab.qml">qml/Dialogs/RosSettingsTab.qml</file>
     <file alias="TestsDialog.qml">qml/Dialogs/TestsDialog.qml</file>

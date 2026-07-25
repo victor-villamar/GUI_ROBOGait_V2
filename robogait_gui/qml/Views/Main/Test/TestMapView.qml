@@ -275,6 +275,12 @@ TestMapViewForm {
         }
     }
 
+    function closePersonDetectionDialog() {
+        if (personDetectionDialog && personDetectionDialog.visible) {
+            personDetectionDialog.close()
+        }
+    }
+
     function syncPathTerminalGoalRobotPose() {
         if (!pathPlacementEnabled || !pathTerminalPoseSet) {
             return
@@ -1103,6 +1109,7 @@ TestMapViewForm {
     }
 
     function handleBackNavigation() {
+        closePersonDetectionDialog()
         exitConfirmDialog.openWithMessage(qsTr("¿Salir de la prueba? Se perderá la configuración."))
         return true
     }
@@ -1123,6 +1130,7 @@ TestMapViewForm {
         handleGoalClear()
         handlePathClear()
         stopPersonDetection()
+        closePersonDetectionDialog()
         personDetectionConfirmed = false
 
         step = stepTrajectory
@@ -1133,6 +1141,7 @@ TestMapViewForm {
             return
         }
 
+        closePersonDetectionDialog()
         exiting = true
         busyDialog.openWithMessage(qsTr("Saliendo..."))
 
@@ -1476,6 +1485,7 @@ TestMapViewForm {
                 return
             }
 
+            closePersonDetectionDialog()
             startTestConfirmDialog.openWithMessage(qsTr("¿Iniciar test con este objetivo?"))
             return
         }
@@ -1485,6 +1495,7 @@ TestMapViewForm {
                 return
             }
 
+            closePersonDetectionDialog()
             startTestConfirmDialog.openWithMessage(qsTr("¿Iniciar test con esta ruta?"))
             return
         }
@@ -1540,6 +1551,7 @@ TestMapViewForm {
         }
 
         stopPersonDetection()
+        closePersonDetectionDialog()
         personDetectionConfirmed = false
         goalPlacementEnabled = false
         pathPlacementEnabled = false
@@ -1620,6 +1632,7 @@ TestMapViewForm {
         repeatedExperimentMode = false
         stopAutoLocalizationSpin()
         stopPersonDetection()
+        closePersonDetectionDialog()
 
         if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
             var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
@@ -1989,6 +2002,29 @@ TestMapViewForm {
             stopPersonDetection()
             personDetectedConfirmDialog.openWithMessage(qsTr("Persona detectada (%1). ¿Desea continuar con el test?").arg(detections))
         }
+
+        function onCameraPersonDetected(detections, imageSource) {
+            if (step !== stepTrajectory || !personDetectionInProgress) {
+                return
+            }
+
+            stopPersonDetection()
+            personDetectionConfirmed = true
+            personDetectionDialog.openWithDetection(qsTr("Numero de personas detectadas (%1)").arg(detections), imageSource)
+        }
+    }
+
+    PersonDetectionDialog {
+        id: personDetectionDialog
+
+        onRedetectRequested: {
+            if (step !== stepTrajectory) {
+                return
+            }
+
+            personDetectionConfirmed = false
+            beginPersonDetection()
+        }
     }
 
     TracedRoutesDialog {
@@ -2068,6 +2104,7 @@ TestMapViewForm {
             storeCurrentTestRoute()
             testStarted = true
             resetExperimentPhaseState()
+            closePersonDetectionDialog()
             step = stepExperiment
 
             if (goalPlacementEnabled && mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
