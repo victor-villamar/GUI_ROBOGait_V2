@@ -35,7 +35,6 @@ RobotServiceClient::RobotServiceClient() :
     pending_stop_after_save_(false),
     map_saver_stop_requested_(false),
     nav_goal_active_(false),
-    cancel_requested_(false),
     cancel_in_progress_(false),
     start_stop_timeout_s_(START_STOP_TIMEOUT)
 {
@@ -301,6 +300,22 @@ bool RobotServiceClient::startNavigation(const std::string& map_name)
     return false;
   }
 
+  const bool navigation_use_sim_time = useNavigationSimTime();
+  const std::string navigation_use_sim_time_arg = navigation_use_sim_time ? "true" : "false";
+  const std::string nav2_params_file = yaml_loader.getValue<std::string>("navigation.nav2_params_file", "params/nav2_params.yaml");
+
+  if (nav2_params_file.empty())
+  {
+    qCritical() << "[RobotServiceClient::startNavigation] Nav2 params file is empty in YAML configuration";
+    return false;
+  }
+
+  const std::filesystem::path nav2_params_path(nav2_params_file);
+  const std::string resolved_nav2_params_file =
+      nav2_params_path.is_absolute()
+          ? nav2_params_path.string()
+          : (std::filesystem::path(ament_index_cpp::get_package_share_directory(ROBOGait::ros::define::ROBOGAIT_GUI)) / nav2_params_path).string();
+
   if (!validateCommandKey(KEY_NAVIGATION))
   {
     qCritical() << "[RobotServiceClient::startNavigation] Command key" << KEY_NAVIGATION << "is not valid";
@@ -313,6 +328,8 @@ bool RobotServiceClient::startNavigation(const std::string& map_name)
   const std::unordered_map<std::string, std::string> vars = {
       {"{map_path}", map_path},
       {"{map_name}", safe_name},
+      {"{navigation_use_sim_time}", navigation_use_sim_time_arg},
+      {"{nav2_params_file}", resolved_nav2_params_file},
   };
 
   args = replacePlaceholders(args, vars);
@@ -577,7 +594,6 @@ bool RobotServiceClient::navigateToPose(double x, double y, double theta)
   }
 
   nav_goal_handle_.reset();
-  cancel_requested_ = false;
 
   rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SendGoalOptions options;
   options.goal_response_callback = std::bind(&RobotServiceClient::goalResponseNavigateToPoseCallback, this, std::placeholders::_1);
@@ -612,11 +628,20 @@ bool RobotServiceClient::setManualFollowPath(const QVariantList& points)
   }
 
   const std::string frame = context_ ? context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME) : ROBOGait::ros::topics::TF_MAP_FRAME;
-  const rclcpp::Time stamp = parent_node_->now();
 
   nav_msgs::msg::Path path;
   path.header.frame_id = frame;
-  path.header.stamp = stamp;
+
+  if (useNavigationSimTime())
+  {
+    path.header.stamp.sec = 0;
+    path.header.stamp.nanosec = 0;
+  }
+  else
+  {
+    const rclcpp::Time stamp = parent_node_->now();
+    path.header.stamp = stamp;
+  }
   path.poses.reserve(waypoints.size());
 
   for (size_t i = 0; i < waypoints.size(); ++i)
@@ -632,7 +657,6 @@ bool RobotServiceClient::setManualFollowPath(const QVariantList& points)
   }
 
   manual_follow_path_ = path;
-
   return true;
 }
 
@@ -682,10 +706,11 @@ bool RobotServiceClient::followLastComputedPath()
 
   nav2_msgs::action::FollowPath::Goal goal_msg;
   goal_msg.path = *manual_follow_path_;
+  goal_msg.controller_id = getConfiguredNavigationId(CONFIG_MANUAL_FOLLOW_PATH_CONTROLLER_ID, DEFAULT_MANUAL_FOLLOW_PATH_CONTROLLER_ID);
+  goal_msg.goal_checker_id = getConfiguredNavigationId(CONFIG_MANUAL_FOLLOW_PATH_GOAL_CHECKER_ID, DEFAULT_FOLLOW_PATH_GOAL_CHECKER_ID);
 
   nav_goal_handle_.reset();
   follow_path_goal_handle_.reset();
-  cancel_requested_ = false;
 
   rclcpp_action::Client<nav2_msgs::action::FollowPath>::SendGoalOptions options;
   options.goal_response_callback = std::bind(&RobotServiceClient::goalResponseFollowPathCallback, this, std::placeholders::_1);
@@ -711,7 +736,6 @@ bool RobotServiceClient::cancelNavigateToPose()
 
   if (!nav_goal_active_)
   {
-    cancel_requested_ = true;
     cancel_in_progress_ = true;
     nav_goal_handle_.reset();
 
@@ -727,7 +751,6 @@ bool RobotServiceClient::cancelNavigateToPose()
     return true;
   }
 
-  cancel_requested_ = true;
   cancel_in_progress_ = true;
 
   if (nav_goal_handle_)
@@ -821,6 +844,34 @@ bool RobotServiceClient::loadTimeouts()
 
   start_stop_timeout_s_ = std::chrono::seconds(sanitized_start_stop_timeout_s);
   return true;
+}
+
+std::string RobotServiceClient::getConfiguredNavigationId(std::string_view key, std::string_view default_value) const
+{
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  if (!yaml_loader.isLoaded())
+  {
+    return std::string(default_value);
+  }
+
+  const std::string key_string(key);
+  const std::string default_string(default_value);
+  return yaml_loader.getValue<std::string>(key_string, default_string);
+}
+
+bool RobotServiceClient::useNavigationSimTime() const
+{
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  if (!yaml_loader.isLoaded())
+  {
+    qCritical() << "[RobotServiceClient::useNavigationSimTime] YAML loader is not loaded";
+    return false;
+  }
+
+  const std::string key_string(CONFIG_NAVIGATION_USE_SIM_TIME);
+  return yaml_loader.getValue<bool>(key_string, false);
 }
 
 bool RobotServiceClient::callCommandServiceAsync(const std::string& cmd, bool execute, const CommandRequestContext& context)
@@ -1596,7 +1647,7 @@ void RobotServiceClient::goalResponseNavigateToPoseCallback(const rclcpp_action:
   nav_goal_handle_ = goal_handle;
   nav_goal_active_ = true;
 
-  if (cancel_requested_ || cancel_in_progress_)
+  if (cancel_in_progress_)
   {
     ac_navigate_to_pose_->async_cancel_goal(nav_goal_handle_, std::bind(&RobotServiceClient::cancelNavigateToPoseCallback, this, std::placeholders::_1));
   }
@@ -1620,7 +1671,6 @@ void RobotServiceClient::cancelNavigateToPoseCallback(typename rclcpp_action::Cl
     qWarning() << "[RobotServiceClient::cancelNavigateToPoseCallback] Failed to cancel navigation";
   }
 
-  cancel_requested_ = false;
   cancel_in_progress_ = false;
 }
 
@@ -1636,27 +1686,28 @@ void RobotServiceClient::resultNavigateToPoseCallback(const rclcpp_action::Clien
   switch (result.code)
   {
     case rclcpp_action::ResultCode::SUCCEEDED:
-      qInfo() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal alcanzado";
+      qInfo() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal reached";
       nav_result = NavigationResult::SUCCEEDED;
       break;
 
     case rclcpp_action::ResultCode::CANCELED:
-      qInfo() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal cancelado";
+      qInfo() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal canceled";
       nav_result = NavigationResult::CANCELED;
       break;
 
     case rclcpp_action::ResultCode::ABORTED:
-      qWarning() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal abortado";
+      qWarning() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal aborted";
       nav_result = NavigationResult::ABORTED;
       break;
 
     default:
-      qWarning() << "[RobotServiceClient::resultNavigateToPoseCallback] Estado desconocido";
+      qWarning() << "[RobotServiceClient::resultNavigateToPoseCallback] Unknown state";
       nav_result = NavigationResult::UNKNOWN;
       break;
   }
 
   nav_goal_active_ = false;
+  cancel_in_progress_ = false;
   nav_goal_handle_.reset();
   notifyNavigationResult(nav_result);
 }
@@ -1674,7 +1725,7 @@ void RobotServiceClient::goalResponseFollowPathCallback(const rclcpp_action::Cli
   follow_path_goal_handle_ = goal_handle;
   nav_goal_active_ = true;
 
-  if (cancel_requested_ || cancel_in_progress_)
+  if (cancel_in_progress_)
   {
     ac_follow_path_->async_cancel_goal(follow_path_goal_handle_, std::bind(&RobotServiceClient::cancelFollowPathCallback, this, std::placeholders::_1));
   }
@@ -1699,7 +1750,6 @@ void RobotServiceClient::cancelFollowPathCallback(typename rclcpp_action::Client
     qWarning() << "[RobotServiceClient::cancelFollowPathCallback] Failed to cancel follow path";
   }
 
-  cancel_requested_ = false;
   cancel_in_progress_ = false;
 }
 
@@ -1730,6 +1780,7 @@ void RobotServiceClient::resultFollowPathCallback(const rclcpp_action::ClientGoa
   }
 
   nav_goal_active_ = false;
+  cancel_in_progress_ = false;
   follow_path_goal_handle_.reset();
   notifyNavigationResult(nav_result);
 }
