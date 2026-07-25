@@ -80,6 +80,7 @@ MapVisualizationManager::MapVisualizationManager() :
     use_namespace_discovery_(true),
     is_initialized_(false),
     subscriptions_active_(false),
+    layers_active_(false),
     map_available_cache_(false),
     robot_pose_available_cache_(false),
     laser_available_cache_(false),
@@ -195,12 +196,8 @@ void MapVisualizationManager::setSelectedRobot(const QString& robot_identifier, 
     return;
   }
 
-  // Destroy previous displays if they exist
-  if (subscriptions_active_)
-  {
-    destroySubscriptions();
-  }
-
+  // Destroy previous displays and subscriptions if they exist
+  destroySubscriptions();
   destroyLayers();
 
   // Store new robot selection
@@ -514,6 +511,8 @@ void MapVisualizationManager::destroySubscriptions()
     return;
   }
 
+  subscriptions_active_ = false;
+
   if (render_scene_)
   {
     render_scene_->stop();
@@ -578,8 +577,6 @@ void MapVisualizationManager::destroySubscriptions()
     follow_robot_ = false;
     emit followRobotChanged();
   }
-
-  subscriptions_active_ = false;
 
   qInfo() << "[MapVisualizationManager::destroySubscriptions] Subscriptions destroyed";
 }
@@ -1713,41 +1710,39 @@ void MapVisualizationManager::createLayers()
   render_scene_->setParticleCloudLayer(particle_layer_);
 
   updateAvailability();
+  layers_active_ = true;
 
   qInfo() << "[MapVisualizationManager::createLayers] Layers created";
 }
 
 void MapVisualizationManager::destroyLayers()
 {
-  if (!map_layer_ && !robot_layer_ && !path_layer_ && !manual_draw_path_layer_ && !live_path_layer_ && !laser_layer_ && !particle_layer_)
+  if (!layers_active_)
   {
     if (spline_path_editor_)
     {
       spline_path_editor_->clearCachedPath();
     }
 
-    qWarning() << "[MapVisualizationManager::destroyLayers] No layers to destroy";
     return;
   }
 
-  if (!render_scene_)
-  {
-    if (spline_path_editor_)
-    {
-      spline_path_editor_->clearCachedPath();
-    }
+  layers_active_ = false;
 
+  if (render_scene_)
+  {
+    render_scene_->stop();
+    render_scene_->setMapLayer(nullptr);
+    render_scene_->setRobotLayer(nullptr);
+    render_scene_->setPathLayer(nullptr);
+    render_scene_->setLivePathLayer(nullptr);
+    render_scene_->setLaserLayer(nullptr);
+    render_scene_->setParticleCloudLayer(nullptr);
+  }
+  else
+  {
     qWarning() << "[MapVisualizationManager::destroyLayers] Render scene not available, cannot properly disconnect layers from scene";
-    return;
   }
-
-  render_scene_->stop();
-  render_scene_->setMapLayer(nullptr);
-  render_scene_->setRobotLayer(nullptr);
-  render_scene_->setPathLayer(nullptr);
-  render_scene_->setLivePathLayer(nullptr);
-  render_scene_->setLaserLayer(nullptr);
-  render_scene_->setParticleCloudLayer(nullptr);
 
   if (map_layer_item_)
   {

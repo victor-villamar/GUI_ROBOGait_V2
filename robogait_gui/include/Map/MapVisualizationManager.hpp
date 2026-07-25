@@ -548,6 +548,7 @@ private:
   bool use_namespace_discovery_;                                                  /**< Use namespace-based topic discovery */
   bool is_initialized_;                                                           /**< Initialization flag */
   bool subscriptions_active_;                                                     /**< Subscriptions active flag */
+  bool layers_active_;                                                            /**< Render layers active flag */
   bool map_available_cache_;                                                      /**< Cached map availability state */
   bool robot_pose_available_cache_;                                               /**< Cached robot pose availability state */
   bool laser_available_cache_;                                                    /**< Cached laser availability state */

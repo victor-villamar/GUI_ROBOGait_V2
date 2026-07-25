@@ -105,10 +105,15 @@ void ManualControl::updateVelocity(double linear, double angular)
     changed = true;
   }
 
-  if (timer_cmd_vel_ && !timer_active_)
+  if (timer_cmd_vel_ && !timer_active_ && !topic_name_.isEmpty())
   {
-    timer_cmd_vel_->reset();
-    timer_active_ = true;
+    ensurePublisherCreated();
+
+    if (pub_cmd_vel_)
+    {
+      timer_cmd_vel_->reset();
+      timer_active_ = true;
+    }
   }
 
   if (changed)
@@ -173,7 +178,7 @@ void ManualControl::ensurePublisherCreated()
 
   if (topic_name_.isEmpty())
   {
-    qCritical() << "[ManualControl::ensurePublisherCreated] Cannot create publisher, topic_name_ is empty";
+    qCritical() << "[ManualControl::ensurePublisherCreated] Cannot create publisher, topic name is empty";
     return;
   }
 
