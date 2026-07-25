@@ -174,7 +174,7 @@ void RosNodeManager::initialize(int argc, char** argv, uint8_t domain_id)
 
   startSpinThread();
 
-  qCritical() << "[RosNodeManager::initialize] ROS Node" << node_name_ << "initialized and running on domain" << domain_id;
+  qInfo() << "[RosNodeManager::initialize] ROS Node" << node_name_ << "initialized and running on domain" << domain_id;
 }
 
 bool RosNodeManager::restartWithDomain(uint8_t new_domain_id, int argc, char** argv)
@@ -280,5 +280,5 @@ void RosNodeManager::stopSpinThread()
     spin_thread_.join();
   }
 
-  qCritical() << "[RosNodeManager::stopSpinThread] Spin thread stopped";
+  qInfo() << "[RosNodeManager::stopSpinThread] Spin thread stopped";
 }

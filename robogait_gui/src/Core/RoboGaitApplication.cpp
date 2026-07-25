@@ -38,6 +38,13 @@ RoboGaitApplication::RoboGaitApplication(int& argc, char* argv[]) :
     argc_(argc),
     argv_(argv)
 {
+  // Activate logs colors for better visibility in the console
+  qSetMessagePattern("%{if-debug}\033[32m%{message}\033[0m%{endif}"
+                     "%{if-info}\033[37m%{message}\033[0m%{endif}"
+                     "%{if-warning}\033[33m%{message}\033[0m%{endif}"
+                     "%{if-critical}\033[31m%{message}\033[0m%{endif}"
+                     "%{if-fatal}\033[31m%{message}\033[0m%{endif}");
+
   qInfo() << "************************ ROBOGait GUI ******************************";
 
   Q_ASSERT(app_instance_ == nullptr);
