@@ -50,6 +50,9 @@ robot:
 navigation:
   use_sim_time: true
   nav2_params_file: "params/nav2_params.yaml"
+  manual_follow_path:
+    controller_id: "ManualPath" # Controller used by direct FollowPath for manually drawn paths
+    goal_checker_id: "general_goal_checker"
 
 # Timeout Configuration
 timeouts:
