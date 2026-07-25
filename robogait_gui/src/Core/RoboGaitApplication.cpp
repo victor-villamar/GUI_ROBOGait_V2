@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <string>
 
 #include <QDebug>
@@ -28,7 +29,14 @@ using namespace ROBOGait::core;
 RoboGaitApplication* RoboGaitApplication::app_instance_ = nullptr;
 
 RoboGaitApplication::RoboGaitApplication(int& argc, char* argv[]) :
-    QApplication(argc, argv), ros_node_manager_(nullptr), user_session_(nullptr), qml_app_engine_(nullptr), translator_(), argc_(argc), argv_(argv)
+    QApplication(argc, argv),
+    ros_node_manager_(nullptr),
+    user_session_(nullptr),
+    qml_app_engine_(nullptr),
+    translator_(),
+    is_database_setup_(false),
+    argc_(argc),
+    argv_(argv)
 {
   qInfo() << "************************ ROBOGait GUI ******************************";
 
@@ -50,6 +58,12 @@ RoboGaitApplication::~RoboGaitApplication()
 
   user_session_.reset();
   ros_node_manager_.reset();
+
+  if (is_database_setup_)
+  {
+    ROBOGait::db::DataBaseManager::getInstance().shutdown();
+    is_database_setup_ = false;
+  }
 
   app_instance_ = nullptr;
 }
@@ -76,7 +90,8 @@ bool RoboGaitApplication::initialize()
 {
   // Load YAML configuration
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
-  const std::string config_path = ament_index_cpp::get_package_share_directory(ROBOGait::ros::define::ROBOGAIT_GUI) + "/params/config.yaml";
+  const std::filesystem::path shared_path = ament_index_cpp::get_package_share_directory(ROBOGait::ros::define::ROBOGAIT_GUI);
+  const std::string config_path = (shared_path / "params" / "config.yaml").string();
 
   if (!yaml_loader.loadConfig(config_path))
   {
@@ -259,6 +274,8 @@ bool RoboGaitApplication::setupDatabase(const QString& db_path)
     qCritical() << "[RoboGaitApplication::setupDatabase] Failed to initialize database at:" << db_path;
     return false;
   }
+
+  is_database_setup_ = true;
 
   qInfo() << "[RoboGaitApplication::setupDatabase] Database setup completed successfully";
   return true;

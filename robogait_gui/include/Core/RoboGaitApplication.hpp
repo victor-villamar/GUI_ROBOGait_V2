@@ -166,6 +166,8 @@ private:
   QQmlApplicationEngine* qml_app_engine_; /**< QML application engine */
   QTranslator translator_;                /**< Application translator for i18n */
 
+  bool is_database_setup_; /**< Database setup status for explicit shutdown */
+
   int argc_;    /**< Argument count (stored for ROS restart) */
   char** argv_; /**< Argument values (stored for ROS restart) */
 

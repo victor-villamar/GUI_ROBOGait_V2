@@ -8,11 +8,7 @@ using namespace ROBOGait::db;
 
 RoboGaitDb::RoboGaitDb() : connection_name_(QString("robogait_%1").arg(reinterpret_cast<quintptr>(this))) {}
 
-RoboGaitDb::~RoboGaitDb()
-{
-  close();
-  qInfo() << "[RoboGaitDb::~RoboGaitDb] RoboGaitDb destroyed";
-}
+RoboGaitDb::~RoboGaitDb() { qInfo() << "[RoboGaitDb::~RoboGaitDb] RoboGaitDb destroyed"; }
 
 DbResultVoid RoboGaitDb::open(const QString& db_path)
 {

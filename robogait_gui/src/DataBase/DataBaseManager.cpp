@@ -39,6 +39,18 @@ bool DataBaseManager::initialize(const QString& db_path)
 
 bool DataBaseManager::isInitialized() const { return is_initialized_; }
 
+void DataBaseManager::shutdown()
+{
+  if (!is_initialized_)
+  {
+    return;
+  }
+
+  db_.close();
+  is_initialized_ = false;
+  qInfo() << "[DataBaseManager::shutdown] Database manager shutdown";
+}
+
 DataBaseManager::DataBaseManager() :
     is_initialized_(false), db_(), user_repository_(db_), patient_repository_(db_), map_repository_(db_), experiment_repository_(db_)
 {

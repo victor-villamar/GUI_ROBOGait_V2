@@ -51,6 +51,11 @@ public:
    */
   bool isInitialized() const;
 
+  /**
+   * @brief Close the database connection
+   */
+  void shutdown();
+
   // clang-format off
   Q_PROPERTY(bool passLogin
              READ getPassLogin
