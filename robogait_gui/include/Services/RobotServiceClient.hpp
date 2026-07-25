@@ -4,6 +4,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -333,6 +334,22 @@ private:
   bool loadTimeouts();
 
   /**
+   * @brief Read a navigation plugin id from configuration
+   *
+   * @param key YAML key
+   * @param default_value Default id used when the key is missing or invalid
+   * @return Configured navigation plugin id
+   */
+  std::string getConfiguredNavigationId(std::string_view key, std::string_view default_value) const;
+
+  /**
+   * @brief Check whether navigation is configured to use simulation time
+   *
+   * @return true if navigation uses simulation time, false otherwise
+   */
+  bool useNavigationSimTime() const;
+
+  /**
    * @brief Call a command service
    *
    * @param cmd The command to call
@@ -568,8 +585,8 @@ private:
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_map_data_;            /**< Publisher for map data */
 
   rclcpp_action::Client<nav2_msgs::action::ComputePathToPose>::SharedPtr ac_compute_path_to_pose_; /**< Action client for compute path to pose */
-  rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr ac_navigate_to_pose_;             /**< Action client for navigate to pose */
-  rclcpp_action::Client<nav2_msgs::action::FollowPath>::SharedPtr ac_follow_path_;                      /**< Action client for follow path */
+  rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr ac_navigate_to_pose_;        /**< Action client for navigate to pose */
+  rclcpp_action::Client<nav2_msgs::action::FollowPath>::SharedPtr ac_follow_path_;                 /**< Action client for follow path */
 
   rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr nav_goal_handle_;     /**< Active navigate to pose goal handle */
   rclcpp_action::ClientGoalHandle<nav2_msgs::action::FollowPath>::SharedPtr follow_path_goal_handle_; /**< Active follow path goal handle */
@@ -592,7 +609,6 @@ private:
   bool pending_stop_after_save_;  /**< Flag indicating if a stop is pending after save */
   bool map_saver_stop_requested_; /**< Flag indicating if a stop is requested for the map saver */
   bool nav_goal_active_;          /**< Flag indicating if there is an active navigation goal */
-  bool cancel_requested_;         /**< Flag indicating if a cancel has been requested for the active navigation goal */
   bool cancel_in_progress_;       /**< Flag indicating if a cancel is in progress for the active navigation goal */
 
   std::chrono::seconds start_stop_timeout_s_; /**< Configurable timeout for STARTING/STOPPING transitions */
@@ -601,6 +617,15 @@ private:
   static constexpr const char* KEY_MAP_SAVER = "map_saver";       /**< Key for the map saver command */
   static constexpr const char* KEY_DELETE_MAP = "delete_map";     /**< Key for the delete map command */
   static constexpr const char* KEY_NAVIGATION = "navigation";     /**< Key for the navigation command */
+
+  static constexpr std::string_view CONFIG_MANUAL_FOLLOW_PATH_CONTROLLER_ID =
+      "navigation.manual_follow_path.controller_id"; /**< Config key for direct FollowPath manual-path controller id */
+  static constexpr std::string_view CONFIG_MANUAL_FOLLOW_PATH_GOAL_CHECKER_ID =
+      "navigation.manual_follow_path.goal_checker_id"; /**< Config key for direct FollowPath manual-path goal checker id */
+  static constexpr std::string_view CONFIG_NAVIGATION_USE_SIM_TIME = "navigation.use_sim_time"; /**< Config key for Nav2 simulation time */
+
+  static constexpr std::string_view DEFAULT_MANUAL_FOLLOW_PATH_CONTROLLER_ID = "ManualPath";      /**< Default controller used for manual spline paths */
+  static constexpr std::string_view DEFAULT_FOLLOW_PATH_GOAL_CHECKER_ID = "general_goal_checker"; /**< Default FollowPath goal checker id */
 
   static constexpr std::chrono::milliseconds HEALTH_CHECK_PERIOD = std::chrono::milliseconds(100);                 /**< Health check period */
   static constexpr std::chrono::seconds START_STOP_TIMEOUT = std::chrono::seconds(25);                             /**< Start/stop timeout */
