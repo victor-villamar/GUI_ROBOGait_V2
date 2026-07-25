@@ -296,6 +296,7 @@ endif()
 ament_target_dependencies(${PROJECT_NAME}
     rclcpp
     ament_index_cpp
+    sensor_msgs
     geometry_msgs
     nav_msgs
     map_msgs
