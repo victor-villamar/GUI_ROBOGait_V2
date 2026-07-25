@@ -18,6 +18,7 @@ const std::string T_SCAN =                             "/scan";
 const std::string T_PARTICLE_CLOUD =                   "/particle_cloud";
 const std::string T_POSE_INITIALIZE =                  "/initialpose";
 const std::string T_USER_DETECTION =                   "/user_detection_filter";
+const std::string T_CAMERA_DETECTION =                 "/camera_detection";
 
 // Services
 const std::string S_CMD =                              define::COMMAND_EXECUTOR + "/cmd";
