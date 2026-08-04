@@ -209,7 +209,7 @@ Item {
             id: startTestButton
             width: 150
             height: root.iconButtonSizePx
-            visible: ((root.goalPlacementEnabled && root.goalAccepted) || (root.pathPlacementEnabled && root.manualPathReady))
+            visible: !root.personDetectionConfirmed && ((root.goalPlacementEnabled && root.goalAccepted) || (root.pathPlacementEnabled && root.manualPathReady))
             enabled: root.goalPlacementEnabled ? root.goalPathReady : (root.pathPlacementEnabled ? root.manualPathReady : false)
             opacity: enabled ? 1.0 : 0.4
 
@@ -221,7 +221,7 @@ Item {
             }
 
             contentItem: Text {
-                text: root.personDetectionConfirmed ? qsTr("INICIAR TEST") : qsTr("DETECTAR PERSONA")
+                text: qsTr("DETECTAR PERSONA")
                 color: AppTheme.map.white
                 font.pixelSize: 14
                 font.bold: true

@@ -1470,6 +1470,75 @@ TestMapViewForm {
         tracedRoutesDialog.openWithRoutes(tracedRouteHistory.routes, tracedRouteHistory.selectedRouteId)
     }
 
+    function startCurrentTest() {
+        if (step !== stepTrajectory) {
+            return
+        }
+
+        if (!goalPlacementEnabled && !pathPlacementEnabled) {
+            return
+        }
+
+        if (!saveInitialRobotPose()) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo guardar la posición inicial del robot")
+            errorPopup.open()
+            return
+        }
+
+        if (goalPlacementEnabled) {
+            if (!goalPathReady || !robotServiceBridge || !robotServiceBridge.navigateToPose) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
+                errorPopup.open()
+                return
+            }
+
+            var okStartGoal = robotServiceBridge.navigateToPose(goalMapPosition.x, goalMapPosition.y, goalOrientationDeg * Math.PI / 180)
+            if (!okStartGoal) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación")
+                errorPopup.open()
+                return
+            }
+        }
+        else if (pathPlacementEnabled) {
+            if (!manualPathReady) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No hay ruta manual calculada")
+                errorPopup.open()
+                return
+            }
+
+            if (!robotServiceBridge || !robotServiceBridge.followLastComputedPath) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
+                errorPopup.open()
+                return
+            }
+
+            var okStartPath = robotServiceBridge.followLastComputedPath()
+            if (!okStartPath) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación por ruta")
+                errorPopup.open()
+                return
+            }
+        }
+
+        storeCurrentTestRoute()
+        testStarted = true
+        resetExperimentPhaseState()
+        closePersonDetectionDialog()
+        step = stepExperiment
+
+        if (goalPlacementEnabled && mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
+            mapVisualizationManager.setPathUpdatesEnabled(true)
+        }
+        else if (pathPlacementEnabled && mapVisualizationManager) {
+            if (mapVisualizationManager.setPathUpdatesEnabled) {
+                mapVisualizationManager.setPathUpdatesEnabled(false)
+            }
+            if (mapVisualizationManager.startManualLivePath) {
+                mapVisualizationManager.startManualLivePath(manualFollowPathPoints)
+            }
+        }
+    }
+
     onStartTestRequested: {
         if (step !== stepTrajectory) {
             return
@@ -1485,8 +1554,7 @@ TestMapViewForm {
                 return
             }
 
-            closePersonDetectionDialog()
-            startTestConfirmDialog.openWithMessage(qsTr("¿Iniciar test con este objetivo?"))
+            startCurrentTest()
             return
         }
 
@@ -1495,8 +1563,7 @@ TestMapViewForm {
                 return
             }
 
-            closePersonDetectionDialog()
-            startTestConfirmDialog.openWithMessage(qsTr("¿Iniciar test con esta ruta?"))
+            startCurrentTest()
             return
         }
 
@@ -1994,15 +2061,6 @@ TestMapViewForm {
         target: personDetectionMonitor
         ignoreUnknownSignals: true
 
-        function onPersonDetected(detections) {
-            if (step !== stepTrajectory || !personDetectionInProgress) {
-                return
-            }
-
-            stopPersonDetection()
-            personDetectedConfirmDialog.openWithMessage(qsTr("Persona detectada (%1). ¿Desea continuar con el test?").arg(detections))
-        }
-
         function onCameraPersonDetected(detections, imageSource) {
             if (step !== stepTrajectory || !personDetectionInProgress) {
                 return
@@ -2025,6 +2083,10 @@ TestMapViewForm {
             personDetectionConfirmed = false
             beginPersonDetection()
         }
+
+        onStartTestRequested: {
+            startCurrentTest()
+        }
     }
 
     TracedRoutesDialog {
@@ -2043,108 +2105,6 @@ TestMapViewForm {
 
         onAccepted: {
             beginAutoLocalization()
-        }
-    }
-
-    ConfirmationDialog {
-        id: startTestConfirmDialog
-        acceptText: qsTr("Iniciar")
-        holdToAccept: true
-
-        onAccepted: {
-            if (step !== stepTrajectory) {
-                return
-            }
-
-            if (!goalPlacementEnabled && !pathPlacementEnabled) {
-                return
-            }
-
-            if (!saveInitialRobotPose()) {
-                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo guardar la posición inicial del robot")
-                errorPopup.open()
-                return
-            }
-
-            if (goalPlacementEnabled) {
-                if (!goalPathReady || !robotServiceBridge || !robotServiceBridge.navigateToPose) {
-                    errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
-                    errorPopup.open()
-                    return
-                }
-
-                var okStartGoal = robotServiceBridge.navigateToPose(goalMapPosition.x, goalMapPosition.y, goalOrientationDeg * Math.PI / 180)
-                if (!okStartGoal) {
-                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación")
-                    errorPopup.open()
-                    return
-                }
-            }
-            else if (pathPlacementEnabled) {
-                if (!manualPathReady) {
-                    errorPopup.errorRectangleTextError.text = qsTr("Error: No hay ruta manual calculada")
-                    errorPopup.open()
-                    return
-                }
-
-                if (!robotServiceBridge || !robotServiceBridge.followLastComputedPath) {
-                    errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
-                    errorPopup.open()
-                    return
-                }
-
-                var okStartPath = robotServiceBridge.followLastComputedPath()
-                if (!okStartPath) {
-                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación por ruta")
-                    errorPopup.open()
-                    return
-                }
-            }
-
-            storeCurrentTestRoute()
-            testStarted = true
-            resetExperimentPhaseState()
-            closePersonDetectionDialog()
-            step = stepExperiment
-
-            if (goalPlacementEnabled && mapVisualizationManager && mapVisualizationManager.setPathUpdatesEnabled) {
-                mapVisualizationManager.setPathUpdatesEnabled(true)
-            }
-            else if (pathPlacementEnabled && mapVisualizationManager) {
-                if (mapVisualizationManager.setPathUpdatesEnabled) {
-                    mapVisualizationManager.setPathUpdatesEnabled(false)
-                }
-                if (mapVisualizationManager.startManualLivePath) {
-                    mapVisualizationManager.startManualLivePath(manualFollowPathPoints)
-                }
-            }
-        }
-
-        onRejected: {
-        }
-    }
-
-    ConfirmationDialog {
-        id: personDetectedConfirmDialog
-        acceptText: qsTr("Aceptar")
-        rejectText: qsTr("Volver a detectar")
-        holdToAccept: false
-
-        onAccepted: {
-            if (step !== stepTrajectory) {
-                return
-            }
-
-            personDetectionConfirmed = true
-        }
-
-        onRejected: {
-            if (step !== stepTrajectory) {
-                return
-            }
-
-            personDetectionConfirmed = false
-            beginPersonDetection()
         }
     }
 
