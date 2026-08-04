@@ -7,7 +7,6 @@
 #include <rclcpp/subscription.hpp>
 
 #include <navigation_pkg/msg/camera_detection.hpp>
-#include <navigation_pkg/msg/user.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
 namespace ROBOGait
@@ -41,18 +40,15 @@ public:
 
 signals:
   void monitoringChanged();                                        // Emitted when monitoring state changes
-  void personDetected(int detections);                             // Emitted when a new person detection message is received, with the number of detections
   void cameraPersonDetected(int detections, QString image_source); // Emitted when a camera detection with snapshot is received
 
 private:
-  void callbackUserDetection(const navigation_pkg::msg::User::ConstSharedPtr msg);
   void callbackCameraDetection(const navigation_pkg::msg::CameraDetection::ConstSharedPtr msg);
   QString imageToDataUrl(const sensor_msgs::msg::Image& image) const;
 
   rclcpp::Node* parent_node_;
   QString selected_robot_namespace_;
   bool use_namespace_discovery_;
-  rclcpp::Subscription<navigation_pkg::msg::User>::SharedPtr sub_user_detection_;
   rclcpp::Subscription<navigation_pkg::msg::CameraDetection>::SharedPtr sub_camera_detection_;
   bool is_monitoring_;
 

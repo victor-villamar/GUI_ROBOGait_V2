@@ -43,13 +43,7 @@ QImage buildQImageFromRosImage(const sensor_msgs::msg::Image& image)
 using namespace ROBOGait::perception::monitor;
 
 PersonDetectionMonitor::PersonDetectionMonitor(QObject* parent) :
-    QObject(parent),
-    parent_node_(nullptr),
-    selected_robot_namespace_(),
-    use_namespace_discovery_(true),
-    sub_user_detection_(nullptr),
-    sub_camera_detection_(nullptr),
-    is_monitoring_(false)
+    QObject(parent), parent_node_(nullptr), selected_robot_namespace_(), use_namespace_discovery_(true), sub_camera_detection_(nullptr), is_monitoring_(false)
 {
 }
 
@@ -97,30 +91,25 @@ bool PersonDetectionMonitor::startMonitoring()
   }
 
   const std::string full_camera_topic = context.resolveTopic(ROBOGait::ros::topics::T_CAMERA_DETECTION);
-  const std::string full_user_topic = context.resolveTopic(ROBOGait::ros::topics::T_USER_DETECTION);
 
   sub_camera_detection_ = parent_node_->create_subscription<navigation_pkg::msg::CameraDetection>(
       full_camera_topic, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(),
       std::bind(&PersonDetectionMonitor::callbackCameraDetection, this, std::placeholders::_1));
 
-  sub_user_detection_ = parent_node_->create_subscription<navigation_pkg::msg::User>(
-      full_user_topic, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(), std::bind(&PersonDetectionMonitor::callbackUserDetection, this, std::placeholders::_1));
-
   is_monitoring_ = true;
   emit monitoringChanged();
 
-  qInfo() << "[PersonDetectionMonitor::startMonitoring] Monitoring started on topics:" << full_camera_topic.c_str() << "and" << full_user_topic.c_str();
+  qInfo() << "[PersonDetectionMonitor::startMonitoring] Monitoring started on topic:" << full_camera_topic.c_str();
   return true;
 }
 
 void PersonDetectionMonitor::stopMonitoring()
 {
-  if (!is_monitoring_ && !sub_user_detection_ && !sub_camera_detection_)
+  if (!is_monitoring_ && !sub_camera_detection_)
   {
     return;
   }
 
-  sub_user_detection_.reset();
   sub_camera_detection_.reset();
 
   if (is_monitoring_)
@@ -133,29 +122,6 @@ void PersonDetectionMonitor::stopMonitoring()
 }
 
 bool PersonDetectionMonitor::isMonitoring() const { return is_monitoring_; }
-
-void PersonDetectionMonitor::callbackUserDetection(const navigation_pkg::msg::User::ConstSharedPtr msg)
-{
-  if (!is_monitoring_)
-  {
-    return;
-  }
-
-  if (!msg)
-  {
-    return;
-  }
-
-  if (msg->detection <= NOT_DETECTED)
-  {
-    return;
-  }
-
-  const int detections = msg->detection;
-
-  emit personDetected(detections);
-  stopMonitoring();
-}
 
 void PersonDetectionMonitor::callbackCameraDetection(const navigation_pkg::msg::CameraDetection::ConstSharedPtr msg)
 {
