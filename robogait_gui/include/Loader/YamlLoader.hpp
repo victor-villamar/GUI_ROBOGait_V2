@@ -87,9 +87,17 @@ template <typename T> T YamlLoader::getValue(const std::string& key, const T& de
   }
 
   YAML::Node node = getNode(key);
-  if (node && node.IsDefined())
+  if (node && node.IsDefined() && !node.IsNull())
   {
-    return node.as<T>();
+    try
+    {
+      return node.as<T>();
+    }
+    catch (const YAML::Exception& e)
+    {
+      std::cerr << "[YamlLoader::getValue] Failed to convert key: " << key << ". Error: " << e.what() << std::endl;
+      return default_value;
+    }
   }
 
   return default_value;

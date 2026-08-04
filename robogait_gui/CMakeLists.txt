@@ -325,4 +325,140 @@ install(DIRECTORY params
     DESTINATION share/${PROJECT_NAME}
 )
 
+# Create tests
+if(BUILD_TESTING)
+    find_package(ament_cmake_gtest REQUIRED)
+
+    ament_add_gtest(test_map_data
+        test/map/data/test_map_data.cpp
+        src/Map/Data/MapData.cpp
+    )
+    target_include_directories(test_map_data PRIVATE include)
+
+    ament_add_gtest(test_yaml_loader
+        test/loader/test_yaml_loader.cpp
+        src/Loader/YamlLoader.cpp
+    )
+    target_include_directories(test_yaml_loader PRIVATE include)
+    target_link_libraries(test_yaml_loader
+        yaml-cpp
+    )
+
+    ament_add_gtest(test_path_data
+        test/map/data/test_path_data.cpp
+        src/Map/Data/PathData.cpp
+    )
+    target_include_directories(test_path_data PRIVATE include)
+
+    ament_add_gtest(test_robot_pose_data
+        test/map/data/test_robot_pose_data.cpp
+        src/Map/Data/RobotPoseData.cpp
+    )
+    target_include_directories(test_robot_pose_data PRIVATE include)
+
+    ament_add_gtest(test_sensor_data
+        test/map/data/test_sensor_data.cpp
+        src/Map/Data/LaserScanData.cpp
+        src/Map/Data/ParticleCloudData.cpp
+    )
+    target_include_directories(test_sensor_data PRIVATE include)
+
+    ament_add_gtest(test_stroke_processor
+        test/map/interaction/geometry/test_stroke_processor.cpp
+        src/Map/Interaction/Geometry/StrokeProcessor.cpp
+    )
+    target_include_directories(test_stroke_processor PRIVATE include)
+    target_link_libraries(test_stroke_processor
+        Qt6::Core
+    )
+
+    ament_add_gtest(test_spline_geometry
+        test/map/interaction/geometry/test_spline_geometry.cpp
+        src/Map/Interaction/Geometry/BezierSplineModel.cpp
+        src/Map/Interaction/Geometry/SplineFitter.cpp
+    )
+    target_include_directories(test_spline_geometry PRIVATE include)
+    target_link_libraries(test_spline_geometry
+        Qt6::Core
+    )
+
+    ament_add_gtest(test_render_camera
+        test/map/rendering/test_render_camera.cpp
+        src/Map/Rendering/RenderCamera.cpp
+    )
+    target_include_directories(test_render_camera PRIVATE include)
+    target_link_libraries(test_render_camera
+        Qt6::Core
+        Qt6::Gui
+    )
+
+    ament_add_gtest(test_db_common
+        test/data_base/common/test_db_common.cpp
+        src/DataBase/Common/DbErrors.cpp
+        src/DataBase/Common/DbTypes.cpp
+    )
+    target_include_directories(test_db_common PRIVATE include)
+    target_link_libraries(test_db_common
+        Qt6::Core
+    )
+
+    ament_add_gtest(test_database_schema
+        test/data_base/schema/test_database_schema.cpp
+        src/DataBase/Common/DbErrors.cpp
+        src/DataBase/DatabaseSchema.cpp
+    )
+    target_include_directories(test_database_schema PRIVATE include)
+    target_link_libraries(test_database_schema
+        Qt6::Core
+        Qt6::Sql
+    )
+
+    ament_add_gtest(test_repositories
+        test/data_base/repository/test_repositories.cpp
+        src/DataBase/Common/DbErrors.cpp
+        src/DataBase/Common/DbTypes.cpp
+        src/DataBase/DatabaseSchema.cpp
+        src/DataBase/RoboGaitDb.cpp
+        src/DataBase/Repository/Repository.cpp
+        src/DataBase/Repository/UserRepository.cpp
+        src/DataBase/Repository/PatientRepository.cpp
+        src/DataBase/Repository/MapRepository.cpp
+        src/DataBase/Repository/ExperimentRepository.cpp
+    )
+    target_include_directories(test_repositories PRIVATE include)
+    target_link_libraries(test_repositories
+        Qt6::Core
+        Qt6::Sql
+    )
+
+    ament_add_gtest(test_database_manager
+        test/data_base/manager/test_database_manager.cpp
+        include/DataBase/DataBaseManager.hpp
+        src/DataBase/Common/DbErrors.cpp
+        src/DataBase/Common/DbTypes.cpp
+        src/DataBase/DatabaseSchema.cpp
+        src/DataBase/RoboGaitDb.cpp
+        src/DataBase/DataBaseManager.cpp
+        src/DataBase/Repository/Repository.cpp
+        src/DataBase/Repository/UserRepository.cpp
+        src/DataBase/Repository/PatientRepository.cpp
+        src/DataBase/Repository/MapRepository.cpp
+        src/DataBase/Repository/ExperimentRepository.cpp
+    )
+    target_include_directories(test_database_manager PRIVATE include)
+    target_link_libraries(test_database_manager
+        Qt6::Core
+        Qt6::Sql
+    )
+
+    ament_add_gtest(test_robot_context
+        test/context/test_robot_context.cpp
+        src/Context/RobotContext.cpp
+    )
+    target_include_directories(test_robot_context PRIVATE include)
+    target_link_libraries(test_robot_context
+        Qt6::Core
+    )
+endif()
+
 ament_package()
