@@ -1,11 +1,8 @@
 #include <algorithm>
-#include <cmath>
 #include <cstddef>
 #include <iostream>
 
 #include "Map/Data/MapData.hpp"
-#include "Map/Utils/Utils.hpp"
-#include "Ros/TopicsName.hpp"
 
 using namespace ROBOGait::map::data;
 
@@ -73,13 +70,22 @@ void MapData::updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height
     return;
   }
 
-  if (x + width > metadata_.width_ || y + height > metadata_.height_)
+  if (x < 0 || y < 0)
   {
     std::cerr << "[MapData::updateRegion] Update region out of bounds" << std::endl;
     return;
   }
 
-  if (x == 0 && y == 0 && width == metadata_.width_ && height == metadata_.height_)
+  const uint32_t update_x = static_cast<uint32_t>(x);
+  const uint32_t update_y_start = static_cast<uint32_t>(y);
+
+  if (update_x + width > metadata_.width_ || update_y_start + height > metadata_.height_)
+  {
+    std::cerr << "[MapData::updateRegion] Update region out of bounds" << std::endl;
+    return;
+  }
+
+  if (update_x == 0 && update_y_start == 0 && width == metadata_.width_ && height == metadata_.height_)
   {
     // Full map update, can replace data directly
     std::copy(data.begin(), data.end(), occupancy_data_.begin());
@@ -87,10 +93,10 @@ void MapData::updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height
     return;
   }
 
-  if (x == 0 && width == metadata_.width_)
+  if (update_x == 0 && width == metadata_.width_)
   {
     // Update the entire column
-    const uint32_t start_index = y * metadata_.width_;
+    const uint32_t start_index = update_y_start * metadata_.width_;
     std::copy(data.begin(), data.end(), occupancy_data_.begin() + start_index);
     ++update_stamp_;
     return;
@@ -98,7 +104,7 @@ void MapData::updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height
 
   for (uint32_t update_y = 0; update_y < height; ++update_y)
   {
-    const uint32_t map_row_start = (y + update_y) * metadata_.width_ + x;
+    const uint32_t map_row_start = (update_y_start + update_y) * metadata_.width_ + update_x;
     const uint32_t update_row_start = update_y * width;
 
     // clang-format off
