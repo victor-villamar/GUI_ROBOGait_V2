@@ -6,6 +6,7 @@ import AppTheme 1.0
 Item {
     id: home
     property alias buttonStart: buttonStart
+    signal startRequested()
     signal appExitRequested()
 
     readonly property real iconButtonSizePx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.iconButtonSize, 0) : 50
@@ -85,6 +86,7 @@ Item {
                         height: home.height < 500 ? 80 : 100
                         width: contentItem.implicitWidth + (home.height < 500 ? 60 : 80)
                         anchors.horizontalCenter: parent.horizontalCenter
+                        onClicked: home.startRequested()
 
                         background: Rectangle {
                             color: buttonStart.down ? AppTheme.home.light : AppTheme.home.startButtonBg
@@ -142,7 +144,7 @@ Item {
                     background: null
 
                     contentItem: Image {
-                        source: "qrc:/qmlresources/icons/white/shutdown.svg"
+                        source: "qrc:/qmlresources/icons/white/shutdown.png"
                         width: home.iconGlyphSizePx
                         height: home.iconGlyphSizePx
                         anchors.centerIn: parent
