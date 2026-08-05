@@ -17,11 +17,6 @@ ApplicationFlowForm {
     }
     keyboardInset: keyboardVisible ? Math.max(0, keyboardHeight - keyboardSafeArea) : 0
 
-    home.buttonStart.onClicked: {
-        mystackview.push(register_page)
-        applicationFlow.state = "register_page"
-    }
-
     property bool pendingQuitRequest: false
 
     function showShutdownDialog() {
@@ -81,17 +76,17 @@ ApplicationFlowForm {
     }
 
     Connections {
-        target: home
+        target: mystackview.currentItem
         ignoreUnknownSignals: true
+
+        function onStartRequested() {
+            mystackview.push(register_page)
+            applicationFlow.state = "register_page"
+        }
 
         function onAppExitRequested() {
             applicationFlow.safeQuit()
         }
-    }
-
-    Connections {
-        target: mystackview.currentItem
-        ignoreUnknownSignals: true
 
         function onAppExitFinished() {
             if (!applicationFlow.pendingQuitRequest) {
