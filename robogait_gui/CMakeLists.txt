@@ -27,7 +27,6 @@ find_package(Qt6 REQUIRED COMPONENTS
     Gui
     Qml
     Quick
-    VirtualKeyboard
     Network
     Sql
     Widgets)
@@ -228,7 +227,6 @@ set(QT_LIBS
     Qt6::Quick
     Qt6::Network
     Qt6::Sql
-    Qt6::VirtualKeyboard
     Qt6::Widgets
 )
 
@@ -252,7 +250,6 @@ include_directories(
     ${Qt6Quick_INCLUDE_DIRS}
     ${Qt6Network_INCLUDE_DIRS}
     ${Qt6Sql_INCLUDE_DIRS}
-    ${Qt6VirtualKeyboard_INCLUDE_DIRS}
 )
 
 # Add executable
@@ -290,6 +287,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
             -Werror
         )
     endif()
+
 endif()
 
 # Add dependencies
