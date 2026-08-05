@@ -214,7 +214,7 @@ bool generateMapPreview(const data::MapData& map_data, const QString& map_name)
     return false;
   }
 
-  image = image.flipped(Qt::Vertical);
+  image = image.mirrored(false, true);
 
   if (!image.save(file_path, "PNG", IMAGE_QUALITY))
   {
