@@ -4,6 +4,7 @@ import QtQuick.Window 2.15
 import RobotDiscovery 1.0
 import AppTheme 1.0
 
+import "qrc:/Components"
 import "qrc:/Dialogs"
 
 Item {
@@ -171,16 +172,13 @@ Item {
                             visible: userSession.rosManager.robotDiscovery.state === RobotDiscovery.ROBOTS_FOUND
                     }
 
-                    BusyIndicator {
+                    Spin {
                         id: searchingIndicator
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: 180
-                        height: 180
-                        running: true
-                        topPadding: 20
-                        palette.text: AppTheme.robotConnection.white
-                        palette.buttonText: AppTheme.robotConnection.white
-                        palette.highlight: AppTheme.robotConnection.white
+                        width: 96
+                        height: 96
+                        running: visible
+                        dotColor: AppTheme.robotConnection.white
                         visible: userSession.rosManager.robotDiscovery.state === RobotDiscovery.SCANNING
                     }
 

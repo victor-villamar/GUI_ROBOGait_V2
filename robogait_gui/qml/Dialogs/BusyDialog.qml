@@ -2,6 +2,8 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import AppTheme 1.0
 
+import "qrc:/Components"
+
 Dialog {
     id: root
     modal: true
@@ -104,14 +106,12 @@ Dialog {
                     width: parent.width
                 }
 
-                BusyIndicator {
+                Spin {
                     width: 180
                     height: 180
-                    running: true
+                    running: root.visible
+                    dotColor: AppTheme.dialogsCommon.light
                     anchors.horizontalCenter: parent.horizontalCenter
-                    palette.highlight: AppTheme.dialogsCommon.light
-                    palette.text: AppTheme.dialogsCommon.light
-                    palette.buttonText: AppTheme.dialogsCommon.light
                 }
             }
         }
