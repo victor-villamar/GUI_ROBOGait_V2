@@ -320,6 +320,7 @@ void RoboGaitApplication::onDeveloperSettingsApplied()
 
   auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
   const auto new_domain_id = static_cast<uint8_t>(developer_settings.getRosDomainId());
+  const bool use_namespace_discovery = developer_settings.getUseNamespaceDiscovery();
   const bool use_topic_filter = developer_settings.getUseTopicFilter();
 
   if (ros_node_manager_ == nullptr)
@@ -328,6 +329,7 @@ void RoboGaitApplication::onDeveloperSettingsApplied()
     return;
   }
 
+  ros_node_manager_->setUseNamespaceDiscovery(use_namespace_discovery);
   ros_node_manager_->setUseTopicFilter(use_topic_filter);
 
   const bool restart_success = ros_node_manager_->restartWithDomain(new_domain_id, argc_, argv_);
