@@ -16,4 +16,4 @@ delete_map:
 navigation:
   name: "bt_navigator"
   cmd: "ros2 launch turtlebot3_navigation2 navigation2.launch.py"
-  append_args: "use_sim_time:={navigation_use_sim_time} map:=$HOME{map_path}{map_name} params_file:={nav2_params_file}" # navigation launch arguments
+  append_args: "use_sim_time:={navigation_use_sim_time} map:=$HOME{map_path}{map_name} params_file:=$HOME{nav2_params_path}{nav2_params_file}" # navigation launch arguments
