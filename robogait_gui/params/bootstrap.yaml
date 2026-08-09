@@ -1,0 +1,3 @@
+user_config_root: ".local/robogait/params"
+config_file: "config.yaml"
+commands_file: "commands.yaml"

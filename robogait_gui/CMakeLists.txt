@@ -50,6 +50,7 @@ set(HEADERS
     include/DataBase/DataBaseManager.hpp
     include/DataBase/DatabaseSchema.hpp
     include/DataBase/RoboGaitDb.hpp
+    include/Loader/BootStrapLoader.hpp
     include/Loader/MapFileLoader.hpp
     include/Loader/YamlLoader.hpp
     include/Map/Data/LaserScanData.hpp
@@ -135,6 +136,7 @@ set(SOURCES
     src/DataBase/DataBaseManager.cpp
     src/DataBase/DatabaseSchema.cpp
     src/DataBase/RoboGaitDb.cpp
+    src/Loader/BootStrapLoader.cpp
     src/Loader/MapFileLoader.cpp
     src/Loader/YamlLoader.cpp
     src/Map/Data/LaserScanData.cpp
