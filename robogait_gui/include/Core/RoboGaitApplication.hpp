@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 #include <QApplication>
 #include <QLocale>
@@ -9,6 +10,7 @@
 #include <QTranslator>
 
 #include "DataBase/DataBaseManager.hpp"
+#include "Loader/BootStrapLoader.hpp"
 #include "Ros/RosNodeManager.hpp"
 #include "Settings/DeveloperSettings.hpp"
 #include "Settings/TimeoutSettings.hpp"
@@ -159,6 +161,24 @@ private:
    * @brief Connect application signals and slots
    */
   void connectSignals();
+
+  /**
+   * @brief Get BootStrap configuration file
+   *
+   * @param config_path Path of bootstrap YAML
+   *
+   * @return BootStrap configuration, nullopt otherwise
+   */
+  std::optional<ROBOGait::loader::BootStrapLoader::BootStrapConfig> getBoostrapConfig(const QString& config_path) const;
+
+  /**
+   * @brief Get Database file
+   *
+   * @param config_path Path of config YAML
+   *
+   * @return Database file, nullopt otherwise
+   */
+  std::optional<QString> getDatabaseFile(const QString& config_path) const;
 
   std::unique_ptr<ROBOGait::ros::manager::RosNodeManager> ros_node_manager_; /**< ROS node manager instance */
   std::unique_ptr<ROBOGait::session::UserSession> user_session_;             /**< User session instance */
