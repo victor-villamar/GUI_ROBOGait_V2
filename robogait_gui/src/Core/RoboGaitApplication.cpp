@@ -100,7 +100,7 @@ bool RoboGaitApplication::initialize()
   // Load Boostrap YAML configuration
   const std::filesystem::path shared_dir = ament_index_cpp::get_package_share_directory(ROBOGait::ros::define::ROBOGAIT_GUI);
   const std::filesystem::path bootstrap_path = (shared_dir / "params" / "bootstrap.yaml");
-  const auto bootstrap_config = getBoostrapConfig(QString::fromStdString(bootstrap_path));
+  const auto bootstrap_config = getBootstrapConfig(QString::fromStdString(bootstrap_path));
 
   if (!bootstrap_config)
   {
@@ -181,12 +181,12 @@ bool RoboGaitApplication::initialize()
   return true;
 }
 
-std::optional<ROBOGait::loader::BootStrapLoader::BootStrapConfig> RoboGaitApplication::getBoostrapConfig(const QString& config_path) const
+std::optional<ROBOGait::loader::BootStrapLoader::BootStrapConfig> RoboGaitApplication::getBootstrapConfig(const QString& config_path) const
 {
   auto& bootstrap_loader = ROBOGait::loader::BootStrapLoader::getInstance();
   if (!bootstrap_loader.loadBootStrapConfig(std::filesystem::path(config_path.toStdString())))
   {
-    qCritical() << "[RoboGaitApplication::getBoostrapConfig] Failed to load boostrap configuration from:" << config_path;
+    qCritical() << "[RoboGaitApplication::getBootstrapConfig] Failed to load boostrap configuration from:" << config_path;
     return std::nullopt;
   }
 

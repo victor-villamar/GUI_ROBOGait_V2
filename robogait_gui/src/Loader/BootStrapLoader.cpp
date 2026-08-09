@@ -22,37 +22,45 @@ bool BootStrapLoader::loadBootStrapConfig(const std::filesystem::path& yaml_file
     return false;
   }
 
-  YAML::Node boostrap_config = YAML::LoadFile(yaml_file.string());
-
-  if (!boostrap_config)
+  try
   {
-    std::cout << "[BootStrapLoader::loadBootStrapConfig] Failed to load bootstrap configuration from:" << yaml_file << std::endl;
-    return {};
+    YAML::Node boostrap_config = YAML::LoadFile(yaml_file.string());
+
+    if (!boostrap_config)
+    {
+      std::cout << "[BootStrapLoader::loadBootStrapConfig] Failed to load bootstrap configuration from:" << yaml_file << std::endl;
+      return false;
+    }
+
+    // Get config file path
+    if (!boostrap_config["user_config_root"])
+    {
+      std::cout << "[BootStrapLoader::loadBootStrapConfig] User configuration root path not configured in YAML" << std::endl;
+      return false;
+    }
+
+    if (!boostrap_config["config_file"])
+    {
+      std::cout << "[BootStrapLoader::loadBootStrapConfig] Config file name not configured in YAML" << std::endl;
+      return false;
+    }
+
+    if (!boostrap_config["commands_file"])
+    {
+      std::cout << "[BootStrapLoader::loadBootStrapConfig] Commands file name not configured in YAML" << std::endl;
+      return false;
+    }
+
+    // Get values from YAML
+    config_.user_config_root_path = boostrap_config["user_config_root"].as<std::string>();
+    config_.config_file_name = boostrap_config["config_file"].as<std::string>();
+    config_.commands_file_name = boostrap_config["commands_file"].as<std::string>();
   }
-
-  // Get config file path
-  if (!boostrap_config["user_config_root"])
+  catch (const YAML::Exception& exception)
   {
-    std::cout << "[BootStrapLoader::loadBootStrapConfig] User configuration root path not configured in YAML";
+    std::cout << "[BootStrapLoader::loadBootStrapConfig] Failed to parse bootstrap YAML:" << yaml_file << " " << exception.what() << std::endl;
     return false;
   }
-
-  if (!boostrap_config["config_file"])
-  {
-    std::cout << "[BootStrapLoader::loadBootStrapConfig] Config file name not configured in YAML";
-    return false;
-  }
-
-  if (!boostrap_config["commands_file"])
-  {
-    std::cout << "[BootStrapLoader::loadBootStrapConfig] Commands file name not configured in YAML" << std::endl;
-    return false;
-  }
-
-  // Get values from YAML
-  config_.user_config_root_path = boostrap_config["user_config_root"].as<std::string>();
-  config_.config_file_name = boostrap_config["config_file"].as<std::string>();
-  config_.commands_file_name = boostrap_config["commands_file"].as<std::string>();
 
   if (config_.user_config_root_path.empty())
   {

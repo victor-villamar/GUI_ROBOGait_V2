@@ -169,7 +169,7 @@ private:
    *
    * @return BootStrap configuration, nullopt otherwise
    */
-  std::optional<ROBOGait::loader::BootStrapLoader::BootStrapConfig> getBoostrapConfig(const QString& config_path) const;
+  std::optional<ROBOGait::loader::BootStrapLoader::BootStrapConfig> getBootstrapConfig(const QString& config_path) const;
 
   /**
    * @brief Ensure user-editable configuration files exist in the configured user directory

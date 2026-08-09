@@ -303,8 +303,8 @@ bool RobotServiceClient::startNavigation(const std::string& map_name)
 
   const bool navigation_use_sim_time = useNavigationSimTime();
   const std::string navigation_use_sim_time_arg = navigation_use_sim_time ? "true" : "false";
-  const std::string nav2_params_path = yaml_loader.getValue<std::string>("navigation.nav2_params_path", ".local/robogait/params/");
-  const std::string nav2_params_file = yaml_loader.getValue<std::string>("navigation.nav2_params_file", "params/nav2_params.yaml");
+  const std::string nav2_params_path = yaml_loader.getValue<std::string>("navigation.nav2_params_path", "/.local/robogait/params/");
+  const std::string nav2_params_file = yaml_loader.getValue<std::string>("navigation.nav2_params_file", "nav2_params.yaml");
 
   if (nav2_params_path.empty())
   {
