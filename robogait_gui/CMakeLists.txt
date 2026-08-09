@@ -344,6 +344,15 @@ if(BUILD_TESTING)
         yaml-cpp
     )
 
+    ament_add_gtest(test_bootstrap_loader
+        test/loader/test_bootstrap_loader.cpp
+        src/Loader/BootStrapLoader.cpp
+    )
+    target_include_directories(test_bootstrap_loader PRIVATE include)
+    target_link_libraries(test_bootstrap_loader
+        yaml-cpp
+    )
+
     ament_add_gtest(test_path_data
         test/map/data/test_path_data.cpp
         src/Map/Data/PathData.cpp
