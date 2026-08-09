@@ -172,6 +172,26 @@ private:
   std::optional<ROBOGait::loader::BootStrapLoader::BootStrapConfig> getBoostrapConfig(const QString& config_path) const;
 
   /**
+   * @brief Ensure user-editable configuration files exist in the configured user directory
+   *
+   * @param shared_params_dir Package params directory used as defaults source
+   * @param bootstrap_config Bootstrap configuration with user file names
+   *
+   * @return true if files exist or were copied successfully, false otherwise
+   */
+  bool ensureUserConfigFiles(const QString& shared_params_dir, const ROBOGait::loader::BootStrapLoader::BootStrapConfig& bootstrap_config) const;
+
+  /**
+   * @brief Copy a default configuration file to the user path if it does not exist
+   *
+   * @param source_file Default file in package share
+   * @param target_file User-editable target file
+   *
+   * @return true if target exists or was copied successfully, false otherwise
+   */
+  bool ensureUserConfigFile(const QString& source_file, const QString& target_file) const;
+
+  /**
    * @brief Get Database file
    *
    * @param config_path Path of config YAML

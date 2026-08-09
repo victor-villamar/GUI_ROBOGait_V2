@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <string>
+#include <system_error>
 
 #include <QDebug>
 #include <QDir>
@@ -107,6 +108,14 @@ bool RoboGaitApplication::initialize()
     return false;
   }
 
+  const QString shared_params_dir = QString::fromStdString((shared_dir / "params").string());
+
+  if (!ensureUserConfigFiles(shared_params_dir, bootstrap_config.value()))
+  {
+    qCritical() << "[RoboGaitApplication::initialize] Failed to ensure user configuration files";
+    return false;
+  }
+
   const std::filesystem::path config_path =
       std::filesystem::path(QDir::homePath().toStdString()) / bootstrap_config->user_config_root_path / bootstrap_config->config_file_name;
 
@@ -184,6 +193,64 @@ std::optional<ROBOGait::loader::BootStrapLoader::BootStrapConfig> RoboGaitApplic
   return bootstrap_loader.getBootStrapConfig();
 }
 
+bool RoboGaitApplication::ensureUserConfigFiles(const QString& shared_params_dir,
+                                                const ROBOGait::loader::BootStrapLoader::BootStrapConfig& bootstrap_config) const
+{
+  const std::filesystem::path user_config_dir = std::filesystem::path(QDir::homePath().toStdString()) / bootstrap_config.user_config_root_path;
+
+  std::error_code error_code;
+  const bool directory_created = std::filesystem::create_directories(user_config_dir, error_code);
+
+  if (error_code)
+  {
+    qCritical() << "[RoboGaitApplication::ensureUserConfigFiles] Failed to create user configuration directory:"
+                << QString::fromStdString(user_config_dir.string()) << QString::fromStdString(error_code.message());
+    return false;
+  }
+
+  if (directory_created)
+  {
+    qInfo() << "[RoboGaitApplication::ensureUserConfigFiles] Created user configuration directory:" << QString::fromStdString(user_config_dir.string());
+  }
+
+  const std::filesystem::path shared_params_path(shared_params_dir.toStdString());
+  const QString default_config_file = QString::fromStdString((shared_params_path / bootstrap_config.config_file_name).string());
+  const QString user_config_file = QString::fromStdString((user_config_dir / bootstrap_config.config_file_name).string());
+
+  if (!ensureUserConfigFile(default_config_file, user_config_file))
+  {
+    return false;
+  }
+
+  const QString default_commands_file = QString::fromStdString((shared_params_path / bootstrap_config.commands_file_name).string());
+  const QString user_commands_file = QString::fromStdString((user_config_dir / bootstrap_config.commands_file_name).string());
+
+  return ensureUserConfigFile(default_commands_file, user_commands_file);
+}
+
+bool RoboGaitApplication::ensureUserConfigFile(const QString& source_file, const QString& target_file) const
+{
+  if (QFileInfo::exists(target_file))
+  {
+    return true;
+  }
+
+  if (!QFileInfo::exists(source_file))
+  {
+    qCritical() << "[RoboGaitApplication::ensureUserConfigFile] Default configuration file does not exist:" << source_file;
+    return false;
+  }
+
+  if (!QFile::copy(source_file, target_file))
+  {
+    qCritical() << "[RoboGaitApplication::ensureUserConfigFile] Failed to copy default configuration from:" << source_file << "to:" << target_file;
+    return false;
+  }
+
+  qInfo() << "[RoboGaitApplication::ensureUserConfigFile] Copied default configuration to:" << target_file;
+  return true;
+}
+
 std::optional<QString> RoboGaitApplication::getDatabaseFile(const QString& config_path) const
 {
   if (!std::filesystem::exists(config_path.toStdString()))
@@ -217,12 +284,6 @@ std::optional<QString> RoboGaitApplication::getDatabaseFile(const QString& confi
   }
 
   const std::filesystem::path db_path = std::filesystem::path(QDir::homePath().toStdString()) / database_dir / database_filename;
-
-  if (!std::filesystem::exists(db_path))
-  {
-    qCritical() << "[RoboGaitApplication::initialize] Database file does not exist:" << QString::fromStdString(db_path);
-    return std::nullopt;
-  }
 
   return QString::fromStdString(db_path);
 }
