@@ -1,6 +1,6 @@
 services:
   robogait_gui:
-    image: robogait_gui:humble
+    image: robogait_gui:${ROS_DISTRO:-humble}
     network_mode: host
     ipc: host
     environment:
