@@ -1,0 +1,115 @@
+ARG ROS_DISTRO=humble
+FROM ros:${ROS_DISTRO}-ros-base
+
+ARG ROS_DISTRO=humble
+ARG USERNAME=robogait
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+LABEL org.opencontainers.image.authors="Victor Villamar <victorjosevillamar@gmail.com>"
+
+# *********************** System build tools ***********************
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    g++ \
+    curl \
+    wget \
+    python3-pip \
+    python3-dev \
+    python3-colcon-common-extensions \
+    python3-rosdep \
+    unzip \
+    nano \
+    sudo \
+    iputils-ping \
+    net-tools \
+    libyaml-cpp-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# *********************** Qt6 build and QML runtime dependencies ***********************
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    qt6-base-dev \
+    qt6-base-dev-tools \
+    qt6-declarative-dev \
+    qt6-declarative-dev-tools \
+    qt6-tools-dev \
+    qt6-tools-dev-tools \
+    libgl1-mesa-dev \
+    libqt6opengl6-dev \
+    libqt6svg6 \
+    libqt6virtualkeyboard6 \
+    qt6-virtualkeyboard-plugin \
+    qml6-module-qtquick \
+    qml6-module-qtquick-window \
+    qml6-module-qtquick-controls \
+    qml6-module-qtquick-layouts \
+    qml6-module-qtqml \
+    qml6-module-qtqml-workerscript \
+    qml6-module-qtquick-virtualkeyboard \
+    qml6-module-qtquick-templates \
+    qml6-module-qt-labs-folderlistmodel \
+    qml6-module-qt-labs-settings \
+    libqt6sql6-sqlite \
+    hunspell-es \
+    && rm -rf /var/lib/apt/lists/*
+
+# *********************** ROS2 build packages ***********************
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-${ROS_DISTRO}-ament-cmake \
+    ros-${ROS_DISTRO}-ament-index-cpp \
+    ros-${ROS_DISTRO}-rclcpp \
+    ros-${ROS_DISTRO}-rclcpp-action \
+    ros-${ROS_DISTRO}-geometry-msgs \
+    ros-${ROS_DISTRO}-sensor-msgs \
+    ros-${ROS_DISTRO}-nav-msgs \
+    ros-${ROS_DISTRO}-map-msgs \
+    ros-${ROS_DISTRO}-nav2-msgs \
+    ros-${ROS_DISTRO}-std-srvs \
+    ros-${ROS_DISTRO}-tf2 \
+    ros-${ROS_DISTRO}-tf2-ros \
+    ros-${ROS_DISTRO}-tf2-geometry-msgs \
+    ros-${ROS_DISTRO}-rosidl-default-generators \
+    ros-${ROS_DISTRO}-rosidl-default-runtime \
+    && rm -rf /var/lib/apt/lists/*
+
+# *********************** Runtime ROS environment ***********************
+COPY docker/config/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+
+# *********************** Build ROBOGait ROS2 interface packages and GUI ***********************
+COPY command_executor/command_executor_msgs /tmp/robogait_ws/src/command_executor_msgs
+COPY navigation_pkg /tmp/robogait_ws/src/navigation_pkg
+COPY robogait_gui /tmp/robogait_ws/src/robogait_gui
+
+RUN cd /tmp/robogait_ws && \
+    . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    colcon build --merge-install \
+      --packages-select command_executor_msgs navigation_pkg robogait_gui \
+      --install-base /opt/ros/robogait && \
+    rm -rf /tmp/robogait_ws
+
+
+# *********************** User setup ***********************
+# Delete user if it exists in container (e.g Ubuntu Noble: ubuntu)
+RUN if [ -n "$USER_UID" ] && [ "$USER_UID" != "0" ] && getent passwd "$USER_UID" > /dev/null; then \
+  userdel "$(getent passwd "$USER_UID" | cut -d: -f1)"; \
+  fi
+
+RUN groupadd --gid ${USER_GID} ${USERNAME} \
+    && useradd --uid ${USER_UID} --gid ${USER_GID} -m ${USERNAME} \
+    && echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
+  && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+  && chmod 0440 /etc/sudoers.d/$USERNAME
+
+RUN echo "source /opt/ros/robogait/setup.bash" >> /home/${USERNAME}/.bashrc \
+    && chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.bashrc
+
+ENV SHELL=/bin/bash \
+    HOME=/home/${USERNAME}
+
+ENTRYPOINT ["/entrypoint.sh"]
+USER ${USERNAME}
+WORKDIR /home/${USERNAME}
+CMD ["/bin/bash"]
