@@ -79,9 +79,9 @@ RUN chmod +x /entrypoint.sh
 
 
 # *********************** Build ROBOGait ROS2 interface packages and GUI ***********************
-COPY command_executor/command_executor_msgs /tmp/robogait_ws/src/command_executor_msgs
-COPY navigation_pkg /tmp/robogait_ws/src/navigation_pkg
-COPY robogait_gui /tmp/robogait_ws/src/robogait_gui
+COPY src/command_executor/command_executor_msgs /tmp/robogait_ws/src/command_executor_msgs
+COPY src/navigation_pkg /tmp/robogait_ws/src/navigation_pkg
+COPY src/robogait_gui /tmp/robogait_ws/src/robogait_gui
 
 RUN cd /tmp/robogait_ws && \
     . /opt/ros/${ROS_DISTRO}/setup.sh && \
