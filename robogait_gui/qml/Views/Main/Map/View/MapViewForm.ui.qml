@@ -225,7 +225,7 @@ Rectangle {
                 }
 
                 contentItem: Image {
-                    source: "qrc:/qmlresources/icons/color/emergency_stop.svg"
+                    source: "qrc:/qmlresources/icons/color/emergency_stop.png"
                     width: root.emergencyIconSizePx > 0 ? root.emergencyIconSizePx : root.iconGlyphSizePx * 2
                     height: width
                     anchors.centerIn: parent
@@ -447,8 +447,8 @@ Rectangle {
                         width: root.iconGlyphSizePx
                         height: root.iconGlyphSizePx
                         source: joystickPanel.pinned
-                                ? "qrc:/qmlresources/icons/white/pin.svg"
-                                : "qrc:/qmlresources/icons/white/pin_empty.svg"
+                                ? "qrc:/qmlresources/icons/white/pin.png"
+                                : "qrc:/qmlresources/icons/white/pin_empty.png"
 
                         fillMode: Image.PreserveAspectFit
                         smooth: true
@@ -496,7 +496,7 @@ Rectangle {
                     }
 
                     contentItem: Image {
-                        source: "qrc:/qmlresources/icons/white/minus.svg"
+                        source: "qrc:/qmlresources/icons/white/minus.png"
                         width: root.iconGlyphSizePx
                         height: root.iconGlyphSizePx
                         anchors.centerIn: parent
@@ -522,7 +522,7 @@ Rectangle {
                     }
 
                     contentItem: Image {
-                        source: "qrc:/qmlresources/icons/white/plus.svg"
+                        source: "qrc:/qmlresources/icons/white/plus.png"
                         width: root.iconGlyphSizePx
                         height: root.iconGlyphSizePx
                         anchors.centerIn: parent
@@ -548,7 +548,7 @@ Rectangle {
                     }
 
                     contentItem: Image {
-                        source: "qrc:/qmlresources/icons/white/center_to_fit.svg"
+                        source: "qrc:/qmlresources/icons/white/center_to_fit.png"
                         width: root.iconGlyphSizePx
                         height: root.iconGlyphSizePx
                         anchors.centerIn: parent
@@ -575,7 +575,7 @@ Rectangle {
                     }
 
                     contentItem: Image {
-                        source: "qrc:/qmlresources/icons/white/center_view.svg"
+                        source: "qrc:/qmlresources/icons/white/center_view.png"
                         width: root.iconGlyphSizePx
                         height: root.iconGlyphSizePx
                         anchors.centerIn: parent

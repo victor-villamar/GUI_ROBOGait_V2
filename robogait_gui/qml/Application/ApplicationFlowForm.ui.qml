@@ -10,7 +10,6 @@ Rectangle {
     id: root
     color: AppTheme.core.appBackground
 
-    property alias home: home
     property alias robot_connection: robot_connection
     property alias register_page: register_page
     property alias lostConnectionPopupItem: lostConnectionPopup
@@ -40,9 +39,7 @@ Rectangle {
         anchors.bottomMargin: root.keyboardInset
         anchors.topMargin: 0
 
-        initialItem: Home {
-            id: home
-        }
+        initialItem: home_component
         pushEnter: Transition {
             PropertyAnimation {
                 property: "x"
@@ -74,6 +71,12 @@ Rectangle {
                 to: mystackview.width
                 duration: 400
             }
+        }
+    }
+
+    Component {
+        id: home_component
+        Home {
         }
     }
 

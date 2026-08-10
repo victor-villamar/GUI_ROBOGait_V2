@@ -205,7 +205,7 @@ Dialog {
                                 }
 
                                 contentItem: Image {
-                                    source: "qrc:/qmlresources/icons/black/circle_info_solid.svg"
+                                    source: "qrc:/qmlresources/icons/black/circle_info_solid.png"
                                     fillMode: Image.PreserveAspectFit
                                     sourceSize.width: 18
                                     sourceSize.height: 18

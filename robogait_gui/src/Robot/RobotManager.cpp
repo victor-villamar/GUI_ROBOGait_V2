@@ -24,7 +24,7 @@ RobotManager::RobotManager() :
     cb_group_(nullptr),
     is_monitoring_(false),
     battery_level_trunc_(0),
-    battery_icon_("qrc:/qmlresources/icons/color/battery_0.svg")
+    battery_icon_("qrc:/qmlresources/icons/color/battery_0.png")
 {
   qInfo() << "[RobotManager::RobotManager] RobotManager created";
 
@@ -463,7 +463,7 @@ void RobotManager::callbackRobotStatus(const command_executor_msgs::msg::RobotSt
   const float clamped_battery = std::max(0.0f, std::min(100.0f, msg->battery));
   const int bucket = static_cast<int>(std::floor(clamped_battery / 5.0f)) * 5;
   battery_level_trunc_ = std::max(0, std::min(100, bucket));
-  battery_icon_ = QString("qrc:/qmlresources/icons/color/battery_%1.svg").arg(battery_level_trunc_);
+  battery_icon_ = QString("qrc:/qmlresources/icons/color/battery_%1.png").arg(battery_level_trunc_);
 
   robot_status_items_ = buildStatusItems(robot_status_info_);
 

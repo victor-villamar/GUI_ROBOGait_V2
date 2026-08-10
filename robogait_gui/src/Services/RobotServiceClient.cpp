@@ -4,11 +4,12 @@
 #include <vector>
 
 #include <action_msgs/srv/cancel_goal.hpp>
-#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <yaml-cpp/yaml.h>
 
 #include <QDebug>
+#include <QDir>
 
+#include "Loader/BootStrapLoader.hpp"
 #include "Loader/MapFileLoader.hpp"
 #include "Loader/YamlLoader.hpp"
 #include "Map/Interaction/Geometry/StrokeProcessor.hpp"
@@ -302,19 +303,19 @@ bool RobotServiceClient::startNavigation(const std::string& map_name)
 
   const bool navigation_use_sim_time = useNavigationSimTime();
   const std::string navigation_use_sim_time_arg = navigation_use_sim_time ? "true" : "false";
-  const std::string nav2_params_file = yaml_loader.getValue<std::string>("navigation.nav2_params_file", "params/nav2_params.yaml");
+  const std::string nav2_params_path = yaml_loader.getValue<std::string>("navigation.nav2_params_path", "/.local/robogait/params/");
+  const std::string nav2_params_file = yaml_loader.getValue<std::string>("navigation.nav2_params_file", "nav2_params.yaml");
 
+  if (nav2_params_path.empty())
+  {
+    qCritical() << "[RobotServiceClient::startNavigation] Nav2 params path is empty in YAML configuration";
+    return false;
+  }
   if (nav2_params_file.empty())
   {
     qCritical() << "[RobotServiceClient::startNavigation] Nav2 params file is empty in YAML configuration";
     return false;
   }
-
-  const std::filesystem::path nav2_params_path(nav2_params_file);
-  const std::string resolved_nav2_params_file =
-      nav2_params_path.is_absolute()
-          ? nav2_params_path.string()
-          : (std::filesystem::path(ament_index_cpp::get_package_share_directory(ROBOGait::ros::define::ROBOGAIT_GUI)) / nav2_params_path).string();
 
   if (!validateCommandKey(KEY_NAVIGATION))
   {
@@ -325,12 +326,11 @@ bool RobotServiceClient::startNavigation(const std::string& map_name)
   const RobotServiceClient::CommandInfo& cmd_info = commands_[KEY_NAVIGATION];
   std::string args = cmd_info.append_args;
 
-  const std::unordered_map<std::string, std::string> vars = {
-      {"{map_path}", map_path},
-      {"{map_name}", safe_name},
-      {"{navigation_use_sim_time}", navigation_use_sim_time_arg},
-      {"{nav2_params_file}", resolved_nav2_params_file},
-  };
+  const std::unordered_map<std::string, std::string> vars = {{"{map_path}", map_path},
+                                                             {"{map_name}", safe_name},
+                                                             {"{navigation_use_sim_time}", navigation_use_sim_time_arg},
+                                                             {"{nav2_params_path}", nav2_params_path},
+                                                             {"{nav2_params_file}", nav2_params_file}};
 
   args = replacePlaceholders(args, vars);
 
@@ -804,14 +804,23 @@ void RobotServiceClient::resetRobotServiceClient()
 bool RobotServiceClient::loadCommands()
 {
 
-  const std::filesystem::path share_path = ament_index_cpp::get_package_share_directory(ROBOGait::ros::define::ROBOGAIT_GUI);
-  const std::string config_path = (share_path / "params" / "commands.yaml").string();
+  auto& bootstrap_loader = ROBOGait::loader::BootStrapLoader::getInstance();
+  const auto bootstrap_config = bootstrap_loader.getBootStrapConfig();
 
-  YAML::Node config = YAML::LoadFile(config_path);
+  const std::filesystem::path commands_path =
+      std::filesystem::path(QDir::homePath().toStdString()) / bootstrap_config.user_config_root_path / bootstrap_config.commands_file_name;
+
+  if (!std::filesystem::exists(commands_path))
+  {
+    qCritical() << "[RobotServiceClient::loadCommands]  Commands file does not exist:" << QString::fromStdString(commands_path);
+    return false;
+  }
+
+  YAML::Node config = YAML::LoadFile(commands_path);
 
   if (!config)
   {
-    qCritical() << "[RobotServiceClient::loadCommands] Failed to load commands from " << QString::fromStdString(config_path);
+    qCritical() << "[RobotServiceClient::loadCommands] Failed to load commands from " << QString::fromStdString(commands_path);
     return false;
   }
 

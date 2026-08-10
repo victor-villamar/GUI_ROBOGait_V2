@@ -8,6 +8,8 @@ Item {
     property real buttonHeightPx: 44
     property real iconButtonSizePx: 50
     property real iconGlyphSizePx: 25
+    readonly property real textButtonPaddingPx: Math.max(24, iconButtonSizePx * 0.45)
+    readonly property real textButtonHeightPx: Math.max(buttonHeightPx, iconButtonSizePx)
 
     property bool isTrajectoryStep: false
     property bool mapAvailable: false
@@ -74,7 +76,7 @@ Item {
             }
 
             contentItem: Image {
-                source: "qrc:/qmlresources/icons/white/minus.svg"
+                source: "qrc:/qmlresources/icons/white/minus.png"
                 width: root.iconGlyphSizePx
                 height: root.iconGlyphSizePx
                 anchors.centerIn: parent
@@ -100,7 +102,7 @@ Item {
             }
 
             contentItem: Image {
-                source: "qrc:/qmlresources/icons/white/plus.svg"
+                source: "qrc:/qmlresources/icons/white/plus.png"
                 width: root.iconGlyphSizePx
                 height: root.iconGlyphSizePx
                 anchors.centerIn: parent
@@ -134,7 +136,7 @@ Item {
             }
 
             contentItem: Image {
-                source: "qrc:/qmlresources/icons/white/goal.svg"
+                source: "qrc:/qmlresources/icons/white/goal.png"
                 width: root.iconGlyphSizePx
                 height: root.iconGlyphSizePx
                 anchors.centerIn: parent
@@ -160,7 +162,7 @@ Item {
             }
 
             contentItem: Image {
-                source: "qrc:/qmlresources/icons/white/path.svg"
+                source: "qrc:/qmlresources/icons/white/path.png"
                 width: root.iconGlyphSizePx
                 height: root.iconGlyphSizePx
                 anchors.centerIn: parent
@@ -180,8 +182,8 @@ Item {
 
         Button {
             id: tracedRoutesButton
-            width: 190
-            height: root.iconButtonSizePx
+            width: Math.max(190, tracedRoutesLabel.implicitWidth + root.textButtonPaddingPx * 2)
+            height: root.textButtonHeightPx
             visible: root.tracedRoutesAvailable
             enabled: root.mapAvailable && root.isTrajectoryStep
             opacity: enabled ? 1.0 : 0.4
@@ -194,12 +196,16 @@ Item {
             }
 
             contentItem: Text {
+                id: tracedRoutesLabel
                 text: qsTr("VER RUTAS TRAZADAS")
                 color: AppTheme.map.white
                 font.pixelSize: 13
+                minimumPixelSize: 10
+                fontSizeMode: Text.Fit
                 font.bold: true
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
             }
 
             onClicked: root.tracedRoutesRequested()
@@ -207,8 +213,8 @@ Item {
 
         Button {
             id: startTestButton
-            width: 150
-            height: root.iconButtonSizePx
+            width: Math.max(170, startTestLabel.implicitWidth + root.textButtonPaddingPx * 2)
+            height: root.textButtonHeightPx
             visible: !root.personDetectionConfirmed && ((root.goalPlacementEnabled && root.goalAccepted) || (root.pathPlacementEnabled && root.manualPathReady))
             enabled: root.goalPlacementEnabled ? root.goalPathReady : (root.pathPlacementEnabled ? root.manualPathReady : false)
             opacity: enabled ? 1.0 : 0.4
@@ -221,12 +227,16 @@ Item {
             }
 
             contentItem: Text {
+                id: startTestLabel
                 text: qsTr("DETECTAR PERSONA")
                 color: AppTheme.map.white
                 font.pixelSize: 14
+                minimumPixelSize: 10
+                fontSizeMode: Text.Fit
                 font.bold: true
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
             }
 
             onClicked: root.startTestRequested()

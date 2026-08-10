@@ -5,7 +5,7 @@ import AppTheme 1.0
 Popup {
     id: root
     width: parent ? Math.min(560, parent.width * 0.80) : 560
-    height: 100
+    height: Math.max(100, textError.implicitHeight + 44)
     modal: true
     focus: true
     parent: Overlay.overlay
@@ -54,10 +54,16 @@ Popup {
 
         Text {
             id: textError
-            anchors.centerIn: parent
+            anchors.fill: parent
+            anchors.margins: 22
             text: "Error: Has puesto el robot en una posicion donde esta prohibido."
             color: AppTheme.dialogsCommon.errorText
             font.pixelSize: 16
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            wrapMode: Text.WordWrap
+            minimumPixelSize: 10
+            fontSizeMode: Text.Fit
         }
 
         MouseArea {

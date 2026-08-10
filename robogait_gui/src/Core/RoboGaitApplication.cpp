@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <string>
+#include <system_error>
 
 #include <QDebug>
 #include <QDir>
@@ -10,6 +11,7 @@
 #include <QStandardPaths>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <yaml-cpp/yaml.h>
 
 #include <geometry_msgs/msg/twist.hpp>
 
@@ -95,44 +97,45 @@ void RoboGaitApplication::initCommon()
 
 bool RoboGaitApplication::initialize()
 {
-  // Load YAML configuration
-  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
-  const std::filesystem::path shared_path = ament_index_cpp::get_package_share_directory(ROBOGait::ros::define::ROBOGAIT_GUI);
-  const std::string config_path = (shared_path / "params" / "config.yaml").string();
+  // Load Boostrap YAML configuration
+  const std::filesystem::path shared_dir = ament_index_cpp::get_package_share_directory(ROBOGait::ros::define::ROBOGAIT_GUI);
+  const std::filesystem::path bootstrap_path = (shared_dir / "params" / "bootstrap.yaml");
+  const auto bootstrap_config = getBootstrapConfig(QString::fromStdString(bootstrap_path));
 
-  if (!yaml_loader.loadConfig(config_path))
+  if (!bootstrap_config)
   {
-    qCritical() << "[RoboGaitApplication::initialize] CRITICAL: Failed to load configuration from:" << QString::fromStdString(config_path);
+    qCritical() << "[RoboGaitApplication::initialize] BootStrap config is not available";
     return false;
   }
 
-  // Database Configuration
-  const std::string configured_dir = yaml_loader.getValue<std::string>("database.path", ".local/default");
-  const std::string configured_filename = yaml_loader.getValue<std::string>("database.filename", "default.db");
+  const QString shared_params_dir = QString::fromStdString((shared_dir / "params").string());
 
-  if (configured_dir.empty())
+  if (!ensureUserConfigFiles(shared_params_dir, bootstrap_config.value()))
   {
-    qCritical() << "[RoboGaitApplication::initialize] Database path not configured in YAML";
+    qCritical() << "[RoboGaitApplication::initialize] Failed to ensure user configuration files";
     return false;
   }
 
-  if (configured_filename.empty())
+  const std::filesystem::path config_path =
+      std::filesystem::path(QDir::homePath().toStdString()) / bootstrap_config->user_config_root_path / bootstrap_config->config_file_name;
+
+  const auto db_file = getDatabaseFile(QString::fromStdString(config_path));
+
+  if (!db_file)
   {
-    qCritical() << "[RoboGaitApplication::initialize] Database filename not configured in YAML";
+    qCritical() << "[RoboGaitApplication::initialize] Database file is not available";
     return false;
   }
-
-  const QString full_db_path = QDir::homePath() + "/" + QString::fromStdString(configured_dir) + "/" + QString::fromStdString(configured_filename);
-
-  // Setup application translator
-  setupTranslator();
 
   // Setup database
-  if (!setupDatabase(full_db_path))
+  if (!setupDatabase(db_file.value()))
   {
     qCritical() << "[RoboGaitApplication::initialize] Failed to setup database";
     return false;
   }
+
+  // Setup application translator
+  setupTranslator();
 
   // Initialize DeveloperSettings singleton
   auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
@@ -176,6 +179,113 @@ bool RoboGaitApplication::initialize()
 
   qInfo() << "[RoboGaitApplication::initialize] Application subsystems initialized";
   return true;
+}
+
+std::optional<ROBOGait::loader::BootStrapLoader::BootStrapConfig> RoboGaitApplication::getBootstrapConfig(const QString& config_path) const
+{
+  auto& bootstrap_loader = ROBOGait::loader::BootStrapLoader::getInstance();
+  if (!bootstrap_loader.loadBootStrapConfig(std::filesystem::path(config_path.toStdString())))
+  {
+    qCritical() << "[RoboGaitApplication::getBootstrapConfig] Failed to load boostrap configuration from:" << config_path;
+    return std::nullopt;
+  }
+
+  return bootstrap_loader.getBootStrapConfig();
+}
+
+bool RoboGaitApplication::ensureUserConfigFiles(const QString& shared_params_dir,
+                                                const ROBOGait::loader::BootStrapLoader::BootStrapConfig& bootstrap_config) const
+{
+  const std::filesystem::path user_config_dir = std::filesystem::path(QDir::homePath().toStdString()) / bootstrap_config.user_config_root_path;
+
+  std::error_code error_code;
+  const bool directory_created = std::filesystem::create_directories(user_config_dir, error_code);
+
+  if (error_code)
+  {
+    qCritical() << "[RoboGaitApplication::ensureUserConfigFiles] Failed to create user configuration directory:"
+                << QString::fromStdString(user_config_dir.string()) << QString::fromStdString(error_code.message());
+    return false;
+  }
+
+  if (directory_created)
+  {
+    qInfo() << "[RoboGaitApplication::ensureUserConfigFiles] Created user configuration directory:" << QString::fromStdString(user_config_dir.string());
+  }
+
+  const std::filesystem::path shared_params_path(shared_params_dir.toStdString());
+  const QString default_config_file = QString::fromStdString((shared_params_path / bootstrap_config.config_file_name).string());
+  const QString user_config_file = QString::fromStdString((user_config_dir / bootstrap_config.config_file_name).string());
+
+  if (!ensureUserConfigFile(default_config_file, user_config_file))
+  {
+    return false;
+  }
+
+  const QString default_commands_file = QString::fromStdString((shared_params_path / bootstrap_config.commands_file_name).string());
+  const QString user_commands_file = QString::fromStdString((user_config_dir / bootstrap_config.commands_file_name).string());
+
+  return ensureUserConfigFile(default_commands_file, user_commands_file);
+}
+
+bool RoboGaitApplication::ensureUserConfigFile(const QString& source_file, const QString& target_file) const
+{
+  if (QFileInfo::exists(target_file))
+  {
+    return true;
+  }
+
+  if (!QFileInfo::exists(source_file))
+  {
+    qCritical() << "[RoboGaitApplication::ensureUserConfigFile] Default configuration file does not exist:" << source_file;
+    return false;
+  }
+
+  if (!QFile::copy(source_file, target_file))
+  {
+    qCritical() << "[RoboGaitApplication::ensureUserConfigFile] Failed to copy default configuration from:" << source_file << "to:" << target_file;
+    return false;
+  }
+
+  qInfo() << "[RoboGaitApplication::ensureUserConfigFile] Copied default configuration to:" << target_file;
+  return true;
+}
+
+std::optional<QString> RoboGaitApplication::getDatabaseFile(const QString& config_path) const
+{
+  if (!std::filesystem::exists(config_path.toStdString()))
+  {
+    qCritical() << "[RoboGaitApplication::getDatabaseFile] Config file does not exist:" << config_path;
+    return std::nullopt;
+  }
+
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  if (!yaml_loader.loadConfig(config_path.toStdString()))
+  {
+    qCritical() << "[RoboGaitApplication::getDatabaseFile] Failed to load config YAML configuration from:" << config_path;
+    return std::nullopt;
+  }
+
+  // Get Database Configuration
+  const std::string database_dir = yaml_loader.getValue<std::string>("database.path", ".local/default");
+  const std::string database_filename = yaml_loader.getValue<std::string>("database.filename", "default.db");
+
+  if (database_dir.empty())
+  {
+    qCritical() << "[RoboGaitApplication::getDatabaseFile] Database path not configured in YAML";
+    return std::nullopt;
+  }
+
+  if (database_filename.empty())
+  {
+    qCritical() << "[RoboGaitApplication::getDatabaseFile] Database filename not configured in YAML";
+    return std::nullopt;
+  }
+
+  const std::filesystem::path db_path = std::filesystem::path(QDir::homePath().toStdString()) / database_dir / database_filename;
+
+  return QString::fromStdString(db_path);
 }
 
 bool RoboGaitApplication::initForNormalAppBoot()
@@ -320,6 +430,7 @@ void RoboGaitApplication::onDeveloperSettingsApplied()
 
   auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
   const auto new_domain_id = static_cast<uint8_t>(developer_settings.getRosDomainId());
+  const bool use_namespace_discovery = developer_settings.getUseNamespaceDiscovery();
   const bool use_topic_filter = developer_settings.getUseTopicFilter();
 
   if (ros_node_manager_ == nullptr)
@@ -328,6 +439,7 @@ void RoboGaitApplication::onDeveloperSettingsApplied()
     return;
   }
 
+  ros_node_manager_->setUseNamespaceDiscovery(use_namespace_discovery);
   ros_node_manager_->setUseTopicFilter(use_topic_filter);
 
   const bool restart_success = ros_node_manager_->restartWithDomain(new_domain_id, argc_, argv_);

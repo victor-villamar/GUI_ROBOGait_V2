@@ -27,7 +27,6 @@ find_package(Qt6 REQUIRED COMPONENTS
     Gui
     Qml
     Quick
-    VirtualKeyboard
     Network
     Sql
     Widgets)
@@ -51,6 +50,7 @@ set(HEADERS
     include/DataBase/DataBaseManager.hpp
     include/DataBase/DatabaseSchema.hpp
     include/DataBase/RoboGaitDb.hpp
+    include/Loader/BootStrapLoader.hpp
     include/Loader/MapFileLoader.hpp
     include/Loader/YamlLoader.hpp
     include/Map/Data/LaserScanData.hpp
@@ -136,6 +136,7 @@ set(SOURCES
     src/DataBase/DataBaseManager.cpp
     src/DataBase/DatabaseSchema.cpp
     src/DataBase/RoboGaitDb.cpp
+    src/Loader/BootStrapLoader.cpp
     src/Loader/MapFileLoader.cpp
     src/Loader/YamlLoader.cpp
     src/Map/Data/LaserScanData.cpp
@@ -228,7 +229,6 @@ set(QT_LIBS
     Qt6::Quick
     Qt6::Network
     Qt6::Sql
-    Qt6::VirtualKeyboard
     Qt6::Widgets
 )
 
@@ -252,7 +252,6 @@ include_directories(
     ${Qt6Quick_INCLUDE_DIRS}
     ${Qt6Network_INCLUDE_DIRS}
     ${Qt6Sql_INCLUDE_DIRS}
-    ${Qt6VirtualKeyboard_INCLUDE_DIRS}
 )
 
 # Add executable
@@ -290,6 +289,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
             -Werror
         )
     endif()
+
 endif()
 
 # Add dependencies
@@ -341,6 +341,15 @@ if(BUILD_TESTING)
     )
     target_include_directories(test_yaml_loader PRIVATE include)
     target_link_libraries(test_yaml_loader
+        yaml-cpp
+    )
+
+    ament_add_gtest(test_bootstrap_loader
+        test/loader/test_bootstrap_loader.cpp
+        src/Loader/BootStrapLoader.cpp
+    )
+    target_include_directories(test_bootstrap_loader PRIVATE include)
+    target_link_libraries(test_bootstrap_loader
         yaml-cpp
     )
 

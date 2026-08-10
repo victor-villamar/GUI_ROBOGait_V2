@@ -29,7 +29,7 @@ Item {
         background: null
 
         contentItem: Image {
-            source: "qrc:/qmlresources/icons/white/shutdown.svg"
+            source: "qrc:/qmlresources/icons/white/shutdown.png"
             width: root.iconGlyphSizePx
             height: root.iconGlyphSizePx
             anchors.centerIn: parent

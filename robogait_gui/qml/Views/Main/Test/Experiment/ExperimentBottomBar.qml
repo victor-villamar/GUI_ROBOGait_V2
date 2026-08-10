@@ -44,7 +44,7 @@ Item {
             }
 
             contentItem: Image {
-                source: "qrc:/qmlresources/icons/white/minus.svg"
+                source: "qrc:/qmlresources/icons/white/minus.png"
                 width: root.iconGlyphSizePx
                 height: root.iconGlyphSizePx
                 anchors.centerIn: parent
@@ -70,7 +70,7 @@ Item {
             }
 
             contentItem: Image {
-                source: "qrc:/qmlresources/icons/white/plus.svg"
+                source: "qrc:/qmlresources/icons/white/plus.png"
                 width: root.iconGlyphSizePx
                 height: root.iconGlyphSizePx
                 anchors.centerIn: parent
@@ -96,7 +96,7 @@ Item {
             }
 
             contentItem: Image {
-                source: "qrc:/qmlresources/icons/white/center_to_fit.svg"
+                source: "qrc:/qmlresources/icons/white/center_to_fit.png"
                 width: root.iconGlyphSizePx
                 height: root.iconGlyphSizePx
                 anchors.centerIn: parent
@@ -124,7 +124,7 @@ Item {
             }
 
             contentItem: Image {
-                source: "qrc:/qmlresources/icons/white/center_view.svg"
+                source: "qrc:/qmlresources/icons/white/center_view.png"
                 width: root.iconGlyphSizePx
                 height: root.iconGlyphSizePx
                 anchors.centerIn: parent

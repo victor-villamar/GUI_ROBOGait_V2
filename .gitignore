@@ -62,3 +62,6 @@ combined_compile_commands.json
 
 # Ignore ROS 2 workspace files
 COLCON_IGNORE
+
+# Docker environment
+.env

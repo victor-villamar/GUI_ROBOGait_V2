@@ -341,7 +341,7 @@ Rectangle {
                 }
 
                 contentItem: Image {
-                    source: "qrc:/qmlresources/icons/color/emergency_stop.svg"
+                    source: "qrc:/qmlresources/icons/color/emergency_stop.png"
                     width: root.emergencyIconSizePx > 0 ? root.emergencyIconSizePx : root.iconGlyphSizePx * 2
                     height: width
                     anchors.centerIn: parent
