@@ -18,7 +18,9 @@ install_system_build_tools()
     net-tools \
     iputils-ping \
     libyaml-cpp-dev \
-    libboost-dev
+    libboost-dev \
+    libboost-system-dev \
+    libboost-filesystem-dev
 }
 
 install_development_dependencies()
