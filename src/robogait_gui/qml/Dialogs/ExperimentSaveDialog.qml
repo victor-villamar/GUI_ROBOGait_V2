@@ -189,6 +189,7 @@ Dialog {
                         wrapMode: TextEdit.Wrap
                         selectByMouse: true
                         text: root.annotations
+                        placeholderTextColor: AppTheme.selection.placeholderText
                         placeholderText: qsTr("Escriba observaciones del experimento...")
                         color: AppTheme.selection.black
                         font.pixelSize: root.bodyFontPx

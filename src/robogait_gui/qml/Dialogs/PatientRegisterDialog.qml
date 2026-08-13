@@ -147,6 +147,7 @@ Dialog {
                         verticalAlignment: TextInput.AlignVCenter
                         leftPadding: 10
                         rightPadding: 10
+                        placeholderTextColor: AppTheme.selection.placeholderText
                         placeholderText: qsTr("Nombre")
 
                         background: Rectangle {
@@ -164,6 +165,7 @@ Dialog {
                         verticalAlignment: TextInput.AlignVCenter
                         leftPadding: 10
                         rightPadding: 10
+                        placeholderTextColor: AppTheme.selection.placeholderText
                         placeholderText: qsTr("Apellidos")
 
                         background: Rectangle {
@@ -181,6 +183,7 @@ Dialog {
                         verticalAlignment: TextInput.AlignVCenter
                         leftPadding: 10
                         rightPadding: 10
+                        placeholderTextColor: AppTheme.selection.placeholderText
                         placeholderText: qsTr("Edad (años)")
 
                         background: Rectangle {
@@ -198,6 +201,7 @@ Dialog {
                         verticalAlignment: TextInput.AlignVCenter
                         leftPadding: 10
                         rightPadding: 10
+                        placeholderTextColor: AppTheme.selection.placeholderText
                         placeholderText: qsTr("Peso (Kg)")
 
                         background: Rectangle {
@@ -215,6 +219,7 @@ Dialog {
                         verticalAlignment: TextInput.AlignVCenter
                         leftPadding: 10
                         rightPadding: 10
+                        placeholderTextColor: AppTheme.selection.placeholderText
                         placeholderText: qsTr("Altura (cm)")
 
                         background: Rectangle {
@@ -230,6 +235,7 @@ Dialog {
                         color: AppTheme.selection.black
                         font.pointSize: 15
                         wrapMode: TextEdit.Wrap
+                        placeholderTextColor: AppTheme.selection.placeholderText
                         placeholderText: qsTr("Descripción")
 
                         background: Rectangle {

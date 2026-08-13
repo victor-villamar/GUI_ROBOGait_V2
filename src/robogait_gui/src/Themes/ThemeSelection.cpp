@@ -10,6 +10,8 @@ QColor ThemeSelection::getWhite() const { return QColor(WHITE); }
 
 QColor ThemeSelection::getBlack() const { return QColor(BLACK); }
 
+QColor ThemeSelection::getPlaceholderText() const { return QColor(PLACEHOLDER_TEXT); }
+
 QColor ThemeSelection::getPrimary() const { return QColor(PRIMARY); }
 
 QColor ThemeSelection::getPrimaryDark() const { return QColor(PRIMARY_DARK); }

@@ -145,6 +145,7 @@ Dialog {
                         verticalAlignment: TextInput.AlignVCenter
                         leftPadding: 10
                         rightPadding: 10
+                        placeholderTextColor: AppTheme.selection.placeholderText
                         placeholderText: qsTr("Nombre del mapa")
 
                         background: Rectangle {
@@ -162,6 +163,7 @@ Dialog {
                         verticalAlignment: TextInput.AlignVCenter
                         leftPadding: 10
                         rightPadding: 10
+                        placeholderTextColor: AppTheme.selection.placeholderText
                         placeholderText: qsTr("Localización del mapa")
 
                         background: Rectangle {
@@ -177,6 +179,7 @@ Dialog {
                         color: AppTheme.selection.black
                         font.pointSize: 15
                         wrapMode: TextEdit.Wrap
+                        placeholderTextColor: AppTheme.selection.placeholderText
                         placeholderText: qsTr("Descripción")
 
                         background: Rectangle {

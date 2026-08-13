@@ -25,6 +25,10 @@ public:
              READ getBlack
              CONSTANT)
 
+  Q_PROPERTY(QColor placeholderText
+             READ getPlaceholderText
+             CONSTANT)
+
   Q_PROPERTY(QColor primary
              READ getPrimary
              CONSTANT)
@@ -68,6 +72,7 @@ public:
   QColor getBackground() const;
   QColor getWhite() const;
   QColor getBlack() const;
+  QColor getPlaceholderText() const;
   QColor getPrimary() const;
   QColor getPrimaryDark() const;
   QColor getLightBlue() const;
@@ -82,6 +87,7 @@ private:
   static constexpr const char* BACKGROUND = "#518bb7";
   static constexpr const char* WHITE = "#ffffff";
   static constexpr const char* BLACK = "#000000";
+  static constexpr const char* PLACEHOLDER_TEXT = "#808080";
   static constexpr const char* PRIMARY = "#518bb7";
   static constexpr const char* PRIMARY_DARK = "#045671";
   static constexpr const char* LIGHT_BLUE = "#aed2ea";
