@@ -3,8 +3,8 @@
 #include <charconv>
 #include <cmath>
 #include <cstring>
-#include <iostream>
 #include <limits>
+#include <utility>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <yaml-cpp/yaml.h>
@@ -13,31 +13,35 @@
 
 using namespace ROBOGait::loader;
 
-std::optional<nav_msgs::msg::OccupancyGrid> MapFileLoader::loadMap(const std::string& yaml_content, const std::vector<uint8_t>& pgm_content) const
+MapFileLoader::MapLoadResult::MapLoadResult(nav_msgs::msg::OccupancyGrid occupancy_grid_in) : occupancy_grid(std::move(occupancy_grid_in)) {}
+
+MapFileLoader::MapLoadResult::MapLoadResult(std::string error_in) : error(std::move(error_in)) {}
+
+MapFileLoader::MapLoadResult::operator bool() const { return occupancy_grid.has_value(); }
+
+MapFileLoader::MapLoadResult MapFileLoader::loadMap(const std::string& yaml_content, const std::vector<uint8_t>& pgm_content) const
 {
   MapMetadata metadata;
+  std::string error;
 
-  if (!parseYaml(yaml_content, metadata))
+  if (!parseYaml(yaml_content, metadata, error))
   {
-    std::cerr << "[MapFileLoader::loadMap] Failed to parse YAML content" << std::endl;
-    return std::nullopt;
+    return MapLoadResult("[MapFileLoader::loadMap] Failed to parse YAML content\n" + error);
   }
 
   std::vector<uint8_t> pixels;
-  if (!parsePgm(pgm_content, metadata.width, metadata.height, pixels))
+  if (!parsePgm(pgm_content, metadata.width, metadata.height, pixels, error))
   {
-    std::cerr << "[MapFileLoader::loadMap] Failed to parse PGM content" << std::endl;
-    return std::nullopt;
+    return MapLoadResult("[MapFileLoader::loadMap] Failed to parse PGM content\n" + error);
   }
 
   nav_msgs::msg::OccupancyGrid occupancy_grid;
-  if (!buildOccupancyGrid(metadata, pixels, occupancy_grid))
+  if (!buildOccupancyGrid(metadata, pixels, occupancy_grid, error))
   {
-    std::cerr << "[MapFileLoader::loadMap] Failed to build OccupancyGrid message" << std::endl;
-    return std::nullopt;
+    return MapLoadResult("[MapFileLoader::loadMap] Failed to build OccupancyGrid message\n" + error);
   }
 
-  return occupancy_grid;
+  return MapLoadResult(std::move(occupancy_grid));
 }
 
 bool MapFileLoader::readToken(const std::vector<uint8_t>& data, size_t& cursor, std::string_view& token)
@@ -104,14 +108,14 @@ bool MapFileLoader::readIntToken(const std::vector<uint8_t>& data, size_t& curso
   return result.ec == std::errc{} && result.ptr == end;
 }
 
-bool MapFileLoader::parseYaml(const std::string& yaml_content, MapMetadata& metadata_out) const
+bool MapFileLoader::parseYaml(const std::string& yaml_content, MapMetadata& metadata_out, std::string& error_out) const
 {
   try
   {
     const YAML::Node node = YAML::Load(yaml_content);
     if (!node || !node.IsMap())
     {
-      std::cerr << "[MapFileLoader::parseYaml] Invalid YAML root node" << std::endl;
+      error_out = "[MapFileLoader::parseYaml] Invalid YAML root node";
       return false;
     }
 
@@ -121,13 +125,13 @@ bool MapFileLoader::parseYaml(const std::string& yaml_content, MapMetadata& meta
 
     if (!resolution_node)
     {
-      std::cerr << "[MapFileLoader::parseYaml] Missing 'resolution' field in YAML" << std::endl;
+      error_out = "[MapFileLoader::parseYaml] Missing 'resolution' field in YAML";
       return false;
     }
 
     if (!origin_node || !origin_node.IsSequence() || origin_node.size() != ORIGIN_SIZE)
     {
-      std::cerr << "[MapFileLoader::parseYaml] Missing or invalid 'origin' field in YAML" << std::endl;
+      error_out = "[MapFileLoader::parseYaml] Missing or invalid 'origin' field in YAML";
       return false;
     }
 
@@ -135,7 +139,7 @@ bool MapFileLoader::parseYaml(const std::string& yaml_content, MapMetadata& meta
 
     if (metadata_out.resolution <= 0.0)
     {
-      std::cerr << "[MapFileLoader::parseYaml] Resolution must be a positive value" << std::endl;
+      error_out = "[MapFileLoader::parseYaml] Resolution must be a positive value";
       return false;
     }
 
@@ -179,19 +183,19 @@ bool MapFileLoader::parseYaml(const std::string& yaml_content, MapMetadata& meta
 
     if (metadata_out.occupied_thresh < 0.0 || metadata_out.occupied_thresh > MAX_THRESHOLD)
     {
-      std::cerr << "[MapFileLoader::parseYaml] 'occupied_thresh' must be in range [0.0, " << MAX_THRESHOLD << "]" << std::endl;
+      error_out = "[MapFileLoader::parseYaml] 'occupied_thresh' must be in range [0.0, 1.0]";
       return false;
     }
 
     if (metadata_out.free_thresh < 0.0 || metadata_out.free_thresh > MAX_THRESHOLD)
     {
-      std::cerr << "[MapFileLoader::parseYaml] 'free_thresh' must be in range [0.0, " << MAX_THRESHOLD << "]" << std::endl;
+      error_out = "[MapFileLoader::parseYaml] 'free_thresh' must be in range [0.0, 1.0]";
       return false;
     }
 
     if (metadata_out.free_thresh >= metadata_out.occupied_thresh)
     {
-      std::cerr << "[MapFileLoader::parseYaml] 'free_thresh' must be less than 'occupied_thresh'" << std::endl;
+      error_out = "[MapFileLoader::parseYaml] 'free_thresh' must be less than 'occupied_thresh'";
       return false;
     }
 
@@ -199,31 +203,32 @@ bool MapFileLoader::parseYaml(const std::string& yaml_content, MapMetadata& meta
   }
   catch (const std::exception& e)
   {
-    std::cerr << "[MapFileLoader::parseYaml] Exception while parsing YAML: " << e.what() << std::endl;
+    error_out = std::string("[MapFileLoader::parseYaml] Exception while parsing YAML: ") + e.what();
     return false;
   }
 }
 
-bool MapFileLoader::parsePgm(const std::vector<uint8_t>& pgm_content, int& width_out, int& height_out, std::vector<uint8_t>& pixels_out) const
+bool MapFileLoader::parsePgm(const std::vector<uint8_t>& pgm_content, int& width_out, int& height_out, std::vector<uint8_t>& pixels_out,
+                             std::string& error_out) const
 {
   size_t cursor = 0;
   std::string_view token;
 
   if (!readToken(pgm_content, cursor, token) || token != "P5")
   {
-    std::cerr << "[MapFileLoader::parsePgm] Invalid PGM header (expected 'P5')" << std::endl;
+    error_out = "[MapFileLoader::parsePgm] Invalid PGM header (expected 'P5')";
     return false;
   }
 
   if (!readIntToken(pgm_content, cursor, width_out) || width_out <= 0)
   {
-    std::cerr << "[MapFileLoader::parsePgm] Failed to read valid width from PGM header" << std::endl;
+    error_out = "[MapFileLoader::parsePgm] Failed to read valid width from PGM header";
     return false;
   }
 
   if (!readIntToken(pgm_content, cursor, height_out) || height_out <= 0)
   {
-    std::cerr << "[MapFileLoader::parsePgm] Failed to read valid height from PGM header" << std::endl;
+    error_out = "[MapFileLoader::parsePgm] Failed to read valid height from PGM header";
     return false;
   }
 
@@ -231,19 +236,19 @@ bool MapFileLoader::parsePgm(const std::vector<uint8_t>& pgm_content, int& width
 
   if (!readIntToken(pgm_content, cursor, max_value) || max_value <= 0 || max_value > MAX_PIXEL_VALUE)
   {
-    std::cerr << "[MapFileLoader::parsePgm] Failed to read valid max pixel value from PGM header" << std::endl;
+    error_out = "[MapFileLoader::parsePgm] Failed to read valid max pixel value from PGM header";
     return false;
   }
 
   if (static_cast<size_t>(width_out) > (std::numeric_limits<size_t>::max() / static_cast<size_t>(height_out)))
   {
-    std::cerr << "[MapFileLoader::parsePgm] Image dimensions are too large and cause size overflow" << std::endl;
+    error_out = "[MapFileLoader::parsePgm] Image dimensions are too large and cause size overflow";
     return false;
   }
 
   if (cursor >= pgm_content.size() || !std::isspace(static_cast<unsigned char>(pgm_content[cursor])))
   {
-    std::cerr << "[MapFileLoader::parsePgm] Expected whitespace after max pixel value in PGM header" << std::endl;
+    error_out = "[MapFileLoader::parsePgm] Expected whitespace after max pixel value in PGM header";
     return false;
   }
 
@@ -263,7 +268,7 @@ bool MapFileLoader::parsePgm(const std::vector<uint8_t>& pgm_content, int& width
   const size_t expected_size = static_cast<size_t>(width_out) * static_cast<size_t>(height_out);
   if (cursor + expected_size > pgm_content.size())
   {
-    std::cerr << "[MapFileLoader::parsePgm] PGM pixel data is incomplete based on expected image dimensions" << std::endl;
+    error_out = "[MapFileLoader::parsePgm] PGM pixel data is incomplete based on expected image dimensions";
     return false;
   }
 
@@ -282,11 +287,12 @@ bool MapFileLoader::parsePgm(const std::vector<uint8_t>& pgm_content, int& width
   return true;
 }
 
-bool MapFileLoader::buildOccupancyGrid(const MapMetadata& metadata, const std::vector<uint8_t>& pixels, nav_msgs::msg::OccupancyGrid& occupancy_grid_out) const
+bool MapFileLoader::buildOccupancyGrid(const MapMetadata& metadata, const std::vector<uint8_t>& pixels, nav_msgs::msg::OccupancyGrid& occupancy_grid_out,
+                                       std::string& error_out) const
 {
   if (metadata.width <= 0 || metadata.height <= 0)
   {
-    std::cerr << "[MapFileLoader::buildOccupancyGrid] Invalid map dimensions" << std::endl;
+    error_out = "[MapFileLoader::buildOccupancyGrid] Invalid map dimensions";
     return false;
   }
 
@@ -296,7 +302,7 @@ bool MapFileLoader::buildOccupancyGrid(const MapMetadata& metadata, const std::v
 
   if (pixels.size() != expected_size)
   {
-    std::cerr << "[MapFileLoader::buildOccupancyGrid] Pixel data size does not match map dimensions" << std::endl;
+    error_out = "[MapFileLoader::buildOccupancyGrid] Pixel data size does not match map dimensions";
     return false;
   }
 

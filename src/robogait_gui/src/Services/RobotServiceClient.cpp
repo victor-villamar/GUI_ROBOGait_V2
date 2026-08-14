@@ -254,15 +254,16 @@ bool RobotServiceClient::requestMapData(const std::string& map_name)
 
   ROBOGait::loader::MapFileLoader map_loader;
 
-  auto occupancy_grid_opt = map_loader.loadMap(*yaml_info, *pgm_info);
+  const auto map_result = map_loader.loadMap(*yaml_info, *pgm_info);
 
-  if (!occupancy_grid_opt)
+  if (!map_result)
   {
-    qCritical() << "[RobotServiceClient::requestMapData] Failed to load map data for map " << QString::fromStdString(map_name);
+    qCritical().noquote() << QString("[RobotServiceClient::requestMapData] Failed to load map data for map %1\n%2")
+                                 .arg(QString::fromStdString(map_name), QString::fromStdString(map_result.error));
     return false;
   }
 
-  auto occupancy_grid = occupancy_grid_opt.value();
+  auto occupancy_grid = map_result.occupancy_grid.value();
   occupancy_grid.header.frame_id = context_ ? context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME) : ROBOGait::ros::topics::TF_MAP_FRAME;
 
   return publishMapDataOnce(occupancy_grid);
