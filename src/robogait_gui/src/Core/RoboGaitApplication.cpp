@@ -184,13 +184,16 @@ bool RoboGaitApplication::initialize()
 std::optional<ROBOGait::loader::BootStrapLoader::BootStrapConfig> RoboGaitApplication::getBootstrapConfig(const QString& config_path) const
 {
   auto& bootstrap_loader = ROBOGait::loader::BootStrapLoader::getInstance();
-  if (!bootstrap_loader.loadBootStrapConfig(std::filesystem::path(config_path.toStdString())))
+  const auto bootstrap_result = bootstrap_loader.loadBootStrapConfig(std::filesystem::path(config_path.toStdString()));
+
+  if (!bootstrap_result)
   {
-    qCritical() << "[RoboGaitApplication::getBootstrapConfig] Failed to load boostrap configuration from:" << config_path;
+    qCritical().noquote() << QString("[RoboGaitApplication::getBootstrapConfig] Failed to load bootstrap configuration from: %1\n%2")
+                                 .arg(config_path, QString::fromStdString(bootstrap_result.error));
     return std::nullopt;
   }
 
-  return bootstrap_loader.getBootStrapConfig();
+  return bootstrap_result.config.value();
 }
 
 bool RoboGaitApplication::ensureUserConfigFiles(const QString& shared_params_dir,

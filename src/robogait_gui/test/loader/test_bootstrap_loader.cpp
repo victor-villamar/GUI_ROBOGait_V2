@@ -44,9 +44,10 @@ TEST_F(BootStrapLoaderTest, LoadsValidBootstrapConfig)
 
   auto& bootstrap_loader = ROBOGait::loader::BootStrapLoader::getInstance();
 
-  ASSERT_TRUE(bootstrap_loader.loadBootStrapConfig(yaml_path));
+  const auto load_result = bootstrap_loader.loadBootStrapConfig(yaml_path);
+  ASSERT_TRUE(static_cast<bool>(load_result));
 
-  const auto config = bootstrap_loader.getBootStrapConfig();
+  const auto config = load_result.config.value();
   EXPECT_EQ(config.user_config_root_path, ".local/robogait/params");
   EXPECT_EQ(config.config_file_name, "config.yaml");
   EXPECT_EQ(config.commands_file_name, "commands.yaml");
@@ -58,7 +59,8 @@ TEST_F(BootStrapLoaderTest, ReturnsFalseWhenFileDoesNotExist)
 
   auto& bootstrap_loader = ROBOGait::loader::BootStrapLoader::getInstance();
 
-  EXPECT_FALSE(bootstrap_loader.loadBootStrapConfig(missing_path));
+  const auto load_result = bootstrap_loader.loadBootStrapConfig(missing_path);
+  EXPECT_FALSE(static_cast<bool>(load_result));
 }
 
 TEST_F(BootStrapLoaderTest, ReturnsFalseWhenYamlIsMalformed)
@@ -69,7 +71,8 @@ TEST_F(BootStrapLoaderTest, ReturnsFalseWhenYamlIsMalformed)
 
   auto& bootstrap_loader = ROBOGait::loader::BootStrapLoader::getInstance();
 
-  EXPECT_FALSE(bootstrap_loader.loadBootStrapConfig(yaml_path));
+  const auto load_result = bootstrap_loader.loadBootStrapConfig(yaml_path);
+  EXPECT_FALSE(static_cast<bool>(load_result));
 }
 
 TEST_F(BootStrapLoaderTest, ReturnsFalseWhenRequiredKeyIsMissing)
@@ -79,7 +82,8 @@ TEST_F(BootStrapLoaderTest, ReturnsFalseWhenRequiredKeyIsMissing)
 
   auto& bootstrap_loader = ROBOGait::loader::BootStrapLoader::getInstance();
 
-  EXPECT_FALSE(bootstrap_loader.loadBootStrapConfig(yaml_path));
+  const auto load_result = bootstrap_loader.loadBootStrapConfig(yaml_path);
+  EXPECT_FALSE(static_cast<bool>(load_result));
 }
 
 TEST_F(BootStrapLoaderTest, ReturnsFalseWhenRequiredValueHasInvalidType)
@@ -91,7 +95,8 @@ TEST_F(BootStrapLoaderTest, ReturnsFalseWhenRequiredValueHasInvalidType)
 
   auto& bootstrap_loader = ROBOGait::loader::BootStrapLoader::getInstance();
 
-  EXPECT_FALSE(bootstrap_loader.loadBootStrapConfig(yaml_path));
+  const auto load_result = bootstrap_loader.loadBootStrapConfig(yaml_path);
+  EXPECT_FALSE(static_cast<bool>(load_result));
 }
 
 TEST_F(BootStrapLoaderTest, ReturnsFalseWhenRequiredValueIsEmpty)
@@ -102,5 +107,6 @@ TEST_F(BootStrapLoaderTest, ReturnsFalseWhenRequiredValueIsEmpty)
 
   auto& bootstrap_loader = ROBOGait::loader::BootStrapLoader::getInstance();
 
-  EXPECT_FALSE(bootstrap_loader.loadBootStrapConfig(yaml_path));
+  const auto load_result = bootstrap_loader.loadBootStrapConfig(yaml_path);
+  EXPECT_FALSE(static_cast<bool>(load_result));
 }
