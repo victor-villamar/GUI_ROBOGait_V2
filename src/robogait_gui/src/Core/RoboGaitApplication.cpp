@@ -264,15 +264,18 @@ std::optional<QString> RoboGaitApplication::getDatabaseFile(const QString& confi
 
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
 
-  if (!yaml_loader.loadConfig(config_path.toStdString()))
+  const auto yaml_result = yaml_loader.loadConfig(config_path.toStdString());
+
+  if (!yaml_result)
   {
-    qCritical() << "[RoboGaitApplication::getDatabaseFile] Failed to load config YAML configuration from:" << config_path;
+    qCritical().noquote() << QString("[RoboGaitApplication::getDatabaseFile] Failed to load config YAML configuration from: %1\n%2")
+                                 .arg(config_path, QString::fromStdString(yaml_result.error));
     return std::nullopt;
   }
 
   // Get Database Configuration
-  const std::string database_dir = yaml_loader.getValue<std::string>("database.path", ".local/default");
-  const std::string database_filename = yaml_loader.getValue<std::string>("database.filename", "default.db");
+  const std::string database_dir = yaml_loader.getValue<std::string>("database.path", ".local/robogait");
+  const std::string database_filename = yaml_loader.getValue<std::string>("database.filename", "db_robogait.db");
 
   if (database_dir.empty())
   {

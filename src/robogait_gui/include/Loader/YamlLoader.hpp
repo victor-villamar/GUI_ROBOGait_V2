@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <string>
 
 #include <yaml-cpp/yaml.h>
@@ -20,6 +19,20 @@ class YamlLoader
 {
 public:
   /**
+   * @brief Result returned when loading YAML configuration
+   */
+  struct YamlLoadResult
+  {
+    explicit YamlLoadResult(bool loaded_in);
+    explicit YamlLoadResult(std::string error_in);
+
+    bool loaded;
+    std::string error;
+
+    explicit operator bool() const;
+  };
+
+  /**
    * @brief Get the singleton instance
    *
    * @return Reference to the YamlLoader instance
@@ -37,9 +50,9 @@ public:
    *
    * @param file_path Absolute path to the YAML configuration file
    *
-   * @return true if loading was successful, false otherwise
+   * @return Result containing load status or error details
    */
-  bool loadConfig(const std::string& file_path);
+  YamlLoadResult loadConfig(const std::string& file_path);
 
   /**
    * @brief Get a value from the configuration
@@ -82,7 +95,6 @@ template <typename T> T YamlLoader::getValue(const std::string& key, const T& de
 {
   if (!is_loaded_)
   {
-    std::cerr << "[YamlLoader::getValue] Configuration not loaded, returning default value for key: " << key << std::endl;
     return default_value;
   }
 
@@ -95,7 +107,6 @@ template <typename T> T YamlLoader::getValue(const std::string& key, const T& de
     }
     catch (const YAML::Exception& e)
     {
-      std::cerr << "[YamlLoader::getValue] Failed to convert key: " << key << ". Error: " << e.what() << std::endl;
       return default_value;
     }
   }

@@ -195,7 +195,7 @@ bool RobotServiceClient::deleteMap(const std::string& map_name)
     return false;
   }
 
-  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
+  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "/maps/");
 
   if (map_path.empty())
   {
@@ -294,7 +294,7 @@ bool RobotServiceClient::startNavigation(const std::string& map_name)
     return false;
   }
 
-  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
+  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "/maps/");
 
   if (map_path.empty())
   {
@@ -1089,7 +1089,7 @@ bool RobotServiceClient::callGetMapDataService(const std::string& map_name, std:
     return false;
   }
 
-  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
+  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "/maps/");
 
   if (map_path.empty())
   {
@@ -1306,7 +1306,7 @@ bool RobotServiceClient::saveMap(const std::string& map_name)
     return false;
   }
 
-  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
+  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "/maps/");
 
   if (map_path.empty())
   {

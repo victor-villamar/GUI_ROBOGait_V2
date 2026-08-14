@@ -189,7 +189,7 @@ bool generateMapPreview(const data::MapData& map_data, const QString& map_name)
     return false;
   }
 
-  const std::string image_path = yaml_loader.getValue<std::string>("map.image_path", "");
+  const std::string image_path = yaml_loader.getValue<std::string>("map.image_path", ".local/robogait/maps/");
 
   const QString maps_directory = QDir::homePath() + "/" + QString::fromStdString(image_path);
 
@@ -273,7 +273,7 @@ QString getMapPreviewPath(const QString& map_name)
     return QString();
   }
 
-  std::string image_path = yaml_loader.getValue<std::string>("map.image_path", "");
+  std::string image_path = yaml_loader.getValue<std::string>("map.image_path", ".local/robogait/maps/");
   QString maps_directory = QDir::homePath() + "/" + QString::fromStdString(image_path);
 
   QString file_path = maps_directory + map_name + ".png";

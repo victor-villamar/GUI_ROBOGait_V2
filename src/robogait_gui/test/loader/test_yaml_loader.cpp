@@ -23,7 +23,8 @@ TEST(YamlLoaderTest, LoadsNestedValuesAndReturnsDefaults)
 
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
 
-  ASSERT_TRUE(yaml_loader.loadConfig(config_path.string()));
+  const auto load_result = yaml_loader.loadConfig(config_path.string());
+  ASSERT_TRUE(static_cast<bool>(load_result));
   EXPECT_TRUE(yaml_loader.isLoaded());
   EXPECT_EQ(yaml_loader.getValue<std::string>("database.path", "default"), "/tmp/robogait.db");
   EXPECT_DOUBLE_EQ(yaml_loader.getValue<double>("map.spline_path.follow_path_min_point_spacing_m", 0.0), 0.25);
@@ -32,7 +33,9 @@ TEST(YamlLoaderTest, LoadsNestedValuesAndReturnsDefaults)
   EXPECT_EQ(yaml_loader.getValue<int>("database.path", 42), 42);
 
   const std::filesystem::path missing_path = test_dir / "missing.yaml";
-  EXPECT_FALSE(yaml_loader.loadConfig(missing_path.string()));
+  const auto missing_load_result = yaml_loader.loadConfig(missing_path.string());
+  EXPECT_FALSE(static_cast<bool>(missing_load_result));
+  EXPECT_FALSE(missing_load_result.error.empty());
   EXPECT_FALSE(yaml_loader.isLoaded());
   EXPECT_EQ(yaml_loader.getValue<int>("database.path", 42), 42);
 

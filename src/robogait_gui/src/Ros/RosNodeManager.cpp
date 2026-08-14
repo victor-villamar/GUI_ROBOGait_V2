@@ -154,7 +154,7 @@ void RosNodeManager::initialize(int argc, char** argv, uint8_t domain_id)
     return;
   }
 
-  std::string node_namespace = yaml_loader.getValue<std::string>("node.namespace");
+  std::string node_namespace = yaml_loader.getValue<std::string>("node.namespace", "RoboGait_GUI");
 
   ros_node_ = std::make_shared<rclcpp::Node>(node_name_.toStdString(), node_namespace, node_options);
 
