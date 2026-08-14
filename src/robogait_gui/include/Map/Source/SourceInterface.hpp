@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <string>
 
 #include <rclcpp/node.hpp>
 
@@ -19,9 +20,27 @@ namespace source
 class SourceInterface
 {
 public:
+  /**
+   * @brief Result returned by source control operations
+   */
+  struct SourceResult
+  {
+    static SourceResult success();
+    static SourceResult failure(std::string error_in);
+
+    std::string error;
+
+    explicit operator bool() const;
+
+  private:
+    SourceResult(bool success_in, std::string error_in);
+
+    bool success_;
+  };
+
   virtual ~SourceInterface() = default;
 
-  virtual void initialize(rclcpp::Node* parent_node) = 0;
+  virtual SourceResult initialize(rclcpp::Node* parent_node) = 0;
   virtual void setRobotContext(const ROBOGait::context::RobotContext& context) = 0;
 
   virtual void start() = 0;

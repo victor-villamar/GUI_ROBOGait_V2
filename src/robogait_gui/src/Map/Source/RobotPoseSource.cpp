@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "Map/Source/RobotPoseSource.hpp"
 #include "Ros/TopicsName.hpp"
 
@@ -16,12 +14,11 @@ RobotPoseSource::RobotPoseSource() : map_frame_(ROBOGait::ros::topics::TF_MAP_FR
   tf_subscriber_ = std::make_shared<ROBOGait::map::subscribers::TFSubscriber>();
 }
 
-void RobotPoseSource::initialize(rclcpp::Node* parent_node)
+SourceInterface::SourceResult RobotPoseSource::initialize(rclcpp::Node* parent_node)
 {
   if (!parent_node)
   {
-    std::cerr << "[RobotPoseSource::initialize] Null parent node pointer" << std::endl;
-    return;
+    return SourceResult::failure("[RobotPoseSource::initialize] Null parent node pointer");
   }
 
   parent_node_ = parent_node;
@@ -34,6 +31,7 @@ void RobotPoseSource::initialize(rclcpp::Node* parent_node)
   }
 
   initialized_ = true;
+  return SourceResult::success();
 }
 
 void RobotPoseSource::setRobotContext(const ROBOGait::context::RobotContext& context)
@@ -68,15 +66,15 @@ void RobotPoseSource::stop()
   active_ = false;
 }
 
-void RobotPoseSource::setPaused(bool paused)
+SourceInterface::SourceResult RobotPoseSource::setPaused(bool paused)
 {
   if (!tf_subscriber_)
   {
-    std::cerr << "[RobotPoseSource::setPaused] TF subscriber is null" << std::endl;
-    return;
+    return SourceResult::failure("[RobotPoseSource::setPaused] TF subscriber is null");
   }
 
   tf_subscriber_->setPaused(paused);
+  return SourceResult::success();
 }
 
 bool RobotPoseSource::isActive() const { return active_; }

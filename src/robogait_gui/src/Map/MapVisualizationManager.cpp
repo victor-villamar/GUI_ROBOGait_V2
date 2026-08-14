@@ -164,23 +164,57 @@ void MapVisualizationManager::setROSNode(rclcpp::Node* parent_node)
 
   if (map_source_)
   {
-    map_source_->initialize(parent_node_);
+    const auto result = map_source_->initialize(parent_node_);
+
+    if (!result)
+    {
+      qCritical().noquote() << "[MapVisualizationManager::setROSNode] Failed to initialize map source\n" << QString::fromStdString(result.error);
+      return;
+    }
   }
+
   if (pose_source_)
   {
-    pose_source_->initialize(parent_node_);
+    const auto result = pose_source_->initialize(parent_node_);
+
+    if (!result)
+    {
+      qCritical().noquote() << "[MapVisualizationManager::setROSNode] Failed to initialize robot pose source\n" << QString::fromStdString(result.error);
+      return;
+    }
   }
+
   if (path_source_)
   {
-    path_source_->initialize(parent_node_);
+    const auto result = path_source_->initialize(parent_node_);
+
+    if (!result)
+    {
+      qCritical().noquote() << "[MapVisualizationManager::setROSNode] Failed to initialize path source\n" << QString::fromStdString(result.error);
+      return;
+    }
   }
+
   if (laser_source_)
   {
-    laser_source_->initialize(parent_node_);
+    const auto result = laser_source_->initialize(parent_node_);
+
+    if (!result)
+    {
+      qCritical().noquote() << "[MapVisualizationManager::setROSNode] Failed to initialize laser source\n" << QString::fromStdString(result.error);
+      return;
+    }
   }
+
   if (particle_source_)
   {
-    particle_source_->initialize(parent_node_);
+    const auto result = particle_source_->initialize(parent_node_);
+
+    if (!result)
+    {
+      qCritical().noquote() << "[MapVisualizationManager::setROSNode] Failed to initialize particle cloud source\n" << QString::fromStdString(result.error);
+      return;
+    }
   }
 
   is_initialized_ = true;
@@ -699,7 +733,13 @@ void MapVisualizationManager::setRobotPoseUpdatesEnabled(bool enabled)
     return;
   }
 
-  pose_source_->setPaused(!enabled);
+  const auto result = pose_source_->setPaused(!enabled);
+
+  if (!result)
+  {
+    qCritical().noquote() << "[MapVisualizationManager::setRobotPoseUpdatesEnabled] Failed to update robot pose source pause state\n"
+                          << QString::fromStdString(result.error);
+  }
 }
 
 void MapVisualizationManager::setPathUpdatesEnabled(bool enabled)

@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "Map/Source/LaserSource.hpp"
 
 using namespace ROBOGait::map::source;
@@ -15,12 +13,11 @@ LaserSource::LaserSource()
   subscriber_ = std::make_shared<ROBOGait::map::subscribers::LaserScanSubscriber>();
 }
 
-void LaserSource::initialize(rclcpp::Node* parent_node)
+SourceInterface::SourceResult LaserSource::initialize(rclcpp::Node* parent_node)
 {
   if (!parent_node)
   {
-    std::cerr << "[LaserSource::initialize] Null parent node pointer" << std::endl;
-    return;
+    return SourceResult::failure("[LaserSource::initialize] Null parent node pointer");
   }
 
   parent_node_ = parent_node;
@@ -37,6 +34,7 @@ void LaserSource::initialize(rclcpp::Node* parent_node)
   }
 
   initialized_ = true;
+  return SourceResult::success();
 }
 
 void LaserSource::setRobotContext(const ROBOGait::context::RobotContext& context)

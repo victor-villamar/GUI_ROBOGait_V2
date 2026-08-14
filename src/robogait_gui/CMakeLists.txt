@@ -167,6 +167,7 @@ set(SOURCES
     src/Map/Source/ParticleCloudSource.cpp
     src/Map/Source/PathSource.cpp
     src/Map/Source/RobotPoseSource.cpp
+    src/Map/Source/SourceInterface.cpp
     src/Map/Subscribers/LaserScanSubscriber.cpp
     src/Map/Subscribers/MapSubscriber.cpp
     src/Map/Subscribers/ParticleCloudSubscriber.cpp

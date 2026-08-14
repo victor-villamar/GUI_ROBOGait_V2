@@ -28,7 +28,7 @@ public:
    *
    * @param parent_node The parent ROS node
    */
-  void initialize(rclcpp::Node* parent_node) override;
+  SourceResult initialize(rclcpp::Node* parent_node) override;
 
   /**
    * @brief Set the robot context

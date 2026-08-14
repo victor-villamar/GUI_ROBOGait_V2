@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "Map/Source/ParticleCloudSource.hpp"
 
 using namespace ROBOGait::map::source;
@@ -15,12 +13,11 @@ ParticleCloudSource::ParticleCloudSource()
   subscriber_ = std::make_shared<ROBOGait::map::subscribers::ParticleCloudSubscriber>();
 }
 
-void ParticleCloudSource::initialize(rclcpp::Node* parent_node)
+SourceInterface::SourceResult ParticleCloudSource::initialize(rclcpp::Node* parent_node)
 {
   if (!parent_node)
   {
-    std::cerr << "[ParticleCloudSource::initialize] Null parent node pointer" << std::endl;
-    return;
+    return SourceResult::failure("[ParticleCloudSource::initialize] Null parent node pointer");
   }
 
   parent_node_ = parent_node;
@@ -37,6 +34,7 @@ void ParticleCloudSource::initialize(rclcpp::Node* parent_node)
   }
 
   initialized_ = true;
+  return SourceResult::success();
 }
 
 void ParticleCloudSource::setRobotContext(const ROBOGait::context::RobotContext& context)
