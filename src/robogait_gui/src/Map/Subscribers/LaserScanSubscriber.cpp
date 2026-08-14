@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cstddef>
-#include <iostream>
+
+#include <QDebug>
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2/LinearMath/Transform.h>
@@ -30,7 +31,7 @@ void LaserScanSubscriber::initialize(rclcpp::Node* parent_node)
 {
   if (!parent_node)
   {
-    std::cerr << "[LaserScanSubscriber::initialize] Null parent node pointer" << std::endl;
+    qCritical() << "[LaserScanSubscriber::initialize] Null parent node pointer";
     return;
   }
 
@@ -53,7 +54,7 @@ void LaserScanSubscriber::start()
 {
   if (!parent_node_)
   {
-    std::cerr << "[LaserScanSubscriber::start] Parent node is null" << std::endl;
+    qCritical() << "[LaserScanSubscriber::start] Parent node is null";
     return;
   }
 
@@ -79,7 +80,7 @@ void LaserScanSubscriber::start()
 
   active_ = true;
   warn_logged_ = false;
-  std::cout << "[LaserScanSubscriber::start] Subscribed to laser scan topic:" << scan_topic << std::endl;
+  qDebug() << "[LaserScanSubscriber::start] Subscribed to laser scan topic:" << scan_topic.c_str();
 }
 
 void LaserScanSubscriber::stop()
@@ -106,7 +107,7 @@ void LaserScanSubscriber::stop()
 
   active_ = false;
 
-  std::cout << "[LaserScanSubscriber::stop] Subscriptions stopped" << std::endl;
+  qDebug() << "[LaserScanSubscriber::stop] Subscriptions stopped";
 }
 
 bool LaserScanSubscriber::isActive() const { return active_; }
@@ -115,19 +116,19 @@ void LaserScanSubscriber::callbackScan(const sensor_msgs::msg::LaserScan::Shared
 {
   if (!laser_scan_data_)
   {
-    std::cerr << "[LaserScanSubscriber::callbackScan] LaserScanData is null" << std::endl;
+    qCritical() << "[LaserScanSubscriber::callbackScan] LaserScanData is null";
     return;
   }
 
   if (!msg)
   {
-    std::cerr << "[LaserScanSubscriber::callbackScan] Invalid LaserScan message" << std::endl;
+    qWarning() << "[LaserScanSubscriber::callbackScan] Invalid LaserScan message";
     return;
   }
 
   if (!tf_buffer_)
   {
-    std::cerr << "[LaserScanSubscriber::callbackScan] TF buffer is not initialized" << std::endl;
+    qCritical() << "[LaserScanSubscriber::callbackScan] TF buffer is not initialized";
     return;
   }
 
@@ -140,7 +141,7 @@ void LaserScanSubscriber::callbackScan(const sensor_msgs::msg::LaserScan::Shared
 
   if (scan_frame.empty())
   {
-    std::cerr << "[LaserScanSubscriber::callbackScan] Scan frame is empty" << std::endl;
+    qWarning() << "[LaserScanSubscriber::callbackScan] Scan frame is empty";
     return;
   }
 
@@ -180,8 +181,8 @@ ROBOGait::map::data::LaserScanData::LaserScanMetadata LaserScanSubscriber::trans
     {
       if (!warn_logged_)
       {
-        std::cerr << "[LaserScanSubscriber::transformLaserScan] Could not transform from " << scan_frame << " to " << map_frame_ << ": " << e.what()
-                  << std::endl;
+        qWarning() << "[LaserScanSubscriber::transformLaserScan] Could not transform from" << scan_frame.c_str() << "to" << map_frame_.c_str() << ":"
+                   << e.what();
         warn_logged_ = true;
       }
       return metadata;
@@ -190,7 +191,7 @@ ROBOGait::map::data::LaserScanData::LaserScanMetadata LaserScanSubscriber::trans
 
   if (!transform_found)
   {
-    std::cerr << "[LaserScanSubscriber::transformLaserScan] Could not find transform from " << scan_frame << " to " << map_frame_ << std::endl;
+    qWarning() << "[LaserScanSubscriber::transformLaserScan] Could not find transform from" << scan_frame.c_str() << "to" << map_frame_.c_str();
     return metadata;
   }
 
