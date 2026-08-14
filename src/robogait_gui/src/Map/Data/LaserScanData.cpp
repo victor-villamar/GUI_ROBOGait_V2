@@ -1,13 +1,8 @@
-#include <iostream>
-
 #include "Map/Data/LaserScanData.hpp"
 
 using namespace ROBOGait::map::data;
 
-LaserScanData::LaserScanData() : is_available_(false), update_stamp_(0)
-{
-  std::cout << "[LaserScanData::LaserScanData] Laser scan data handler initialized" << std::endl;
-}
+LaserScanData::LaserScanData() : is_available_(false), update_stamp_(0) {}
 
 void LaserScanData::setLaserScanData(const LaserScanMetadata& metadata)
 {

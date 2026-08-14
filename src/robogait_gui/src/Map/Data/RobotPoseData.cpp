@@ -1,13 +1,8 @@
-#include <iostream>
-
 #include "Map/Data/RobotPoseData.hpp"
 
 using namespace ROBOGait::map::data;
 
-RobotPoseData::RobotPoseData() : is_available_(false), update_stamp_(0)
-{
-  std::cout << "[RobotPoseData::RobotPoseData] Robot pose data handler initialized" << std::endl;
-}
+RobotPoseData::RobotPoseData() : is_available_(false), update_stamp_(0) {}
 
 void RobotPoseData::setPose(const RobotPoseData::RobotPoseMetadata& metadata)
 {

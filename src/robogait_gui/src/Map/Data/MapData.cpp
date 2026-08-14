@@ -1,12 +1,20 @@
 #include <algorithm>
 #include <cstddef>
-#include <iostream>
+#include <utility>
 
 #include "Map/Data/MapData.hpp"
 
 using namespace ROBOGait::map::data;
 
-MapData::MapData() : is_available_(false), update_stamp_(0) { std::cout << "[MapData::MapData] Map data handler initialized" << std::endl; }
+MapData::MapDataResult::MapDataResult(bool success_in) : success(success_in) {}
+
+MapData::MapDataResult::MapDataResult(const char* error_in) : success(false), error(error_in) {}
+
+MapData::MapDataResult::MapDataResult(std::string error_in) : success(false), error(std::move(error_in)) {}
+
+MapData::MapDataResult::operator bool() const { return success; }
+
+MapData::MapData() : is_available_(false), update_stamp_(0) {}
 
 MapData::MapMetadata MapData::getMetadata() const
 {
@@ -14,7 +22,7 @@ MapData::MapMetadata MapData::getMetadata() const
   return metadata_;
 }
 
-void MapData::setOccupancyData(const std::vector<int8_t>& occupancy_data, const MapMetadata& metadata)
+MapData::MapDataResult MapData::setOccupancyData(const std::vector<int8_t>& occupancy_data, const MapMetadata& metadata)
 {
   std::lock_guard<std::mutex> lock(data_mutex_);
 
@@ -22,16 +30,16 @@ void MapData::setOccupancyData(const std::vector<int8_t>& occupancy_data, const 
   const size_t expected_size = metadata.width_ * metadata.height_;
   if (occupancy_data.size() != expected_size)
   {
-    std::cerr << "[MapData::setOccupancyData] Data size mismatch! Expected " << expected_size << ", got " << occupancy_data.size() << std::endl;
     is_available_ = false;
-    return;
+    return MapDataResult("[MapData::setOccupancyData] Data size mismatch. Expected " + std::to_string(expected_size) + ", got " +
+                         std::to_string(occupancy_data.size()));
   }
 
   if (metadata.width_ == 0 || metadata.height_ == 0)
   {
-    std::cerr << "[MapData::setOccupancyData] Invalid map dimensions: width=" << metadata.width_ << ", height=" << metadata.height_ << std::endl;
     is_available_ = false;
-    return;
+    return MapDataResult("[MapData::setOccupancyData] Invalid map dimensions: width=" + std::to_string(metadata.width_) +
+                         ", height=" + std::to_string(metadata.height_));
   }
 
   metadata_ = metadata;
@@ -45,6 +53,7 @@ void MapData::setOccupancyData(const std::vector<int8_t>& occupancy_data, const 
 
   is_available_ = true;
   ++update_stamp_;
+  return MapDataResult(true);
 }
 
 const std::vector<int8_t>& MapData::getOccupancyData() const
@@ -53,27 +62,25 @@ const std::vector<int8_t>& MapData::getOccupancyData() const
   return occupancy_data_;
 }
 
-void MapData::updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height, const std::vector<int8_t>& data)
+MapData::MapDataResult MapData::updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height, const std::vector<int8_t>& data)
 {
   std::lock_guard<std::mutex> lock(data_mutex_);
 
   if (!is_available_)
   {
-    std::cerr << "[MapData::updateRegion] Map data not available, cannot update region" << std::endl;
-    return;
+    return MapDataResult("[MapData::updateRegion] Map data not available, cannot update region");
   }
 
   const size_t expected_size = static_cast<size_t>(width) * static_cast<size_t>(height);
+
   if (data.size() != expected_size)
   {
-    std::cerr << "[MapData::updateRegion] Data size mismatch! Expected " << expected_size << ", got " << data.size() << std::endl;
-    return;
+    return MapDataResult("[MapData::updateRegion] Data size mismatch. Expected " + std::to_string(expected_size) + ", got " + std::to_string(data.size()));
   }
 
   if (x < 0 || y < 0)
   {
-    std::cerr << "[MapData::updateRegion] Update region out of bounds" << std::endl;
-    return;
+    return MapDataResult("[MapData::updateRegion] Update region out of bounds");
   }
 
   const uint32_t update_x = static_cast<uint32_t>(x);
@@ -81,8 +88,7 @@ void MapData::updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height
 
   if (update_x + width > metadata_.width_ || update_y_start + height > metadata_.height_)
   {
-    std::cerr << "[MapData::updateRegion] Update region out of bounds" << std::endl;
-    return;
+    return MapDataResult("[MapData::updateRegion] Update region out of bounds");
   }
 
   if (update_x == 0 && update_y_start == 0 && width == metadata_.width_ && height == metadata_.height_)
@@ -90,7 +96,7 @@ void MapData::updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height
     // Full map update, can replace data directly
     std::copy(data.begin(), data.end(), occupancy_data_.begin());
     ++update_stamp_;
-    return;
+    return MapDataResult(true);
   }
 
   if (update_x == 0 && width == metadata_.width_)
@@ -99,7 +105,7 @@ void MapData::updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height
     const uint32_t start_index = update_y_start * metadata_.width_;
     std::copy(data.begin(), data.end(), occupancy_data_.begin() + start_index);
     ++update_stamp_;
-    return;
+    return MapDataResult(true);
   }
 
   for (uint32_t update_y = 0; update_y < height; ++update_y)
@@ -115,6 +121,7 @@ void MapData::updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height
   }
 
   ++update_stamp_;
+  return MapDataResult(true);
 }
 
 bool MapData::isAvailable() const { return is_available_; }

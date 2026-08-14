@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <mutex>
+#include <string>
 #include <vector>
 
 namespace ROBOGait
@@ -46,6 +47,21 @@ public:
   };
 
   /**
+   * @brief Result returned by map data mutation operations
+   */
+  struct MapDataResult
+  {
+    explicit MapDataResult(bool success_in);
+    explicit MapDataResult(const char* error_in);
+    explicit MapDataResult(std::string error_in);
+
+    bool success;
+    std::string error;
+
+    explicit operator bool() const;
+  };
+
+  /**
    * @brief Constructor of MapData class
    */
   MapData();
@@ -67,8 +83,10 @@ public:
    *
    * @param occupancy_data Occupancy data vector (row-major order)
    * @param metadata Map metadata (resolution, dimensions, origin)
+   *
+   * @return Result indicating success or error
    */
-  void setOccupancyData(const std::vector<int8_t>& occupancy_data, const MapMetadata& metadata);
+  MapDataResult setOccupancyData(const std::vector<int8_t>& occupancy_data, const MapMetadata& metadata);
 
   /**
    * @brief Get occupancy data for the map
@@ -85,8 +103,10 @@ public:
    * @param width Width of the region (in cells)
    * @param height Height of the region (in cells)
    * @param data Region data (size must be equal to width * height)
+   *
+   * @return Result indicating success or error
    */
-  void updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height, const std::vector<int8_t>& data);
+  MapDataResult updateRegion(int32_t x, int32_t y, uint32_t width, uint32_t height, const std::vector<int8_t>& data);
 
   /**
    * @brief Check if map data is available

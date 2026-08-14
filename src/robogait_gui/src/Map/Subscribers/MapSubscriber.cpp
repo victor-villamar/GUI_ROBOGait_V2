@@ -96,7 +96,12 @@ void MapSubscriber::callbackMap(const nav_msgs::msg::OccupancyGrid::SharedPtr ms
     return;
   }
 
-  map_data_->setOccupancyData(occupancy_data, metadata);
+  const auto result = map_data_->setOccupancyData(occupancy_data, metadata);
+
+  if (!result)
+  {
+    std::cerr << "[MapSubscriber::callbackMap] Failed to set occupancy data\n" << result.error << std::endl;
+  }
 }
 
 void MapSubscriber::callbackMapUpdate(const map_msgs::msg::OccupancyGridUpdate::SharedPtr msg)
@@ -120,5 +125,10 @@ void MapSubscriber::callbackMapUpdate(const map_msgs::msg::OccupancyGridUpdate::
   }
 
   std::vector<int8_t> update_data(msg->data.begin(), msg->data.end());
-  map_data_->updateRegion(msg->x, msg->y, msg->width, msg->height, update_data);
+  const auto result = map_data_->updateRegion(msg->x, msg->y, msg->width, msg->height, update_data);
+
+  if (!result)
+  {
+    std::cerr << "[MapSubscriber::callbackMapUpdate] Failed to update map region\n" << result.error << std::endl;
+  }
 }
