@@ -194,6 +194,7 @@ bool generateMapPreview(const data::MapData& map_data, const QString& map_name)
   const QString maps_directory = QDir::homePath() + "/" + QString::fromStdString(image_path);
 
   QDir dir;
+
   if (!dir.exists(maps_directory))
   {
     if (!dir.mkpath(maps_directory))
@@ -201,6 +202,7 @@ bool generateMapPreview(const data::MapData& map_data, const QString& map_name)
       qCritical() << "[utils::generateMapPreview] Failed to create maps directory";
       return false;
     }
+
     qInfo() << "[utils::generateMapPreview] Created maps directory:" << maps_directory;
   }
 
@@ -231,14 +233,14 @@ bool deleteMapPreview(const QString& map_name)
 {
   if (map_name.isEmpty())
   {
-    qWarning() << "[utils::deleteMapPreview] Map name is empty";
+    qCritical() << "[utils::deleteMapPreview] Map name is empty";
     return false;
   }
 
   QString file_path = getMapPreviewPath(map_name);
   if (file_path.isEmpty())
   {
-    qWarning() << "[utils::deleteMapPreview] Failed to get map preview path for:" << map_name;
+    qCritical() << "[utils::deleteMapPreview] Failed to get map preview path for:" << map_name;
     return false;
   }
 
@@ -249,7 +251,7 @@ bool deleteMapPreview(const QString& map_name)
 
   if (!QFile::remove(file_path))
   {
-    qWarning() << "[utils::deleteMapPreview] Failed to delete map preview at:" << file_path;
+    qCritical() << "[utils::deleteMapPreview] Failed to delete map preview at:" << file_path;
     return false;
   }
 

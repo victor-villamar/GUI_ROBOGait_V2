@@ -143,7 +143,7 @@ MapVisualizationManager::~MapVisualizationManager()
   destroySubscriptions();
   destroyLayers();
 
-  qInfo() << "[MapVisualizationManager] Manager destroyed";
+  qInfo() << "[MapVisualizationManager] Map Visualization Manager destroyed";
 }
 
 void MapVisualizationManager::setROSNode(rclcpp::Node* parent_node)
@@ -612,7 +612,7 @@ void MapVisualizationManager::destroySubscriptions()
     emit followRobotChanged();
   }
 
-  qInfo() << "[MapVisualizationManager::destroySubscriptions] Subscriptions destroyed";
+  qDebug() << "[MapVisualizationManager::destroySubscriptions] Subscriptions destroyed";
 }
 
 void MapVisualizationManager::registerMapLayerItem(QObject* item)
@@ -723,7 +723,7 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
           Qt::QueuedConnection);
   // clang-format on
 
-  qInfo() << "[MapVisualizationManager::registerMapLayerItem] Item registered";
+  qDebug() << "[MapVisualizationManager::registerMapLayerItem] Item registered";
 }
 
 void MapVisualizationManager::setRobotPoseUpdatesEnabled(bool enabled)
@@ -854,7 +854,7 @@ void MapVisualizationManager::registerRobotLayerItem(QObject* item)
     map_layer_item_->update();
   }
 
-  qInfo() << "[MapVisualizationManager::registerRobotLayerItem] Item registered";
+  qDebug() << "[MapVisualizationManager::registerRobotLayerItem] Item registered";
 }
 
 void MapVisualizationManager::registerGoalRobotLayerItem(QObject* item)
@@ -907,7 +907,7 @@ void MapVisualizationManager::registerGoalRobotLayerItem(QObject* item)
     map_layer_item_->setSyncItem(goal_robot_layer_item_);
   }
 
-  qInfo() << "[MapVisualizationManager::registerGoalRobotLayerItem] Item registered";
+  qDebug() << "[MapVisualizationManager::registerGoalRobotLayerItem] Item registered";
 }
 
 void MapVisualizationManager::registerPathLayerItem(QObject* item)
@@ -960,7 +960,7 @@ void MapVisualizationManager::registerPathLayerItem(QObject* item)
     map_layer_item_->setSyncItem(path_layer_item_);
   }
 
-  qInfo() << "[MapVisualizationManager::registerPathLayerItem] Item registered";
+  qDebug() << "[MapVisualizationManager::registerPathLayerItem] Item registered";
 }
 
 void MapVisualizationManager::registerManualDrawPathLayerItem(QObject* item)
@@ -1013,7 +1013,7 @@ void MapVisualizationManager::registerManualDrawPathLayerItem(QObject* item)
     map_layer_item_->setSyncItem(manual_draw_path_layer_item_);
   }
 
-  qInfo() << "[MapVisualizationManager::registerManualDrawPathLayerItem] Item registered";
+  qDebug() << "[MapVisualizationManager::registerManualDrawPathLayerItem] Item registered";
 }
 
 void MapVisualizationManager::registerLivePathLayerItem(QObject* item)
@@ -1066,7 +1066,7 @@ void MapVisualizationManager::registerLivePathLayerItem(QObject* item)
     map_layer_item_->setSyncItem(live_path_layer_item_);
   }
 
-  qInfo() << "[MapVisualizationManager::registerLivePathLayerItem] Item registered";
+  qDebug() << "[MapVisualizationManager::registerLivePathLayerItem] Item registered";
 }
 
 void MapVisualizationManager::setGoalRobotPose(double x, double y, double theta)
@@ -1337,7 +1337,7 @@ void MapVisualizationManager::registerLaserLayerItem(QObject* item)
     map_layer_item_->setSyncItem(laser_layer_item_);
   }
 
-  qInfo() << "[MapVisualizationManager::registerLaserLayerItem] Item registered";
+  qDebug() << "[MapVisualizationManager::registerLaserLayerItem] Item registered";
 }
 
 void MapVisualizationManager::registerParticleCloudLayerItem(QObject* item)
@@ -1390,7 +1390,7 @@ void MapVisualizationManager::registerParticleCloudLayerItem(QObject* item)
     map_layer_item_->setSyncItem(particle_layer_item_);
   }
 
-  qInfo() << "[MapVisualizationManager::registerParticleCloudLayerItem] Item registered";
+  qDebug() << "[MapVisualizationManager::registerParticleCloudLayerItem] Item registered";
 }
 
 void MapVisualizationManager::zoomIn()

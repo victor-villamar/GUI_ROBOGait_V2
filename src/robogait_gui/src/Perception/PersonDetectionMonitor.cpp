@@ -35,7 +35,7 @@ QImage buildQImageFromRosImage(const sensor_msgs::msg::Image& image)
     return QImage(data, width, height, bytes_per_line, QImage::Format_Grayscale8).copy();
   }
 
-  qWarning() << "[buildQImageFromRosImage] Unsupported image encoding:" << image.encoding.c_str();
+  qCritical() << "[buildQImageFromRosImage] Unsupported image encoding:" << image.encoding.c_str();
   return QImage();
 }
 } // namespace
@@ -99,7 +99,7 @@ bool PersonDetectionMonitor::startMonitoring()
   is_monitoring_ = true;
   emit monitoringChanged();
 
-  qInfo() << "[PersonDetectionMonitor::startMonitoring] Monitoring started on topic:" << full_camera_topic.c_str();
+  qDebug() << "[PersonDetectionMonitor::startMonitoring] Monitoring started on topic:" << full_camera_topic.c_str();
   return true;
 }
 
@@ -118,7 +118,7 @@ void PersonDetectionMonitor::stopMonitoring()
     emit monitoringChanged();
   }
 
-  qInfo() << "[PersonDetectionMonitor::stopMonitoring] Monitoring stopped";
+  qDebug() << "[PersonDetectionMonitor::stopMonitoring] Monitoring stopped";
 }
 
 bool PersonDetectionMonitor::isMonitoring() const { return is_monitoring_; }
@@ -151,14 +151,14 @@ QString PersonDetectionMonitor::imageToDataUrl(const sensor_msgs::msg::Image& im
 {
   if (image.height == 0 || image.width == 0 || image.step == 0 || image.data.empty())
   {
-    qWarning() << "[PersonDetectionMonitor::imageToDataUrl] Empty image received";
+    qCritical() << "[PersonDetectionMonitor::imageToDataUrl] Empty image received";
     return QString();
   }
 
   const qsizetype required_size = static_cast<qsizetype>(image.step) * static_cast<qsizetype>(image.height);
   if (static_cast<qsizetype>(image.data.size()) < required_size)
   {
-    qWarning() << "[PersonDetectionMonitor::imageToDataUrl] Image data is smaller than expected";
+    qCritical() << "[PersonDetectionMonitor::imageToDataUrl] Image data is smaller than expected";
     return QString();
   }
 
@@ -175,7 +175,7 @@ QString PersonDetectionMonitor::imageToDataUrl(const sensor_msgs::msg::Image& im
 
   if (!q_image.save(&buffer, "PNG"))
   {
-    qWarning() << "[PersonDetectionMonitor::imageToDataUrl] Failed to encode image as PNG";
+    qCritical() << "[PersonDetectionMonitor::imageToDataUrl] Failed to encode image as PNG";
     return QString();
   }
 

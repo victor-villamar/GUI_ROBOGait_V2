@@ -185,8 +185,8 @@ ParticleCloudSubscriber::transformParticleCloud(const nav2_msgs::msg::ParticleCl
       {
         if (!warn_logged_)
         {
-          qWarning() << "[ParticleCloudSubscriber::transformParticleCloud] Could not transform from" << cloud_frame.c_str() << "to" << map_frame_.c_str() << ":"
-                     << e.what();
+          qDebug() << "[ParticleCloudSubscriber::transformParticleCloud] Could not transform from" << cloud_frame.c_str() << "to" << map_frame_.c_str() << ":"
+                   << e.what();
           warn_logged_ = true;
         }
         return metadata;
@@ -195,7 +195,7 @@ ParticleCloudSubscriber::transformParticleCloud(const nav2_msgs::msg::ParticleCl
 
     if (!transform_found)
     {
-      qWarning() << "[ParticleCloudSubscriber::transformParticleCloud] Could not find transform from" << cloud_frame.c_str() << "to" << map_frame_.c_str();
+      qDebug() << "[ParticleCloudSubscriber::transformParticleCloud] Could not find transform from" << cloud_frame.c_str() << "to" << map_frame_.c_str();
       return metadata;
     }
 

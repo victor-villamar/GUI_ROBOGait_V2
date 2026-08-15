@@ -262,6 +262,13 @@ add_executable(${PROJECT_NAME}
 )
 
 option(ENABLE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+option(SHOW_VERBOSE_LOGS "Show verbose debug logs" OFF)
+
+if(NOT SHOW_VERBOSE_LOGS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        QT_NO_DEBUG_OUTPUT
+    )
+endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(${PROJECT_NAME} PRIVATE

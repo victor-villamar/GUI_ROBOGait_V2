@@ -12,14 +12,15 @@ RenderPipeline::RenderPipeline(QObject* parent) : QObject(parent), update_timer_
           this,
           &RenderPipeline::onUpdateTimer);
   // clang-format on
-  qInfo() << "[RenderPipeline::RenderPipeline] RenderPipeline created";
+
+  qDebug() << "[RenderPipeline::RenderPipeline] RenderPipeline created";
 }
 
 RenderPipeline::~RenderPipeline()
 {
   stopUpdate();
   removeAllLayers();
-  qInfo() << "[RenderPipeline::RenderPipeline] RenderPipeline destroyed";
+  qDebug() << "[RenderPipeline::RenderPipeline] RenderPipeline destroyed";
 }
 
 void RenderPipeline::startUpdate()
@@ -35,7 +36,7 @@ void RenderPipeline::startUpdate()
 
   update_timer_->start(UPDATE_RATE_MS);
 
-  qInfo() << "[RenderPipeline::startUpdate] Update loop started at" << (1000.0 / UPDATE_RATE_MS) << "Hz";
+  qDebug() << "[RenderPipeline::startUpdate] Update loop started at" << (1000.0 / UPDATE_RATE_MS) << "Hz";
   emit updateStarted();
 }
 
@@ -44,7 +45,7 @@ void RenderPipeline::stopUpdate()
   if (update_timer_->isActive())
   {
     update_timer_->stop();
-    qInfo() << "[RenderPipeline::stopUpdate] Update loop stopped";
+    qDebug() << "[RenderPipeline::stopUpdate] Update loop stopped";
     emit updateStopped();
   }
 }
@@ -64,7 +65,7 @@ void RenderPipeline::addLayer(const std::string& name, std::shared_ptr<ROBOGait:
   }
 
   layer_map_[name] = std::move(layer);
-  qInfo() << "[RenderPipeline::addLayer] Added layer:" << QString::fromStdString(name);
+  qDebug() << "[RenderPipeline::addLayer] Added layer:" << QString::fromStdString(name);
 }
 
 void RenderPipeline::removeLayer(const std::string& name)
@@ -77,13 +78,13 @@ void RenderPipeline::removeLayer(const std::string& name)
   }
 
   layer_map_.erase(it);
-  qInfo() << "[RenderPipeline::removeLayer] Removed layer:" << QString::fromStdString(name);
+  qDebug() << "[RenderPipeline::removeLayer] Removed layer:" << QString::fromStdString(name);
 }
 
 void RenderPipeline::removeAllLayers()
 {
   layer_map_.clear();
-  qInfo() << "[RenderPipeline::removeAllLayers] Cleared all layers";
+  qDebug() << "[RenderPipeline::removeAllLayers] Cleared all layers";
 }
 
 bool RenderPipeline::isRunning() const { return update_timer_ && update_timer_->isActive(); }

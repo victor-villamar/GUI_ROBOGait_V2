@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <utility>
 
 #include <QDebug>
 
@@ -24,10 +25,10 @@ ManualControl::ManualControl() :
     timer_active_(false)
 {
   velocity_limits_loaded_ = loadVelocityLimits();
-  qInfo() << "[ManualControl::ManualControl] Manual control created";
+  qDebug() << "[ManualControl::ManualControl] Manual control created";
 }
 
-ManualControl::~ManualControl() { qInfo() << "[ManualControl::~ManualControl] Manual control destroyed"; }
+ManualControl::~ManualControl() { qDebug() << "[ManualControl::~ManualControl] Manual control destroyed"; }
 
 void ManualControl::setROSNode(rclcpp::Node* node)
 {
@@ -60,7 +61,7 @@ void ManualControl::setTopicName(const QString& topic_name)
 
   if (topic_name_ != topic_name && pub_cmd_vel_)
   {
-    qInfo() << "[ManualControl::setTopicName] Topic changed, destroying old publisher";
+    qDebug() << "[ManualControl::setTopicName] Topic changed, destroying old publisher";
     destroyPublisher();
   }
 
@@ -80,8 +81,8 @@ void ManualControl::destroyPublisher()
     linear_velocity_ = 0.0;
     angular_velocity_ = 0.0;
     publishVelocity();
-    qInfo() << "[ManualControl::destroyPublisher] Destroying publisher";
     pub_cmd_vel_.reset();
+    qDebug() << "[ManualControl::destroyPublisher] Destroying publisher";
   }
 }
 
@@ -187,7 +188,7 @@ void ManualControl::ensurePublisherCreated()
     return;
   }
 
-  qInfo() << "[ManualControl::ensurePublisherCreated] Creating publisher for topic:" << topic_name_;
+  qDebug() << "[ManualControl::ensurePublisherCreated] Creating publisher for topic:" << topic_name_;
   pub_cmd_vel_ = parent_node_->create_publisher<geometry_msgs::msg::Twist>(topic_name_.toStdString(), ROBOGait::ros::QosProfiles::QOS_RELIABLE());
 }
 
@@ -211,5 +212,5 @@ void ManualControl::publishVelocity()
   twist_msg.angular.z = angular_velocity_;
 
   // Publish message
-  pub_cmd_vel_->publish(twist_msg);
+  pub_cmd_vel_->publish(std::move(twist_msg));
 }

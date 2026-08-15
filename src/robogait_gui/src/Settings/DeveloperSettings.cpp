@@ -20,7 +20,7 @@ DeveloperSettings::DeveloperSettings() :
     pending_use_topic_filter_(true),
     has_pending_changes_(false)
 {
-  qInfo() << "[DeveloperSettings::DeveloperSettings] DeveloperSettings created";
+  qDebug() << "[DeveloperSettings::DeveloperSettings] DeveloperSettings created";
 }
 
 bool DeveloperSettings::getUseNamespaceDiscovery() const { return pending_use_namespace_discovery_; }
@@ -45,7 +45,7 @@ void DeveloperSettings::setRosDomainId(int domain_id)
 {
   if (domain_id < 0 || domain_id > static_cast<int>(MAX_DOMAIN_ID))
   {
-    qWarning() << "[DeveloperSettings::setRosDomainId] Invalid domain ID:" << domain_id << "(must be 0-232)";
+    qCritical() << "[DeveloperSettings::setRosDomainId] Invalid domain ID:" << domain_id << "(must be 0-232)";
     return;
   }
 
@@ -73,7 +73,7 @@ bool DeveloperSettings::applyChanges()
 {
   if (!getHasPendingChanges())
   {
-    qInfo() << "[DeveloperSettings::applyChanges] No pending changes to apply";
+    qDebug() << "[DeveloperSettings::applyChanges] No pending changes to apply";
     return true;
   }
 
@@ -84,8 +84,8 @@ bool DeveloperSettings::applyChanges()
   updatePendingChangesState();
   emit settingsApplied();
 
-  qInfo() << "[DeveloperSettings::applyChanges] Changes applied - Domain ID:" << static_cast<int>(current_ros_domain_id_)
-          << "Namespace Discovery:" << current_use_namespace_discovery_ << "Topic Filter:" << current_use_topic_filter_;
+  qDebug() << "[DeveloperSettings::applyChanges] Changes applied - Domain ID:" << static_cast<int>(current_ros_domain_id_)
+           << "Namespace Discovery:" << current_use_namespace_discovery_ << "Topic Filter:" << current_use_topic_filter_;
 
   return true;
 }
@@ -106,7 +106,7 @@ void DeveloperSettings::resetChanges()
     updatePendingChangesState();
     emit settingsReset();
 
-    qInfo() << "[DeveloperSettings::resetChanges] Pending changes reset to current values";
+    qDebug() << "[DeveloperSettings::resetChanges] Pending changes reset to current values";
   }
 }
 
@@ -143,7 +143,7 @@ void DeveloperSettings::initializeDefaults()
   emit useTopicFilterChanged();
   updatePendingChangesState();
 
-  qInfo() << "[DeveloperSettings::initializeDefaults] Settings initialized with defaults";
+  qDebug() << "[DeveloperSettings::initializeDefaults] Settings initialized with defaults";
 }
 
 void DeveloperSettings::updatePendingChangesState()

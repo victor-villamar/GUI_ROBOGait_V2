@@ -25,7 +25,7 @@ RosNodeManager::RosNodeManager() :
     use_namespace_discovery_(true),
     current_domain_id_(0)
 {
-  qInfo() << "[RosNodeManager::RosNodeManager] Create RosNodeManager";
+  qInfo() << "[RosNodeManager::RosNodeManager] RosNode Manager created";
   robot_discovery_ = std::make_unique<ROBOGait::robot::discovery::RobotDiscovery>();
   robot_manager_ = std::make_unique<ROBOGait::robot::manager::RobotManager>();
 
@@ -48,7 +48,7 @@ RosNodeManager::RosNodeManager() :
 RosNodeManager::~RosNodeManager()
 {
   shutdown();
-  qInfo() << "[RosNodeManager::~RosNodeManager] RosNodeManager destroyed";
+  qInfo() << "[RosNodeManager::~RosNodeManager] RosNode Manager destroyed";
 }
 
 bool RosNodeManager::isRunning() const { return is_running_; }
@@ -179,7 +179,7 @@ void RosNodeManager::initialize(int argc, char** argv, uint8_t domain_id)
 
 bool RosNodeManager::restartWithDomain(uint8_t new_domain_id, int argc, char** argv)
 {
-  qInfo() << "[RosNodeManager::restartWithDomain] Restarting ROS node with new domain ID:" << new_domain_id;
+  qDebug() << "[RosNodeManager::restartWithDomain] Restarting ROS node with new domain ID:" << new_domain_id;
 
   if (new_domain_id > MAX_DOMAIN_ID)
   {
@@ -189,7 +189,7 @@ bool RosNodeManager::restartWithDomain(uint8_t new_domain_id, int argc, char** a
 
   if (current_domain_id_ == new_domain_id && is_running_)
   {
-    qInfo() << "[RosNodeManager::restartWithDomain] Already running on domain" << new_domain_id;
+    qDebug() << "[RosNodeManager::restartWithDomain] Already running on domain" << new_domain_id;
     return true;
   }
 
@@ -233,16 +233,16 @@ void RosNodeManager::shutdown()
   {
     if (context_->shutdown("Application requested shutdown"))
     {
-      qInfo() << "[RosNodeManager::shutdown] Context from domain" << current_domain_id_ << "shutdown successful";
+      qDebug() << "[RosNodeManager::shutdown] Context from domain" << current_domain_id_ << "shutdown successful";
     }
     else
     {
-      qWarning() << "[RosNodeManager::shutdown] Context was already shut down";
+      qWarning() << "[RosNodeManager::shutdown] Context was already shutdown";
     }
   }
   else
   {
-    qInfo() << "[RosNodeManager::shutdown] Context is null or invalid, skipping shutdown";
+    qDebug() << "[RosNodeManager::shutdown] Context is null or invalid, skipping shutdown";
   }
 
   context_.reset();
@@ -265,7 +265,7 @@ void RosNodeManager::startSpinThread()
 
   spin_thread_ = std::thread([this]() { executor_->spin(); });
 
-  qInfo() << "[RosNodeManager::startSpinThread] Spin thread started";
+  qDebug() << "[RosNodeManager::startSpinThread] Spin thread started";
 }
 
 void RosNodeManager::stopSpinThread()
@@ -280,5 +280,5 @@ void RosNodeManager::stopSpinThread()
     spin_thread_.join();
   }
 
-  qInfo() << "[RosNodeManager::stopSpinThread] Spin thread stopped";
+  qDebug() << "[RosNodeManager::stopSpinThread] Spin thread stopped";
 }

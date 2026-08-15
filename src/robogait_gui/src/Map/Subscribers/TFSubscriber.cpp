@@ -137,8 +137,8 @@ void TFSubscriber::updatePoseFromTF()
   {
     if (!warn_logged_)
     {
-      qWarning() << "[TFSubscriber::updatePoseFromTF] Could not get transform from" << map_frame_.c_str() << "to" << robot_frame_.c_str() << ":" << e.what();
-      qWarning() << "[TFSubscriber::updatePoseFromTF] Waiting for robot localization...";
+      qDebug() << "[TFSubscriber::updatePoseFromTF] Could not get transform from" << map_frame_.c_str() << "to" << robot_frame_.c_str() << ":" << e.what();
+      qDebug() << "[TFSubscriber::updatePoseFromTF] Waiting for robot localization...";
       warn_logged_ = true;
     }
   }

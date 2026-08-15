@@ -20,21 +20,18 @@ bool DataBaseManager::initialize(const QString& db_path)
     return true;
   }
 
-  qInfo() << "[DataBaseManager::initialize] Initializing database with path:" << db_path;
+  qDebug() << "[DataBaseManager::initialize] Initializing database with path:" << db_path;
 
-  bool result = openDatabase(db_path);
+  const bool result = openDatabase(db_path);
 
-  if (result)
-  {
-    is_initialized_ = true;
-    qInfo() << "[DataBaseManager::initialize] Database initialized successfully";
-  }
-  else
+  if (!result)
   {
     qCritical() << "[DataBaseManager::initialize] Failed to initialize database";
+    return false;
   }
 
-  return result;
+  is_initialized_ = true;
+  return true;
 }
 
 bool DataBaseManager::isInitialized() const { return is_initialized_; }
@@ -48,7 +45,6 @@ void DataBaseManager::shutdown()
 
   db_.close();
   is_initialized_ = false;
-  qInfo() << "[DataBaseManager::shutdown] Database manager shutdown";
 }
 
 DataBaseManager::DataBaseManager() :
@@ -87,6 +83,7 @@ int DataBaseManager::getLastExperimentId() const { return last_experiment_id_; }
 bool DataBaseManager::openDatabase(const QString& db_path)
 {
   const auto result = db_.open(db_path);
+
   if (!statusOk(result))
   {
     const auto error = std::get<DbError>(result);
@@ -108,6 +105,7 @@ bool DataBaseManager::login(const QString& username, const QString& password)
     setLastError("La base de datos no esta abierta");
     return false;
   }
+
   const auto password_hash = hashPasswordSha256Hex(password);
   const auto result = user_repository_.findByCredentials(username, password_hash);
 
@@ -135,7 +133,7 @@ bool DataBaseManager::login(const QString& username, const QString& password)
   setLastError("");
   setLastExperimentId(-1);
   setPassLogin(true);
-  qInfo() << "[DataBaseManager::login] Login successful for user:" << maybe_user->user_name << "ID:" << maybe_user->id;
+  qDebug() << "[DataBaseManager::login] Login successful for user:" << maybe_user->user_name << "ID:" << maybe_user->id;
   return true;
 }
 
@@ -163,7 +161,7 @@ bool DataBaseManager::checkUserNameAvailable(const QString& user_name)
   const bool exists = std::get<bool>(result);
   setPassCheckUserName(!exists);
   setLastError("");
-  qInfo() << "[DataBaseManager::checkUserNameAvailable] Username" << user_name << (exists ? "is not available" : "is available");
+  qDebug() << "[DataBaseManager::checkUserNameAvailable] Username" << user_name << (exists ? "is not available" : "is available");
   return !exists;
 }
 
@@ -215,7 +213,7 @@ bool DataBaseManager::registerUser(const QString& name, const QString& last_name
   }
 
   setLastError("");
-  qInfo() << "[DataBaseManager::registerUser] User registered successfully:" << user_name;
+  qDebug() << "[DataBaseManager::registerUser] User registered successfully:" << user_name;
   return true;
 }
 
@@ -227,7 +225,7 @@ void DataBaseManager::loginGuest(const QString& name)
   setLastError("");
   setLastExperimentId(-1);
   setPassLogin(true);
-  qInfo() << "[DataBaseManager::loginGuest] Guest login successfully";
+  qDebug() << "[DataBaseManager::loginGuest] Guest login successfully";
 }
 
 void DataBaseManager::logout()
@@ -240,7 +238,7 @@ void DataBaseManager::logout()
   setLastExperimentId(-1);
   setPassLogin(false);
   setPassCheckUserName(false);
-  qInfo() << "[DataBaseManager::logout] User logged out";
+  qDebug() << "[DataBaseManager::logout] User logged out";
 }
 
 QVariantList DataBaseManager::listPatients()
@@ -256,7 +254,7 @@ QVariantList DataBaseManager::listPatients()
 
   if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::listPatients] Action not allowed for guest users";
+    qCritical() << "[DataBaseManager::listPatients] Action not allowed for guest users";
     setLastError("Accion no permitida para usuario invitado");
     return patients_list;
   }
@@ -283,7 +281,7 @@ QVariantList DataBaseManager::listPatients()
   }
 
   setLastError("");
-  qInfo() << "[DataBaseManager::listPatients] Listed" << patients.size() << "patients for user:" << user_name_;
+  qDebug() << "[DataBaseManager::listPatients] Listed" << patients.size() << "patients for user:" << user_name_;
   return patients_list;
 }
 
@@ -324,7 +322,7 @@ QVariantMap DataBaseManager::getPatientDetails(int patient_id)
   const auto patient_details = std::get<PatientDetails>(result);
 
   setLastError("");
-  qInfo() << "[DataBaseManager::getPatientDetails] Retrieved details for patient ID:" << patient_id;
+  qDebug() << "[DataBaseManager::getPatientDetails] Retrieved details for patient ID:" << patient_id;
   return toVariantMap(std::get<PatientDetails>(result));
 }
 
@@ -341,14 +339,14 @@ QVariantMap DataBaseManager::getPatientBasicInfo(int patient_id)
 
   if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::getPatientBasicInfo] Action not allowed for guest users";
+    qCritical() << "[DataBaseManager::getPatientBasicInfo] Action not allowed for guest users";
     setLastError("Accion no permitida para usuario invitado");
     return patient_map;
   }
 
   if (patient_id <= 0)
   {
-    qWarning() << "[DataBaseManager::getPatientBasicInfo] Invalid patient ID";
+    qCritical() << "[DataBaseManager::getPatientBasicInfo] Invalid patient ID";
     setLastError("ID de paciente invalido");
     return patient_map;
   }
@@ -370,7 +368,7 @@ QVariantMap DataBaseManager::getPatientBasicInfo(int patient_id)
   patient_map["display"] = (patient_row.last_name + ", " + patient_row.name).trimmed();
 
   setLastError("");
-  qInfo() << "[DataBaseManager::getPatientBasicInfo] Retrieved basic info for patient ID:" << patient_id;
+  qDebug() << "[DataBaseManager::getPatientBasicInfo] Retrieved basic info for patient ID:" << patient_id;
   return patient_map;
 }
 
@@ -387,14 +385,14 @@ QVariantList DataBaseManager::getPatientDoctorDiagnostics(int patient_id)
 
   if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::getPatientDoctorDiagnostics] Action not allowed for guest users";
+    qCritical() << "[DataBaseManager::getPatientDoctorDiagnostics] Action not allowed for guest users";
     setLastError("Accion no permitida para usuario invitado");
     return diagnostics_list;
   }
 
   if (patient_id <= 0)
   {
-    qWarning() << "[DataBaseManager::getPatientDoctorDiagnostics] Invalid patient ID";
+    qCritical() << "[DataBaseManager::getPatientDoctorDiagnostics] Invalid patient ID";
     setLastError("ID de paciente invalido");
     return diagnostics_list;
   }
@@ -422,7 +420,7 @@ QVariantList DataBaseManager::getPatientDoctorDiagnostics(int patient_id)
   }
 
   setLastError("");
-  qInfo() << "[DataBaseManager::getPatientDoctorDiagnostics] Retrieved" << doctors.size() << "doctors for patient ID:" << patient_id;
+  qDebug() << "[DataBaseManager::getPatientDoctorDiagnostics] Retrieved" << doctors.size() << "doctors for patient ID:" << patient_id;
   return diagnostics_list;
 }
 
@@ -439,14 +437,14 @@ QVariantList DataBaseManager::getPatientTests(int patient_id)
 
   if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::getPatientTests] Action not allowed for guest users";
+    qCritical() << "[DataBaseManager::getPatientTests] Action not allowed for guest users";
     setLastError("Accion no permitida para usuario invitado");
     return tests_list;
   }
 
   if (patient_id <= 0)
   {
-    qWarning() << "[DataBaseManager::getPatientTests] Invalid patient ID";
+    qCritical() << "[DataBaseManager::getPatientTests] Invalid patient ID";
     setLastError("ID de paciente invalido");
     return tests_list;
   }
@@ -477,7 +475,7 @@ QVariantList DataBaseManager::getPatientTests(int patient_id)
   }
 
   setLastError("");
-  qInfo() << "[DataBaseManager::getPatientTests] Retrieved" << tests.size() << "tests for patient ID:" << patient_id;
+  qDebug() << "[DataBaseManager::getPatientTests] Retrieved" << tests.size() << "tests for patient ID:" << patient_id;
   return tests_list;
 }
 
@@ -492,35 +490,35 @@ bool DataBaseManager::registerPatient(const QString& name, const QString& last_n
 
   if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::registerPatient] Action not allowed for guest users";
+    qCritical() << "[DataBaseManager::registerPatient] Action not allowed for guest users";
     setLastError("Accion no permitida para usuario invitado");
     return false;
   }
 
   if (name.isEmpty() || last_name.isEmpty())
   {
-    qWarning() << "[DataBaseManager::registerPatient] Name or last name is empty";
+    qCritical() << "[DataBaseManager::registerPatient] Name or last name is empty";
     setLastError("Nombres y apellidos son obligatorios");
     return false;
   }
 
   if (age <= 0 || age > 120)
   {
-    qWarning() << "[DataBaseManager::registerPatient] Invalid age";
+    qCritical() << "[DataBaseManager::registerPatient] Invalid age";
     setLastError("Edad invalida, debe estar entre 0 y 120 años");
     return false;
   }
 
   if (weight <= 0 || weight > 200)
   {
-    qWarning() << "[DataBaseManager::registerPatient] Invalid weight";
+    qCritical() << "[DataBaseManager::registerPatient] Invalid weight";
     setLastError("Peso invalido, debe estar entre 0 y 200 kg");
     return false;
   }
 
   if (height <= 0 || height > 250)
   {
-    qWarning() << "[DataBaseManager::registerPatient] Invalid height";
+    qCritical() << "[DataBaseManager::registerPatient] Invalid height";
     setLastError("Altura invalida, debe estar entre 0 y 250 cm");
     return false;
   }
@@ -535,7 +533,7 @@ bool DataBaseManager::registerPatient(const QString& name, const QString& last_n
   }
 
   setLastError("");
-  qInfo() << "[DataBaseManager::registerPatient] Patient registered and linked successfully for user:" << user_name_;
+  qDebug() << "[DataBaseManager::registerPatient] Patient registered and linked successfully for user:" << user_name_;
   return true;
 }
 
@@ -550,14 +548,14 @@ bool DataBaseManager::deletePatient(int patient_id)
 
   if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::deletePatient] Action not allowed for guest users";
+    qCritical() << "[DataBaseManager::deletePatient] Action not allowed for guest users";
     setLastError("Accion no permitida para usuario invitado");
     return false;
   }
 
   if (patient_id <= 0)
   {
-    qWarning() << "[DataBaseManager::deletePatient] Invalid patient ID";
+    qCritical() << "[DataBaseManager::deletePatient] Invalid patient ID";
     setLastError("ID de paciente invalido");
     return false;
   }
@@ -572,7 +570,7 @@ bool DataBaseManager::deletePatient(int patient_id)
   }
 
   setLastError("");
-  qInfo() << "[DataBaseManager::deletePatient] Patient unlinked successfully for user:" << user_name_;
+  qDebug() << "[DataBaseManager::deletePatient] Patient unlinked successfully for user:" << user_name_;
   return true;
 }
 
@@ -587,14 +585,14 @@ bool DataBaseManager::deleteExperiment(int experiment_id)
 
   if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::deleteExperiment] Action not allowed for guest users";
+    qCritical() << "[DataBaseManager::deleteExperiment] Action not allowed for guest users";
     setLastError("Accion no permitida para usuario invitado");
     return false;
   }
 
   if (experiment_id <= 0)
   {
-    qWarning() << "[DataBaseManager::deleteExperiment] Invalid experiment ID";
+    qCritical() << "[DataBaseManager::deleteExperiment] Invalid experiment ID";
     setLastError("ID de experimento invalido");
     return false;
   }
@@ -610,7 +608,7 @@ bool DataBaseManager::deleteExperiment(int experiment_id)
 
   setLastError("");
   setLastExperimentId(-1);
-  qInfo() << "[DataBaseManager::deleteExperiment] Experiment deleted successfully:" << experiment_id;
+  qDebug() << "[DataBaseManager::deleteExperiment] Experiment deleted successfully:" << experiment_id;
   return true;
 }
 
@@ -625,14 +623,14 @@ bool DataBaseManager::saveExperiment(const QString& patient_name, const QString&
 
   if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::saveExperiment] Action not allowed for guest users";
+    qCritical() << "[DataBaseManager::saveExperiment] Action not allowed for guest users";
     setLastError("Accion no permitida para usuario invitado");
     return false;
   }
 
   if (patient_name.trimmed().isEmpty() || patient_last_name.trimmed().isEmpty() || map_name.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::saveExperiment] Patient name, last name or map name is empty";
+    qCritical() << "[DataBaseManager::saveExperiment] Patient name, last name or map name is empty";
     setLastError("Nombre del paciente, apellidos y mapa son obligatorios");
     return false;
   }
@@ -652,7 +650,7 @@ bool DataBaseManager::saveExperiment(const QString& patient_name, const QString&
 
   setLastError("");
   setLastExperimentId(experiment_id);
-  qInfo() << "[DataBaseManager::saveExperiment] Experiment saved successfully:" << experiment_id;
+  qDebug() << "[DataBaseManager::saveExperiment] Experiment saved successfully:" << experiment_id;
   return true;
 }
 
@@ -687,7 +685,7 @@ QVariantList DataBaseManager::listMaps()
   }
 
   setLastError("");
-  qInfo() << "[DataBaseManager::listMaps] Listed" << maps.size() << "maps";
+  qDebug() << "[DataBaseManager::listMaps] Listed" << maps.size() << "maps";
   return maps_list;
 }
 
@@ -704,7 +702,7 @@ QVariantMap DataBaseManager::getMapDetails(const QString& map_name)
 
   if (map_name.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::getMapDetails] Invalid map name";
+    qCritical() << "[DataBaseManager::getMapDetails] Invalid map name";
     setLastError("Nombre de mapa invalido");
     return map;
   }
@@ -719,7 +717,7 @@ QVariantMap DataBaseManager::getMapDetails(const QString& map_name)
   }
 
   setLastError("");
-  qInfo() << "[DataBaseManager::getMapDetails] Retrieved details for map:" << map_name;
+  qDebug() << "[DataBaseManager::getMapDetails] Retrieved details for map:" << map_name;
   return toVariantMap(std::get<MapDetails>(result));
 }
 
@@ -735,7 +733,7 @@ bool DataBaseManager::mapExists(const QString& map_name)
   const QString trimmed = map_name.trimmed();
   if (trimmed.isEmpty())
   {
-    qWarning() << "[DataBaseManager::mapExists] Invalid map name";
+    qCritical() << "[DataBaseManager::mapExists] Invalid map name";
     setLastError("Nombre de mapa invalido");
     return false;
   }
@@ -770,14 +768,14 @@ bool DataBaseManager::registerMap(const QString& map_name, const QString& locati
 
   if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::registerMap] Action not allowed for guest users";
+    qCritical() << "[DataBaseManager::registerMap] Action not allowed for guest users";
     setLastError("Accion no permitida para usuario invitado");
     return false;
   }
 
   if (map_name.trimmed().isEmpty() || location.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::registerMap] Map name or location is empty";
+    qCritical() << "[DataBaseManager::registerMap] Map name or location is empty";
     setLastError("Nombre y localizacion del mapa son obligatorios");
     return false;
   }
@@ -792,7 +790,7 @@ bool DataBaseManager::registerMap(const QString& map_name, const QString& locati
   }
 
   setLastError("");
-  qInfo() << "[DataBaseManager::registerMap] Map registered successfully:" << map_name;
+  qDebug() << "[DataBaseManager::registerMap] Map registered successfully:" << map_name;
   return true;
 }
 
@@ -807,7 +805,7 @@ bool DataBaseManager::deleteMap(const QString& map_name)
 
   if (map_name.trimmed().isEmpty())
   {
-    qWarning() << "[DataBaseManager::deleteMap] Map name is empty";
+    qCritical() << "[DataBaseManager::deleteMap] Map name is empty";
     setLastError("Nombre de mapa invalido");
     return false;
   }
@@ -822,7 +820,7 @@ bool DataBaseManager::deleteMap(const QString& map_name)
   }
 
   setLastError("");
-  qInfo() << "[DataBaseManager::deleteMap] Map deleted successfully:" << map_name;
+  qDebug() << "[DataBaseManager::deleteMap] Map deleted successfully:" << map_name;
   return true;
 }
 

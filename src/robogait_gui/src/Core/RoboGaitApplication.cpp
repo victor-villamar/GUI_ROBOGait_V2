@@ -47,7 +47,7 @@ RoboGaitApplication::RoboGaitApplication(int& argc, char* argv[]) :
                      "%{if-critical}\033[31m%{message}\033[0m%{endif}"
                      "%{if-fatal}\033[31m%{message}\033[0m%{endif}");
 
-  qInfo() << "************************ ROBOGait GUI ******************************";
+  qInfo() << "************************ INIT ROBOGait GUI ******************************";
 
   Q_ASSERT(app_instance_ == nullptr);
   app_instance_ = this;
@@ -92,7 +92,7 @@ void RoboGaitApplication::initCommon()
 
   qRegisterMetaType<geometry_msgs::msg::Twist>("geometry_msgs::msg::Twist");
 
-  qInfo() << "[RoboGaitApplication::initCommon] QML types and metatypes registered";
+  qDebug() << "[RoboGaitApplication::initCommon] QML types and metatypes registered";
 }
 
 bool RoboGaitApplication::initialize()
@@ -177,7 +177,7 @@ bool RoboGaitApplication::initialize()
 
   connectSignals();
 
-  qInfo() << "[RoboGaitApplication::initialize] Application subsystems initialized";
+  qDebug() << "[RoboGaitApplication::initialize] Application subsystems initialized";
   return true;
 }
 
@@ -319,7 +319,7 @@ bool RoboGaitApplication::initForNormalAppBoot()
 
   qml_app_engine_->load(url);
 
-  qInfo() << "[RoboGaitApplication::initForNormalAppBoot] QML engine initialized";
+  qDebug() << "[RoboGaitApplication::initForNormalAppBoot] QML engine initialized";
   return true;
 }
 
@@ -354,12 +354,12 @@ void RoboGaitApplication::setupTranslator()
     if (translator_.load(":/i18n/" + base_name))
     {
       installTranslator(&translator_);
-      qInfo() << "[RoboGaitApplication::setupTranslator] Loaded translation:" << base_name;
+      qDebug() << "[RoboGaitApplication::setupTranslator] Loaded translation:" << base_name;
       break;
     }
   }
 
-  qInfo() << "[RoboGaitApplication::setupTranslator] Translator set up";
+  qDebug() << "[RoboGaitApplication::setupTranslator] Translator set up";
 }
 
 bool RoboGaitApplication::setupDatabase(const QString& db_path)
@@ -369,6 +369,7 @@ bool RoboGaitApplication::setupDatabase(const QString& db_path)
 
   // Check if directory exists
   QDir db_dir(dir_path);
+
   if (!db_dir.exists())
   {
     qInfo() << "[RoboGaitApplication::setupDatabase] Directory does not exist, creating:" << dir_path;
@@ -383,6 +384,7 @@ bool RoboGaitApplication::setupDatabase(const QString& db_path)
   }
 
   QFileInfo dir_info(dir_path);
+
   if (!dir_info.isWritable())
   {
     qWarning() << "[RoboGaitApplication::setupDatabase] Directory is not writable:" << dir_path;
@@ -400,7 +402,7 @@ bool RoboGaitApplication::setupDatabase(const QString& db_path)
 
   is_database_setup_ = true;
 
-  qInfo() << "[RoboGaitApplication::setupDatabase] Database setup completed successfully";
+  qDebug() << "[RoboGaitApplication::setupDatabase] Database setup completed successfully";
   return true;
 }
 
@@ -414,7 +416,7 @@ void RoboGaitApplication::setupQmlContext()
   qml_app_engine_->rootContext()->setContextProperty("uiSizingSettings", uiSizingSettings());
   qml_app_engine_->rootContext()->setContextProperty("timeoutSettings", timeoutSettings());
 
-  qInfo() << "[RoboGaitApplication::setupQmlContext] QML context properties set";
+  qDebug() << "[RoboGaitApplication::setupQmlContext] QML context properties set";
 }
 
 void RoboGaitApplication::connectSignals()

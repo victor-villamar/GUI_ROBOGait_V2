@@ -1,9 +1,11 @@
+#include <cstddef>
+
 #include <QDebug>
 #include <QSGFlatColorMaterial>
 #include <QSGTransformNode>
 
-#include "Themes/AppTheme.hpp"
 #include "Map/Items/PathLayerItem.hpp"
+#include "Themes/AppTheme.hpp"
 
 using namespace ROBOGait::map::item;
 
@@ -19,10 +21,11 @@ PathLayerItem::PathLayerItem(QQuickItem* parent) : QQuickItem(parent), path_colo
   setAcceptedMouseButtons(Qt::NoButton);
   setAcceptHoverEvents(false);
   setAcceptTouchEvents(false);
-  qInfo() << "[PathLayerItem::PathLayerItem] PathLayerItem created";
+
+  qDebug() << "[PathLayerItem::PathLayerItem] PathLayerItem created";
 }
 
-PathLayerItem::~PathLayerItem() { qInfo() << "[PathLayerItem::~PathLayerItem] PathLayerItem destroyed"; }
+PathLayerItem::~PathLayerItem() { qDebug() << "[PathLayerItem::~PathLayerItem] PathLayerItem destroyed"; }
 
 void PathLayerItem::setRenderScene(const std::shared_ptr<ROBOGait::map::rendering::RenderScene>& scene)
 {
@@ -133,7 +136,7 @@ QSGNode* PathLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData* 
   geometry->setLineWidth(LINE_WIDTH);
 
   auto* vertices = geometry->vertexDataAsPoint2D();
-  for (int i = 0; i < static_cast<int>(points.size()); ++i)
+  for (size_t i = 0; i < points.size(); ++i)
   {
     vertices[i].set(static_cast<float>(points[i].x_), static_cast<float>(points[i].y_));
   }

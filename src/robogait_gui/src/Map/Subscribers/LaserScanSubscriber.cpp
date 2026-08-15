@@ -181,8 +181,7 @@ ROBOGait::map::data::LaserScanData::LaserScanMetadata LaserScanSubscriber::trans
     {
       if (!warn_logged_)
       {
-        qWarning() << "[LaserScanSubscriber::transformLaserScan] Could not transform from" << scan_frame.c_str() << "to" << map_frame_.c_str() << ":"
-                   << e.what();
+        qDebug() << "[LaserScanSubscriber::transformLaserScan] Could not transform from" << scan_frame.c_str() << "to" << map_frame_.c_str() << ":" << e.what();
         warn_logged_ = true;
       }
       return metadata;
@@ -191,7 +190,7 @@ ROBOGait::map::data::LaserScanData::LaserScanMetadata LaserScanSubscriber::trans
 
   if (!transform_found)
   {
-    qWarning() << "[LaserScanSubscriber::transformLaserScan] Could not find transform from" << scan_frame.c_str() << "to" << map_frame_.c_str();
+    qDebug() << "[LaserScanSubscriber::transformLaserScan] Could not find transform from" << scan_frame.c_str() << "to" << map_frame_.c_str();
     return metadata;
   }
 

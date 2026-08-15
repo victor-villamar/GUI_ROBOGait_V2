@@ -1,8 +1,6 @@
 #include <QtMath>
 
 #include "Map/Layer/RobotLayer.hpp"
-#include "Map/Rendering/RenderPipeline.hpp"
-#include "Ros/Define.hpp"
 
 using namespace ROBOGait::map::layer;
 

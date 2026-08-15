@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <utility>
 
 #include <QDebug>
 #include <QVariantMap>
@@ -26,7 +27,7 @@ RobotManager::RobotManager() :
     battery_level_trunc_(0),
     battery_icon_("qrc:/qmlresources/icons/color/battery_0.png")
 {
-  qInfo() << "[RobotManager::RobotManager] RobotManager created";
+  qDebug() << "[RobotManager::RobotManager] RobotManager created";
 
   manual_control_ = std::make_unique<ROBOGait::robot::control::ManualControl>();
   map_visualization_manager_ = nullptr;
@@ -37,7 +38,7 @@ RobotManager::RobotManager() :
 
 RobotManager::~RobotManager()
 {
-  qInfo() << "[RobotManager::~RobotManager] RobotManager destroyed";
+  qDebug() << "[RobotManager::~RobotManager] RobotManager destroyed";
   clearSelection();
 }
 
@@ -132,7 +133,7 @@ void RobotManager::setROSNode(rclcpp::Node* parent_node)
 
   if (!ROBOGait::ros::service::RobotServiceClient::getInstance().initialize(parent_node_))
   {
-    qWarning() << "[RobotManager::setROSNode] RobotServiceClient initialization failed";
+    qCritical() << "[RobotManager::setROSNode] RobotServiceClient initialization failed";
   }
 
   manual_control_->setROSNode(parent_node);
@@ -153,7 +154,7 @@ void RobotManager::setROSNode(rclcpp::Node* parent_node)
                                       cb_group_); // one-shot=false, auto-start=false
   timer_robot_timeout_->cancel();                 // Disable auto-start
 
-  qInfo() << "[RobotManager::setROSNode] ROS node set successfully";
+  qDebug() << "[RobotManager::setROSNode] ROS node set successfully";
 }
 
 void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespace)
@@ -208,7 +209,7 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
       emit selectedRobotDisplayNameChanged();
     }
 
-    qInfo() << "[RobotManager::selectRobot] Selected robot:" << normalized_identifier << "Type:" << (is_namespace ? "namespace" : "node name");
+    qDebug() << "[RobotManager::selectRobot] Selected robot:" << normalized_identifier << "Type:" << (is_namespace ? "namespace" : "node name");
 
     // Update map visualization for new robot
     if (map_visualization_manager_)
@@ -315,7 +316,6 @@ void RobotManager::checkRobotAvailability(const QStringList& available_robots)
   if (!available_robots.contains(selected_robot_namespace_))
   {
     qWarning() << "[RobotManager::checkRobotAvailability] Robot" << selected_robot_namespace_ << "is no longer available in the graph";
-
     emit robotDisconnected();
   }
 }
@@ -338,7 +338,7 @@ void RobotManager::enableManualControl()
 
   manual_control_->setTopicName(topic_name);
 
-  qInfo() << "[RobotManager::enableManualControl] Manual control enabled for topic:" << topic_name;
+  qDebug() << "[RobotManager::enableManualControl] Manual control enabled for topic:" << topic_name;
 }
 
 void RobotManager::disableManualControl()
@@ -352,7 +352,7 @@ void RobotManager::disableManualControl()
   // Destroy the publisher to stop manual control
   manual_control_->destroyPublisher();
 
-  qInfo() << "[RobotManager::disableManualControl] Manual control disabled";
+  qDebug() << "[RobotManager::disableManualControl] Manual control disabled";
 }
 
 void RobotManager::publishInitialPose(double x, double y, double theta)
@@ -393,7 +393,7 @@ void RobotManager::publishInitialPose(double x, double y, double theta)
   msg.pose.covariance[7] = 0.05;  // Variance in y (50cm)
   msg.pose.covariance[35] = 0.15; // Variance in yaw (15 degrees)
 
-  pub_pose_initialize_->publish(msg);
+  pub_pose_initialize_->publish(std::move(msg));
 }
 
 QString RobotManager::normalizeNamespace(const QString& robot_namespace) const
@@ -521,8 +521,8 @@ void RobotManager::startMonitoring()
 
   const std::string full_topic = context.resolveTopic(ROBOGait::ros::topics::T_ROBOT_STATUS);
 
-  qInfo() << "[RobotManager::startMonitoring] Starting monitoring for:" << full_topic.c_str()
-          << "(mode:" << (use_namespace_discovery_ ? "namespace" : "node name") << ")";
+  qDebug() << "[RobotManager::startMonitoring] Starting monitoring for:" << full_topic.c_str()
+           << "(mode:" << (use_namespace_discovery_ ? "namespace" : "node name") << ")";
 
   sub_robot_status_ = parent_node_->create_subscription<command_executor_msgs::msg::RobotStatus>(
       full_topic, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(), std::bind(&RobotManager::callbackRobotStatus, this, std::placeholders::_1));
@@ -531,19 +531,15 @@ void RobotManager::startMonitoring()
 
   is_monitoring_ = true;
   timer_robot_timeout_->reset();
-
-  qInfo() << "[RobotManager::startMonitoring] Monitoring started successfully";
 }
 
 void RobotManager::stopMonitoring()
 {
   if (!is_monitoring_)
   {
-    qInfo() << "[RobotManager::stopMonitoring] Monitoring is not active, nothing to stop";
+    qDebug() << "[RobotManager::stopMonitoring] Monitoring is not active, nothing to stop";
     return;
   }
-
-  qInfo() << "[RobotManager::stopMonitoring] Stopping monitoring";
 
   if (timer_robot_timeout_)
   {
@@ -555,7 +551,7 @@ void RobotManager::stopMonitoring()
 
   is_monitoring_ = false;
 
-  qInfo() << "[RobotManager::stopMonitoring] Monitoring stopped";
+  qDebug() << "[RobotManager::stopMonitoring] Monitoring stopped";
 }
 
 void RobotManager::addStatusItem(QVariantList& items, const QString& label, const QString& value) const

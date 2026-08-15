@@ -1,4 +1,5 @@
 #include <QDebug>
+#include <qglobal.h>
 
 #include "Context/RobotContext.hpp"
 
@@ -9,9 +10,10 @@ RobotContext::RobotContext() : use_namespace_(true) {}
 bool RobotContext::setSelectedRobot(const QString& robot_identifier, bool is_namespace)
 {
   QString trimmed = robot_identifier.trimmed();
+
   if (trimmed.isEmpty())
   {
-    qWarning() << "[RobotContext::setSelectedRobot] Empty robot identifier";
+    qCritical() << "[RobotContext::setSelectedRobot] Empty robot identifier";
     return false;
   }
 
@@ -21,9 +23,10 @@ bool RobotContext::setSelectedRobot(const QString& robot_identifier, bool is_nam
   if (is_namespace)
   {
     const QString normalized = normalizeNamespace(trimmed);
+
     if (normalized.isEmpty())
     {
-      qWarning() << "[RobotContext::setSelectedRobot] Invalid namespace";
+      qCritical() << "[RobotContext::setSelectedRobot] Invalid namespace";
       return false;
     }
 
@@ -95,9 +98,10 @@ std::string RobotContext::resolveFrame(const std::string& frame) const
 QString RobotContext::normalizeNamespace(const QString& robot_namespace) const
 {
   QString normalized = robot_namespace.trimmed();
+
   if (normalized.isEmpty())
   {
-    qWarning() << "[RobotContext::normalizeNamespace] Empty namespace provided";
+    qCritical() << "[RobotContext::normalizeNamespace] Empty namespace provided";
     return QString();
   }
 
