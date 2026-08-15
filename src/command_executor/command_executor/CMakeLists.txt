@@ -77,6 +77,16 @@ if(BUILD_TESTING)
     Boost::filesystem
   )
 
+  ament_add_gtest(test_process_manager
+    test/test_process_manager.cpp
+    src/ProcessManager.cpp
+  )
+  target_include_directories(test_process_manager PRIVATE include)
+  target_link_libraries(test_process_manager
+    Boost::system
+    Boost::filesystem
+  )
+
   ament_add_ros_isolated_gtest(test_command_executor_ros test/test_command_executor_ros.cpp)
   target_include_directories(test_command_executor_ros PRIVATE include)
   ament_target_dependencies(test_command_executor_ros
