@@ -1,6 +1,7 @@
+#include <chrono>
 #include <iostream>
 #include <signal.h>
-#include <vector>
+#include <thread>
 
 #include <boost/process/args.hpp>
 #include <boost/process/io.hpp>
@@ -9,6 +10,34 @@
 #include "ProcessManager.hpp"
 
 using namespace ROBOGait::command;
+namespace
+{
+bool waitForProcessExit(boost::process::child& child, std::chrono::milliseconds timeout, std::error_code& ec)
+{
+  const auto deadline = std::chrono::steady_clock::now() + timeout;
+
+  while (std::chrono::steady_clock::now() < deadline)
+  {
+    ec.clear();
+    const bool running = child.running(ec);
+
+    if (ec)
+    {
+      return false;
+    }
+
+    if (!running)
+    {
+      return true;
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
+  ec.clear();
+  return !child.running(ec) && !ec;
+}
+} // namespace
 
 ProcessManager::ProcessManager() { std::cout << "[ProcessManager::ProcessManager] ProcessManager initialized" << std::endl; }
 ProcessManager::~ProcessManager()
@@ -75,7 +104,7 @@ bool ProcessManager::stopProcess(const std::string& cmd)
 
     ::kill(-group_pid, SIGINT);
 
-    if (it->second.child.wait_for(std::chrono::seconds(1), ec))
+    if (waitForProcessExit(it->second.child, std::chrono::seconds(1), ec))
     {
       processes_.erase(it);
       return true;
@@ -83,7 +112,8 @@ bool ProcessManager::stopProcess(const std::string& cmd)
 
     std::cout << "[ProcessManager::stopProcess] Process not terminated gracefully, forcing kill" << std::endl;
     ::kill(-group_pid, SIGKILL);
-    it->second.child.wait_for(std::chrono::milliseconds(50), ec);
+    ec.clear();
+    it->second.child.wait(ec);
   }
 
   processes_.erase(it);
