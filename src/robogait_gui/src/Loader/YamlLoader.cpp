@@ -1,10 +1,16 @@
-#include <iostream>
 #include <sstream>
+#include <utility>
 #include <vector>
 
 #include "Loader/YamlLoader.hpp"
 
 using namespace ROBOGait::loader;
+
+YamlLoader::YamlLoadResult::YamlLoadResult(bool loaded_in) : loaded(loaded_in) {}
+
+YamlLoader::YamlLoadResult::YamlLoadResult(std::string error_in) : loaded(false), error(std::move(error_in)) {}
+
+YamlLoader::YamlLoadResult::operator bool() const { return loaded; }
 
 YamlLoader& YamlLoader::getInstance()
 {
@@ -12,25 +18,23 @@ YamlLoader& YamlLoader::getInstance()
   return instance;
 }
 
-YamlLoader::YamlLoader() : file_path_(""), is_loaded_(false) { std::cout << "[YamlLoader::YamlLoader] YamlLoader instance created" << std::endl; }
+YamlLoader::YamlLoader() : file_path_(""), is_loaded_(false) {}
 
-bool YamlLoader::loadConfig(const std::string& file_path)
+YamlLoader::YamlLoadResult YamlLoader::loadConfig(const std::string& file_path)
 {
   try
   {
     config_ = YAML::LoadFile(file_path);
     file_path_ = file_path;
     is_loaded_ = true;
-    std::cout << "[YamlLoader::loadConfig] Configuration loaded successfully from:" << file_path << std::endl;
-    return true;
+    return YamlLoadResult(true);
   }
   catch (const YAML::Exception& e)
   {
     config_ = YAML::Node();
     file_path_.clear();
     is_loaded_ = false;
-    std::cerr << "[YamlLoader::loadConfig] Failed to load configuration from: " << file_path << ". Error: " << e.what() << std::endl;
-    return false;
+    return YamlLoadResult(std::string("[YamlLoader::loadConfig] Failed to load configuration from: ") + file_path + ". Error: " + e.what());
   }
 }
 

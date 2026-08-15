@@ -4,7 +4,6 @@
 #include <QString>
 
 #include "DataBase/Common/DbErrors.hpp"
-#include "DataBase/DatabaseSchema.hpp"
 
 namespace ROBOGait
 {
@@ -24,7 +23,7 @@ public:
   /**
    * @brief Destructor for the RoboGaitDb class
    */
-  ~RoboGaitDb();
+  ~RoboGaitDb() = default;
 
   /**
    * @brief Open a connection to the database

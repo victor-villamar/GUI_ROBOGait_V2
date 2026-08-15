@@ -1,4 +1,4 @@
-#include <iostream>
+#include <QDebug>
 
 #include <rclcpp/create_timer.hpp>
 #include <tf2/exceptions.h>
@@ -19,7 +19,7 @@ void TFSubscriber::initialize(rclcpp::Node* parent_node, const std::string& map_
 {
   if (!parent_node)
   {
-    std::cerr << "[TFSubscriber::initialize] Parent node is null" << std::endl;
+    qCritical() << "[TFSubscriber::initialize] Parent node is null";
     return;
   }
 
@@ -45,13 +45,13 @@ void TFSubscriber::start()
 {
   if (!parent_node_)
   {
-    std::cerr << "[TFSubscriber::start] Parent node is null" << std::endl;
+    qCritical() << "[TFSubscriber::start] Parent node is null";
     return;
   }
 
   if (!robot_pose_data_)
   {
-    std::cerr << "[TFSubscriber::start] Robot pose data is null" << std::endl;
+    qCritical() << "[TFSubscriber::start] Robot pose data is null";
     return;
   }
 
@@ -68,7 +68,7 @@ void TFSubscriber::start()
   active_ = true;
   warn_logged_ = false;
 
-  std::cout << "[TFSubscriber::start] TF listener started for frames: " << map_frame_ << "->" << robot_frame_ << std::endl;
+  qDebug() << "[TFSubscriber::start] TF listener started for frames:" << map_frame_.c_str() << "->" << robot_frame_.c_str();
 }
 
 void TFSubscriber::stop()
@@ -96,7 +96,7 @@ void TFSubscriber::stop()
 
   active_ = false;
 
-  std::cout << "[TFSubscriber::stop] TF listener stopped" << std::endl;
+  qDebug() << "[TFSubscriber::stop] TF listener stopped";
 }
 
 bool TFSubscriber::isActive() const { return active_; }
@@ -137,13 +137,13 @@ void TFSubscriber::updatePoseFromTF()
   {
     if (!warn_logged_)
     {
-      std::cerr << "[TFSubscriber::updatePoseFromTF] Could not get transform from " << map_frame_ << " to " << robot_frame_ << ": " << e.what() << std::endl;
-      std::cerr << "[TFSubscriber::updatePoseFromTF] Waiting for robot localization..." << std::endl;
+      qDebug() << "[TFSubscriber::updatePoseFromTF] Could not get transform from" << map_frame_.c_str() << "to" << robot_frame_.c_str() << ":" << e.what();
+      qDebug() << "[TFSubscriber::updatePoseFromTF] Waiting for robot localization...";
       warn_logged_ = true;
     }
   }
   catch (const std::exception& e)
   {
-    std::cerr << "[TFSubscriber::updatePoseFromTF] Unexpected error: " << e.what() << std::endl;
+    qCritical() << "[TFSubscriber::updatePoseFromTF] Unexpected error:" << e.what();
   }
 }

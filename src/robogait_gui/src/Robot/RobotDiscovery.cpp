@@ -40,7 +40,7 @@ RobotDiscovery::RobotDiscovery() :
   );
   // clang-format on
 
-  qInfo() << "[RobotDiscovery::RobotDiscovery] RobotDiscovery created";
+  qDebug() << "[RobotDiscovery::RobotDiscovery] RobotDiscovery created";
 }
 
 bool RobotDiscovery::isScanning() const { return is_scanning_; }
@@ -98,7 +98,7 @@ void RobotDiscovery::stopScanning()
 {
   if (!is_scanning_ && !poll_timer_.isActive())
   {
-    qInfo() << "[RobotDiscovery::stopScanning] Scanning is already stopped";
+    qDebug() << "[RobotDiscovery::stopScanning] Scanning is already stopped";
     return;
   }
 
@@ -354,7 +354,7 @@ void RobotDiscovery::onScanTimeout()
 {
   if (is_scanning_ && state_ == State::SCANNING)
   {
-    qInfo() << "[RobotDiscovery] Scan timeout reached, stopping discovery";
+    qDebug() << "[RobotDiscovery::onScanTimeout] Scan timeout reached, stopping discovery";
     stopScanning();
   }
 }

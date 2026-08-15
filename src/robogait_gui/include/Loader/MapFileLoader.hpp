@@ -19,14 +19,28 @@ class MapFileLoader
 {
 public:
   /**
+   * @brief Result returned when loading a map from YAML and PGM content
+   */
+  struct MapLoadResult
+  {
+    explicit MapLoadResult(nav_msgs::msg::OccupancyGrid occupancy_grid_in);
+    explicit MapLoadResult(std::string error_in);
+
+    std::optional<nav_msgs::msg::OccupancyGrid> occupancy_grid;
+    std::string error;
+
+    explicit operator bool() const;
+  };
+
+  /**
    * @brief Load map data from YAML content and PGM content, and convert it into a ROS OccupancyGrid message
    *
    * @param yaml_content The content of the YAML file as a string
    * @param pgm_content The content of the PGM file as a vector of bytes
    *
-   * @return The loaded OccupancyGrid message if successful, or std::nullopt if there was an error during loading or parsing
+   * @return The loaded OccupancyGrid message if successful, or an error message if there was an error during loading or parsing
    */
-  std::optional<nav_msgs::msg::OccupancyGrid> loadMap(const std::string& yaml_content, const std::vector<uint8_t>& pgm_content) const;
+  MapLoadResult loadMap(const std::string& yaml_content, const std::vector<uint8_t>& pgm_content) const;
 
 private:
   /**
@@ -98,7 +112,7 @@ private:
    *
    * @return true if the YAML content was successfully parsed and metadata was extracted, false if there was an error
    */
-  bool parseYaml(const std::string& yaml_content, MapMetadata& metadata_out) const;
+  bool parseYaml(const std::string& yaml_content, MapMetadata& metadata_out, std::string& error_out) const;
 
   /**
    * @brief Parse the PGM content to extract pixel data and dimensions
@@ -110,7 +124,7 @@ private:
    *
    * @return true if the PGM content was successfully parsed and pixel data was extracted, false if there was an error
    */
-  bool parsePgm(const std::vector<uint8_t>& pgm_content, int& width_out, int& height_out, std::vector<uint8_t>& pixels_out) const;
+  bool parsePgm(const std::vector<uint8_t>& pgm_content, int& width_out, int& height_out, std::vector<uint8_t>& pixels_out, std::string& error_out) const;
 
   /**
    * @brief Build an OccupancyGrid message from the given map metadata and pixel data
@@ -121,7 +135,8 @@ private:
    *
    * @return true if the OccupancyGrid message was successfully built, false if there was an error during conversion
    */
-  bool buildOccupancyGrid(const MapMetadata& metadata, const std::vector<uint8_t>& pixels, nav_msgs::msg::OccupancyGrid& occupancy_grid_out) const;
+  bool buildOccupancyGrid(const MapMetadata& metadata, const std::vector<uint8_t>& pixels, nav_msgs::msg::OccupancyGrid& occupancy_grid_out,
+                          std::string& error_out) const;
 
   static constexpr int MAX_PIXEL_VALUE = 255;        /**< Maximum value for a pixel in the map */
   static constexpr int ORIGIN_SIZE = 3;              /**< Expected number of values in the origin field of the YAML file (x, y, theta) */

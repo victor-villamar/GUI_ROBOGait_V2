@@ -41,7 +41,7 @@ TEST(MapDataTest, StoresValidOccupancyDataAndMetadata)
   const auto metadata = createMetadata(2u, 2u);
   const std::vector<int8_t> occupancy_data = {-1, 0, 50, 100};
 
-  map_data.setOccupancyData(occupancy_data, metadata);
+  EXPECT_TRUE(map_data.setOccupancyData(occupancy_data, metadata));
 
   const auto stored_metadata = map_data.getMetadata();
   EXPECT_TRUE(map_data.isAvailable());
@@ -59,12 +59,12 @@ TEST(MapDataTest, RejectsInvalidOccupancyPayloadsWithoutStampUpdate)
 {
   MapData map_data;
 
-  map_data.setOccupancyData({1, 2, 3}, createMetadata(2u, 2u));
+  EXPECT_FALSE(map_data.setOccupancyData({1, 2, 3}, createMetadata(2u, 2u)));
   EXPECT_FALSE(map_data.isAvailable());
   EXPECT_EQ(map_data.getUpdateStamp(), 0u);
   EXPECT_TRUE(map_data.getOccupancyData().empty());
 
-  map_data.setOccupancyData({}, createMetadata(0u, 2u));
+  EXPECT_FALSE(map_data.setOccupancyData({}, createMetadata(0u, 2u)));
   EXPECT_FALSE(map_data.isAvailable());
   EXPECT_EQ(map_data.getUpdateStamp(), 0u);
 }
@@ -72,9 +72,9 @@ TEST(MapDataTest, RejectsInvalidOccupancyPayloadsWithoutStampUpdate)
 TEST(MapDataTest, UpdatesSubRegionInRowMajorOrder)
 {
   MapData map_data;
-  map_data.setOccupancyData({0, 1, 2, 3, 4, 5}, createMetadata(3u, 2u));
+  EXPECT_TRUE(map_data.setOccupancyData({0, 1, 2, 3, 4, 5}, createMetadata(3u, 2u)));
 
-  map_data.updateRegion(1, 0, 2u, 2u, {9, 8, 7, 6});
+  EXPECT_TRUE(map_data.updateRegion(1, 0, 2u, 2u, {9, 8, 7, 6}));
 
   const std::vector<int8_t> expected = {0, 9, 8, 3, 7, 6};
   EXPECT_TRUE(map_data.isAvailable());
@@ -86,9 +86,9 @@ TEST(MapDataTest, IgnoresOutOfBoundsRegionWithoutStampUpdate)
 {
   MapData map_data;
   const std::vector<int8_t> original = {0, 1, 2, 3};
-  map_data.setOccupancyData(original, createMetadata(2u, 2u));
+  EXPECT_TRUE(map_data.setOccupancyData(original, createMetadata(2u, 2u)));
 
-  map_data.updateRegion(1, 1, 2u, 1u, {8, 9});
+  EXPECT_FALSE(map_data.updateRegion(1, 1, 2u, 1u, {8, 9}));
 
   EXPECT_EQ(map_data.getUpdateStamp(), 1u);
   EXPECT_EQ(map_data.getOccupancyData(), original);
@@ -98,10 +98,10 @@ TEST(MapDataTest, IgnoresNegativeRegionWithoutStampUpdate)
 {
   MapData map_data;
   const std::vector<int8_t> original = {0, 1, 2, 3};
-  map_data.setOccupancyData(original, createMetadata(2u, 2u));
+  EXPECT_TRUE(map_data.setOccupancyData(original, createMetadata(2u, 2u)));
 
-  map_data.updateRegion(-1, 0, 1u, 1u, {9});
-  map_data.updateRegion(0, -1, 1u, 1u, {9});
+  EXPECT_FALSE(map_data.updateRegion(-1, 0, 1u, 1u, {9}));
+  EXPECT_FALSE(map_data.updateRegion(0, -1, 1u, 1u, {9}));
 
   EXPECT_EQ(map_data.getUpdateStamp(), 1u);
   EXPECT_EQ(map_data.getOccupancyData(), original);
@@ -110,7 +110,7 @@ TEST(MapDataTest, IgnoresNegativeRegionWithoutStampUpdate)
 TEST(MapDataTest, ResetClearsStateAndIncrementsStamp)
 {
   MapData map_data;
-  map_data.setOccupancyData({0, 1, 2, 3}, createMetadata(2u, 2u));
+  EXPECT_TRUE(map_data.setOccupancyData({0, 1, 2, 3}, createMetadata(2u, 2u)));
 
   map_data.reset();
 

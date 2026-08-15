@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
 #include <string>
 
 namespace ROBOGait
@@ -28,6 +29,20 @@ public:
   };
 
   /**
+   * @brief Result returned when loading bootstrap configuration
+   */
+  struct BootStrapLoadResult
+  {
+    explicit BootStrapLoadResult(BootStrapConfig config_in);
+    explicit BootStrapLoadResult(std::string error_in);
+
+    std::optional<BootStrapConfig> config;
+    std::string error;
+
+    explicit operator bool() const;
+  };
+
+  /**
    * @brief Get the singleton instance of BootStrapLoader
    *
    * @return Reference to the BootStrapLoader instance
@@ -40,7 +55,7 @@ public:
   BootStrapLoader(const BootStrapLoader&) = delete;
   BootStrapLoader& operator=(const BootStrapLoader&) = delete;
 
-  bool loadBootStrapConfig(const std::filesystem::path& yaml_file);
+  BootStrapLoadResult loadBootStrapConfig(const std::filesystem::path& yaml_file);
 
   /**
    * @brief Get the boostStrap configuration from the YAML file

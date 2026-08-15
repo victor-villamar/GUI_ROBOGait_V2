@@ -1,9 +1,11 @@
+#include <cstddef>
+
 #include <QDebug>
 #include <QSGFlatColorMaterial>
 #include <QSGTransformNode>
 
-#include "Themes/AppTheme.hpp"
 #include "Map/Items/ParticleCloudLayerItem.hpp"
+#include "Themes/AppTheme.hpp"
 
 using namespace ROBOGait::map::item;
 
@@ -16,10 +18,10 @@ ParticleCloudLayerItem::ParticleCloudLayerItem(QQuickItem* parent) : QQuickItem(
   }
 
   setFlag(ItemHasContents, true);
-  qInfo() << "[ParticleCloudLayerItem::ParticleCloudLayerItem] ParticleCloudLayerItem created";
+  qDebug() << "[ParticleCloudLayerItem::ParticleCloudLayerItem] ParticleCloudLayerItem created";
 }
 
-ParticleCloudLayerItem::~ParticleCloudLayerItem() { qInfo() << "[ParticleCloudLayerItem::~ParticleCloudLayerItem] ParticleCloudLayerItem destroyed"; }
+ParticleCloudLayerItem::~ParticleCloudLayerItem() { qDebug() << "[ParticleCloudLayerItem::~ParticleCloudLayerItem] ParticleCloudLayerItem destroyed"; }
 
 void ParticleCloudLayerItem::setRenderScene(const std::shared_ptr<ROBOGait::map::rendering::RenderScene>& scene)
 {
@@ -124,11 +126,11 @@ QSGNode* ParticleCloudLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintN
   geometry->allocate(vertex_count);
   auto* vertices = geometry->vertexDataAsPoint2D();
 
-  for (int i = 0; i < static_cast<int>(particles.size()); ++i)
+  for (size_t i = 0; i < particles.size(); ++i)
   {
     const float cx = static_cast<float>(particles[i].x_);
     const float cy = static_cast<float>(particles[i].y_);
-    writeRect(vertices, i * 6, cx, cy, POINT_SIZE, POINT_SIZE);
+    writeRect(vertices, static_cast<int>(i * 6), cx, cy, POINT_SIZE, POINT_SIZE);
   }
 
   points_node->markDirty(QSGNode::DirtyGeometry);

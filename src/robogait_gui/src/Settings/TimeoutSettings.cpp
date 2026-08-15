@@ -24,7 +24,7 @@ TimeoutSettings::TimeoutSettings() :
     auto_localization_spin_publish_period_ms_(DEFAULT_AUTO_LOCALIZATION_SPIN_PUBLISH_PERIOD_MS),
     experiment_save_prompt_delay_ms_(DEFAULT_EXPERIMENT_SAVE_PROMPT_DELAY_MS)
 {
-  qInfo() << "[TimeoutSettings::TimeoutSettings] TimeoutSettings created";
+  qDebug() << "[TimeoutSettings::TimeoutSettings] TimeoutSettings created";
 }
 
 int TimeoutSettings::getAppShutdownDelayMs() const { return app_shutdown_delay_ms_; }

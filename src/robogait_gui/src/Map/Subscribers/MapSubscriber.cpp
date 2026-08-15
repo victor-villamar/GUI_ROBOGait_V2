@@ -1,6 +1,8 @@
 #include <cstdint>
-#include <iostream>
 #include <vector>
+
+#include <QDebug>
+#include <QString>
 
 #include "Map/Subscribers/MapSubscriber.hpp"
 #include "Map/Utils/Utils.hpp"
@@ -15,7 +17,7 @@ void MapSubscriber::initialize(rclcpp::Node* parent_node)
 {
   if (!parent_node)
   {
-    std::cerr << "[MapSubscriber::initialize] Null parent node pointer" << std::endl;
+    qCritical() << "[MapSubscriber::initialize] Null parent node pointer";
     return;
   }
 
@@ -30,7 +32,7 @@ void MapSubscriber::start()
 {
   if (!parent_node_)
   {
-    std::cerr << "[MapSubscriber::start] Parent node is null" << std::endl;
+    qCritical() << "[MapSubscriber::start] Parent node is null";
     return;
   }
 
@@ -41,7 +43,7 @@ void MapSubscriber::start()
 
   if (!context_)
   {
-    std::cerr << "[MapSubscriber::start] Robot context is not set" << std::endl;
+    qCritical() << "[MapSubscriber::start] Robot context is not set";
     return;
   }
 
@@ -76,7 +78,7 @@ void MapSubscriber::callbackMap(const nav_msgs::msg::OccupancyGrid::SharedPtr ms
 
   if (!msg)
   {
-    std::cerr << "[MapSubscriber::callbackMap] Received null message pointer" << std::endl;
+    qWarning() << "[MapSubscriber::callbackMap] Received null message pointer";
     return;
   }
 
@@ -92,33 +94,43 @@ void MapSubscriber::callbackMap(const nav_msgs::msg::OccupancyGrid::SharedPtr ms
 
   if (!map_data_)
   {
-    std::cerr << "[MapSubscriber::callbackMap] MapData is null" << std::endl;
+    qCritical() << "[MapSubscriber::callbackMap] MapData is null";
     return;
   }
 
-  map_data_->setOccupancyData(occupancy_data, metadata);
+  const auto result = map_data_->setOccupancyData(occupancy_data, metadata);
+
+  if (!result)
+  {
+    qCritical().noquote() << "[MapSubscriber::callbackMap] Failed to set occupancy data\n" << QString::fromStdString(result.error);
+  }
 }
 
 void MapSubscriber::callbackMapUpdate(const map_msgs::msg::OccupancyGridUpdate::SharedPtr msg)
 {
   if (!msg)
   {
-    std::cerr << "[MapSubscriber::callbackMapUpdate] Received null message pointer" << std::endl;
+    qWarning() << "[MapSubscriber::callbackMapUpdate] Received null message pointer";
     return;
   }
 
   if (!map_data_)
   {
-    std::cerr << "[MapSubscriber::callbackMapUpdate] MapData is null" << std::endl;
+    qCritical() << "[MapSubscriber::callbackMapUpdate] MapData is null";
     return;
   }
 
   if (!map_data_->isAvailable())
   {
-    std::cerr << "[MapSubscriber::callbackMapUpdate] MapData is not available" << std::endl;
+    qWarning() << "[MapSubscriber::callbackMapUpdate] MapData is not available";
     return;
   }
 
   std::vector<int8_t> update_data(msg->data.begin(), msg->data.end());
-  map_data_->updateRegion(msg->x, msg->y, msg->width, msg->height, update_data);
+  const auto result = map_data_->updateRegion(msg->x, msg->y, msg->width, msg->height, update_data);
+
+  if (!result)
+  {
+    qCritical().noquote() << "[MapSubscriber::callbackMapUpdate] Failed to update map region\n" << QString::fromStdString(result.error);
+  }
 }

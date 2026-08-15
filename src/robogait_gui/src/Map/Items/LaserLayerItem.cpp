@@ -1,9 +1,11 @@
+#include <cstddef>
+
 #include <QDebug>
 #include <QSGFlatColorMaterial>
 #include <QSGTransformNode>
 
-#include "Themes/AppTheme.hpp"
 #include "Map/Items/LaserLayerItem.hpp"
+#include "Themes/AppTheme.hpp"
 
 using namespace ROBOGait::map::item;
 
@@ -19,10 +21,10 @@ LaserLayerItem::LaserLayerItem(QQuickItem* parent) : QQuickItem(parent), laser_c
   setAcceptedMouseButtons(Qt::NoButton);
   setAcceptHoverEvents(false);
   setAcceptTouchEvents(false);
-  qInfo() << "[LaserLayerItem::LaserLayerItem] LaserLayerItem created";
+  qDebug() << "[LaserLayerItem::LaserLayerItem] LaserLayerItem created";
 }
 
-LaserLayerItem::~LaserLayerItem() { qInfo() << "[LaserLayerItem::~LaserLayerItem] LaserLayerItem destroyed"; }
+LaserLayerItem::~LaserLayerItem() { qDebug() << "[LaserLayerItem::~LaserLayerItem] LaserLayerItem destroyed"; }
 
 void LaserLayerItem::setRenderScene(const std::shared_ptr<ROBOGait::map::rendering::RenderScene>& scene)
 {
@@ -127,11 +129,11 @@ QSGNode* LaserLayerItem::updatePaintNode(QSGNode* old_node, UpdatePaintNodeData*
   geometry->allocate(vertex_count);
   auto* vertices = geometry->vertexDataAsPoint2D();
 
-  for (int i = 0; i < static_cast<int>(points.size()); ++i)
+  for (size_t i = 0; i < points.size(); ++i)
   {
     const float cx = static_cast<float>(points[i].x_);
     const float cy = static_cast<float>(points[i].y_);
-    writeRect(vertices, i * 6, cx, cy, POINT_SIZE, POINT_SIZE);
+    writeRect(vertices, static_cast<int>(i * 6), cx, cy, POINT_SIZE, POINT_SIZE);
   }
 
   points_node->markDirty(QSGNode::DirtyGeometry);

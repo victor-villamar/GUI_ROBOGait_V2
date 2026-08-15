@@ -31,10 +31,10 @@ MapLayerItem::MapLayerItem(QQuickItem* parent) :
   setAcceptHoverEvents(true);
   setAcceptTouchEvents(true);
 
-  qInfo() << "[MapLayerItem::MapLayerItem] MapLayerItem created";
+  qDebug() << "[MapLayerItem::MapLayerItem] MapLayerItem created";
 }
 
-MapLayerItem::~MapLayerItem() { qInfo() << "[MapLayerItem::~MapLayerItem] MapLayerItem destroyed"; }
+MapLayerItem::~MapLayerItem() { qDebug() << "[MapLayerItem::~MapLayerItem] MapLayerItem destroyed"; }
 
 void MapLayerItem::setRenderScene(const std::shared_ptr<ROBOGait::map::rendering::RenderScene>& scene)
 {

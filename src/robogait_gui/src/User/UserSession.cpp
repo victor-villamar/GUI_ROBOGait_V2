@@ -162,7 +162,7 @@ void UserSession::authenticateUser(int user_id, const QString& username, const Q
 {
   if (is_authenticated_ && (user_id_ != user_id || username_ != username))
   {
-    qInfo() << "[UserSession::authenticateUser] User change detected, clearing previous state";
+    qDebug() << "[UserSession::authenticateUser] User change detected, clearing previous state";
     clearUserState();
   }
 
@@ -178,7 +178,7 @@ void UserSession::authenticateUser(int user_id, const QString& username, const Q
   emit authenticationChanged();
   emit userChanged();
 
-  qInfo() << "[UserSession::authenticateUser] User authenticated successfully:" << getSessionSummary();
+  qDebug() << "[UserSession::authenticateUser] User authenticated successfully:" << getSessionSummary();
 }
 
 void UserSession::assignRobot(const QString& robot_namespace)
@@ -191,7 +191,7 @@ void UserSession::assignRobot(const QString& robot_namespace)
 
   if (robot_namespace_ != robot_namespace)
   {
-    qInfo() << "[UserSession::assignRobot] Assigning robot:" << robot_namespace << "to user:" << username_;
+    qDebug() << "[UserSession::assignRobot] Assigning robot:" << robot_namespace << "to user:" << username_;
 
     robot_namespace_ = robot_namespace;
 
@@ -203,7 +203,7 @@ void UserSession::assignRobot(const QString& robot_namespace)
     updateSessionState();
     emit robotChanged();
 
-    qInfo() << "[UserSession::assignRobot] Robot assigned successfully:" << getSessionSummary();
+    qDebug() << "[UserSession::assignRobot] Robot assigned successfully:" << getSessionSummary();
   }
 }
 
@@ -215,7 +215,7 @@ void UserSession::assignPatient(int patient_id, const QString& name, const QStri
     return;
   }
 
-  qInfo() << "[UserSession::assignPatient] Assigning patient:" << display_name << "to user:" << username_;
+  qDebug() << "[UserSession::assignPatient] Assigning patient:" << display_name << "to user:" << username_;
 
   if (current_patient_)
   {
@@ -231,7 +231,7 @@ void UserSession::assignPatient(int patient_id, const QString& name, const QStri
   updateSessionState();
   emit patientChanged();
 
-  qInfo() << "[UserSession::assignPatient] Patient assigned successfully:" << getSessionSummary();
+  qDebug() << "[UserSession::assignPatient] Patient assigned successfully:" << getSessionSummary();
 }
 
 void UserSession::assignMap(const QString& map_name)
@@ -244,14 +244,14 @@ void UserSession::assignMap(const QString& map_name)
 
   if (current_map_name_ != map_name)
   {
-    qInfo() << "[UserSession::assignMap] Assigning map:" << map_name << "to user:" << username_;
+    qDebug() << "[UserSession::assignMap] Assigning map:" << map_name << "to user:" << username_;
 
     current_map_name_ = map_name;
 
     updateSessionState();
     emit mapChanged();
 
-    qInfo() << "[UserSession::assignMap] Map assigned successfully:" << getSessionSummary();
+    qDebug() << "[UserSession::assignMap] Map assigned successfully:" << getSessionSummary();
   }
 }
 
@@ -259,7 +259,7 @@ void UserSession::clearRobot()
 {
   if (!robot_namespace_.isEmpty())
   {
-    qInfo() << "[UserSession::clearRobot] Clearing robot assignment for user:" << username_;
+    qDebug() << "[UserSession::clearRobot] Clearing robot assignment for user:" << username_;
 
     robot_namespace_.clear();
 
@@ -277,7 +277,7 @@ void UserSession::clearPatient()
 {
   if (hasPatientAssigned())
   {
-    qInfo() << "[UserSession::clearPatient] Clearing patient assignment for user:" << username_;
+    qDebug() << "[UserSession::clearPatient] Clearing patient assignment for user:" << username_;
 
     if (current_patient_)
     {
@@ -293,7 +293,7 @@ void UserSession::clearMap()
 {
   if (!current_map_name_.isEmpty())
   {
-    qInfo() << "[UserSession::clearMap] Clearing map assignment for user:" << username_;
+    qDebug() << "[UserSession::clearMap] Clearing map assignment for user:" << username_;
 
     current_map_name_.clear();
 
@@ -304,7 +304,7 @@ void UserSession::clearMap()
 
 void UserSession::clearAllAssignments()
 {
-  qInfo() << "[UserSession::clearAllAssignments] Clearing all assignments for user:" << username_;
+  qDebug() << "[UserSession::clearAllAssignments] Clearing all assignments for user:" << username_;
 
   clearRobot();
   clearPatient();
@@ -316,12 +316,13 @@ void UserSession::clearAllAssignments()
 
 void UserSession::logout()
 {
-  qInfo() << "[UserSession::logout] Logging out user:" << username_;
+  const QString username = username_;
 
   clearUserState();
 
   if (db_manager_)
   {
+    db_manager_->logout();
     emit db_manager_->userLoggedOut();
   }
 
@@ -329,18 +330,14 @@ void UserSession::logout()
   emit userChanged();
   emit sessionStateChanged();
 
-  qInfo() << "[UserSession::logout] User logged out successfully";
+  qDebug() << "[UserSession::logout] Logging out user:" << username;
 }
 
 void UserSession::onDatabaseAuthChanged()
 {
   if (!db_manager_)
   {
-    return;
-  }
-
-  if (!is_authenticated_)
-  {
+    qCritical() << "[UserSession::onDatabaseAuthChanged] Database manager not available";
     return;
   }
 
@@ -353,10 +350,19 @@ void UserSession::onDatabaseAuthChanged()
 
   if (!new_auth_state)
   {
-    clearUserState();
-    emit authenticationChanged();
-    emit userChanged();
-    emit sessionStateChanged();
+    if (is_authenticated_)
+    {
+      clearUserState();
+      emit authenticationChanged();
+      emit userChanged();
+      emit sessionStateChanged();
+    }
+    return;
+  }
+
+  if (!is_authenticated_)
+  {
+    authenticateUser(new_user_id, new_username, new_display_name, new_role);
     return;
   }
 
@@ -398,7 +404,7 @@ void UserSession::onRobotManagerChanged()
 
 void UserSession::onRobotDisconnected()
 {
-  qInfo() << "[UserSession::onRobotDisconnected] Robot disconnected, clearing robot assignment";
+  qDebug() << "[UserSession::onRobotDisconnected] Robot disconnected, clearing robot assignment";
 
   QString disconnected_robot_name = getRobotDisplayName();
 
@@ -443,41 +449,48 @@ bool UserSession::loginUser(const QString& username, const QString& password)
 {
   if (!db_manager_)
   {
-    qWarning() << "[UserSession::loginUser] Database manager not available";
+    qCritical() << "[UserSession::loginUser] Database manager not available";
     return false;
   }
 
   bool login_success = db_manager_->login(username, password);
 
-  if (login_success)
+  if (!login_success)
+  {
+    qCritical() << "[UserSession::loginUser] Login failed for user:" << username;
+    return false;
+  }
+
+  if (!is_authenticated_ || user_id_ != db_manager_->getUserId() || username_ != db_manager_->getUserName() || display_name_ != db_manager_->getDisplayName() ||
+      role_ != db_manager_->getUserRole())
   {
     authenticateUser(db_manager_->getUserId(), db_manager_->getUserName(), db_manager_->getDisplayName(), db_manager_->getUserRole());
   }
-  else
-  {
-    qWarning() << "[UserSession::loginUser] Login failed for user:" << username;
-  }
 
-  return login_success;
+  return true;
 }
 
 bool UserSession::loginGuest(const QString& display_name)
 {
   if (!db_manager_)
   {
-    qWarning() << "[UserSession::loginGuest] Database manager not available";
+    qCritical() << "[UserSession::loginGuest] Database manager not available";
     return false;
   }
 
   const QString trimmed = display_name.trimmed();
   if (trimmed.isEmpty())
   {
-    qWarning() << "[UserSession::loginGuest] Display name is empty";
+    qCritical() << "[UserSession::loginGuest] Display name is empty";
     return false;
   }
 
   db_manager_->loginGuest(trimmed);
-  authenticateUser(db_manager_->getUserId(), db_manager_->getUserName(), db_manager_->getDisplayName(), db_manager_->getUserRole());
+  if (!is_authenticated_ || user_id_ != db_manager_->getUserId() || username_ != db_manager_->getUserName() || display_name_ != db_manager_->getDisplayName() ||
+      role_ != db_manager_->getUserRole())
+  {
+    authenticateUser(db_manager_->getUserId(), db_manager_->getUserName(), db_manager_->getDisplayName(), db_manager_->getUserRole());
+  }
   return true;
 }
 
@@ -485,19 +498,19 @@ QVariantList UserSession::getUserPatients()
 {
   if (!db_manager_)
   {
-    qWarning() << "[UserSession::getUserPatients] Database manager not available";
+    qCritical() << "[UserSession::getUserPatients] Database manager not available";
     return QVariantList();
   }
 
   if (!is_authenticated_)
   {
-    qWarning() << "[UserSession::getUserPatients] User not authenticated";
+    qCritical() << "[UserSession::getUserPatients] User not authenticated";
     return QVariantList();
   }
 
   QVariantList patients_list = db_manager_->listPatients();
 
-  qInfo() << "[UserSession::getUserPatients] Retrieved" << patients_list.size() << "patients for user:" << username_;
+  qDebug() << "[UserSession::getUserPatients] Retrieved" << patients_list.size() << "patients for user:" << username_;
 
   return patients_list;
 }
@@ -506,13 +519,13 @@ bool UserSession::selectPatientById(int patient_id)
 {
   if (!db_manager_)
   {
-    qWarning() << "[UserSession::selectPatientById] Database manager not available";
+    qCritical() << "[UserSession::selectPatientById] Database manager not available";
     return false;
   }
 
   if (!is_authenticated_)
   {
-    qWarning() << "[UserSession::selectPatientById] User not authenticated";
+    qCritical() << "[UserSession::selectPatientById] User not authenticated";
     return false;
   }
 
@@ -520,7 +533,7 @@ bool UserSession::selectPatientById(int patient_id)
 
   if (patient_details.isEmpty())
   {
-    qWarning() << "[UserSession::selectPatientById] Patient not found with ID:" << patient_id;
+    qCritical() << "[UserSession::selectPatientById] Patient not found with ID:" << patient_id;
     return false;
   }
 
@@ -535,7 +548,7 @@ bool UserSession::selectPatientById(int patient_id)
 
   assignPatient(patient_id, name, last_name, display_name);
 
-  qInfo() << "[UserSession::selectPatientById] Patient selected:" << display_name << "(ID:" << patient_id << ")";
+  qDebug() << "[UserSession::selectPatientById] Patient selected:" << display_name << "(ID:" << patient_id << ")";
 
   return true;
 }
@@ -544,19 +557,19 @@ bool UserSession::quickSetup(const QString& username, const QString& password, c
 {
   if (!db_manager_)
   {
-    qWarning() << "[UserSession::quickSetup] Database manager not available";
+    qCritical() << "[UserSession::quickSetup] Database manager not available";
     return false;
   }
 
   if (!loginUser(username, password))
   {
-    qWarning() << "[UserSession::quickSetup] Login failed for user:" << username;
+    qCritical() << "[UserSession::quickSetup] Login failed for user:" << username;
     return false;
   }
 
   assignRobot(robot_namespace);
 
-  qInfo() << "[UserSession::quickSetup] Quick setup completed for user:" << username << "with robot:" << robot_namespace;
+  qDebug() << "[UserSession::quickSetup] Quick setup completed for user:" << username << "with robot:" << robot_namespace;
 
   return true;
 }
@@ -565,8 +578,8 @@ bool UserSession::canStartExperiment()
 {
   bool can_start = is_authenticated_ && !robot_namespace_.isEmpty() && hasPatientAssigned();
 
-  qInfo() << "[UserSession::canStartExperiment] Can start experiment:" << can_start << "- Auth:" << is_authenticated_
-          << "- Robot:" << !robot_namespace_.isEmpty() << "- Patient:" << hasPatientAssigned();
+  qDebug() << "[UserSession::canStartExperiment] Can start experiment:" << can_start << "- Auth:" << is_authenticated_
+           << "- Robot:" << !robot_namespace_.isEmpty() << "- Patient:" << hasPatientAssigned();
 
   return can_start;
 }

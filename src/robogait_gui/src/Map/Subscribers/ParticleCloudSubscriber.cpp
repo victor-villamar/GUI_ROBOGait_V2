@@ -1,4 +1,4 @@
-#include <iostream>
+#include <QDebug>
 
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/exceptions.hpp>
@@ -29,7 +29,7 @@ void ParticleCloudSubscriber::initialize(rclcpp::Node* parent_node)
 {
   if (!parent_node)
   {
-    std::cerr << "[ParticleCloudSubscriber::initialize] Null parent node pointer" << std::endl;
+    qCritical() << "[ParticleCloudSubscriber::initialize] Null parent node pointer";
     return;
   }
 
@@ -52,7 +52,7 @@ void ParticleCloudSubscriber::start()
 {
   if (!parent_node_)
   {
-    std::cerr << "[ParticleCloudSubscriber::start] Parent node is null" << std::endl;
+    qCritical() << "[ParticleCloudSubscriber::start] Parent node is null";
     return;
   }
 
@@ -78,7 +78,7 @@ void ParticleCloudSubscriber::start()
 
   active_ = true;
   warn_logged_ = false;
-  std::cout << "[ParticleCloudSubscriber::start] Subscribed to particle cloud topic:" << cloud_topic << std::endl;
+  qDebug() << "[ParticleCloudSubscriber::start] Subscribed to particle cloud topic:" << cloud_topic.c_str();
 }
 
 void ParticleCloudSubscriber::stop()
@@ -105,7 +105,7 @@ void ParticleCloudSubscriber::stop()
 
   active_ = false;
 
-  std::cout << "[ParticleCloudSubscriber::stop] Subscriptions stopped" << std::endl;
+  qDebug() << "[ParticleCloudSubscriber::stop] Subscriptions stopped";
 }
 
 bool ParticleCloudSubscriber::isActive() const { return active_; }
@@ -114,19 +114,19 @@ void ParticleCloudSubscriber::callbackParticleCloud(const nav2_msgs::msg::Partic
 {
   if (!particle_cloud_data_)
   {
-    std::cerr << "[ParticleCloudSubscriber::callbackParticleCloud] ParticleCloudData is null" << std::endl;
+    qCritical() << "[ParticleCloudSubscriber::callbackParticleCloud] ParticleCloudData is null";
     return;
   }
 
   if (!msg)
   {
-    std::cerr << "[ParticleCloudSubscriber::callbackParticleCloud] Invalid ParticleCloud message" << std::endl;
+    qWarning() << "[ParticleCloudSubscriber::callbackParticleCloud] Invalid ParticleCloud message";
     return;
   }
 
   if (!tf_buffer_)
   {
-    std::cerr << "[ParticleCloudSubscriber::callbackParticleCloud] TF buffer is not initialized" << std::endl;
+    qCritical() << "[ParticleCloudSubscriber::callbackParticleCloud] TF buffer is not initialized";
     return;
   }
 
@@ -139,7 +139,7 @@ void ParticleCloudSubscriber::callbackParticleCloud(const nav2_msgs::msg::Partic
 
   if (cloud_frame.empty())
   {
-    std::cerr << "[ParticleCloudSubscriber::callbackParticleCloud] Cloud frame is empty" << std::endl;
+    qWarning() << "[ParticleCloudSubscriber::callbackParticleCloud] Cloud frame is empty";
     return;
   }
 
@@ -185,8 +185,8 @@ ParticleCloudSubscriber::transformParticleCloud(const nav2_msgs::msg::ParticleCl
       {
         if (!warn_logged_)
         {
-          std::cerr << "[ParticleCloudSubscriber::transformParticleCloud] Could not transform from " << cloud_frame << " to " << map_frame_ << ": " << e.what()
-                    << std::endl;
+          qDebug() << "[ParticleCloudSubscriber::transformParticleCloud] Could not transform from" << cloud_frame.c_str() << "to" << map_frame_.c_str() << ":"
+                   << e.what();
           warn_logged_ = true;
         }
         return metadata;
@@ -195,7 +195,7 @@ ParticleCloudSubscriber::transformParticleCloud(const nav2_msgs::msg::ParticleCl
 
     if (!transform_found)
     {
-      std::cerr << "[ParticleCloudSubscriber::transformParticleCloud] Could not find transform from " << cloud_frame << " to " << map_frame_ << std::endl;
+      qDebug() << "[ParticleCloudSubscriber::transformParticleCloud] Could not find transform from" << cloud_frame.c_str() << "to" << map_frame_.c_str();
       return metadata;
     }
 

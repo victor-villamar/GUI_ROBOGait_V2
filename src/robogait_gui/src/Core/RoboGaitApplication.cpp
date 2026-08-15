@@ -47,7 +47,7 @@ RoboGaitApplication::RoboGaitApplication(int& argc, char* argv[]) :
                      "%{if-critical}\033[31m%{message}\033[0m%{endif}"
                      "%{if-fatal}\033[31m%{message}\033[0m%{endif}");
 
-  qInfo() << "************************ ROBOGait GUI ******************************";
+  qInfo() << "************************ INIT ROBOGait GUI ******************************";
 
   Q_ASSERT(app_instance_ == nullptr);
   app_instance_ = this;
@@ -92,7 +92,7 @@ void RoboGaitApplication::initCommon()
 
   qRegisterMetaType<geometry_msgs::msg::Twist>("geometry_msgs::msg::Twist");
 
-  qInfo() << "[RoboGaitApplication::initCommon] QML types and metatypes registered";
+  qDebug() << "[RoboGaitApplication::initCommon] QML types and metatypes registered";
 }
 
 bool RoboGaitApplication::initialize()
@@ -177,20 +177,23 @@ bool RoboGaitApplication::initialize()
 
   connectSignals();
 
-  qInfo() << "[RoboGaitApplication::initialize] Application subsystems initialized";
+  qDebug() << "[RoboGaitApplication::initialize] Application subsystems initialized";
   return true;
 }
 
 std::optional<ROBOGait::loader::BootStrapLoader::BootStrapConfig> RoboGaitApplication::getBootstrapConfig(const QString& config_path) const
 {
   auto& bootstrap_loader = ROBOGait::loader::BootStrapLoader::getInstance();
-  if (!bootstrap_loader.loadBootStrapConfig(std::filesystem::path(config_path.toStdString())))
+  const auto bootstrap_result = bootstrap_loader.loadBootStrapConfig(std::filesystem::path(config_path.toStdString()));
+
+  if (!bootstrap_result)
   {
-    qCritical() << "[RoboGaitApplication::getBootstrapConfig] Failed to load boostrap configuration from:" << config_path;
+    qCritical().noquote() << QString("[RoboGaitApplication::getBootstrapConfig] Failed to load bootstrap configuration from: %1\n%2")
+                                 .arg(config_path, QString::fromStdString(bootstrap_result.error));
     return std::nullopt;
   }
 
-  return bootstrap_loader.getBootStrapConfig();
+  return bootstrap_result.config.value();
 }
 
 bool RoboGaitApplication::ensureUserConfigFiles(const QString& shared_params_dir,
@@ -261,15 +264,18 @@ std::optional<QString> RoboGaitApplication::getDatabaseFile(const QString& confi
 
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
 
-  if (!yaml_loader.loadConfig(config_path.toStdString()))
+  const auto yaml_result = yaml_loader.loadConfig(config_path.toStdString());
+
+  if (!yaml_result)
   {
-    qCritical() << "[RoboGaitApplication::getDatabaseFile] Failed to load config YAML configuration from:" << config_path;
+    qCritical().noquote() << QString("[RoboGaitApplication::getDatabaseFile] Failed to load config YAML configuration from: %1\n%2")
+                                 .arg(config_path, QString::fromStdString(yaml_result.error));
     return std::nullopt;
   }
 
   // Get Database Configuration
-  const std::string database_dir = yaml_loader.getValue<std::string>("database.path", ".local/default");
-  const std::string database_filename = yaml_loader.getValue<std::string>("database.filename", "default.db");
+  const std::string database_dir = yaml_loader.getValue<std::string>("database.path", ".local/robogait");
+  const std::string database_filename = yaml_loader.getValue<std::string>("database.filename", "db_robogait.db");
 
   if (database_dir.empty())
   {
@@ -313,7 +319,7 @@ bool RoboGaitApplication::initForNormalAppBoot()
 
   qml_app_engine_->load(url);
 
-  qInfo() << "[RoboGaitApplication::initForNormalAppBoot] QML engine initialized";
+  qDebug() << "[RoboGaitApplication::initForNormalAppBoot] QML engine initialized";
   return true;
 }
 
@@ -348,12 +354,12 @@ void RoboGaitApplication::setupTranslator()
     if (translator_.load(":/i18n/" + base_name))
     {
       installTranslator(&translator_);
-      qInfo() << "[RoboGaitApplication::setupTranslator] Loaded translation:" << base_name;
+      qDebug() << "[RoboGaitApplication::setupTranslator] Loaded translation:" << base_name;
       break;
     }
   }
 
-  qInfo() << "[RoboGaitApplication::setupTranslator] Translator set up";
+  qDebug() << "[RoboGaitApplication::setupTranslator] Translator set up";
 }
 
 bool RoboGaitApplication::setupDatabase(const QString& db_path)
@@ -363,6 +369,7 @@ bool RoboGaitApplication::setupDatabase(const QString& db_path)
 
   // Check if directory exists
   QDir db_dir(dir_path);
+
   if (!db_dir.exists())
   {
     qInfo() << "[RoboGaitApplication::setupDatabase] Directory does not exist, creating:" << dir_path;
@@ -377,6 +384,7 @@ bool RoboGaitApplication::setupDatabase(const QString& db_path)
   }
 
   QFileInfo dir_info(dir_path);
+
   if (!dir_info.isWritable())
   {
     qWarning() << "[RoboGaitApplication::setupDatabase] Directory is not writable:" << dir_path;
@@ -394,7 +402,7 @@ bool RoboGaitApplication::setupDatabase(const QString& db_path)
 
   is_database_setup_ = true;
 
-  qInfo() << "[RoboGaitApplication::setupDatabase] Database setup completed successfully";
+  qDebug() << "[RoboGaitApplication::setupDatabase] Database setup completed successfully";
   return true;
 }
 
@@ -408,7 +416,7 @@ void RoboGaitApplication::setupQmlContext()
   qml_app_engine_->rootContext()->setContextProperty("uiSizingSettings", uiSizingSettings());
   qml_app_engine_->rootContext()->setContextProperty("timeoutSettings", timeoutSettings());
 
-  qInfo() << "[RoboGaitApplication::setupQmlContext] QML context properties set";
+  qDebug() << "[RoboGaitApplication::setupQmlContext] QML context properties set";
 }
 
 void RoboGaitApplication::connectSignals()

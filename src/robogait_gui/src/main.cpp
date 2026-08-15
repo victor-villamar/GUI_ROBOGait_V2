@@ -10,7 +10,7 @@
  */
 void signalHandler(int sig)
 {
-  qInfo() << "[main::signalHandler] Received signal" << sig << "- shutting down gracefully";
+  qDebug() << "[main::signalHandler] Received signal" << sig << "- shutting down gracefully";
   QCoreApplication::quit();
 }
 

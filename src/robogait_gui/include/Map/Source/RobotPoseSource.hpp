@@ -30,7 +30,7 @@ public:
    *
    * @param parent_node The parent ROS node.
    */
-  void initialize(rclcpp::Node* parent_node) override;
+  SourceResult initialize(rclcpp::Node* parent_node) override;
 
   /**
    * @brief Sets the robot context.
@@ -45,7 +45,7 @@ public:
   /**
    * @brief Pause or resume TF pose updates without resetting pose data
    */
-  void setPaused(bool paused);
+  SourceResult setPaused(bool paused);
 
   bool isActive() const override;
   bool isAvailable() const override;

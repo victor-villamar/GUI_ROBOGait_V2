@@ -1,13 +1,8 @@
-#include <iostream>
-
 #include "Map/Data/ParticleCloudData.hpp"
 
 using namespace ROBOGait::map::data;
 
-ParticleCloudData::ParticleCloudData() : is_available_(false), update_stamp_(0)
-{
-  std::cout << "[ParticleCloudData::ParticleCloudData] Particle cloud data handler initialized" << std::endl;
-}
+ParticleCloudData::ParticleCloudData() : is_available_(false), update_stamp_(0) {}
 
 void ParticleCloudData::setParticleCloudData(const ParticleCloudMetadata& metadata)
 {

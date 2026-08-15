@@ -24,10 +24,11 @@ RobotLayerItem::RobotLayerItem(QQuickItem* parent) :
   setAcceptedMouseButtons(Qt::NoButton);
   setAcceptHoverEvents(false);
   setAcceptTouchEvents(false);
-  qInfo() << "[RobotLayerItem::RobotLayerItem] RobotLayerItem created";
+
+  qDebug() << "[RobotLayerItem::RobotLayerItem] RobotLayerItem created";
 }
 
-RobotLayerItem::~RobotLayerItem() { qInfo() << "[RobotLayerItem::~RobotLayerItem] RobotLayerItem destroyed"; }
+RobotLayerItem::~RobotLayerItem() { qDebug() << "[RobotLayerItem::~RobotLayerItem] RobotLayerItem destroyed"; }
 
 void RobotLayerItem::setRenderScene(const std::shared_ptr<ROBOGait::map::rendering::RenderScene>& scene)
 {

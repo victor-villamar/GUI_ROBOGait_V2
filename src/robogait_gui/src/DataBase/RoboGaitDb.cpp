@@ -2,13 +2,12 @@
 #include <QSqlError>
 #include <QSqlQuery>
 
+#include "DataBase/DatabaseSchema.hpp"
 #include "DataBase/RoboGaitDb.hpp"
 
 using namespace ROBOGait::db;
 
 RoboGaitDb::RoboGaitDb() : connection_name_(QString("robogait_%1").arg(reinterpret_cast<quintptr>(this))) {}
-
-RoboGaitDb::~RoboGaitDb() { qInfo() << "[RoboGaitDb::~RoboGaitDb] RoboGaitDb destroyed"; }
 
 DbResultVoid RoboGaitDb::open(const QString& db_path)
 {
@@ -41,7 +40,7 @@ DbResultVoid RoboGaitDb::open(const QString& db_path)
     }
   }
 
-  qInfo() << "[RoboGaitDb::open] Initializing/verifying database schema...";
+  qDebug() << "[RoboGaitDb::open] Initializing/verifying database schema...";
 
   if (auto result = DatabaseSchema::initializeSchema(db_); !statusOk(result))
   {
@@ -50,7 +49,7 @@ DbResultVoid RoboGaitDb::open(const QString& db_path)
     return result;
   }
 
-  qInfo() << "[RoboGaitDb::open] Database schema verified successfully";
+  qDebug() << "[RoboGaitDb::open] Database schema verified successfully";
 
   return makeSuccess();
 }
@@ -68,7 +67,7 @@ void RoboGaitDb::close()
   db_ = QSqlDatabase();
 
   QSqlDatabase::removeDatabase(name);
-  qInfo() << "[RoboGaitDb::close] Database connection closed and removed:" << name;
+  qDebug() << "[RoboGaitDb::close] Database connection closed and removed:" << name;
 }
 
 bool RoboGaitDb::isOpen() const { return db_.isOpen() && db_.isValid(); }

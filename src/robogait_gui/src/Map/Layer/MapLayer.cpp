@@ -1,5 +1,3 @@
-#include <QDebug>
-
 #include "Map/Layer/MapLayer.hpp"
 #include "Map/Utils/Utils.hpp"
 

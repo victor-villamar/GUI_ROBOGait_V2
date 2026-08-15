@@ -1,5 +1,6 @@
-#include <iostream>
 #include <vector>
+
+#include <QDebug>
 
 #include "Map/Subscribers/PathSubscriber.hpp"
 #include "Ros/QoSProfiles.hpp"
@@ -13,7 +14,7 @@ void PathSubscriber::initialize(rclcpp::Node* parent_node)
 {
   if (!parent_node)
   {
-    std::cerr << "[PathSubscriber::initialize] Null parent node pointer" << std::endl;
+    qCritical() << "[PathSubscriber::initialize] Null parent node pointer";
     return;
   }
 
@@ -28,7 +29,7 @@ void PathSubscriber::start()
 {
   if (!parent_node_)
   {
-    std::cerr << "[PathSubscriber::start] Parent node is null" << std::endl;
+    qCritical() << "[PathSubscriber::start] Parent node is null";
     return;
   }
 
@@ -39,7 +40,7 @@ void PathSubscriber::start()
 
   if (!context_)
   {
-    std::cerr << "[PathSubscriber::start] Robot context is not set" << std::endl;
+    qCritical() << "[PathSubscriber::start] Robot context is not set";
     return;
   }
 
@@ -68,13 +69,13 @@ void PathSubscriber::callbackPath(const nav_msgs::msg::Path::SharedPtr msg)
 {
   if (!msg)
   {
-    std::cerr << "[PathSubscriber::callbackPath] Received null message pointer" << std::endl;
+    qWarning() << "[PathSubscriber::callbackPath] Received null message pointer";
     return;
   }
 
   if (!path_data_)
   {
-    std::cerr << "[PathSubscriber::callbackPath] PathData is null" << std::endl;
+    qCritical() << "[PathSubscriber::callbackPath] PathData is null";
     return;
   }
 

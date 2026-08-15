@@ -1,10 +1,8 @@
-#include <iostream>
-
 #include "Map/Data/PathData.hpp"
 
 using namespace ROBOGait::map::data;
 
-PathData::PathData() : is_available_(false), update_stamp_(0) { std::cout << "[PathData::PathData] Path data handler initialized" << std::endl; }
+PathData::PathData() : is_available_(false), update_stamp_(0) {}
 
 void PathData::setPath(const PathMetadata& metadata)
 {

@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "Map/Source/PathSource.hpp"
 
 using namespace ROBOGait::map::source;
@@ -15,12 +13,11 @@ PathSource::PathSource()
   subscriber_ = std::make_shared<ROBOGait::map::subscribers::PathSubscriber>();
 }
 
-void PathSource::initialize(rclcpp::Node* parent_node)
+SourceInterface::SourceResult PathSource::initialize(rclcpp::Node* parent_node)
 {
   if (!parent_node)
   {
-    std::cerr << "[PathSource::initialize] Null parent node pointer" << std::endl;
-    return;
+    return SourceResult::failure("[PathSource::initialize] Null parent node pointer");
   }
 
   parent_node_ = parent_node;
@@ -37,6 +34,7 @@ void PathSource::initialize(rclcpp::Node* parent_node)
   }
 
   initialized_ = true;
+  return SourceResult::success();
 }
 
 void PathSource::setRobotContext(const ROBOGait::context::RobotContext& context)

@@ -169,7 +169,7 @@ UiSizingSettings::UiSizingSettings() :
     min_scale_(DEFAULT_MIN_SCALE),
     max_scale_(DEFAULT_MAX_SCALE)
 {
-  qInfo() << "[UiSizingSettings::UiSizingSettings] UiSizingSettings created";
+  qDebug() << "[UiSizingSettings::UiSizingSettings] UiSizingSettings created";
 }
 
 double UiSizingSettings::sanitizePositive(double value, double fallback) const { return (value > 0.0) ? value : fallback; }

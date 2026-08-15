@@ -39,6 +39,7 @@ RobotServiceClient::RobotServiceClient() :
     cancel_in_progress_(false),
     start_stop_timeout_s_(START_STOP_TIMEOUT)
 {
+  qInfo() << "[RobotServiceClient::RobotServiceClient] RobotServiceClient created";
 }
 
 bool RobotServiceClient::initialize(rclcpp::Node* parent_node)
@@ -53,7 +54,7 @@ bool RobotServiceClient::initialize(rclcpp::Node* parent_node)
   {
     if (parent_node_ == parent_node && cb_group_)
     {
-      qInfo() << "[RobotServiceClient::initialize] Already initialized with the same parent node, skipping reinitialization";
+      qDebug() << "[RobotServiceClient::initialize] Already initialized with the same parent node, skipping reinitialization";
       return true;
     }
 
@@ -195,7 +196,7 @@ bool RobotServiceClient::deleteMap(const std::string& map_name)
     return false;
   }
 
-  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
+  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "/maps/");
 
   if (map_path.empty())
   {
@@ -254,15 +255,16 @@ bool RobotServiceClient::requestMapData(const std::string& map_name)
 
   ROBOGait::loader::MapFileLoader map_loader;
 
-  auto occupancy_grid_opt = map_loader.loadMap(*yaml_info, *pgm_info);
+  const auto map_result = map_loader.loadMap(*yaml_info, *pgm_info);
 
-  if (!occupancy_grid_opt)
+  if (!map_result)
   {
-    qCritical() << "[RobotServiceClient::requestMapData] Failed to load map data for map " << QString::fromStdString(map_name);
+    qCritical().noquote() << QString("[RobotServiceClient::requestMapData] Failed to load map data for map %1\n%2")
+                                 .arg(QString::fromStdString(map_name), QString::fromStdString(map_result.error));
     return false;
   }
 
-  auto occupancy_grid = occupancy_grid_opt.value();
+  auto occupancy_grid = map_result.occupancy_grid.value();
   occupancy_grid.header.frame_id = context_ ? context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME) : ROBOGait::ros::topics::TF_MAP_FRAME;
 
   return publishMapDataOnce(occupancy_grid);
@@ -293,7 +295,7 @@ bool RobotServiceClient::startNavigation(const std::string& map_name)
     return false;
   }
 
-  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
+  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "/maps/");
 
   if (map_path.empty())
   {
@@ -583,7 +585,7 @@ bool RobotServiceClient::navigateToPose(double x, double y, double theta)
 
   if (cancel_in_progress_)
   {
-    qInfo() << "[RobotServiceClient::navigateToPose] Cancel in progress, waiting for cancel to complete before sending new goal";
+    qDebug() << "[RobotServiceClient::navigateToPose] Cancel in progress, waiting for cancel to complete before sending new goal";
     return false;
   }
 
@@ -694,7 +696,7 @@ bool RobotServiceClient::followLastComputedPath()
 
   if (cancel_in_progress_)
   {
-    qInfo() << "[RobotServiceClient::followLastComputedPath] Cancel in progress, waiting for cancel to complete before sending new goal";
+    qDebug() << "[RobotServiceClient::followLastComputedPath] Cancel in progress, waiting for cancel to complete before sending new goal";
     return false;
   }
 
@@ -967,7 +969,7 @@ void RobotServiceClient::handleStartMappingResult(bool success, const std::strin
 
   setCommandState(KEY_CARTOGRAPHER, RobotServiceClient::CommandStatus::STARTING, full_cmd);
   startHealthTimer();
-  qInfo() << "[RobotServiceClient::startMapping] Successfully initialized mapping";
+  qDebug() << "[RobotServiceClient::startMapping] Successfully initialized mapping";
   notifyRequestResult(true);
 }
 
@@ -980,7 +982,7 @@ void RobotServiceClient::handleDeleteMapResult(bool success, const std::string& 
     return;
   }
 
-  qInfo() << "[RobotServiceClient::deleteMap] Successfully deleted map " << QString::fromStdString(map_name);
+  qDebug() << "[RobotServiceClient::deleteMap] Successfully deleted map " << QString::fromStdString(map_name);
   notifyRequestResult(true);
 }
 
@@ -996,7 +998,7 @@ void RobotServiceClient::handleStartNavigationResult(bool success, const std::st
 
   setCommandState(KEY_NAVIGATION, RobotServiceClient::CommandStatus::STARTING, full_cmd);
   startHealthTimer();
-  qInfo() << "[RobotServiceClient::startNavigation] Successfully started navigation with map " << QString::fromStdString(map_name);
+  qDebug() << "[RobotServiceClient::startNavigation] Successfully started navigation with map " << QString::fromStdString(map_name);
   notifyRequestResult(true);
 }
 
@@ -1012,7 +1014,7 @@ void RobotServiceClient::handleSaveMapResult(bool success, const std::string& fu
 
   setCommandState(KEY_MAP_SAVER, RobotServiceClient::CommandStatus::STARTING, full_cmd);
   startHealthTimer();
-  qInfo() << "[RobotServiceClient::saveMap] Successfully saved map";
+  qDebug() << "[RobotServiceClient::saveMap] Successfully saved map";
   notifyRequestResult(true);
 }
 
@@ -1040,7 +1042,7 @@ void RobotServiceClient::handleGlobalLocalizationResult(bool success)
     return;
   }
 
-  qInfo() << "[RobotServiceClient::reinitializeGlobalLocalization] Global localization request sent";
+  qDebug() << "[RobotServiceClient::reinitializeGlobalLocalization] Global localization request sent";
   notifyRequestResult(true);
 }
 
@@ -1088,7 +1090,7 @@ bool RobotServiceClient::callGetMapDataService(const std::string& map_name, std:
     return false;
   }
 
-  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
+  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "/maps/");
 
   if (map_path.empty())
   {
@@ -1305,7 +1307,7 @@ bool RobotServiceClient::saveMap(const std::string& map_name)
     return false;
   }
 
-  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "");
+  const std::string map_path = yaml_loader.getValue<std::string>("map.map_path", "/maps/");
 
   if (map_path.empty())
   {
@@ -1489,9 +1491,10 @@ void RobotServiceClient::onHealthTimer()
     switch (state.status)
     {
       case RobotServiceClient::CommandStatus::STARTING:
+      {
         if (alive)
         {
-          qInfo() << "[RobotServiceClient::onHealthTimer] Node is alive for command: " << QString::fromStdString(key);
+          qDebug() << "[RobotServiceClient::onHealthTimer] Node is alive for command: " << QString::fromStdString(key);
           setCommandState(key, RobotServiceClient::CommandStatus::RUNNING, state.full_cmd);
         }
         else if (key == KEY_MAP_SAVER && elapsed > MAP_SAVER_STARTUP_ASSUME_STOP_DELAY)
@@ -1503,13 +1506,17 @@ void RobotServiceClient::onHealthTimer()
           setCommandState(key, RobotServiceClient::CommandStatus::ERROR, state.full_cmd);
         }
         break;
+      }
       case RobotServiceClient::CommandStatus::RUNNING:
+      {
         if (!alive)
         {
           setCommandState(key, RobotServiceClient::CommandStatus::STOPPED, state.full_cmd);
         }
         break;
+      }
       case RobotServiceClient::CommandStatus::STOPPING:
+      {
         if (!alive)
         {
           setCommandState(key, RobotServiceClient::CommandStatus::STOPPED, state.full_cmd);
@@ -1519,6 +1526,7 @@ void RobotServiceClient::onHealthTimer()
           setCommandState(key, RobotServiceClient::CommandStatus::ERROR, state.full_cmd);
         }
         break;
+      }
       case RobotServiceClient::CommandStatus::STOPPED:
       case RobotServiceClient::CommandStatus::ERROR:
       case RobotServiceClient::CommandStatus::IDLE:
@@ -1649,7 +1657,7 @@ void RobotServiceClient::goalResponseNavigateToPoseCallback(const rclcpp_action:
   {
     nav_goal_active_ = false;
     nav_goal_handle_.reset();
-    qWarning() << "[RobotServiceClient::goalResponseNavigateToPoseCallback] Goal rejected by server";
+    qCritical() << "[RobotServiceClient::goalResponseNavigateToPoseCallback] Goal rejected by server";
     return;
   }
 
@@ -1666,18 +1674,18 @@ void RobotServiceClient::cancelNavigateToPoseCallback(typename rclcpp_action::Cl
 {
   if (response && response->return_code == action_msgs::srv::CancelGoal::Response::ERROR_NONE)
   {
-    qInfo() << "[RobotServiceClient::cancelNavigateToPoseCallback] Navigation cancel accepted";
+    qDebug() << "[RobotServiceClient::cancelNavigateToPoseCallback] Navigation cancel accepted";
 
     nav_goal_active_ = false;
 
     if (response->goals_canceling.empty())
     {
-      qInfo() << "[RobotServiceClient::cancelNavigateToPoseCallback] No goals active to cancel";
+      qDebug() << "[RobotServiceClient::cancelNavigateToPoseCallback] No goals active to cancel";
     }
   }
   else
   {
-    qWarning() << "[RobotServiceClient::cancelNavigateToPoseCallback] Failed to cancel navigation";
+    qCritical() << "[RobotServiceClient::cancelNavigateToPoseCallback] Failed to cancel navigation";
   }
 
   cancel_in_progress_ = false;
@@ -1695,24 +1703,32 @@ void RobotServiceClient::resultNavigateToPoseCallback(const rclcpp_action::Clien
   switch (result.code)
   {
     case rclcpp_action::ResultCode::SUCCEEDED:
-      qInfo() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal reached";
+    {
+      qDebug() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal reached";
       nav_result = NavigationResult::SUCCEEDED;
       break;
+    }
 
     case rclcpp_action::ResultCode::CANCELED:
-      qInfo() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal canceled";
+    {
+      qDebug() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal canceled";
       nav_result = NavigationResult::CANCELED;
       break;
+    }
 
     case rclcpp_action::ResultCode::ABORTED:
-      qWarning() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal aborted";
+    {
+      qCritical() << "[RobotServiceClient::resultNavigateToPoseCallback] Goal aborted";
       nav_result = NavigationResult::ABORTED;
       break;
+    }
 
     default:
-      qWarning() << "[RobotServiceClient::resultNavigateToPoseCallback] Unknown state";
+    {
+      qCritical() << "[RobotServiceClient::resultNavigateToPoseCallback] Unknown state";
       nav_result = NavigationResult::UNKNOWN;
       break;
+    }
   }
 
   nav_goal_active_ = false;
@@ -1727,7 +1743,7 @@ void RobotServiceClient::goalResponseFollowPathCallback(const rclcpp_action::Cli
   {
     nav_goal_active_ = false;
     follow_path_goal_handle_.reset();
-    qWarning() << "[RobotServiceClient::goalResponseFollowPathCallback] Goal rejected by server";
+    qCritical() << "[RobotServiceClient::goalResponseFollowPathCallback] Goal rejected by server";
     return;
   }
 
@@ -1744,19 +1760,19 @@ void RobotServiceClient::cancelFollowPathCallback(typename rclcpp_action::Client
 {
   if (response && response->return_code == action_msgs::srv::CancelGoal::Response::ERROR_NONE)
   {
-    qInfo() << "[RobotServiceClient::cancelFollowPathCallback] Follow path cancel accepted";
+    qDebug() << "[RobotServiceClient::cancelFollowPathCallback] Follow path cancel accepted";
 
     nav_goal_active_ = false;
     follow_path_goal_handle_.reset();
 
     if (response->goals_canceling.empty())
     {
-      qInfo() << "[RobotServiceClient::cancelFollowPathCallback] No follow path goals active to cancel";
+      qDebug() << "[RobotServiceClient::cancelFollowPathCallback] No follow path goals active to cancel";
     }
   }
   else
   {
-    qWarning() << "[RobotServiceClient::cancelFollowPathCallback] Failed to cancel follow path";
+    qCritical() << "[RobotServiceClient::cancelFollowPathCallback] Failed to cancel follow path";
   }
 
   cancel_in_progress_ = false;
@@ -1768,24 +1784,32 @@ void RobotServiceClient::resultFollowPathCallback(const rclcpp_action::ClientGoa
   switch (result.code)
   {
     case rclcpp_action::ResultCode::SUCCEEDED:
-      qInfo() << "[RobotServiceClient::resultFollowPathCallback] Goal reached";
+    {
+      qDebug() << "[RobotServiceClient::resultFollowPathCallback] Goal reached";
       nav_result = NavigationResult::SUCCEEDED;
       break;
+    }
 
     case rclcpp_action::ResultCode::CANCELED:
-      qInfo() << "[RobotServiceClient::resultFollowPathCallback] Goal canceled";
+    {
+      qDebug() << "[RobotServiceClient::resultFollowPathCallback] Goal canceled";
       nav_result = NavigationResult::CANCELED;
       break;
+    }
 
     case rclcpp_action::ResultCode::ABORTED:
-      qWarning() << "[RobotServiceClient::resultFollowPathCallback] Goal aborted";
+    {
+      qCritical() << "[RobotServiceClient::resultFollowPathCallback] Goal aborted";
       nav_result = NavigationResult::ABORTED;
       break;
+    }
 
     default:
-      qWarning() << "[RobotServiceClient::resultFollowPathCallback] Unknown state";
+    {
+      qCritical() << "[RobotServiceClient::resultFollowPathCallback] Unknown state";
       nav_result = NavigationResult::UNKNOWN;
       break;
+    }
   }
 
   nav_goal_active_ = false;
