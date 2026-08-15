@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <signal.h>
 #include <thread>
 
@@ -46,10 +47,10 @@ ProcessManager::~ProcessManager()
   for (auto& entry : processes_)
   {
     std::error_code ec;
-    if (isRunning(entry.second))
+    if (entry.second && isRunning(*entry.second))
     {
-      entry.second.group.terminate(ec);
-      entry.second.child.wait(ec);
+      entry.second->group.terminate(ec);
+      entry.second->child.wait(ec);
     }
   }
   processes_.clear();
@@ -63,7 +64,12 @@ bool ProcessManager::startProcess(const std::string& cmd)
   auto existing = processes_.find(cmd);
   if (existing != processes_.end())
   {
-    if (isRunning(existing->second))
+    if (existing->second->is_stopping)
+    {
+      return false;
+    }
+
+    if (isRunning(*existing->second))
     {
       return false;
     }
@@ -83,47 +89,72 @@ bool ProcessManager::startProcess(const std::string& cmd)
   // clang-format on
 
   const auto pid = child.id();
-  ProcessEntry entry{std::move(group), std::move(child), pid};
+  auto entry = std::make_shared<ProcessEntry>(ProcessEntry{std::move(group), std::move(child), pid});
   processes_.emplace(cmd, std::move(entry));
   return true;
 }
 
 bool ProcessManager::stopProcess(const std::string& cmd)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-  auto it = processes_.find(cmd);
-  if (it == processes_.end())
+  std::shared_ptr<ProcessEntry> entry;
+
   {
-    return false;
-  }
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto it = processes_.find(cmd);
 
-  std::error_code ec;
-  if (isRunning(it->second))
-  {
-    const pid_t group_pid = it->second.pid;
+    if (it == processes_.end() || it->second->is_stopping)
+    {
+      return false;
+    }
 
-    ::kill(-group_pid, SIGINT);
-
-    if (waitForProcessExit(it->second.child, std::chrono::seconds(1), ec))
+    if (!isRunning(*it->second))
     {
       processes_.erase(it);
       return true;
     }
 
-    std::cout << "[ProcessManager::stopProcess] Process not terminated gracefully, forcing kill" << std::endl;
-    ::kill(-group_pid, SIGKILL);
-    ec.clear();
-    it->second.child.wait(ec);
+    it->second->is_stopping = true;
+    entry = it->second;
   }
 
-  processes_.erase(it);
+  std::error_code ec;
+  const pid_t group_pid = entry->pid;
+
+  ::kill(-group_pid, SIGINT);
+
+  if (waitForProcessExit(entry->child, std::chrono::seconds(1), ec))
+  {
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+
+      const auto it = processes_.find(cmd);
+      if (it != processes_.end() && it->second == entry)
+      {
+        processes_.erase(it);
+      }
+    }
+    return true;
+  }
+
+  std::cout << "[ProcessManager::stopProcess] Process not terminated gracefully, forcing kill" << std::endl;
+  ::kill(-group_pid, SIGKILL);
+  ec.clear();
+  entry->child.wait(ec);
+
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    const auto it = processes_.find(cmd);
+    if (it != processes_.end() && it->second == entry)
+    {
+      processes_.erase(it);
+    }
+  }
   return true;
 }
 
 bool ProcessManager::executeOneShotCommand(const std::string& cmd)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   // clang-format off
   boost::process::child child(
     "/bin/bash",

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -61,12 +62,14 @@ private:
    * @param group The process group
    * @param child The child process
    * @param pid The process ID
+   * @param is_stopping Whether a stop operation is in progress
    */
   struct ProcessEntry
   {
     boost::process::group group;
     boost::process::child child;
     boost::process::pid_t pid{-1};
+    bool is_stopping{false};
   };
 
   /**
@@ -78,8 +81,8 @@ private:
    */
   bool isRunning(ProcessEntry& entry);
 
-  mutable std::mutex mutex_;                                /**< Mutex for synchronizing access to the process map */
-  std::unordered_map<std::string, ProcessEntry> processes_; /**< Map of running processes */
+  mutable std::mutex mutex_;                                                 /**< Mutex for synchronizing access to the process map */
+  std::unordered_map<std::string, std::shared_ptr<ProcessEntry>> processes_; /**< Map of running processes */
 };
 } // namespace command
 } // namespace ROBOGait
