@@ -281,14 +281,14 @@ public:
   ROBOGait::map::history::TracedRouteHistory* getTracedRouteHistory() const;
 
   /**
-   * @brief Activate subscriptions for data sources
+   * @brief Activate visualization resources and data subscriptions
    */
-  Q_INVOKABLE void activateSubscriptions();
+  Q_INVOKABLE void activate();
 
   /**
-   * @brief Destroy subscriptions for data sources
+   * @brief Release visualization resources and data subscriptions
    */
-  Q_INVOKABLE void destroySubscriptions();
+  Q_INVOKABLE void deactivate();
 
   /**
    * @brief Enable or disable TF-based robot pose updates
@@ -470,6 +470,16 @@ private:
    * @brief Destroy render layers
    */
   void destroyLayers();
+
+  /**
+   * @brief Activate subscriptions for data sources
+   */
+  void activateSubscriptions();
+
+  /**
+   * @brief Destroy subscriptions for data sources
+   */
+  void destroySubscriptions();
 
   /**
    * @brief Update availability of data sources

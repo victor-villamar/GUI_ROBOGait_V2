@@ -324,7 +324,7 @@ MapViewForm {
             return
         }
 
-        mapVizManager.activateSubscriptions()
+        mapVizManager.activate()
         followButton.checked = mapVizManager.followRobot
 
         // Enable manual control
@@ -338,7 +338,7 @@ MapViewForm {
         if (userSession.rosManager && userSession.rosManager.robotManager) {
             var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
             if (mapVizManager) {
-                mapVizManager.destroySubscriptions()
+                mapVizManager.deactivate()
             }
 
             userSession.rosManager.robotManager.disableManualControl()

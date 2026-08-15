@@ -265,10 +265,10 @@ void RobotManager::clearSelection()
 
     ROBOGait::ros::service::RobotServiceClient::getInstance().clearRobotContext();
 
-    // Destroy map visualization subscriptions
+    // Release map visualization resources
     if (map_visualization_manager_)
     {
-      map_visualization_manager_->destroySubscriptions();
+      map_visualization_manager_->deactivate();
     }
   }
 }

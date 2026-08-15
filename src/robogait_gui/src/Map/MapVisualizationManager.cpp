@@ -230,6 +230,8 @@ void MapVisualizationManager::setSelectedRobot(const QString& robot_identifier, 
     return;
   }
 
+  const bool was_active = layers_active_ || subscriptions_active_;
+
   // Destroy previous displays and subscriptions if they exist
   destroySubscriptions();
   destroyLayers();
@@ -264,8 +266,10 @@ void MapVisualizationManager::setSelectedRobot(const QString& robot_identifier, 
     }
   }
 
-  // Create new displays for this robot
-  createLayers();
+  if (was_active)
+  {
+    activate();
+  }
 }
 
 bool MapVisualizationManager::isInitialized() const { return is_initialized_; }
@@ -493,126 +497,26 @@ ROBOGait::map::interaction::SplinePathEditor* MapVisualizationManager::getSpline
 
 ROBOGait::map::history::TracedRouteHistory* MapVisualizationManager::getTracedRouteHistory() const { return traced_route_history_.get(); }
 
-void MapVisualizationManager::activateSubscriptions()
+void MapVisualizationManager::activate()
 {
   if (!is_initialized_)
   {
-    qWarning() << "[MapVisualizationManager::activateSubscriptions] Not initialized";
+    qWarning() << "[MapVisualizationManager::activate] Not initialized";
     return;
   }
 
-  if (subscriptions_active_)
+  if (!layers_active_)
   {
-    qWarning() << "[MapVisualizationManager::activateSubscriptions] Already active";
-    return;
+    createLayers();
   }
 
-  if (!map_layer_ || !robot_layer_)
-  {
-    qWarning() << "[MapVisualizationManager::activateSubscriptions] Render layers not created yet";
-    return;
-  }
-
-  if (map_source_)
-  {
-    map_source_->start();
-  }
-  if (pose_source_)
-  {
-    pose_source_->start();
-  }
-  if (laser_source_)
-  {
-    laser_source_->start();
-  }
-  if (particle_source_)
-  {
-    particle_source_->start();
-  }
-  if (render_scene_)
-  {
-    render_scene_->start();
-  }
-
-  subscriptions_active_ = true;
-  updateAvailability();
+  activateSubscriptions();
 }
 
-void MapVisualizationManager::destroySubscriptions()
+void MapVisualizationManager::deactivate()
 {
-  if (!subscriptions_active_)
-  {
-    return;
-  }
-
-  subscriptions_active_ = false;
-
-  if (render_scene_)
-  {
-    render_scene_->stop();
-  }
-
-  if (map_source_)
-  {
-    map_source_->stop();
-  }
-
-  if (pose_source_)
-  {
-    pose_source_->stop();
-  }
-  if (path_source_)
-  {
-    path_source_->stop();
-  }
-  if (laser_source_)
-  {
-    laser_source_->stop();
-  }
-  if (particle_source_)
-  {
-    particle_source_->stop();
-  }
-
-  updateAvailability();
-
-  if (map_layer_item_)
-  {
-    map_layer_item_->update();
-  }
-
-  if (robot_layer_item_)
-  {
-    robot_layer_item_->update();
-  }
-
-  if (path_layer_item_)
-  {
-    path_layer_item_->update();
-  }
-
-  if (manual_draw_path_layer_item_)
-  {
-    manual_draw_path_layer_item_->update();
-  }
-
-  if (live_path_layer_item_)
-  {
-    live_path_layer_item_->update();
-  }
-
-  if (particle_layer_item_)
-  {
-    particle_layer_item_->update();
-  }
-
-  if (follow_robot_)
-  {
-    follow_robot_ = false;
-    emit followRobotChanged();
-  }
-
-  qDebug() << "[MapVisualizationManager::destroySubscriptions] Subscriptions destroyed";
+  destroySubscriptions();
+  destroyLayers();
 }
 
 void MapVisualizationManager::registerMapLayerItem(QObject* item)
@@ -647,7 +551,7 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
 
   if (!map_layer_)
   {
-    qCritical() << "[MapVisualizationManager::registerMapLayerItem] Map layer not available, cannot set renderer for MapLayerItem";
+    qDebug() << "[MapVisualizationManager::registerMapLayerItem] Registration deferred until activation";
     return;
   }
 
@@ -714,13 +618,13 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
           &ROBOGait::map::item::MapLayerItem::zoomChanged,
           this,
           &MapVisualizationManager::zoomLevelChanged,
-          Qt::QueuedConnection);
+          Qt::ConnectionType(Qt::QueuedConnection | Qt::UniqueConnection));
 
   connect(map_layer_item_,
           &ROBOGait::map::item::MapLayerItem::viewTransformChanged,
           this,
           &MapVisualizationManager::viewTransformChanged,
-          Qt::QueuedConnection);
+          Qt::ConnectionType(Qt::QueuedConnection | Qt::UniqueConnection));
   // clang-format on
 
   qDebug() << "[MapVisualizationManager::registerMapLayerItem] Item registered";
@@ -834,7 +738,7 @@ void MapVisualizationManager::registerRobotLayerItem(QObject* item)
 
   if (!robot_layer_)
   {
-    qCritical() << "[MapVisualizationManager::registerRobotLayerItem] Robot layer not available, cannot set renderer for RobotLayerItem";
+    qDebug() << "[MapVisualizationManager::registerRobotLayerItem] Registration deferred until activation";
     return;
   }
 
@@ -888,7 +792,7 @@ void MapVisualizationManager::registerGoalRobotLayerItem(QObject* item)
 
   if (!goal_robot_layer_)
   {
-    qCritical() << "[MapVisualizationManager::registerGoalRobotLayerItem] Goal robot layer not available, cannot set renderer for RobotLayerItem";
+    qDebug() << "[MapVisualizationManager::registerGoalRobotLayerItem] Registration deferred until activation";
     return;
   }
 
@@ -941,7 +845,7 @@ void MapVisualizationManager::registerPathLayerItem(QObject* item)
 
   if (!path_layer_)
   {
-    qCritical() << "[MapVisualizationManager::registerPathLayerItem] Path layer not available, cannot set renderer for PathLayerItem";
+    qDebug() << "[MapVisualizationManager::registerPathLayerItem] Registration deferred until activation";
     return;
   }
 
@@ -994,7 +898,7 @@ void MapVisualizationManager::registerManualDrawPathLayerItem(QObject* item)
 
   if (!manual_draw_path_layer_)
   {
-    qCritical() << "[MapVisualizationManager::registerManualDrawPathLayerItem] Manual draw path layer not available, cannot set renderer for PathLayerItem";
+    qDebug() << "[MapVisualizationManager::registerManualDrawPathLayerItem] Registration deferred until activation";
     return;
   }
 
@@ -1047,7 +951,7 @@ void MapVisualizationManager::registerLivePathLayerItem(QObject* item)
 
   if (!live_path_layer_)
   {
-    qCritical() << "[MapVisualizationManager::registerLivePathLayerItem] Live path layer not available, cannot set renderer for PathLayerItem";
+    qDebug() << "[MapVisualizationManager::registerLivePathLayerItem] Registration deferred until activation";
     return;
   }
 
@@ -1318,7 +1222,7 @@ void MapVisualizationManager::registerLaserLayerItem(QObject* item)
 
   if (!laser_layer_)
   {
-    qCritical() << "[MapVisualizationManager::registerLaserLayerItem] Laser layer not available, cannot set renderer for LaserLayerItem";
+    qDebug() << "[MapVisualizationManager::registerLaserLayerItem] Registration deferred until activation";
     return;
   }
 
@@ -1371,7 +1275,7 @@ void MapVisualizationManager::registerParticleCloudLayerItem(QObject* item)
 
   if (!particle_layer_)
   {
-    qCritical() << "[MapVisualizationManager::registerParticleCloudLayerItem] Particle layer not available, cannot set renderer for ParticleCloudLayerItem";
+    qDebug() << "[MapVisualizationManager::registerParticleCloudLayerItem] Registration deferred until activation";
     return;
   }
 
@@ -1656,6 +1560,11 @@ void MapVisualizationManager::updateManualLivePath()
 
 void MapVisualizationManager::createLayers()
 {
+  if (layers_active_)
+  {
+    return;
+  }
+
   if (!is_initialized_)
   {
     qCritical() << "[MapVisualizationManager::createLayers] Not initialized";
@@ -1727,10 +1636,44 @@ void MapVisualizationManager::createLayers()
   render_scene_->setLaserLayer(laser_layer_);
   render_scene_->setParticleCloudLayer(particle_layer_);
 
-  updateAvailability();
   layers_active_ = true;
 
-  qInfo() << "[MapVisualizationManager::createLayers] Layers created";
+  if (map_layer_item_)
+  {
+    registerMapLayerItem(map_layer_item_);
+  }
+  if (robot_layer_item_)
+  {
+    registerRobotLayerItem(robot_layer_item_);
+  }
+  if (goal_robot_layer_item_)
+  {
+    registerGoalRobotLayerItem(goal_robot_layer_item_);
+  }
+  if (path_layer_item_)
+  {
+    registerPathLayerItem(path_layer_item_);
+  }
+  if (manual_draw_path_layer_item_)
+  {
+    registerManualDrawPathLayerItem(manual_draw_path_layer_item_);
+  }
+  if (live_path_layer_item_)
+  {
+    registerLivePathLayerItem(live_path_layer_item_);
+  }
+  if (laser_layer_item_)
+  {
+    registerLaserLayerItem(laser_layer_item_);
+  }
+  if (particle_layer_item_)
+  {
+    registerParticleCloudLayerItem(particle_layer_item_);
+  }
+
+  updateAvailability();
+
+  qDebug() << "[MapVisualizationManager::createLayers] Layers created";
 }
 
 void MapVisualizationManager::destroyLayers()
@@ -1827,7 +1770,129 @@ void MapVisualizationManager::destroyLayers()
   emit mapResolutionChanged();
   emit scaleChanged();
 
-  qInfo() << "[MapVisualizationManager::destroyLayers] Layers destroyed";
+  qDebug() << "[MapVisualizationManager::destroyLayers] Layers destroyed";
+}
+
+void MapVisualizationManager::activateSubscriptions()
+{
+  if (!is_initialized_)
+  {
+    qWarning() << "[MapVisualizationManager::activateSubscriptions] Not initialized";
+    return;
+  }
+
+  if (subscriptions_active_)
+  {
+    qWarning() << "[MapVisualizationManager::activateSubscriptions] Already active";
+    return;
+  }
+
+  if (!map_layer_ || !robot_layer_)
+  {
+    qWarning() << "[MapVisualizationManager::activateSubscriptions] Render layers not created yet";
+    return;
+  }
+
+  if (map_source_)
+  {
+    map_source_->start();
+  }
+  if (pose_source_)
+  {
+    pose_source_->start();
+  }
+  if (laser_source_)
+  {
+    laser_source_->start();
+  }
+  if (particle_source_)
+  {
+    particle_source_->start();
+  }
+  if (render_scene_)
+  {
+    render_scene_->start();
+  }
+
+  subscriptions_active_ = true;
+  updateAvailability();
+}
+
+void MapVisualizationManager::destroySubscriptions()
+{
+  if (!subscriptions_active_)
+  {
+    return;
+  }
+
+  subscriptions_active_ = false;
+
+  if (render_scene_)
+  {
+    render_scene_->stop();
+  }
+
+  if (map_source_)
+  {
+    map_source_->stop();
+  }
+
+  if (pose_source_)
+  {
+    pose_source_->stop();
+  }
+  if (path_source_)
+  {
+    path_source_->stop();
+  }
+  if (laser_source_)
+  {
+    laser_source_->stop();
+  }
+  if (particle_source_)
+  {
+    particle_source_->stop();
+  }
+
+  updateAvailability();
+
+  if (map_layer_item_)
+  {
+    map_layer_item_->update();
+  }
+
+  if (robot_layer_item_)
+  {
+    robot_layer_item_->update();
+  }
+
+  if (path_layer_item_)
+  {
+    path_layer_item_->update();
+  }
+
+  if (manual_draw_path_layer_item_)
+  {
+    manual_draw_path_layer_item_->update();
+  }
+
+  if (live_path_layer_item_)
+  {
+    live_path_layer_item_->update();
+  }
+
+  if (particle_layer_item_)
+  {
+    particle_layer_item_->update();
+  }
+
+  if (follow_robot_)
+  {
+    follow_robot_ = false;
+    emit followRobotChanged();
+  }
+
+  qDebug() << "[MapVisualizationManager::destroySubscriptions] Subscriptions destroyed";
 }
 
 void MapVisualizationManager::updateAvailability()

@@ -1229,7 +1229,7 @@ TestMapViewForm {
         if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
             var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
             if (mapVizManager) {
-                mapVizManager.destroySubscriptions()
+                mapVizManager.deactivate()
             }
         }
 
@@ -1276,7 +1276,7 @@ TestMapViewForm {
                            : null
 
         if (mapVizManager) {
-            mapVizManager.activateSubscriptions()
+            mapVizManager.activate()
             syncRobotPoseUpdates()
             if (step === stepPosition) {
                 resetParticleCloudData()
@@ -1706,7 +1706,7 @@ TestMapViewForm {
             if (mapVizManager) {
                 // Ensure pose updates are re-enabled when leaving the test view
                 mapVizManager.setRobotPoseUpdatesEnabled(true)
-                mapVizManager.destroySubscriptions()
+                mapVizManager.deactivate()
             }
         }
 
