@@ -1529,28 +1529,6 @@ bool MapVisualizationManager::generateMapPreview(const QString& map_name)
   return true;
 }
 
-bool MapVisualizationManager::deleteMapPreview(const QString& map_name)
-{
-  if (map_name.isEmpty())
-  {
-    qWarning() << "[MapVisualizationManager::deleteMapPreview] Empty map name provided";
-    return false;
-  }
-
-  return ROBOGait::map::utils::deleteMapPreview(map_name);
-}
-
-QString MapVisualizationManager::getMapPreviewPath(const QString& map_name)
-{
-  if (map_name.isEmpty())
-  {
-    qCritical() << "[MapVisualizationManager::getMapPreviewPath] Map name is empty";
-    return QString();
-  }
-
-  return ROBOGait::map::utils::getMapPreviewPath(map_name);
-}
-
 void MapVisualizationManager::clearMap()
 {
   if (map_source_)

@@ -428,18 +428,12 @@ public:
 
   /**
    * @brief Generate a PNG preview for the given map data
+   *
+   * @param map_name Name of the map
+   *
+   * @return true if the preview was generated successfully, false otherwise
    */
   Q_INVOKABLE bool generateMapPreview(const QString& map_name);
-
-  /**
-   * @brief Delete the generated map preview
-   */
-  Q_INVOKABLE bool deleteMapPreview(const QString& map_name);
-
-  /**
-   * @brief Get the file path for the map preview image
-   */
-  Q_INVOKABLE QString getMapPreviewPath(const QString& map_name);
 
   /**
    * @brief Clear the current map

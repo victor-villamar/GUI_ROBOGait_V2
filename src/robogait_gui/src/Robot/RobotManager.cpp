@@ -27,7 +27,7 @@ RobotManager::RobotManager() :
     battery_level_trunc_(0),
     battery_icon_("qrc:/qmlresources/icons/color/battery_0.png")
 {
-  qDebug() << "[RobotManager::RobotManager] RobotManager created";
+  qInfo() << "[RobotManager::RobotManager] RobotManager created";
 
   manual_control_ = std::make_unique<ROBOGait::robot::control::ManualControl>();
   map_visualization_manager_ = nullptr;
@@ -38,7 +38,7 @@ RobotManager::RobotManager() :
 
 RobotManager::~RobotManager()
 {
-  qDebug() << "[RobotManager::~RobotManager] RobotManager destroyed";
+  qInfo() << "[RobotManager::~RobotManager] RobotManager destroyed";
   clearSelection();
 }
 
@@ -395,6 +395,10 @@ void RobotManager::publishInitialPose(double x, double y, double theta)
 
   pub_pose_initialize_->publish(std::move(msg));
 }
+
+QString RobotManager::getMapPreviewPath(const QString& mapName) const { return ROBOGait::map::utils::getMapPreviewPath(mapName); }
+
+bool RobotManager::deleteMapPreview(const QString& mapName) const { return ROBOGait::map::utils::deleteMapPreview(mapName); }
 
 QString RobotManager::normalizeNamespace(const QString& robot_namespace) const
 {

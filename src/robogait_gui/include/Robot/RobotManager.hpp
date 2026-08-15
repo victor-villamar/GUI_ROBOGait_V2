@@ -213,6 +213,24 @@ public:
    */
   Q_INVOKABLE void publishInitialPose(double x, double y, double theta);
 
+  /**
+   * @brief Get the file path for the map preview image
+   *
+   * @param mapName Name of the map
+   *
+   * @return File path of the map preview image
+   */
+  Q_INVOKABLE QString getMapPreviewPath(const QString& mapName) const;
+
+  /**
+   * @brief Delete the generated map preview
+   *
+   * @param mapName Name of the map
+   *
+   * @return true if deletion was successful, false otherwise
+   */
+  Q_INVOKABLE bool deleteMapPreview(const QString& mapName) const;
+
 signals:
   void selectedRobotNamespaceChanged();   /**< Emitted when the selected robot namespace changes */
   void selectedRobotDisplayNameChanged(); /**< Emitted when the selected robot display name changes */

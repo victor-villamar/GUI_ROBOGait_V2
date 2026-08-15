@@ -74,9 +74,8 @@ SelectMapForm {
         var details = dbManager.getMapDetails(mapNameValue)
 
         var previewPath = ""
-        if (userSession && userSession.rosManager && userSession.rosManager.robotManager
-            && userSession.rosManager.robotManager.mapVisualizationManager) {
-            previewPath = userSession.rosManager.robotManager.mapVisualizationManager.getMapPreviewPath(mapNameValue)
+        if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
+            previewPath = userSession.rosManager.robotManager.getMapPreviewPath(mapNameValue)
         }
 
         mapDetailsDialog.openForMap(mapNameValue, details, previewPath)
@@ -163,9 +162,8 @@ SelectMapForm {
             }
 
             var previewDeleted = true
-            if (userSession && userSession.rosManager && userSession.rosManager.robotManager
-                && userSession.rosManager.robotManager.mapVisualizationManager) {
-                previewDeleted = userSession.rosManager.robotManager.mapVisualizationManager.deleteMapPreview(pendingDeleteMapName)
+            if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
+                previewDeleted = userSession.rosManager.robotManager.deleteMapPreview(pendingDeleteMapName)
             }
 
             if (!previewDeleted) {
