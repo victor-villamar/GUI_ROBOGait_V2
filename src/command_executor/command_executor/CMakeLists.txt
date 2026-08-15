@@ -73,21 +73,16 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
 
   # Test for Functions
-  ament_add_gtest(test_functions test/test_functions.cpp src/Functions.cpp)
-  target_include_directories(test_functions PRIVATE include)
+  ament_add_gtest(test_functions test/test_functions.cpp)
   target_link_libraries(test_functions
-    Boost::system
-    Boost::filesystem
+    ${PROJECT_NAME}_lib
   )
 
   ament_add_gtest(test_process_manager
     test/test_process_manager.cpp
-    src/ProcessManager.cpp
   )
-  target_include_directories(test_process_manager PRIVATE include)
   target_link_libraries(test_process_manager
-    Boost::system
-    Boost::filesystem
+    ${PROJECT_NAME}_lib
   )
 
   ament_add_ros_isolated_gtest(test_command_executor_ros test/test_command_executor_ros.cpp)
