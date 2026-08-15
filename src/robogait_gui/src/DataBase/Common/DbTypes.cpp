@@ -1,3 +1,6 @@
+#include <QStringLiteral>
+#include <QStringView>
+
 #include "DataBase/Common/DbTypes.hpp"
 
 namespace ROBOGait
@@ -10,36 +13,29 @@ QString userRoleToDbString(UserRole role)
   switch (role)
   {
     case UserRole::DOCTOR:
-    {
-      return "doctor";
-    }
+      return QStringLiteral("doctor");
     case UserRole::MANAGER:
-    {
-      return "manager";
-    }
+      return QStringLiteral("manager");
     case UserRole::GUEST:
-    {
-      return "guest";
-    }
+      return QStringLiteral("guest");
     default:
-    {
-      return "unknown";
-    }
+      return QStringLiteral("unknown");
   }
 }
 
 UserRole userRoleFromDbString(const QString& role)
 {
-  const auto roleStr = role.trimmed().toLower();
-  if (roleStr == "doctor")
+  const auto role_view = QStringView{role}.trimmed();
+
+  if (role_view.compare(u"doctor", Qt::CaseInsensitive) == 0)
   {
     return UserRole::DOCTOR;
   }
-  else if (roleStr == "manager")
+  else if (role_view.compare(u"manager", Qt::CaseInsensitive) == 0)
   {
     return UserRole::MANAGER;
   }
-  else if (roleStr == "guest")
+  else if (role_view.compare(u"guest", Qt::CaseInsensitive) == 0)
   {
     return UserRole::GUEST;
   }
