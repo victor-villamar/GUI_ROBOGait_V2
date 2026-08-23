@@ -142,6 +142,8 @@ Genera el servicio de usuario:
 
 También se crea un lanzador en `~/.local/bin` y una entrada XDG Autostart en `~/.config/autostart`. Cuando el usuario abre la sesión gráfica, el lanzador importa `DISPLAY`, `XAUTHORITY` y las variables de Wayland en el gestor systemd antes de iniciar el servicio. El servicio ejecuta Docker Compose desde el directorio `docker`, comparte la pantalla X11 y reinicia el contenedor si el proceso falla, con un límite de tres intentos por minuto.
 
+La instalación añade además ROBOGait GUI al menú de aplicaciones mediante `~/.local/share/applications/robogait-gui.desktop`, instala su icono en `~/.local/share/icons` y, cuando se utiliza GNOME, conserva los favoritos existentes y añade el lanzador a la barra. Este acceso permite volver a iniciar la aplicación sin utilizar una terminal.
+
 El script puede reinstalar únicamente este mecanismo sin repetir la instalación completa:
 
 ```bash

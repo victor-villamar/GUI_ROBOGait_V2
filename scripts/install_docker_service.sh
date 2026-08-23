@@ -9,9 +9,20 @@ install_docker_user_service()
   local launcher_file="${user_bin_dir}/start-robogait-gui-docker"
   local autostart_dir="${HOME}/.config/autostart"
   local autostart_file="${autostart_dir}/robogait-gui-docker.desktop"
+  local applications_dir="${HOME}/.local/share/applications"
+  local application_file="${applications_dir}/robogait-gui.desktop"
+  local icons_dir="${HOME}/.local/share/icons"
+  local icon_file="${icons_dir}/robogait-gui.png"
+  local source_icon="${ROOT_DIR}/src/robogait_gui/resources/Logos/robogait_logo.png"
 
-  mkdir -p "${user_systemd_dir}" "${user_bin_dir}" "${autostart_dir}"
+  mkdir -p "${user_systemd_dir}" "${user_bin_dir}" "${autostart_dir}" "${applications_dir}" "${icons_dir}"
   systemctl --user disable --now robogait-gui-docker.service 2>/dev/null || true
+
+  if [ ! -f "${source_icon}" ]; then
+    die "No se ha encontrado el icono de ROBOGait: ${source_icon}"
+  fi
+
+  install -m 0644 "${source_icon}" "${icon_file}"
 
   cat > "${service_file}" << EOF
 [Unit]
@@ -48,6 +59,21 @@ fi
 systemctl --user import-environment "${graphical_environment[@]}"
 systemctl --user reset-failed robogait-gui-docker.service 2>/dev/null || true
 systemctl --user start robogait-gui-docker.service
+
+if [[ ":${XDG_CURRENT_DESKTOP:-}:" == *":GNOME:"* ]] && command -v gsettings >/dev/null 2>&1; then
+  favorites="$(gsettings get org.gnome.shell favorite-apps 2>/dev/null || true)"
+  desktop_id="robogait-gui.desktop"
+
+  if [ -n "${favorites}" ] && [[ "${favorites}" != *"'${desktop_id}'"* ]]; then
+    if [ "${favorites}" = "[]" ]; then
+      favorites="['${desktop_id}']"
+    else
+      favorites="${favorites%]}, '${desktop_id}']"
+    fi
+
+    gsettings set org.gnome.shell favorite-apps "${favorites}" >/dev/null 2>&1 || true
+  fi
+fi
 EOF
 
   chmod +x "${launcher_file}"
@@ -62,10 +88,24 @@ Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
 
+  cat > "${application_file}" << EOF
+[Desktop Entry]
+Type=Application
+Name=ROBOGait GUI
+Comment=Start ROBOGait GUI with Docker Compose
+Exec=${launcher_file}
+Icon=${icon_file}
+Terminal=false
+Categories=Utility;
+StartupNotify=true
+StartupWMClass=robogait_gui
+EOF
+
   systemctl --user daemon-reload
 
   echo "[install] Servicio instalado: ${service_file}"
   echo "[install] Inicio gráfico instalado: ${autostart_file}"
+  echo "[install] Lanzador de aplicación instalado: ${application_file}"
   echo "[install] El servicio se iniciará al abrir la próxima sesión gráfica."
   echo "[install] Para arrancarlo ahora desde esta sesión: ${launcher_file}"
 }
