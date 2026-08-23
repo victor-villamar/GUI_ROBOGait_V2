@@ -23,9 +23,18 @@ install_system_build_tools()
     libboost-filesystem-dev
 }
 
+install_database_development_tools()
+{
+  log "Installing optional database inspection tools"
+  apt_install \
+    sqlite3 \
+    sqlitebrowser
+}
+
 install_development_dependencies()
 {
   install_system_build_tools
+  install_database_development_tools
   install_qt6_dependencies
   install_ros2_dependencies
 }

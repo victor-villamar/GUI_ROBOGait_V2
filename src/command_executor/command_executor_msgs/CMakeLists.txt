@@ -23,8 +23,6 @@ set(srv_files
 rosidl_generate_interfaces(${PROJECT_NAME}
     ${msg_files}
     ${srv_files}
-
-    DEPENDENCIES
 )
 
 ament_package()
