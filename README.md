@@ -88,7 +88,7 @@ La aplicación Docker también se construye seleccionando Humble o Jazzy mediant
 Clone el repositorio y ejecute el instalador desde su raíz:
 
 ```bash
-git clone https://github.com/victor-villamar/GUI_ROBOGait_V2.git
+git clone -b develop https://github.com/victor-villamar/GUI_ROBOGait_V2.git
 cd GUI_ROBOGait_V2
 chmod +x install.sh
 ./install.sh
