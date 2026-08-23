@@ -332,8 +332,11 @@ install(TARGETS ${PROJECT_NAME}
     DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY params
-    DESTINATION share/${PROJECT_NAME}
+install(FILES
+    params/bootstrap.yaml
+    params/config.yaml
+    params/commands.yaml
+    DESTINATION share/${PROJECT_NAME}/params
 )
 
 # Create tests
