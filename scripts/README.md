@@ -140,7 +140,15 @@ Genera el servicio de usuario:
 ~/.config/systemd/user/robogait-gui-docker.service
 ```
 
-El servicio ejecuta Docker Compose desde el directorio `docker`, comparte la pantalla X11 y reinicia el contenedor si el proceso falla.
+También se crea un lanzador en `~/.local/bin` y una entrada XDG Autostart en `~/.config/autostart`. Cuando el usuario abre la sesión gráfica, el lanzador importa `DISPLAY`, `XAUTHORITY` y las variables de Wayland en el gestor systemd antes de iniciar el servicio. El servicio ejecuta Docker Compose desde el directorio `docker`, comparte la pantalla X11 y reinicia el contenedor si el proceso falla, con un límite de tres intentos por minuto.
+
+El script puede reinstalar únicamente este mecanismo sin repetir la instalación completa:
+
+```bash
+./scripts/install_docker_service.sh jazzy
+```
+
+Utilice `humble` en lugar de `jazzy` cuando corresponda. Si `docker/.env` ya contiene `ROS_DISTRO`, el argumento puede omitirse.
 
 <!-- USO -->
 ## Uso
@@ -154,7 +162,7 @@ chmod +x install.sh
 
 > [!IMPORTANT]
 >
->No ejecute directamente los archivos de `scripts/`. Están diseñados para cargarse desde `install.sh` y dependen del contexto inicializado por este.
+>Salvo `install_docker_service.sh`, no ejecute directamente los archivos de `scripts/`. Están diseñados para cargarse desde `install.sh` y dependen del contexto inicializado por este.
 
 Tras una instalación de desarrollo, abra una nueva terminal o cargue manualmente el entorno. Ejecute solo la opción correspondiente a su distribución:
 
@@ -188,7 +196,7 @@ Los scripts intentan evitar duplicados en `.bashrc` y reutilizan la configuraci�
 <!-- SERVICIO DOCKER -->
 ## Servicio Docker
 
-Después de cerrar y volver a abrir la sesión, el servicio puede gestionarse mediante:
+Después de cerrar y volver a abrir la sesión, la entrada XDG Autostart inicia automáticamente el servicio. También puede gestionarse mediante:
 
 ```bash
 systemctl --user start robogait-gui-docker.service
