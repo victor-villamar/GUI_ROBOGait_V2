@@ -1,7 +1,7 @@
 # Command Executor Node
 
 <!-- TABLA DE CONTENIDOS -->
-<details>
+<details open>
     <summary><h2>Tabla de contenidos</h2></summary>
     <ol>
         <li><a href="#descripción">Descripción</a></li>
