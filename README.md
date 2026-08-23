@@ -16,7 +16,7 @@
 <!-- DESCRIPCIÓN -->
 ## Descripción
 
-GUI_ROBOGait_V2 es un workspace ROS 2 que contiene la aplicación gráfica utilizada para gestionar pacientes y experimentos, visualizar y crear mapas, y supervisar y controlar el robot. El repositorio incluye además el nodo que ejecuta comandos en el robot, las interfaces ROS compartidas y los recursos necesarios para instalar o desplegar la aplicación.
+**GUI_ROBOGait_V2** es un workspace ROS 2 que contiene la aplicación gráfica utilizada para gestionar pacientes y experimentos, visualizar y crear mapas, y supervisar y controlar el robot. El repositorio incluye además el nodo que ejecuta comandos en el robot, las interfaces ROS compartidas y los recursos necesarios para instalar o desplegar la aplicación.
 
 <!-- ORGANIZACIÓN DEL REPOSITORIO -->
 ## Organización del repositorio
