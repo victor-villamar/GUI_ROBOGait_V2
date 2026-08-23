@@ -130,7 +130,7 @@ source <ruta-del-repositorio>/install/setup.bash
 
 Elimina paquetes que puedan entrar en conflicto con Docker CE, configura el repositorio oficial, instala Docker Engine y sus plugins, y añade el usuario actual al grupo `docker`.
 
-También ejecuta [`docker/setup_docker_env.sh`](../docker/setup_docker_env.sh) y construye la imagen definida en [`docker/DockerFile`](../docker/DockerFile).
+También ejecuta [`docker/setup_docker_env.sh`](../docker/setup_docker_env.sh), que prepara el directorio persistente del usuario y la configuración de Docker, y construye la imagen definida en [`docker/DockerFile`](../docker/DockerFile).
 
 ### `install_docker_service.sh`
 

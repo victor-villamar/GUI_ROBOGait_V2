@@ -32,7 +32,7 @@ La instalación automatizada de Docker se documenta en [scripts/README.md](../sc
 
 * [`docker-compose.yaml`](docker-compose.yaml) &rarr; Configura la ejecución de la GUI, la red ROS 2, el acceso gráfico y los volúmenes persistentes.
 
-* [`setup_docker_env.sh`](setup_docker_env.sh) &rarr; Genera el archivo `.env` con la distribución ROS 2 y los grupos gráficos del host.
+* [`setup_docker_env.sh`](setup_docker_env.sh) &rarr; Prepara el directorio persistente y genera el archivo `.env` con la distribución ROS 2 y los grupos gráficos del host.
 
 * [`config/entrypoint.sh`](config/entrypoint.sh) &rarr; Carga el workspace instalado en `/opt/ros/robogait` antes de ejecutar el comando del contenedor.
 
@@ -96,7 +96,7 @@ o bien:
 ./docker/setup_docker_env.sh jazzy
 ```
 
-El script obtiene los GID de los grupos gráficos del host y genera:
+El script crea `$HOME/.local/robogait`, comprueba que el usuario pueda escribir en él, obtiene los GID de los grupos gráficos del host y genera:
 
 ```text
 ROS_DISTRO=<humble|jazzy>
@@ -204,6 +204,8 @@ Contenedor: /home/robogait/.local/robogait
 ```
 
 En él se conservan la base de datos SQLite y los archivos de configuración de la aplicación. La información persiste al detener, eliminar o sustituir el contenedor.
+
+El valor `database.path` de `config.yaml` debe apuntar a este directorio persistente.
 
 > [!IMPORTANT]
 >
