@@ -46,7 +46,7 @@ if [ -n "${WAYLAND_DISPLAY:-}" ]; then
 fi
 
 systemctl --user import-environment "${graphical_environment[@]}"
-systemctl --user reset-failed robogait-gui-docker.service
+systemctl --user reset-failed robogait-gui-docker.service 2>/dev/null || true
 systemctl --user start robogait-gui-docker.service
 EOF
 
