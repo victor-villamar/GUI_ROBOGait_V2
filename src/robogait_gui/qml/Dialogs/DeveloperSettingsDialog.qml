@@ -4,6 +4,8 @@ import QtQuick.Layouts 6.0
 import QtQuick.Window 2.15
 import AppTheme 1.0
 
+import "qrc:/Components"
+
 Dialog {
     id: root
 
@@ -20,15 +22,21 @@ Dialog {
     width: Math.min(500, parent ? parent.width * 0.9 : 500)
     implicitHeight: header.height + contentItem.implicitHeight
     height: Math.min(implicitHeight, parent ? parent.height * 0.8 : implicitHeight)
-    
 
     x: parent ? Math.round((parent.width - width) / 2) : 0
     y: parent ? Math.round((parent.height - height) / 2) : 0
-    
+
     enabled: userSession && userSession.role === "manager"
     readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 52
     readonly property real tabHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.tabHeight, 0) : 44
-    
+    readonly property real iconGlyphSizePx: uiSizingSettings ? uiSizingSettings.px(uiSizingSettings.iconGlyphSize, 0) : 18
+    readonly property real contentPadding: 20
+    readonly property bool hasVerticalScroll: contentFlick.contentHeight > contentFlick.height + 1
+    readonly property real scrollTrackWidth: 10
+    readonly property real scrollTrackGap: 6
+    readonly property real scrollTrackEdgeMargin: 2
+    readonly property real scrollTrackReserve: scrollTrackWidth + scrollTrackGap + scrollTrackEdgeMargin
+
     function reposition()
     {
         if (!parent) {
@@ -122,14 +130,38 @@ Dialog {
     
     contentItem: Item {
         id: contentRoot
-        implicitWidth: contentColumn.implicitWidth + contentColumn.anchors.margins * 2
-        implicitHeight: contentColumn.implicitHeight + contentColumn.anchors.margins * 2
+        implicitWidth: contentColumn.implicitWidth + root.contentPadding * 2
+        implicitHeight: contentColumn.implicitHeight + root.contentPadding * 2
 
-        ColumnLayout {
-            id: contentColumn
+        Flickable {
+            id: contentFlick
             anchors.fill: parent
-            anchors.margins: 20
-            spacing: 14
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            flickableDirection: Flickable.VerticalFlick
+            interactive: root.hasVerticalScroll
+            contentWidth: width
+            contentHeight: contentColumn.implicitHeight + root.contentPadding * 2
+
+            onContentHeightChanged: {
+                if (!root.hasVerticalScroll) {
+                    contentY = 0
+                }
+            }
+
+            onHeightChanged: {
+                if (!root.hasVerticalScroll) {
+                    contentY = 0
+                }
+            }
+
+            ColumnLayout {
+                id: contentColumn
+                x: root.contentPadding
+                y: root.contentPadding
+                width: Math.max(0, contentFlick.width - root.contentPadding * 2 - root.scrollTrackReserve)
+                height: implicitHeight
+                spacing: 14
 
             Rectangle {
                 Layout.fillWidth: true
@@ -318,26 +350,53 @@ Dialog {
                 }
             }
 
-            Rectangle {
-                Layout.fillWidth: true
-                height: 60
-                color: AppTheme.settings.white
-                radius: 8
-                border.color: AppTheme.settings.primaryDark
-                border.width: 1
-            
-                Text {
-                    id: infoText
-                    anchors.fill: parent
-                    anchors.margins: 10
-                    text: qsTr("ℹ️ Los cambios se aplican inmediatamente. El descubrimiento de namespaces ayuda a organizar robots en entornos multi-robot.")
-                    font.pixelSize: 11
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.max(60, infoContent.implicitHeight + 20)
                     color: AppTheme.settings.primaryDark
-                    wrapMode: Text.WordWrap
-                    verticalAlignment: Text.AlignVCenter
-                    horizontalAlignment: Text.AlignLeft
+                    radius: 8
+                    border.color: AppTheme.settings.white
+                    border.width: 1
+
+                    RowLayout {
+                        id: infoContent
+                        anchors.fill: parent
+                        anchors.margins: 10
+                        spacing: 10
+
+                        Image {
+                            Layout.preferredWidth: root.iconGlyphSizePx
+                            Layout.preferredHeight: root.iconGlyphSizePx
+                            Layout.alignment: Qt.AlignVCenter
+                            source: "qrc:/qmlresources/icons/white/circle_info_solid.svg"
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                        }
+
+                        Text {
+                            id: infoText
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            text: qsTr("Los cambios se aplican inmediatamente. El descubrimiento de namespaces ayuda a organizar robots en entornos multi-robot.")
+                            font.pixelSize: 11
+                            color: AppTheme.settings.white
+                            wrapMode: Text.WordWrap
+                            verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignLeft
+                        }
+                    }
                 }
             }
+        }
+
+        CustomScrollTrack {
+            flickable: contentFlick
+            formColumn: contentColumn
+            startItem: settingsTabBar
+            trackWidth: root.scrollTrackWidth
+            gapFromForm: root.scrollTrackGap
+            edgeMargin: root.scrollTrackEdgeMargin
+            trackVisible: root.hasVerticalScroll
         }
     }
 }
