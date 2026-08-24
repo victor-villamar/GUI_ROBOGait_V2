@@ -38,6 +38,10 @@ Item {
 
     InputPanel {
         id: inputPanel
+        parent: Overlay.overlay
+        z: root.z + 1
+        x: root.x
+        y: root.y
         width: root.baseWidth
         height: root.baseHeight
         visible: root.keyboardVisible
