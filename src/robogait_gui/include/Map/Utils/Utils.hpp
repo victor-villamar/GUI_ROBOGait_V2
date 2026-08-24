@@ -123,13 +123,14 @@ bool deleteMapPreview(const QString& map_name);
 QString getMapPreviewPath(const QString& map_name);
 
 /**
- * @brief Sanitize map name for filesystem usage
+ * @brief Sanitize and normalize a map name for filesystem usage
  *
- * Replaces spaces and unsafe characters with underscores.
+ * Converts allowed characters to lowercase and replaces groups of spaces or
+ * unsafe characters with a single underscore.
  *
  * @param map_name Original map name
  *
- * @return Sanitized map name safe for file paths
+ * @return Normalized map name safe for file paths
  */
 std::string sanitizeMapName(const std::string& map_name);
 

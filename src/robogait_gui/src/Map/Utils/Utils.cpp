@@ -319,7 +319,7 @@ std::string sanitizeMapName(const std::string& map_name)
       continue;
     }
 
-    out.push_back(static_cast<char>(ch));
+    out.push_back(static_cast<char>(std::tolower(unsigned_ch)));
     last_was_separator = false;
   }
 
