@@ -7,13 +7,14 @@ import "qrc:/Components"
 
 Dialog {
     id: root
-    modal: true
+    modal: false
+    dim: true
     focus: true
     closePolicy: Popup.NoAutoClose
 
     parent: Overlay.overlay
 
-    Overlay.modal: Rectangle {
+    Overlay.modeless: KeyboardCompatibleOverlay {
         anchors.fill: parent
         color: AppTheme.selection.overlayDim
     }

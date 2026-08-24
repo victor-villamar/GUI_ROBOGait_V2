@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
 import QtQuick.VirtualKeyboard 2.15
 import QtQuick.VirtualKeyboard.Settings 2.15
 
@@ -11,12 +12,13 @@ Item {
 
     property real keyboardScale: 0.6
     readonly property bool keyboardVisible: Qt.inputMethod.visible
+    readonly property var activeWindow: root.Window.window
     readonly property real windowWidth: {
-        var win = Qt.application.activeWindow
+        var win = activeWindow
         return win ? win.width : (parent ? parent.width : 0)
     }
     readonly property real windowHeight: {
-        var win = Qt.application.activeWindow
+        var win = activeWindow
         return win ? win.height : (parent ? parent.height : 0)
     }
     readonly property real fallbackHeight: windowHeight * 0.4

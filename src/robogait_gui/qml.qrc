@@ -27,6 +27,7 @@
     <file alias="HelpButton.qml">qml/Components/Helpers/HelpButton.qml</file>
     <file alias="HelpContentProvider.qml">qml/Components/Helpers/HelpContentProvider.qml</file>
     <file alias="KeyboardAwareHelper.qml">qml/Components/Helpers/KeyboardAwareHelper.qml</file>
+    <file alias="KeyboardCompatibleOverlay.qml">qml/Components/Helpers/KeyboardCompatibleOverlay.qml</file>
     <file alias="AuthModeDropdown.qml">qml/Components/Inputs/AuthModeDropdown.qml</file>
     <file alias="CustomToolBar.qml">qml/Components/Toolbar/CustomToolBar.qml</file>
     <file alias="CustomToolBarForm.ui.qml">qml/Components/Toolbar/CustomToolBarForm.ui.qml</file>

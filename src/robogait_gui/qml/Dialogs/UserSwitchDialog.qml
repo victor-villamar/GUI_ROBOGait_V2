@@ -7,14 +7,16 @@ import "qrc:/Components"
 
 Dialog {
     id: root
-    modal: true
+    modal: false
+    dim: true
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
     parent: Overlay.overlay
 
-    Overlay.modal: Rectangle {
+    Overlay.modeless: KeyboardCompatibleOverlay {
         anchors.fill: parent
         color: AppTheme.dialogsCommon.overlayDim
+        onBackgroundPressed: root.close()
     }
 
     width: parent ? Math.min(900, parent.width * 0.96) : 900

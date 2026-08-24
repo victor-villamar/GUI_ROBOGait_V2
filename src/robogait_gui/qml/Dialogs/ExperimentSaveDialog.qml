@@ -6,7 +6,8 @@ import "qrc:/Components"
 
 Dialog {
     id: root
-    modal: true
+    modal: false
+    dim: true
     focus: true
     closePolicy: Popup.NoAutoClose
     parent: Overlay.overlay
@@ -41,7 +42,7 @@ Dialog {
         maxDialogHeight: parent ? Math.min(520, parent.height * 0.88) : 520
     }
 
-    Overlay.modal: Rectangle {
+    Overlay.modeless: KeyboardCompatibleOverlay {
         anchors.fill: parent
         color: AppTheme.selection.overlayDim
     }
