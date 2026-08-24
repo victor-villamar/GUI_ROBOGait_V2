@@ -19,29 +19,78 @@ Item {
         anchors.fill: parent
         color: "transparent"
 
-        Button {
-            id: backButton
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            icon.source: "qrc:/qmlresources/icons/white/keyboard_left.svg"
-            icon.color: "white"
-            icon.width: 24
-            icon.height: 24
-            background: null
-            transitions: Transition {
-                NumberAnimation {
-                    properties: "scale"
-                    duration: 100
-                    easing.type: Easing.InOutQuad
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 10
+            anchors.rightMargin: 10
+            spacing: 10
+
+            Button {
+                id: backButton
+                Layout.alignment: Qt.AlignVCenter
+                icon.source: "qrc:/qmlresources/icons/white/keyboard_left.svg"
+                icon.color: "white"
+                icon.width: 24
+                icon.height: 24
+                background: null
+                transitions: Transition {
+                    NumberAnimation {
+                        properties: "scale"
+                        duration: 100
+                        easing.type: Easing.InOutQuad
+                    }
+                }
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumWidth: 0
+            }
+
+            Row {
+                id: rightBadges
+                Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                spacing: 10
+
+                SettingsBadge {
+                    id: settingsBadge
+                }
+
+                RobotBadge {
+                    id: robotBadge
+                    visible: root.showRobotBadge && robotConnected
+                    enabled: visible
+                }
+
+                PatientBadge {
+                    id: patientBadge
+                    visible: userSession ? userSession.hasPatientAssigned : false
+                    enabled: visible
+                }
+
+                UserBadge {
+                    id: userBadge
+                    visible: root.showUserBadge
+                    enabled: visible
                 }
             }
         }
 
-        // Logo and Title
         Row {
-            anchors.horizontalCenter: parent.horizontalCenter
+            id: brandRow
+            readonly property real leftLimit: backButton.visible
+                                                ? backButton.x + backButton.width + 10
+                                                : 10
+            readonly property real rightLimit: rightBadges.x - 10
+            readonly property real availableWidth: Math.max(0, rightLimit - leftLimit)
+            readonly property real fullBrandWidth: logo.implicitWidth + spacing + title.implicitWidth
+
+            visible: availableWidth >= logo.implicitWidth
+            x: Math.round(Math.max(leftLimit,
+                                  Math.min((parent.width - implicitWidth) / 2,
+                                           rightLimit - implicitWidth)))
             anchors.verticalCenter: parent.verticalCenter
-            anchors.horizontalCenterOffset: -5
             spacing: 10
 
             Image {
@@ -53,41 +102,11 @@ Item {
 
             Text {
                 id: title
+                visible: brandRow.availableWidth >= brandRow.fullBrandWidth
                 text: "ROBOGAIT"
                 font.pixelSize: 20
                 color: "white"
                 font.bold: true
-            }
-        }
-
-        Row {
-            id: rightBadges
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.verticalCenterOffset: 20
-            anchors.rightMargin: 10
-            spacing: 10
-
-            SettingsBadge {
-                id: settingsBadge
-            }
-
-            RobotBadge {
-                id: robotBadge
-                visible: root.showRobotBadge && robotConnected
-                enabled: visible
-            }
-
-            PatientBadge {
-                id: patientBadge
-                visible: userSession ? userSession.hasPatientAssigned : false
-                enabled: visible
-            }
-
-            UserBadge {
-                id: userBadge
-                visible: root.showUserBadge
-                enabled: visible
             }
         }
     }
