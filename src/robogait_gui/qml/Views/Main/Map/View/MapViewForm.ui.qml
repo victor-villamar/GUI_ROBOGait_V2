@@ -347,18 +347,61 @@ Rectangle {
                 implicitWidth: panelContent.implicitWidth + (padding * 2)
                 implicitHeight: panelContent.implicitHeight + (padding * 2)
 
+                function clampFloatPosition()
+                {
+                    if (!hasFloatPosition)
+                    {
+                        return
+                    }
+
+                    var maximumX = Math.max(floatMargin,
+                                            mapDisplayArea.width - width - floatMargin)
+                    var maximumY = Math.max(floatMargin,
+                                            mapDisplayArea.height - height - floatMargin)
+
+                    var clampedX = Math.max(floatMargin, Math.min(floatX, maximumX))
+                    var clampedY = Math.max(floatMargin, Math.min(floatY, maximumY))
+
+                    floatX = clampedX
+                    floatY = clampedY
+                    x = clampedX
+                    y = clampedY
+                }
+
+                onWidthChanged: Qt.callLater(clampFloatPosition)
+                onHeightChanged: Qt.callLater(clampFloatPosition)
+                onHasFloatPositionChanged: Qt.callLater(clampFloatPosition)
+
+                Connections {
+                    target: mapDisplayArea
+
+                    function onWidthChanged()
+                    {
+                        Qt.callLater(joystickPanel.clampFloatPosition)
+                    }
+
+                    function onHeightChanged()
+                    {
+                        Qt.callLater(joystickPanel.clampFloatPosition)
+                    }
+                }
+
                 DragHandler {
                     target: joystickPanel
                     enabled: !joystickPanel.pinned
                     xAxis.minimum: joystickPanel.floatMargin
-                    xAxis.maximum: mapDisplayArea.width - joystickPanel.width - joystickPanel.floatMargin
+                    xAxis.maximum: Math.max(joystickPanel.floatMargin,
+                                            mapDisplayArea.width - joystickPanel.width - joystickPanel.floatMargin)
                     yAxis.minimum: joystickPanel.floatMargin
-                    yAxis.maximum: mapDisplayArea.height - joystickPanel.height - joystickPanel.floatMargin
+                    yAxis.maximum: Math.max(joystickPanel.floatMargin,
+                                            mapDisplayArea.height - joystickPanel.height - joystickPanel.floatMargin)
 
                     onActiveChanged: {
-                        if (!active) {
+                        if (!active)
+                        {
                             joystickPanel.floatX = joystickPanel.x
                             joystickPanel.floatY = joystickPanel.y
+                            joystickPanel.clampFloatPosition()
                         }
                     }
                 }
