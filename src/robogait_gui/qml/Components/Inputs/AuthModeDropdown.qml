@@ -120,28 +120,28 @@ Item {
             fillMode: Image.PreserveAspectFit
             smooth: true
             anchors.verticalCenter: parent.verticalCenter
-        }
-    }
 
-    MouseArea {
-        anchors.fill: parent
-        onPressed: function(mouse) {
-            root.restartAutoCloseTimer()
+            MouseArea {
+                anchors.fill: parent
+                onPressed: function(mouse) {
+                    root.restartAutoCloseTimer()
 
-            if (popup.opened) {
-                root.closePopup()
-                root.ignoreNextClick = true
-                mouse.accepted = true
+                    if (popup.opened) {
+                        root.closePopup()
+                        root.ignoreNextClick = true
+                        mouse.accepted = true
+                    }
+                }
+                onClicked: {
+                    if (root.ignoreNextClick) {
+                        root.ignoreNextClick = false
+                        return
+                    }
+
+                    root.togglePopup()
+                    root.restartAutoCloseTimer()
+                }
             }
-        }
-        onClicked: {
-            if (root.ignoreNextClick) {
-                root.ignoreNextClick = false
-                return
-            }
-
-            root.togglePopup()
-            root.restartAutoCloseTimer()
         }
     }
 
