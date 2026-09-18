@@ -12,7 +12,6 @@ Item {
     property int fontPixelSize: 26
     property color textColor: AppTheme.auth.light
     property bool open: popup.opened
-    property bool ignoreNextClick: false
 
     signal modeSelected(string mode)
 
@@ -121,23 +120,10 @@ Item {
             smooth: true
             anchors.verticalCenter: parent.verticalCenter
 
-            MouseArea {
-                anchors.fill: parent
-                onPressed: function(mouse) {
-                    root.restartAutoCloseTimer()
-
-                    if (popup.opened) {
-                        root.closePopup()
-                        root.ignoreNextClick = true
-                        mouse.accepted = true
-                    }
-                }
-                onClicked: {
-                    if (root.ignoreNextClick) {
-                        root.ignoreNextClick = false
-                        return
-                    }
-
+            TapHandler {
+                acceptedButtons: Qt.LeftButton
+                gesturePolicy: TapHandler.ReleaseWithinBounds
+                onTapped: {
                     root.togglePopup()
                     root.restartAutoCloseTimer()
                 }
