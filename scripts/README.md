@@ -177,7 +177,7 @@ source install/setup.bash
 o bien:
 
 ```bash
-# ROS 2 Jazzy en Ubuntu 24.04
+# ROS 2 Jazzy en Ubuntu 24.04 o Ubuntu 26.04
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 ```

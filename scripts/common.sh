@@ -74,8 +74,8 @@ validate_ros_distro_for_host()
     die "ROS2 Humble por apt esta soportado para Ubuntu 22.04 jammy. Sistema detectado: ${ubuntu_codename}"
   fi
 
-  if [ "${ROS_DISTRO}" = "jazzy" ] && [ "${ubuntu_codename}" != "noble" ]; then
-    die "ROS2 Jazzy por apt esta soportado para Ubuntu 24.04 noble. Sistema detectado: ${ubuntu_codename}"
+  if [ "${ROS_DISTRO}" = "jazzy" ] && [ "${ubuntu_codename}" != "noble" ] && [ "${ubuntu_codename}" != "resolute" ]; then
+    die "ROS2 Jazzy por apt esta soportado para Ubuntu 24.04 noble y Ubuntu 26.04 resolute. Sistema detectado: ${ubuntu_codename}"
   fi
 }
 

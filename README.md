@@ -79,6 +79,7 @@ Para el entorno de desarrollo, el instalador valida estas combinaciones:
 |--------|--------|
 | 22.04  | Humble |
 | 24.04  | Jazzy  |
+| 26.04  | Jazzy  |
 
 La aplicación Docker también se construye seleccionando Humble o Jazzy mediante `ROS_DISTRO`.
 
