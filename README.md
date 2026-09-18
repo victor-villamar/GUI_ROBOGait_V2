@@ -63,8 +63,9 @@ La construcción, configuración, ejecución y resolución de problemas se detal
 |  Ordenador de desarrollo  |        ROS 2, Qt 6, herramientas C++, dependencias y utilidades SQLite       |      Workspace compilado y entornos ROS añadidos a `.bashrc`      |
 | Dispositivo de aplicación | Docker Engine, grupos gráficos, entorno Docker, imagen y servicio de usuario |   GUI preparada para iniciarse mediante systemd y Docker Compose  |
 |        Solo Docker        |            Docker Engine, grupos gráficos, entorno Docker e imagen           | Imagen disponible para ejecución manual, sin instalar el servicio |
+|    Recompilar Docker      |             Reutiliza Docker y reconstruye la imagen existente              |      Imagen actualizada sin reinstalar ni reconfigurar Docker      |
 
-El flujo de desarrollo compila mediante `colcon` los paquetes `command_executor_msgs`, `navigation_pkg`, `command_executor` y `robogait_gui`. Los flujos Docker construyen la imagen `robogait_gui:${ROS_DISTRO}`; únicamente la modalidad **Dispositivo de aplicación** crea `robogait-gui-docker.service`.
+El flujo de desarrollo compila mediante `colcon` los paquetes `command_executor_msgs`, `navigation_pkg`, `command_executor` y `robogait_gui`. Los flujos Docker construyen la imagen `robogait_gui:${ROS_DISTRO}`; únicamente la modalidad **Dispositivo de aplicación** crea `robogait-gui-docker.service`. La modalidad **Recompilar Docker** omite la instalación y configuración de Docker y actualiza solamente el entorno `.env` y la imagen.
 
 > [!WARNING]
 >
@@ -95,7 +96,7 @@ chmod +x install.sh
 ./install.sh
 ```
 
-Seleccione una de las tres modalidades mostradas por el instalador. Después de instalar Docker, cierre la sesión y vuelva a entrar, o reinicie el equipo, para aplicar la pertenencia al grupo `docker`.
+Seleccione una de las cuatro modalidades mostradas por el instalador. Después de instalar Docker, cierre la sesión y vuelva a entrar, o reinicie el equipo, para aplicar la pertenencia al grupo `docker`.
 
 Para instrucciones específicas consulte:
 

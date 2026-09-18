@@ -132,13 +132,13 @@ Compose proporciona al contenedor:
 
 ### Mediante el instalador
 
-La opción **Dispositivo de aplicación** y la opción **Solo Docker** de [`install.sh`](../install.sh) instalan Docker, generan `.env` y construyen la imagen correspondiente:
+Las opciones **Dispositivo de aplicación** y **Solo Docker** de [`install.sh`](../install.sh) instalan Docker, generan `.env` y construyen la imagen correspondiente. La opción **Recompilar Docker** reutiliza una instalación existente, actualiza `.env` y reconstruye únicamente la imagen:
 
 ```bash
 ./install.sh
 ```
 
-La opción **Dispositivo de aplicación** instala además el servicio de usuario. La opción **Solo Docker** termina después de construir la imagen.
+La opción **Dispositivo de aplicación** instala además el servicio de usuario. La opción **Solo Docker** termina después de construir la imagen. **Recompilar Docker** no instala paquetes, no modifica la configuración del sistema y no reinstala el servicio.
 
 ### Construcción manual
 

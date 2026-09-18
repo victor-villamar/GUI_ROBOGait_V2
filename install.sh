@@ -61,13 +61,25 @@ install_docker_only()
   echo "[install] Docker instalado. Para usar docker sin sudo y para que funcione el servicio, cierra sesion y vuelve a entrar o reinicia."
 }
 
+rebuild_docker_only()
+{
+  require_ubuntu
+  choose_ros_distro
+  require_existing_docker
+  prepare_docker_environment
+  build_docker_image
+  log "Docker image rebuild completed"
+  echo "[install] Imagen reconstruida: robogait_gui:${ROS_DISTRO}"
+}
+
 main()
 {
   echo "ROBOGait installer"
   echo "  1. Instalacion de ordenador de desarrollo"
   echo "  2. Instalacion de aplicacion en un dispositivo"
   echo "  3. Instalacion de docker"
-  read -r -p "Opcion [1/2/3]: " option
+  echo "  4. Recompilacion de imagen Docker"
+  read -r -p "Opcion [1/2/3/4]: " option
 
   case "${option}" in
     1)
@@ -78,6 +90,9 @@ main()
       ;;
     3)
       install_docker_only
+      ;;
+    4)
+      rebuild_docker_only
       ;;
     *)
       die "Opcion no valida"

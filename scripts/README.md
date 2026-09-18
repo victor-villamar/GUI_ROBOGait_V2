@@ -67,6 +67,10 @@ flowchart TD
     DockerOnly --> OnlyDocker[Instalar y configurar Docker]
     OnlyDocker --> OnlyEnvironment[Generar entorno Docker]
     OnlyEnvironment --> OnlyImage[Construir imagen robogait_gui]
+
+    Mode -->|Recompilar Docker| Rebuild[Validar Docker existente y seleccionar ROS 2]
+    Rebuild --> RebuildEnvironment[Actualizar entorno Docker]
+    RebuildEnvironment --> RebuildImage[Reconstruir imagen robogait_gui]
 ```
 
 <!-- SCRIPTS -->
@@ -132,6 +136,8 @@ Elimina paquetes que puedan entrar en conflicto con Docker CE, configura el repo
 
 También ejecuta [`docker/setup_docker_env.sh`](../docker/setup_docker_env.sh), que prepara el directorio persistente del usuario y la configuración de Docker, y construye la imagen definida en [`docker/DockerFile`](../docker/DockerFile).
 
+La opción **Recompilar Docker** del instalador valida que Docker ya esté disponible y reutiliza estas funciones para actualizar `.env` y reconstruir la imagen. No instala paquetes, no modifica repositorios o grupos y no reinstala el servicio de usuario.
+
 ### `install_docker_service.sh`
 
 Genera el servicio de usuario:
@@ -192,6 +198,7 @@ Tras instalar Docker, cierre la sesión y vuelva a entrar, o reinicie el equipo,
 |         Desarrollo        |      Repositorio ROS 2, paquetes APT, locale, compilación del workspace y líneas en `.bashrc`     |
 | Dispositivo de aplicación | Repositorio y paquetes Docker, grupo `docker`, archivo `.env`, imagen local y servicio de usuario |
 |         Solo Docker       |            Repositorio y paquetes Docker, grupo `docker`, archivo `.env` e imagen local           |
+|    Recompilar Docker      |                     Archivo `.env` e imagen Docker local actualizados                             |
 
 Los scripts intentan evitar duplicados en `.bashrc` y reutilizan la configuración existente cuando es posible. La instalación de Docker puede eliminar previamente paquetes incompatibles como `docker.io`, `podman-docker`, `containerd` o `runc`.
 

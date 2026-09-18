@@ -67,6 +67,23 @@ configure_docker_postinstall()
   sudo_cmd docker run hello-world
 }
 
+require_existing_docker()
+{
+  if ! command -v docker >/dev/null 2>&1; then
+    die "Docker no esta instalado. Ejecuta primero la opcion 2 o 3 del instalador."
+  fi
+
+  if docker info >/dev/null 2>&1; then
+    return
+  fi
+
+  log "Docker is not accessible as the current user; checking with sudo"
+  request_password
+  if ! sudo_cmd docker info >/dev/null 2>&1; then
+    die "Docker esta instalado, pero el daemon no esta disponible. Comprueba el servicio con: systemctl status docker"
+  fi
+}
+
 docker_cmd()
 {
   if docker info >/dev/null 2>&1; then
