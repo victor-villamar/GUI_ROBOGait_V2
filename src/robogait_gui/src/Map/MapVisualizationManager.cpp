@@ -625,6 +625,12 @@ void MapVisualizationManager::registerMapLayerItem(QObject* item)
           this,
           &MapVisualizationManager::viewTransformChanged,
           Qt::ConnectionType(Qt::QueuedConnection | Qt::UniqueConnection));
+
+  connect(map_layer_item_,
+          &ROBOGait::map::item::MapLayerItem::userInteractionStarted,
+          this,
+          &MapVisualizationManager::onMapUserInteractionStarted,
+          Qt::ConnectionType(Qt::DirectConnection | Qt::UniqueConnection));
   // clang-format on
 
   qDebug() << "[MapVisualizationManager::registerMapLayerItem] Item registered";
@@ -1487,6 +1493,8 @@ void MapVisualizationManager::onFrameReady()
   updateManualLivePath();
   updateAvailability();
 }
+
+void MapVisualizationManager::onMapUserInteractionStarted() { setFollowRobot(false); }
 
 void MapVisualizationManager::updateManualLivePath()
 {
