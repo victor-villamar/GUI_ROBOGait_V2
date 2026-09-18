@@ -446,7 +446,8 @@ public:
   Q_INVOKABLE void resetParticleCloud();
 
 private slots:
-  void onFrameReady(); // Slot for handling frame readiness
+  void onFrameReady();                // Slot for handling frame readiness
+  void onMapUserInteractionStarted(); // Slot for disabling robot follow after manual map interaction
 
 signals:
   void isInitializedChanged();          // Emitted when initialization state changes

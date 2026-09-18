@@ -315,6 +315,8 @@ void MapLayerItem::wheelEvent(QWheelEvent* event)
     return;
   }
 
+  emit userInteractionStarted();
+
   const qreal delta = event->angleDelta().y() > 0 ? rendering::RenderCamera::ZOOM_FACTOR : (1.0 / rendering::RenderCamera::ZOOM_FACTOR);
   camera_->zoomByFactor(delta);
   camera_->setViewCenter(clampCenterToMap(camera_->getViewCenter()));
@@ -341,6 +343,7 @@ void MapLayerItem::mousePressEvent(QMouseEvent* event)
 
   if (event->button() == Qt::MiddleButton || event->button() == Qt::LeftButton)
   {
+    emit userInteractionStarted();
     is_panning_ = true;
     last_pan_pos_ = event->position();
     event->accept();
@@ -417,11 +420,15 @@ void MapLayerItem::touchEvent(QTouchEvent* event)
     switch (event->type())
     {
       case QEvent::TouchBegin:
+      {
+        emit userInteractionStarted();
         is_panning_ = true;
         last_pan_pos_ = pos;
         event->accept();
         return;
+      }
       case QEvent::TouchUpdate:
+      {
         if (is_panning_)
         {
           const QPointF delta = pos - last_pan_pos_;
@@ -433,11 +440,14 @@ void MapLayerItem::touchEvent(QTouchEvent* event)
           return;
         }
         break;
+      }
       case QEvent::TouchEnd:
       case QEvent::TouchCancel:
+      {
         is_panning_ = false;
         event->accept();
         return;
+      }
       default:
         break;
     }
@@ -449,6 +459,7 @@ void MapLayerItem::touchEvent(QTouchEvent* event)
     const qreal distance = line.length();
     if (!is_pinching_ || event->type() == QEvent::TouchBegin)
     {
+      emit userInteractionStarted();
       pinch_start_distance_ = distance;
       pinch_start_zoom_ = camera_->getZoom();
       is_pinching_ = true;
@@ -488,6 +499,7 @@ bool MapLayerItem::event(QEvent* event)
       auto* pinch_gesture = static_cast<QPinchGesture*>(pinch);
       if (pinch_gesture->state() == Qt::GestureStarted)
       {
+        emit userInteractionStarted();
         pinch_start_zoom_ = camera_->getZoom();
       }
       const qreal scale = pinch_gesture->totalScaleFactor();
