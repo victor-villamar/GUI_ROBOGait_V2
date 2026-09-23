@@ -76,13 +76,14 @@ El flujo de desarrollo compila mediante `colcon` los paquetes `command_executor_
 
 Para el entorno de desarrollo, el instalador valida estas combinaciones:
 
-| Ubuntu |  ROS 2 |
-|--------|--------|
-| 22.04  | Humble |
-| 24.04  | Jazzy  |
-| 26.04  | Jazzy  |
+| Ubuntu |   ROS 2 |
+|--------|---------|
+| 22.04  |  Humble |
+| 24.04  |  Jazzy  |
+| 26.04  |  Jazzy  |
+| 26.04  | Lyrical |
 
-La aplicación Docker también se construye seleccionando Humble o Jazzy mediante `ROS_DISTRO`.
+La aplicación Docker también se construye seleccionando Humble, Jazzy o Lyrical mediante `ROS_DISTRO`.
 
 <!-- INSTALACIÓN -->
 ## Instalación

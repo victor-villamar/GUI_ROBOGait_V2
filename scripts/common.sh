@@ -49,7 +49,8 @@ choose_ros_distro()
   echo "Selecciona la version de ROS2:"
   echo "  1. humble"
   echo "  2. jazzy"
-  read -r -p "Opcion [1/2]: " option
+  echo "  3. lyrical"
+  read -r -p "Opcion [1/2/3]: " option
 
   case "${option}" in
     1)
@@ -57,6 +58,9 @@ choose_ros_distro()
       ;;
     2)
       ROS_DISTRO="jazzy"
+      ;;
+    3)
+      ROS_DISTRO="lyrical"
       ;;
     *)
       die "Opcion no valida"
@@ -76,6 +80,10 @@ validate_ros_distro_for_host()
 
   if [ "${ROS_DISTRO}" = "jazzy" ] && [ "${ubuntu_codename}" != "noble" ] && [ "${ubuntu_codename}" != "resolute" ]; then
     die "ROS2 Jazzy por apt esta soportado para Ubuntu 24.04 noble y Ubuntu 26.04 resolute. Sistema detectado: ${ubuntu_codename}"
+  fi
+
+  if [ "${ROS_DISTRO}" = "lyrical" ] && [ "${ubuntu_codename}" != "resolute" ]; then
+    die "ROS2 Lyrical por apt esta soportado para Ubuntu 26.04 resolute. Sistema detectado: ${ubuntu_codename}"
   fi
 }
 

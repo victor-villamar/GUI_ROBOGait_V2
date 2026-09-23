@@ -62,7 +62,7 @@ Compose utiliza `network_mode: host` e `ipc: host`. De esta forma, el nodo ROS 2
 <!-- IMAGEN -->
 ## Imagen
 
-La imagen parte de `ros:${ROS_DISTRO}-ros-base` y se construye para ROS 2 *Humble* o *Jazzy*.
+La imagen parte de `ros:${ROS_DISTRO}-ros-base` y se construye para ROS 2 *Humble*, *Jazzy* o *Lyrical*.
 
 Durante la construcción:
 
@@ -96,10 +96,16 @@ o bien:
 ./docker/setup_docker_env.sh jazzy
 ```
 
+o bien:
+
+```bash
+./docker/setup_docker_env.sh lyrical
+```
+
 El script crea `$HOME/.local/robogait`, comprueba que el usuario pueda escribir en él, obtiene los GID de los grupos gráficos del host y genera:
 
 ```text
-ROS_DISTRO=<humble|jazzy>
+ROS_DISTRO=<humble|jazzy|lyrical>
 VIDEO_GID=<gid del grupo video>
 RENDER_GID=<gid del grupo render>
 ```
@@ -145,14 +151,14 @@ La opción **Dispositivo de aplicación** instala además el servicio de usuario
 Desde la raíz del repositorio:
 
 ```bash
-./docker/setup_docker_env.sh jazzy
+./docker/setup_docker_env.sh lyrical
 docker build \
-    --build-arg ROS_DISTRO=jazzy \
-    -t robogait_gui:jazzy \
+    --build-arg ROS_DISTRO=lyrical \
+    -t robogait_gui:lyrical \
     -f docker/DockerFile .
 ```
 
-Para Humble, sustituya `jazzy` por `humble` tanto en `.env` como en la etiqueta y el argumento de construcción.
+Para Humble o Jazzy, sustituya `lyrical` por `humble` o `jazzy` tanto en `.env` como en la etiqueta y el argumento de construcción.
 
 <!-- EJECUCIÓN -->
 ## Ejecución
@@ -229,10 +235,10 @@ xhost +local:docker
 Regenerar `.env` actualiza los GID de los grupos `video` y `render`:
 
 ```bash
-./docker/setup_docker_env.sh jazzy
+./docker/setup_docker_env.sh lyrical
 ```
 
-Utilice `humble` en lugar de `jazzy` cuando corresponda.
+Utilice `humble`, `jazzy` o `lyrical` según corresponda.
 
 Después, recree el contenedor:
 

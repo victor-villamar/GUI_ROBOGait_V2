@@ -83,7 +83,7 @@ Proporciona las funciones comunes del instalador:
 * Registro de operaciones y gestión de errores.
 * Solicitud y reutilización de la contraseña de `sudo` durante la ejecución.
 * Validación de Ubuntu.
-* Selección de ROS 2 Humble o Jazzy.
+* Selección de ROS 2 Humble, Jazzy o Lyrical.
 * Validación de la combinación entre Ubuntu y ROS 2.
 * Instalación de paquetes APT y actualización idempotente de `.bashrc`.
 
@@ -153,10 +153,10 @@ La instalación añade además ROBOGait GUI al menú de aplicaciones mediante `~
 El script puede reinstalar únicamente este mecanismo sin repetir la instalación completa:
 
 ```bash
-./scripts/install_docker_service.sh jazzy
+./scripts/install_docker_service.sh lyrical
 ```
 
-Utilice `humble` en lugar de `jazzy` cuando corresponda. Si `docker/.env` ya contiene `ROS_DISTRO`, el argumento puede omitirse.
+Utilice `humble`, `jazzy` o `lyrical` según corresponda. Si `docker/.env` ya contiene `ROS_DISTRO`, el argumento puede omitirse.
 
 <!-- USO -->
 ## Uso
@@ -185,6 +185,14 @@ o bien:
 ```bash
 # ROS 2 Jazzy en Ubuntu 24.04 o Ubuntu 26.04
 source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+```
+
+o bien:
+
+```bash
+# ROS 2 Lyrical en Ubuntu 26.04
+source /opt/ros/lyrical/setup.bash
 source install/setup.bash
 ```
 

@@ -124,10 +124,10 @@ install_docker_service_main()
 
   ROS_DISTRO="${1:-${ROS_DISTRO:-}}"
   case "${ROS_DISTRO}" in
-    humble|jazzy)
+    humble|jazzy|lyrical)
       ;;
     *)
-      die "Uso: $0 <humble|jazzy>. También puede generarse antes docker/.env."
+      die "Uso: $0 <humble|jazzy|lyrical>. También puede generarse antes docker/.env."
       ;;
   esac
 
