@@ -334,7 +334,7 @@ El nodo necesita el archivo `params/config.yaml`. Sus parámetros obligatorios s
 Ejemplo:
 
 ```yaml
-command_executor:
+/**:
   ros__parameters:
     robot_info:
       id: 1
