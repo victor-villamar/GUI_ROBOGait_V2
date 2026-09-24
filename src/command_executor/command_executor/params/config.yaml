@@ -1,4 +1,4 @@
-command_executor:
+/**:
   ros__parameters:
     robot_info:
       id: 1
