@@ -10,21 +10,32 @@ Dialog {
     id: root
 
     title: qsTr("Ajustes de desarrollador")
-    modal: true
+    modal: false
+    dim: true
+    focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
     parent: Overlay.overlay
 
-    Overlay.modal: Rectangle {
+    Overlay.modeless: KeyboardCompatibleOverlay {
         anchors.fill: parent
         color: AppTheme.settings.overlayDim
+        onBackgroundPressed: root.close()
     }
 
     width: Math.min(500, parent ? parent.width * 0.9 : 500)
     implicitHeight: header.height + contentItem.implicitHeight
-    height: Math.min(implicitHeight, parent ? parent.height * 0.8 : implicitHeight)
+    height: keyboardHelper.computedHeight
 
     x: parent ? Math.round((parent.width - width) / 2) : 0
-    y: parent ? Math.round((parent.height - height) / 2) : 0
+    y: parent ? keyboardHelper.computedY : 0
+
+    KeyboardAwareHelper {
+        id: keyboardHelper
+        target: root
+        maxDialogHeight: root.parent
+            ? Math.min(root.implicitHeight, root.parent.height * 0.8)
+            : root.implicitHeight
+    }
 
     enabled: userSession && userSession.role === "manager"
     readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 52
@@ -36,21 +47,6 @@ Dialog {
     readonly property real scrollTrackGap: 6
     readonly property real scrollTrackEdgeMargin: 2
     readonly property real scrollTrackReserve: scrollTrackWidth + scrollTrackGap + scrollTrackEdgeMargin
-
-    function reposition()
-    {
-        if (!parent) {
-            return
-        }
-
-        x = Math.round((parent.width - width) / 2)
-        y = Math.round((parent.height - height) / 2)
-    }
-
-    onOpened: reposition()
-    onWidthChanged: reposition()
-    onHeightChanged: reposition()
-    onParentChanged: reposition()
 
     background: Rectangle {
         color: AppTheme.settings.lightBlue

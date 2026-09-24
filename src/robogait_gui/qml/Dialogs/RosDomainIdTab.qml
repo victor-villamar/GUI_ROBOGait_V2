@@ -113,7 +113,10 @@ Item {
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         readOnly: !domainSpinBox.editable
-                        validator: IntValidator { bottom: domainSpinBox.from; top: domainSpinBox.to }
+                        validator: IntValidator {
+                            bottom: domainSpinBox.from; top: domainSpinBox.to
+                        }
+                        inputMethodHints: Qt.ImhDigitsOnly
                         anchors.fill: parent
                         anchors.rightMargin: root.spinboxButtonPx + root.spinboxButtonMargin * 2
                     }
