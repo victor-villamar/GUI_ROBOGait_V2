@@ -378,9 +378,7 @@ void RobotManager::publishInitialPose(double x, double y, double theta)
 
   auto msg = geometry_msgs::msg::PoseWithCovarianceStamped();
 
-  QString frame_id = buildTopicName("/" + QString::fromStdString(ROBOGait::ros::topics::TF_MAP_FRAME));
-
-  msg.header.frame_id = frame_id.toStdString();
+  msg.header.frame_id = ROBOGait::ros::topics::TF_MAP_FRAME;
   msg.header.stamp = parent_node_->now();
 
   msg.pose.pose.position.x = x;
