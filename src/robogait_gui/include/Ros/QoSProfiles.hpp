@@ -1,7 +1,10 @@
 #pragma once
 
 #include <rclcpp/qos.hpp>
+
+#ifdef ROBOGAIT_ROS_HUMBLE
 #include <rmw/types.h>
+#endif
 
 namespace ROBOGait
 {
@@ -54,7 +57,13 @@ public:
    *
    * This quality of service is meant to be used in clients of services communications.
    */
+#ifdef ROBOGAIT_ROS_HUMBLE
   static rmw_qos_profile_t QOS_CLIENTS();
+#elif defined(ROBOGAIT_ROS_JAZZY) || defined(ROBOGAIT_ROS_LYRICAL)
+  static rclcpp::QoS QOS_CLIENTS();
+#else
+#error "Unsupported ROS 2 distribution"
+#endif
 };
 } // namespace ros
 } // namespace ROBOGait

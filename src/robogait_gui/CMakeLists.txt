@@ -4,6 +4,22 @@ project(robogait_gui VERSION 0.1 LANGUAGES CXX)
 
 option(BUILD_TESTING "Build robogait_gui tests" OFF)
 
+set(ROBOGAIT_ROS_DISTRO "$ENV{ROS_DISTRO}" CACHE STRING
+    "ROS 2 distribution targeted by robogait_gui")
+set_property(CACHE ROBOGAIT_ROS_DISTRO PROPERTY STRINGS humble jazzy lyrical)
+
+string(TOLOWER "${ROBOGAIT_ROS_DISTRO}" ROBOGAIT_ROS_DISTRO_NORMALIZED)
+set(ROBOGAIT_SUPPORTED_ROS_DISTROS humble jazzy lyrical)
+
+if(NOT ROBOGAIT_ROS_DISTRO_NORMALIZED IN_LIST ROBOGAIT_SUPPORTED_ROS_DISTROS)
+    message(FATAL_ERROR
+        "Unsupported ROBOGAIT_ROS_DISTRO='${ROBOGAIT_ROS_DISTRO}'. "
+        "Expected one of: humble, jazzy, lyrical")
+endif()
+
+string(TOUPPER "${ROBOGAIT_ROS_DISTRO_NORMALIZED}" ROBOGAIT_ROS_DISTRO_UPPER)
+message(STATUS "Building robogait_gui for ROS 2 ${ROBOGAIT_ROS_DISTRO_NORMALIZED}")
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -265,6 +281,10 @@ include_directories(
 add_executable(${PROJECT_NAME}
     ${SOURCES}
     ${HEADERS}
+)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    "ROBOGAIT_ROS_${ROBOGAIT_ROS_DISTRO_UPPER}"
 )
 
 option(ENABLE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
