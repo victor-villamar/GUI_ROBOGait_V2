@@ -33,6 +33,7 @@
 #include "Map/Source/ParticleCloudSource.hpp"
 #include "Map/Source/PathSource.hpp"
 #include "Map/Source/RobotPoseSource.hpp"
+#include "Map/TF/RobotTFBuffer.hpp"
 
 namespace ROBOGait
 {
@@ -546,6 +547,7 @@ private:
   std::shared_ptr<ROBOGait::map::source::PathSource> path_source_;                   /**< Path source */
   std::shared_ptr<ROBOGait::map::source::LaserSource> laser_source_;                 /**< Laser source */
   std::shared_ptr<ROBOGait::map::source::ParticleCloudSource> particle_source_;      /**< Particle cloud source */
+  std::unique_ptr<ROBOGait::map::tf::RobotTFBuffer> robot_tf_buffer_;                /**< Selected robot TF provider */
   std::unique_ptr<ROBOGait::map::interaction::SplinePathEditor> spline_path_editor_; /**< Spline path editor */
   std::unique_ptr<ROBOGait::map::history::TracedRouteHistory> traced_route_history_; /**< Traced route history */
 

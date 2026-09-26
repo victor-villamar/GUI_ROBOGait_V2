@@ -74,6 +74,7 @@ MapVisualizationManager::MapVisualizationManager() :
     path_source_(std::make_shared<ROBOGait::map::source::PathSource>()),
     laser_source_(std::make_shared<ROBOGait::map::source::LaserSource>()),
     particle_source_(std::make_shared<ROBOGait::map::source::ParticleCloudSource>()),
+    robot_tf_buffer_(std::make_unique<ROBOGait::map::tf::RobotTFBuffer>()),
     spline_path_editor_(std::make_unique<ROBOGait::map::interaction::SplinePathEditor>()),
     traced_route_history_(std::make_unique<ROBOGait::map::history::TracedRouteHistory>()),
     selected_robot_namespace_(""),
@@ -162,6 +163,14 @@ void MapVisualizationManager::setROSNode(rclcpp::Node* parent_node)
 
   parent_node_ = parent_node;
 
+  if (!robot_tf_buffer_)
+  {
+    qCritical() << "[MapVisualizationManager::setROSNode] TF provider is not available";
+    return;
+  }
+
+  robot_tf_buffer_->initialize(parent_node_);
+
   if (map_source_)
   {
     const auto result = map_source_->initialize(parent_node_);
@@ -242,28 +251,35 @@ void MapVisualizationManager::setSelectedRobot(const QString& robot_identifier, 
 
   // Create robot context
   ROBOGait::context::RobotContext context;
-  if (context.setSelectedRobot(selected_robot_namespace_, use_namespace_discovery_))
+  if (!context.setSelectedRobot(selected_robot_namespace_, use_namespace_discovery_))
   {
-    if (map_source_)
-    {
-      map_source_->setRobotContext(context);
-    }
-    if (pose_source_)
-    {
-      pose_source_->setRobotContext(context);
-    }
-    if (path_source_)
-    {
-      path_source_->setRobotContext(context);
-    }
-    if (laser_source_)
-    {
-      laser_source_->setRobotContext(context);
-    }
-    if (particle_source_)
-    {
-      particle_source_->setRobotContext(context);
-    }
+    qCritical() << "[MapVisualizationManager::setSelectedRobot] Invalid robot context";
+    return;
+  }
+
+  if (robot_tf_buffer_)
+  {
+    robot_tf_buffer_->setRobotContext(context);
+  }
+  if (map_source_)
+  {
+    map_source_->setRobotContext(context);
+  }
+  if (pose_source_)
+  {
+    pose_source_->setRobotContext(context);
+  }
+  if (path_source_)
+  {
+    path_source_->setRobotContext(context);
+  }
+  if (laser_source_)
+  {
+    laser_source_->setRobotContext(context);
+  }
+  if (particle_source_)
+  {
+    particle_source_->setRobotContext(context);
   }
 
   if (was_active)
@@ -1801,6 +1817,42 @@ void MapVisualizationManager::activateSubscriptions()
     return;
   }
 
+  if (!robot_tf_buffer_)
+  {
+    qCritical() << "[MapVisualizationManager::activateSubscriptions] TF provider is not available";
+    return;
+  }
+
+  robot_tf_buffer_->start();
+
+  if (!robot_tf_buffer_->isActive())
+  {
+    qCritical() << "[MapVisualizationManager::activateSubscriptions] Failed to start TF provider";
+    return;
+  }
+
+  const std::shared_ptr<tf2_ros::Buffer> tf_buffer = robot_tf_buffer_->getBuffer();
+
+  if (!tf_buffer)
+  {
+    qCritical() << "[MapVisualizationManager::activateSubscriptions] TF provider returned a null buffer";
+    robot_tf_buffer_->stop();
+    return;
+  }
+
+  if (pose_source_)
+  {
+    pose_source_->setTFBuffer(tf_buffer);
+  }
+  if (laser_source_)
+  {
+    laser_source_->setTFBuffer(tf_buffer);
+  }
+  if (particle_source_)
+  {
+    particle_source_->setTFBuffer(tf_buffer);
+  }
+
   if (map_source_)
   {
     map_source_->start();
@@ -1828,11 +1880,7 @@ void MapVisualizationManager::activateSubscriptions()
 
 void MapVisualizationManager::destroySubscriptions()
 {
-  if (!subscriptions_active_)
-  {
-    return;
-  }
-
+  const bool was_active = subscriptions_active_ || (robot_tf_buffer_ && robot_tf_buffer_->isActive());
   subscriptions_active_ = false;
 
   if (render_scene_)
@@ -1860,6 +1908,11 @@ void MapVisualizationManager::destroySubscriptions()
   if (particle_source_)
   {
     particle_source_->stop();
+  }
+
+  if (robot_tf_buffer_)
+  {
+    robot_tf_buffer_->stop();
   }
 
   updateAvailability();
@@ -1900,7 +1953,10 @@ void MapVisualizationManager::destroySubscriptions()
     emit followRobotChanged();
   }
 
-  qDebug() << "[MapVisualizationManager::destroySubscriptions] Subscriptions destroyed";
+  if (was_active)
+  {
+    qDebug() << "[MapVisualizationManager::destroySubscriptions] Subscriptions destroyed";
+  }
 }
 
 void MapVisualizationManager::updateAvailability()
