@@ -62,10 +62,10 @@ std::string namespaceToLogsSuffix(const std::string& robot_namespace)
 
 std::string buildLogPath(const std::string& robot_namespace, const std::string& stream)
 {
-  const std::string logs_dir = "/tmp/command_executor";
+  const std::string log_base_path = "/tmp/command_executor";
   const std::string logs_suffix = namespaceToLogsSuffix(robot_namespace);
 
-  return logs_dir + "/" + logs_suffix + "_" + stream + ".log";
+  return log_base_path + logs_suffix + "_" + stream + ".log";
 }
 } // namespace
 
