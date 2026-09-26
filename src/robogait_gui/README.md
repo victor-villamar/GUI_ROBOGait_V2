@@ -326,11 +326,19 @@ source install/setup.bash
 |       `BUILD_TESTING`       |         `OFF`        |        Compila las pruebas del paquete       |
 | `ENABLE_WARNINGS_AS_ERRORS` |         `OFF`        | Trata los avisos del compilador como errores |
 |     `SHOW_VERBOSE_LOGS`     |         `OFF`        |  Conserva la salida de depuración detallada  |
+|   `ROBOGAIT_ROS_DISTRO`     |     `$ROS_DISTRO`    |   Selecciona `humble`, `jazzy` o `lyrical`   |
 
 Por ejemplo, para habilitar los tests:
 
 ```bash
 colcon build --packages-up-to robogait_gui --cmake-args -DBUILD_TESTING=ON
+```
+
+La distribución se obtiene del entorno ROS cargado. También puede indicarse
+explícitamente:
+
+```bash
+colcon build --packages-up-to robogait_gui --cmake-args -DROBOGAIT_ROS_DISTRO=jazzy
 ```
 
 <!-- TESTS -->
