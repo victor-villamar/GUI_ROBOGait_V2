@@ -8,7 +8,6 @@
 #include <rclcpp/timer.hpp>
 
 #include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
 
 #include "Context/RobotContext.hpp"
 #include "Map/Data/RobotPoseData.hpp"
@@ -53,6 +52,13 @@ public:
   void setRobotPoseData(data::RobotPoseData* robot_pose_data);
 
   /**
+   * @brief Set the shared TF buffer used for transform lookups
+   *
+   * @param tf_buffer The TF buffer owned by the selected robot TF provider
+   */
+  void setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer);
+
+  /**
    * @brief Set the robot context
    *
    * @param context The robot context
@@ -91,7 +97,6 @@ private:
 
   rclcpp::Node* parent_node_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   rclcpp::TimerBase::SharedPtr tf_timer_;
 
   data::RobotPoseData* robot_pose_data_;

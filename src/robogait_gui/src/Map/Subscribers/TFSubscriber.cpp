@@ -11,7 +11,10 @@
 
 using namespace ROBOGait::map::subscribers;
 
-TFSubscriber::TFSubscriber() : robot_pose_data_(nullptr), map_frame_(""), robot_frame_(""), active_(false), warn_logged_(false), paused_(false) {}
+TFSubscriber::TFSubscriber() :
+    parent_node_(nullptr), robot_pose_data_(nullptr), map_frame_(""), robot_frame_(""), active_(false), warn_logged_(false), paused_(false)
+{
+}
 
 TFSubscriber::~TFSubscriber() { stop(); }
 
@@ -29,6 +32,8 @@ void TFSubscriber::initialize(rclcpp::Node* parent_node, const std::string& map_
 }
 
 void TFSubscriber::setRobotPoseData(data::RobotPoseData* robot_pose_data) { robot_pose_data_ = robot_pose_data; }
+
+void TFSubscriber::setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer) { tf_buffer_ = tf_buffer; }
 
 void TFSubscriber::setRobotContext(const ROBOGait::context::RobotContext& context)
 {
@@ -55,28 +60,28 @@ void TFSubscriber::start()
     return;
   }
 
+  if (!tf_buffer_)
+  {
+    qCritical() << "[TFSubscriber::start] Shared TF buffer is not set";
+    return;
+  }
+
   if (active_)
   {
     return;
   }
 
-  tf_buffer_ = std::make_shared<tf2_ros::Buffer>(parent_node_->get_clock());
-  tf_buffer_->setUsingDedicatedThread(true);
-  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, parent_node_, false);
   tf_timer_ = parent_node_->create_wall_timer(ROBOGait::ros::define::TIME_TO_ROBOT_POSE_UPDATE_MS, std::bind(&TFSubscriber::updatePoseFromTF, this));
 
   active_ = true;
   warn_logged_ = false;
 
-  qDebug() << "[TFSubscriber::start] TF listener started for frames:" << map_frame_.c_str() << "->" << robot_frame_.c_str();
+  qDebug() << "[TFSubscriber::start] TF pose updates started for frames:" << map_frame_.c_str() << "->" << robot_frame_.c_str();
 }
 
 void TFSubscriber::stop()
 {
-  if (!active_)
-  {
-    return;
-  }
+  const bool was_active = active_;
 
   if (tf_timer_)
   {
@@ -84,19 +89,13 @@ void TFSubscriber::stop()
     tf_timer_.reset();
   }
 
-  if (tf_listener_)
-  {
-    tf_listener_.reset();
-  }
-
-  if (tf_buffer_)
-  {
-    tf_buffer_.reset();
-  }
-
+  tf_buffer_.reset();
   active_ = false;
 
-  qDebug() << "[TFSubscriber::stop] TF listener stopped";
+  if (was_active)
+  {
+    qDebug() << "[TFSubscriber::stop] TF pose updates stopped";
+  }
 }
 
 bool TFSubscriber::isActive() const { return active_; }

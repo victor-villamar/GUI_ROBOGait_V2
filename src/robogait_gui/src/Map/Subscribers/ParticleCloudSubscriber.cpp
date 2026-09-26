@@ -38,6 +38,8 @@ void ParticleCloudSubscriber::initialize(rclcpp::Node* parent_node)
 
 void ParticleCloudSubscriber::setParticleCloudData(data::ParticleCloudData* particle_cloud_data) { particle_cloud_data_ = particle_cloud_data; }
 
+void ParticleCloudSubscriber::setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer) { tf_buffer_ = tf_buffer; }
+
 void ParticleCloudSubscriber::setRobotContext(const ROBOGait::context::RobotContext& context)
 {
   context_ = context;
@@ -61,10 +63,11 @@ void ParticleCloudSubscriber::start()
     return;
   }
 
-  // Create TF buffer and listener
-  tf_buffer_ = std::make_shared<tf2_ros::Buffer>(parent_node_->get_clock());
-  tf_buffer_->setUsingDedicatedThread(true);
-  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, parent_node_, false);
+  if (!tf_buffer_)
+  {
+    qCritical() << "[ParticleCloudSubscriber::start] Shared TF buffer is not set";
+    return;
+  }
 
   std::string cloud_topic = ROBOGait::ros::topics::T_PARTICLE_CLOUD;
 
@@ -83,29 +86,20 @@ void ParticleCloudSubscriber::start()
 
 void ParticleCloudSubscriber::stop()
 {
-  if (!active_)
-  {
-    return;
-  }
+  const bool was_active = active_;
 
   if (sub_cloud_)
   {
     sub_cloud_.reset();
   }
 
-  if (tf_listener_)
-  {
-    tf_listener_.reset();
-  }
-
-  if (tf_buffer_)
-  {
-    tf_buffer_.reset();
-  }
-
+  tf_buffer_.reset();
   active_ = false;
 
-  qDebug() << "[ParticleCloudSubscriber::stop] Subscriptions stopped";
+  if (was_active)
+  {
+    qDebug() << "[ParticleCloudSubscriber::stop] Subscriptions stopped";
+  }
 }
 
 bool ParticleCloudSubscriber::isActive() const { return active_; }
