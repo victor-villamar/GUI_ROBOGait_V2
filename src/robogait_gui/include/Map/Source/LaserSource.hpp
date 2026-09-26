@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include <tf2_ros/buffer.h>
+
 #include "Map/Data/LaserScanData.hpp"
 #include "Map/Source/SourceInterface.hpp"
 #include "Map/Subscribers/LaserScanSubscriber.hpp"
@@ -38,6 +40,13 @@ public:
   void setRobotContext(const ROBOGait::context::RobotContext& context) override;
 
   /**
+   * @brief Set the shared TF buffer used by the laser subscriber
+   *
+   * @param tf_buffer The TF buffer owned by the selected robot TF provider
+   */
+  void setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer);
+
+  /**
    * @brief Start the laser source
    */
   void start() override;
@@ -71,6 +80,7 @@ public:
 private:
   std::shared_ptr<ROBOGait::map::data::LaserScanData> scan_data_;               /**< Laser scan data */
   std::shared_ptr<ROBOGait::map::subscribers::LaserScanSubscriber> subscriber_; /**< Laser scan subscriber */
+  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;                                  /**< Shared TF buffer */
 };
 
 } // namespace source

@@ -27,6 +27,11 @@ SourceInterface::SourceResult ParticleCloudSource::initialize(rclcpp::Node* pare
     subscriber_->initialize(parent_node_);
     subscriber_->setParticleCloudData(cloud_data_.get());
 
+    if (tf_buffer_)
+    {
+      subscriber_->setTFBuffer(tf_buffer_);
+    }
+
     if (context_)
     {
       subscriber_->setRobotContext(context_.value());
@@ -46,6 +51,16 @@ void ParticleCloudSource::setRobotContext(const ROBOGait::context::RobotContext&
   }
 }
 
+void ParticleCloudSource::setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer)
+{
+  tf_buffer_ = tf_buffer;
+
+  if (subscriber_)
+  {
+    subscriber_->setTFBuffer(tf_buffer_);
+  }
+}
+
 void ParticleCloudSource::start()
 {
   if (!initialized_ || active_ || !subscriber_)
@@ -54,18 +69,17 @@ void ParticleCloudSource::start()
   }
 
   subscriber_->start();
-
-  active_ = true;
+  active_ = subscriber_->isActive();
 }
 
 void ParticleCloudSource::stop()
 {
-  if (!active_ || !subscriber_)
+  if (subscriber_)
   {
-    return;
+    subscriber_->stop();
   }
 
-  subscriber_->stop();
+  tf_buffer_.reset();
 
   if (cloud_data_)
   {

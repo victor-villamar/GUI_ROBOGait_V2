@@ -4,6 +4,7 @@
 #include <string>
 
 #include <rclcpp/node.hpp>
+#include <tf2_ros/buffer.h>
 
 #include "Context/RobotContext.hpp"
 #include "Map/Data/RobotPoseData.hpp"
@@ -39,6 +40,13 @@ public:
    */
   void setRobotContext(const ROBOGait::context::RobotContext& context) override;
 
+  /**
+   * @brief Set the shared TF buffer used by the pose subscriber
+   *
+   * @param tf_buffer The TF buffer owned by the selected robot TF provider
+   */
+  void setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer);
+
   void start() override;
   void stop() override;
 
@@ -55,6 +63,7 @@ public:
 private:
   std::shared_ptr<ROBOGait::map::data::RobotPoseData> robot_pose_data_;     /**< Robot pose data */
   std::shared_ptr<ROBOGait::map::subscribers::TFSubscriber> tf_subscriber_; /**< TF subscriber for pose updates */
+  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;                              /**< Shared TF buffer */
   std::string map_frame_;                                                   /**< Map frame to use for TF lookups */
   std::string robot_frame_;                                                 /**< Robot frame to use for TF lookups */
 };

@@ -25,6 +25,11 @@ SourceInterface::SourceResult RobotPoseSource::initialize(rclcpp::Node* parent_n
   tf_subscriber_->initialize(parent_node_, map_frame_, robot_frame_);
   tf_subscriber_->setRobotPoseData(robot_pose_data_.get());
 
+  if (tf_buffer_)
+  {
+    tf_subscriber_->setTFBuffer(tf_buffer_);
+  }
+
   if (context_)
   {
     tf_subscriber_->setRobotContext(context_.value());
@@ -43,6 +48,16 @@ void RobotPoseSource::setRobotContext(const ROBOGait::context::RobotContext& con
   }
 }
 
+void RobotPoseSource::setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer)
+{
+  tf_buffer_ = tf_buffer;
+
+  if (tf_subscriber_)
+  {
+    tf_subscriber_->setTFBuffer(tf_buffer_);
+  }
+}
+
 void RobotPoseSource::start()
 {
   if (!initialized_ || !tf_subscriber_ || active_)
@@ -51,18 +66,23 @@ void RobotPoseSource::start()
   }
 
   tf_subscriber_->start();
-  active_ = true;
+  active_ = tf_subscriber_->isActive();
 }
 
 void RobotPoseSource::stop()
 {
-  if (!active_ || !tf_subscriber_)
+  if (tf_subscriber_)
   {
-    return;
+    tf_subscriber_->stop();
   }
 
-  tf_subscriber_->stop();
-  robot_pose_data_->reset();
+  tf_buffer_.reset();
+
+  if (robot_pose_data_)
+  {
+    robot_pose_data_->reset();
+  }
+
   active_ = false;
 }
 

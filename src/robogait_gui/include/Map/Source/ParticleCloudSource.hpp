@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include <tf2_ros/buffer.h>
+
 #include "Map/Data/ParticleCloudData.hpp"
 #include "Map/Source/SourceInterface.hpp"
 #include "Map/Subscribers/ParticleCloudSubscriber.hpp"
@@ -38,6 +40,13 @@ public:
   void setRobotContext(const ROBOGait::context::RobotContext& context) override;
 
   /**
+   * @brief Set the shared TF buffer used by the particle cloud subscriber
+   *
+   * @param tf_buffer The TF buffer owned by the selected robot TF provider
+   */
+  void setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer);
+
+  /**
    * @brief Start the particle cloud source
    */
   void start() override;
@@ -71,6 +80,7 @@ public:
 private:
   std::shared_ptr<ROBOGait::map::data::ParticleCloudData> cloud_data_;              /**< Particle cloud data */
   std::shared_ptr<ROBOGait::map::subscribers::ParticleCloudSubscriber> subscriber_; /**< Particle cloud subscriber */
+  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;                                      /**< Shared TF buffer */
 };
 
 } // namespace source
