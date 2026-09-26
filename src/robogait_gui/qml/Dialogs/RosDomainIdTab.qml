@@ -13,6 +13,7 @@ Item {
     readonly property real spinboxBaseHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.inputHeight, 0) : 70
     readonly property real spinboxMinHeightPx: Math.round(spinboxButtonPx * 2 + spinboxButtonMargin * 2 + 8)
     readonly property real spinboxHeightPx: Math.max(spinboxBaseHeightPx, spinboxMinHeightPx)
+    readonly property real spinboxWidthPx: Math.max(160, Math.round(spinboxHeightPx * 1.6))
     readonly property real spinboxNumberFontPx: Math.max(16, Math.round(spinboxHeightPx * 0.4))
 
     implicitWidth: contentLayout.childrenRect.width + 40
@@ -87,7 +88,7 @@ Item {
                     value: developerSettings ? developerSettings.rosDomainId : 0
                     editable: true
                     enabled: root.enabled
-                    width: 160
+                    width: Math.min(parent.width, root.spinboxWidthPx)
                     height: root.spinboxHeightPx
                     palette.base: AppTheme.settings.white
                     palette.text: AppTheme.settings.primaryDark
@@ -106,7 +107,8 @@ Item {
 
                     contentItem: TextInput {
                         text: domainSpinBox.textFromValue(domainSpinBox.value, domainSpinBox.locale)
-                        font.pixelSize: root.spinboxNumberFontPx
+                        font.pixelSize: Math.max(16, Math.min(root.spinboxNumberFontPx,
+                                                             Math.floor((width - 12) / 2)))
                         font.family: domainSpinBox.font.family
                         font.bold: domainSpinBox.font.bold
                         color: AppTheme.settings.primaryDark
@@ -117,6 +119,7 @@ Item {
                             bottom: domainSpinBox.from; top: domainSpinBox.to
                         }
                         inputMethodHints: Qt.ImhDigitsOnly
+                        clip: true
                         anchors.fill: parent
                         anchors.rightMargin: root.spinboxButtonPx + root.spinboxButtonMargin * 2
                     }
