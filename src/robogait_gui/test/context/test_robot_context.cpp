@@ -14,7 +14,7 @@ TEST(RobotContextTest, StartsUnconfiguredAndNormalizesPlainTopics)
   EXPECT_EQ(context.resolveFrame("/base_link"), "base_link");
 }
 
-TEST(RobotContextTest, NamespaceRobotPrefixesTopicsAndFrames)
+TEST(RobotContextTest, NamespaceRobotPrefixesTopicsButPreservesFrames)
 {
   ROBOGait::context::RobotContext context;
 
@@ -25,7 +25,8 @@ TEST(RobotContextTest, NamespaceRobotPrefixesTopicsAndFrames)
   EXPECT_EQ(context.topicNamespace(), "/robot_one");
   EXPECT_EQ(context.resolveTopic("cmd_vel"), "/robot_one/cmd_vel");
   EXPECT_EQ(context.resolveTopic("/robot_one/cmd_vel"), "/robot_one/cmd_vel");
-  EXPECT_EQ(context.resolveFrame("base_link"), "robot_one/base_link");
+  EXPECT_EQ(context.resolveFrame("base_link"), "base_link");
+  EXPECT_EQ(context.resolveFrame("/map"), "map");
   EXPECT_EQ(context.resolveFrame("/robot_one/base_link"), "robot_one/base_link");
 }
 
