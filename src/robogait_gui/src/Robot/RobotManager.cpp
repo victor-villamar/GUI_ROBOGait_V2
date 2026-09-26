@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QVariantMap>
 
+#include "Loader/YamlLoader.hpp"
 #include "Map/Utils/Utils.hpp"
 #include "Robot/RobotManager.hpp"
 #include "Ros/Define.hpp"
@@ -334,7 +335,10 @@ void RobotManager::enableManualControl()
     return;
   }
 
-  const QString topic_name = buildTopicName(QString::fromStdString(ROBOGait::ros::topics::T_CMD_VEL));
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  const std::string cmd_vel_topic = yaml_loader.getValue<std::string>("robot.cmd_vel_topic", ROBOGait::ros::topics::T_CMD_VEL);
+  const QString topic_name = buildTopicName(QString::fromStdString(cmd_vel_topic));
 
   manual_control_->setTopicName(topic_name);
 

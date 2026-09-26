@@ -43,6 +43,7 @@ ros2:
 
 # Robot Configuration
 robot:
+  cmd_vel_topic: "/cmd_vel"
   max_linear_velocity: 0.22
   max_angular_velocity: 2.84
 
