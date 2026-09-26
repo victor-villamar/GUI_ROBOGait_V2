@@ -41,7 +41,7 @@ GUI del proyecto ROBOGait desarrollada con Qt 6, Qt Quick y ROS 2. Las funcional
 
 * [`qml/`](qml/) &rarr; Interfaz Qt Quick, vistas, controles y diálogos.
 
-* [`params/`](params/) &rarr; Configuración predeterminada, comandos y parámetros de navegación.
+* [`params/`](params/README.md) &rarr; Configuración predeterminada, comandos y variantes de simulación.
 
 * [`resources/`](resources/) &rarr; Iconos, logotipos y recursos gráficos.
 
@@ -404,12 +404,11 @@ colcon build \
 <!-- CONFIGURACIÓN -->
 ## Configuración
 
-|                    Archivo                    |                                Finalidad                                |
-|-----------------------------------------------|-------------------------------------------------------------------------|
-|   [`bootstrap.yaml`](params/bootstrap.yaml)   |     Define la ubicación de la configuración persistente del usuario     |
-|      [`config.yaml`](params/config.yaml)      | Configura interfaz, base de datos, ROS, robot, navegación y renderizado |
-|    [`commands.yaml`](params/commands.yaml)    |           Define los comandos remotos de mapeado y navegación           |
-| [`nav2_params.yaml`](params/nav2_params.yaml) |        Configuración de Nav2 de referencia para simular TurtleBot3      |
+|                  Archivo                  |                                Finalidad                                |
+|-------------------------------------------|-------------------------------------------------------------------------|
+| [`bootstrap.yaml`](params/bootstrap.yaml) |     Define la ubicación de la configuración persistente del usuario     |
+|    [`config.yaml`](params/config.yaml)    | Configura interfaz, base de datos, ROS, robot, navegación y renderizado |
+|  [`commands.yaml`](params/commands.yaml)  |           Define los comandos remotos de mapeado y navegación           |
 
 Durante el arranque, la aplicación lee `bootstrap.yaml` desde el directorio `share` del paquete. Si todavía no existen, copia `config.yaml` y `commands.yaml` desde ese mismo directorio a:
 
@@ -417,11 +416,13 @@ Durante el arranque, la aplicación lee `bootstrap.yaml` desde el directorio `sh
 ~/.local/robogait/params
 ```
 
-> [!NOTE]
->
->El archivo `nav2_params.yaml` incluido en el repositorio no se instala ni se copia a la configuración del usuario; contiene la configuración de referencia utilizada para simular TurtleBot3. El mecanismo de selección del archivo Nav2 se utiliza tanto en simulación como con el robot real. Su ubicación y nombre se definen en [`config.yaml`](params/config.yaml) mediante `navigation.nav2_params_path` y `navigation.nav2_params_file`.
->
->Estos valores se incorporan al comando que `command_executor` ejecuta en el robot. Por ello, para utilizar el robot real deben apuntar al directorio y al archivo de parámetros Nav2 existentes en su propio sistema de archivos.
+Las configuraciones específicas de simulación se mantienen en [`params/simulation/`](params/README.md#configuraciones-de-simulación) y no se instalan automáticamente. La guía de parámetros explica los archivos disponibles, las diferencias entre Humble y Jazzy y las dos formas de seleccionar una configuración:
+
+* Preparar `config.yaml` y `commands.yaml` antes de compilar.
+
+* Sustituir después de la compilación los archivos efectivos de `$HOME/.local/robogait/params`.
+
+Consulta la [guía completa de parámetros](params/README.md) para ver los comandos y las consideraciones sobre `nav2_params.yaml`.
 
 <!-- EJECUCIÓN DE LA APLICACIÓN -->
 ## Ejecución de la aplicación
