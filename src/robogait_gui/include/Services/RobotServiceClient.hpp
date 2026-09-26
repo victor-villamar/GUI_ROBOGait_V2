@@ -606,8 +606,6 @@ private:
   std::optional<nav_msgs::msg::Path> manual_follow_path_; /**< The last prepared manual path, if any */
 
   bool initialized_;              /**< Flag indicating if the client is initialized */
-  bool pending_stop_after_save_;  /**< Flag indicating if a stop is pending after save */
-  bool map_saver_stop_requested_; /**< Flag indicating if a stop is requested for the map saver */
   bool nav_goal_active_;          /**< Flag indicating if there is an active navigation goal */
   bool cancel_in_progress_;       /**< Flag indicating if a cancel is in progress for the active navigation goal */
 
@@ -627,10 +625,8 @@ private:
   static constexpr std::string_view DEFAULT_MANUAL_FOLLOW_PATH_CONTROLLER_ID = "ManualPath";      /**< Default controller used for manual spline paths */
   static constexpr std::string_view DEFAULT_FOLLOW_PATH_GOAL_CHECKER_ID = "general_goal_checker"; /**< Default FollowPath goal checker id */
 
-  static constexpr std::chrono::milliseconds HEALTH_CHECK_PERIOD = std::chrono::milliseconds(100);                 /**< Health check period */
-  static constexpr std::chrono::seconds START_STOP_TIMEOUT = std::chrono::seconds(25);                             /**< Start/stop timeout */
-  static constexpr std::chrono::milliseconds MAP_SAVER_FORCE_STOP_DELAY = std::chrono::milliseconds(2000);         /**< Map saver force stop delay */
-  static constexpr std::chrono::milliseconds MAP_SAVER_STARTUP_ASSUME_STOP_DELAY = std::chrono::milliseconds(500); /**< Map saver startup assume stop delay */
+  static constexpr std::chrono::milliseconds HEALTH_CHECK_PERIOD = std::chrono::milliseconds(100); /**< Health check period */
+  static constexpr std::chrono::seconds START_STOP_TIMEOUT = std::chrono::seconds(25);             /**< Start/stop timeout */
 };
 } // namespace service
 } // namespace ros

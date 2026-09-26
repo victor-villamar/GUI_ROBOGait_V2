@@ -18,6 +18,7 @@ find_package(nav_msgs REQUIRED)
 find_package(map_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(tf2_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
@@ -91,6 +92,7 @@ set(HEADERS
     include/Map/Subscribers/ParticleCloudSubscriber.hpp
     include/Map/Subscribers/PathSubscriber.hpp
     include/Map/Subscribers/TFSubscriber.hpp
+    include/Map/TF/RobotTFBuffer.hpp
     include/Map/Utils/Utils.hpp
     include/Map/MapVisualizationManager.hpp
     include/Perception/PersonDetectionMonitor.hpp
@@ -176,6 +178,7 @@ set(SOURCES
     src/Map/Subscribers/ParticleCloudSubscriber.cpp
     src/Map/Subscribers/PathSubscriber.cpp
     src/Map/Subscribers/TFSubscriber.cpp
+    src/Map/TF/RobotTFBuffer.cpp
     src/Map/Utils/Utils.cpp
     src/Map/MapVisualizationManager.cpp
     src/Perception/PersonDetectionMonitor.cpp
@@ -313,6 +316,7 @@ ament_target_dependencies(${PROJECT_NAME}
     map_msgs
     nav2_msgs
     tf2
+    tf2_msgs
     tf2_ros
     tf2_geometry_msgs
     std_srvs

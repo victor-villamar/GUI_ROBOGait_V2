@@ -41,6 +41,7 @@ install_ros2_dependencies()
     "ros-${ROS_DISTRO}-std-srvs" \
     "ros-${ROS_DISTRO}-tf2" \
     "ros-${ROS_DISTRO}-tf2-ros" \
+    "ros-${ROS_DISTRO}-tf2-msgs" \
     "ros-${ROS_DISTRO}-tf2-geometry-msgs" \
     "ros-${ROS_DISTRO}-rosidl-default-generators" \
     "ros-${ROS_DISTRO}-rosidl-default-runtime"

@@ -40,6 +40,8 @@ void LaserScanSubscriber::initialize(rclcpp::Node* parent_node)
 
 void LaserScanSubscriber::setLaserScanData(data::LaserScanData* laser_scan_data) { laser_scan_data_ = laser_scan_data; }
 
+void LaserScanSubscriber::setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer) { tf_buffer_ = tf_buffer; }
+
 void LaserScanSubscriber::setRobotContext(const ROBOGait::context::RobotContext& context)
 {
   context_ = context;
@@ -63,10 +65,11 @@ void LaserScanSubscriber::start()
     return;
   }
 
-  // Create TF buffer and listener
-  tf_buffer_ = std::make_shared<tf2_ros::Buffer>(parent_node_->get_clock());
-  tf_buffer_->setUsingDedicatedThread(true);
-  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, parent_node_, false);
+  if (!tf_buffer_)
+  {
+    qCritical() << "[LaserScanSubscriber::start] Shared TF buffer is not set";
+    return;
+  }
 
   std::string scan_topic = ROBOGait::ros::topics::T_SCAN;
 
@@ -85,29 +88,20 @@ void LaserScanSubscriber::start()
 
 void LaserScanSubscriber::stop()
 {
-  if (!active_)
-  {
-    return;
-  }
+  const bool was_active = active_;
 
   if (sub_scan_)
   {
     sub_scan_.reset();
   }
 
-  if (tf_listener_)
-  {
-    tf_listener_.reset();
-  }
-
-  if (tf_buffer_)
-  {
-    tf_buffer_.reset();
-  }
-
+  tf_buffer_.reset();
   active_ = false;
 
-  qDebug() << "[LaserScanSubscriber::stop] Subscriptions stopped";
+  if (was_active)
+  {
+    qDebug() << "[LaserScanSubscriber::stop] Subscriptions stopped";
+  }
 }
 
 bool LaserScanSubscriber::isActive() const { return active_; }

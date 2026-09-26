@@ -33,8 +33,6 @@ RobotServiceClient::RobotServiceClient() :
     context_(std::nullopt),
     manual_follow_path_(std::nullopt),
     initialized_(false),
-    pending_stop_after_save_(false),
-    map_saver_stop_requested_(false),
     nav_goal_active_(false),
     cancel_in_progress_(false),
     start_stop_timeout_s_(START_STOP_TIMEOUT)
@@ -120,8 +118,6 @@ void RobotServiceClient::clearRobotContext()
   manual_follow_path_.reset();
   pub_map_data_.reset();
   command_states_.clear();
-  pending_stop_after_save_ = false;
-  map_saver_stop_requested_ = false;
   stopHealthTimer();
 }
 
@@ -136,9 +132,6 @@ bool RobotServiceClient::startMapping()
   const RobotServiceClient::CommandInfo& cmd_info = commands_[KEY_CARTOGRAPHER];
 
   const std::string full_cmd = buildCommand(cmd_info.cmd, cmd_info.append_args);
-
-  pending_stop_after_save_ = false;
-  map_saver_stop_requested_ = false;
 
   CommandRequestContext context{CommandRequestType::StartMapping, std::string(KEY_CARTOGRAPHER), full_cmd, std::string()};
 
@@ -163,13 +156,9 @@ bool RobotServiceClient::stopMapping(bool save_map, const std::string& map_name)
       return false;
     }
 
-    pending_stop_after_save_ = true;
-    map_saver_stop_requested_ = false;
-    startHealthTimer();
     return true;
   }
 
-  pending_stop_after_save_ = false;
   return stopCommand(KEY_CARTOGRAPHER);
 }
 
@@ -1012,10 +1001,13 @@ void RobotServiceClient::handleSaveMapResult(bool success, const std::string& fu
     return;
   }
 
-  setCommandState(KEY_MAP_SAVER, RobotServiceClient::CommandStatus::STARTING, full_cmd);
-  startHealthTimer();
-  qDebug() << "[RobotServiceClient::saveMap] Successfully saved map";
-  notifyRequestResult(true);
+  setCommandState(KEY_MAP_SAVER, RobotServiceClient::CommandStatus::STOPPED, full_cmd);
+  qDebug() << "[RobotServiceClient::saveMap] Map saved successfully";
+  if (!stopCommand(KEY_CARTOGRAPHER))
+  {
+    qCritical() << "[RobotServiceClient::saveMap] Map was saved but mapping could not be stopped";
+    notifyRequestResult(false);
+  }
 }
 
 void RobotServiceClient::handleStopCommandResult(bool success, const std::string& key, const std::string& full_cmd)
@@ -1497,10 +1489,6 @@ void RobotServiceClient::onHealthTimer()
           qDebug() << "[RobotServiceClient::onHealthTimer] Node is alive for command: " << QString::fromStdString(key);
           setCommandState(key, RobotServiceClient::CommandStatus::RUNNING, state.full_cmd);
         }
-        else if (key == KEY_MAP_SAVER && elapsed > MAP_SAVER_STARTUP_ASSUME_STOP_DELAY)
-        {
-          setCommandState(key, RobotServiceClient::CommandStatus::STOPPED, state.full_cmd);
-        }
         else if (elapsed > start_stop_timeout_s_)
         {
           setCommandState(key, RobotServiceClient::CommandStatus::ERROR, state.full_cmd);
@@ -1532,36 +1520,6 @@ void RobotServiceClient::onHealthTimer()
       case RobotServiceClient::CommandStatus::IDLE:
       default:
         break;
-    }
-  }
-
-  if (pending_stop_after_save_)
-  {
-    const RobotServiceClient::CommandStatus saver_status = getCommandStatus(KEY_MAP_SAVER);
-    if (saver_status == RobotServiceClient::CommandStatus::STOPPED || saver_status == RobotServiceClient::CommandStatus::ERROR ||
-        saver_status == RobotServiceClient::CommandStatus::IDLE)
-    {
-      if (saver_status == RobotServiceClient::CommandStatus::ERROR && !map_saver_stop_requested_)
-      {
-        map_saver_stop_requested_ = true;
-        stopCommand(KEY_MAP_SAVER);
-      }
-
-      pending_stop_after_save_ = false;
-      stopCommand(KEY_CARTOGRAPHER);
-    }
-    else if (saver_status == RobotServiceClient::CommandStatus::RUNNING)
-    {
-      const auto saver_it = command_states_.find(KEY_MAP_SAVER);
-      if (saver_it != command_states_.end() && !map_saver_stop_requested_)
-      {
-        const auto run_elapsed = now - saver_it->second.timestamp;
-        if (run_elapsed > MAP_SAVER_FORCE_STOP_DELAY)
-        {
-          map_saver_stop_requested_ = true;
-          stopCommand(KEY_MAP_SAVER);
-        }
-      }
     }
   }
 

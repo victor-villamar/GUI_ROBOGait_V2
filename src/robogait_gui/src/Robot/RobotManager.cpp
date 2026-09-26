@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QVariantMap>
 
+#include "Loader/YamlLoader.hpp"
 #include "Map/Utils/Utils.hpp"
 #include "Robot/RobotManager.hpp"
 #include "Ros/Define.hpp"
@@ -334,7 +335,10 @@ void RobotManager::enableManualControl()
     return;
   }
 
-  const QString topic_name = buildTopicName(QString::fromStdString(ROBOGait::ros::topics::T_CMD_VEL));
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  const std::string cmd_vel_topic = yaml_loader.getValue<std::string>("robot.cmd_vel_topic", ROBOGait::ros::topics::T_CMD_VEL);
+  const QString topic_name = buildTopicName(QString::fromStdString(cmd_vel_topic));
 
   manual_control_->setTopicName(topic_name);
 
@@ -378,9 +382,7 @@ void RobotManager::publishInitialPose(double x, double y, double theta)
 
   auto msg = geometry_msgs::msg::PoseWithCovarianceStamped();
 
-  QString frame_id = buildTopicName("/" + QString::fromStdString(ROBOGait::ros::topics::TF_MAP_FRAME));
-
-  msg.header.frame_id = frame_id.toStdString();
+  msg.header.frame_id = ROBOGait::ros::topics::TF_MAP_FRAME;
   msg.header.stamp = parent_node_->now();
 
   msg.pose.pose.position.x = x;

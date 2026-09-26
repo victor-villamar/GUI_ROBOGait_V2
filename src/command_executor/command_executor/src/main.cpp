@@ -1,6 +1,6 @@
 #include <memory>
 
-#include <rclcpp/executors.hpp>
+#include <rclcpp/executors/multi_threaded_executor.hpp>
 #include <rclcpp/node_options.hpp>
 #include <rclcpp/utilities.hpp>
 
@@ -17,7 +17,9 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  rclcpp::spin(command_executor);
+  rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), 2);
+  executor.add_node(command_executor);
+  executor.spin();
   rclcpp::shutdown();
   return 0;
 }

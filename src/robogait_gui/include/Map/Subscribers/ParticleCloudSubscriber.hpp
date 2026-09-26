@@ -8,7 +8,6 @@
 
 #include <nav2_msgs/msg/particle_cloud.hpp>
 #include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
 
 #include "Context/RobotContext.hpp"
 #include "Map/Data/ParticleCloudData.hpp"
@@ -48,6 +47,13 @@ public:
    * @param particle_cloud_data The ParticleCloudData instance
    */
   void setParticleCloudData(data::ParticleCloudData* particle_cloud_data);
+
+  /**
+   * @brief Set the shared TF buffer used for transform lookups
+   *
+   * @param tf_buffer The TF buffer owned by the selected robot TF provider
+   */
+  void setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer);
 
   /**
    * @brief Set the robot context
@@ -94,7 +100,6 @@ private:
   rclcpp::Node* parent_node_;                                                /**< Pointer to the parent ROS node */
   rclcpp::Subscription<nav2_msgs::msg::ParticleCloud>::SharedPtr sub_cloud_; /**< Subscription to the particle cloud topic */
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;                               /**< TF buffer for transform lookups */
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;                  /**< TF listener for transform lookups */
 
   data::ParticleCloudData* particle_cloud_data_; /**< Particle cloud data */
   std::string map_frame_;                        /**< The map frame for transforming particles */

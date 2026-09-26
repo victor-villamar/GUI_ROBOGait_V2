@@ -40,6 +40,16 @@ public:
   static rclcpp::QoS QOS_BEST_EFFORT();
 
   /**
+   * @brief Get the standard QoS profile for dynamic TF transforms
+   */
+  static rclcpp::QoS QOS_TF_DYNAMIC();
+
+  /**
+   * @brief Get the standard QoS profile for static TF transforms
+   */
+  static rclcpp::QoS QOS_TF_STATIC();
+
+  /**
    * @brief Get a QoS profile for service clients
    *
    * This quality of service is meant to be used in clients of services communications.

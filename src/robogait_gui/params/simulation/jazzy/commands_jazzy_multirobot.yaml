@@ -1,0 +1,21 @@
+# Only used in simulation, not in real robot
+
+cartographer:
+  name: "slam_toolbox"
+  cmd: "ros2 launch turtlebot4_navigation slam.launch.py"
+  append_args: "namespace:=$ROBOT_NAMESPACE use_sim_time:=true sync:=true"
+
+map_saver:
+  name: "map_saver"
+  cmd: "ros2 run nav2_map_server map_saver_cli"
+  append_args: "-t {map_topic} -f $HOME{map_path}{map_name} --occ 0.65 --free 0.196 --ros-args -p save_map_timeout:=15.0 -p use_sim_time:=true -p map_subscribe_transient_local:=true -r __ns:=$ROBOT_NAMESPACE"
+
+delete_map:
+  name: "delete_map"
+  cmd: "ros2 delete"
+  append_args: "$HOME{map_path}{map_name}*"
+
+navigation:
+  name: "bt_navigator"
+  cmd: "ros2 launch nav2_bringup bringup_launch.py"
+  append_args: "namespace:=$ROBOT_NAMESPACE use_namespace:=true use_sim_time:={navigation_use_sim_time} slam:=False use_localization:=True autostart:=true use_composition:=False map:=$HOME{map_path}{map_name} params_file:=$HOME{nav2_params_path}{nav2_params_file}"

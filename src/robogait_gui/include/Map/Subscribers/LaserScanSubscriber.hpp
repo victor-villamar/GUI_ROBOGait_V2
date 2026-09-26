@@ -8,7 +8,6 @@
 
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
 
 #include "Context/RobotContext.hpp"
 #include "Map/Data/LaserScanData.hpp"
@@ -48,6 +47,13 @@ public:
    * @param laser_scan_data The LaserScanData instance
    */
   void setLaserScanData(data::LaserScanData* laser_scan_data);
+
+  /**
+   * @brief Set the shared TF buffer used for transform lookups
+   *
+   * @param tf_buffer The TF buffer owned by the selected robot TF provider
+   */
+  void setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer);
 
   /**
    * @brief Set the robot context
@@ -94,7 +100,6 @@ private:
   rclcpp::Node* parent_node_;                                             /**< Pointer to the parent ROS node */
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr sub_scan_; /**< Subscription to the laser scan topic */
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;                            /**< TF buffer for transform lookups */
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;               /**< TF listener for transform lookups */
 
   data::LaserScanData* laser_scan_data_; /**< Laser scan data */
   std::string map_frame_;                /**< The map frame for transforming laser scan points */
