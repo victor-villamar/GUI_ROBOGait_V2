@@ -1,4 +1,7 @@
+#include <algorithm>
+#include <cctype>
 #include <chrono>
+#include <cstddef>
 #include <iostream>
 #include <memory>
 #include <signal.h>
@@ -38,6 +41,32 @@ bool waitForProcessExit(boost::process::child& child, std::chrono::milliseconds 
   ec.clear();
   return !child.running(ec) && !ec;
 }
+
+std::string namespaceToLogsSuffix(const std::string& robot_namespace)
+{
+  const std::size_t separator_pos = robot_namespace.find('/');
+
+  std::string first_namespace = robot_namespace.substr(0, separator_pos);
+
+  std::replace_if(
+      first_namespace.begin(), first_namespace.end(), [](unsigned char character) { return !std::isalnum(character) && character != '_' && character != '-'; },
+      '_');
+
+  if (first_namespace.empty())
+  {
+    return "";
+  }
+
+  return "_" + first_namespace;
+}
+
+std::string buildLogPath(const std::string& robot_namespace, const std::string& stream)
+{
+  const std::string logs_dir = "/tmp/command_executor";
+  const std::string logs_suffix = namespaceToLogsSuffix(robot_namespace);
+
+  return logs_dir + "/" + logs_suffix + "_" + stream + ".log";
+}
 } // namespace
 
 ProcessManager::ProcessManager() { std::cout << "[ProcessManager::ProcessManager] ProcessManager initialized" << std::endl; }
@@ -76,6 +105,10 @@ bool ProcessManager::startProcess(const std::string& cmd)
     processes_.erase(existing);
   }
 
+  const std::string stdout_log_path = buildLogPath(robot_namespace_, "stdout");
+
+  const std::string stderr_log_path = buildLogPath(robot_namespace_, "stderr");
+
   boost::process::group group;
 
   // clang-format off
@@ -83,8 +116,8 @@ bool ProcessManager::startProcess(const std::string& cmd)
     "/bin/bash",
     boost::process::args({"-lc", cmd}),
     group,
-    boost::process::std_out > "/tmp/command_executor_stdout.log",
-    boost::process::std_err > "/tmp/command_executor_stderr.log"
+    boost::process::std_out > stdout_log_path,
+    boost::process::std_err > stderr_log_path
   );
   // clang-format on
 
@@ -155,12 +188,16 @@ bool ProcessManager::stopProcess(const std::string& cmd)
 
 bool ProcessManager::executeOneShotCommand(const std::string& cmd)
 {
+
+  const std::string stdout_log_path = buildLogPath(robot_namespace_, "stdout");
+  const std::string stderr_log_path = buildLogPath(robot_namespace_, "stderr");
+
   // clang-format off
   boost::process::child child(
     "/bin/bash",
     boost::process::args({"-lc", cmd}),
-    boost::process::std_out > "/tmp/command_executor_stdout.log",
-    boost::process::std_err > "/tmp/command_executor_stderr.log"
+    boost::process::std_out > stdout_log_path,
+    boost::process::std_err > stderr_log_path
   );
   // clang-format on
 
@@ -175,6 +212,27 @@ bool ProcessManager::executeOneShotCommand(const std::string& cmd)
   else
   {
     return true;
+  }
+}
+
+void ProcessManager::setRobotNamespace(const std::string& robot_namespace)
+{
+  robot_namespace_ = robot_namespace;
+
+  if (robot_namespace_.empty() || robot_namespace_ == "/")
+  {
+    robot_namespace_.clear();
+    return;
+  }
+
+  while (!robot_namespace_.empty() && robot_namespace_.front() == '/')
+  {
+    robot_namespace_.erase(robot_namespace_.begin());
+  }
+
+  while (!robot_namespace_.empty() && robot_namespace_.back() == '/')
+  {
+    robot_namespace_.pop_back();
   }
 }
 

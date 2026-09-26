@@ -19,6 +19,7 @@ using namespace ROBOGait::command;
 
 CommandExecutor::CommandExecutor(const rclcpp::NodeOptions& options) : Node(define::COMMAND_EXECUTOR, options)
 {
+  process_manager_.setRobotNamespace(get_namespace());
   RCLCPP_INFO(get_logger(), "[CommandExecutor::CommandExecutor] CommandExecutor created");
 }
 

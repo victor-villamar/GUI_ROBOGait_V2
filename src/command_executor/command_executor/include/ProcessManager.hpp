@@ -55,6 +55,13 @@ public:
    */
   bool executeOneShotCommand(const std::string& cmd);
 
+  /**
+   *@brief Set the ROS namespace for the command executor node
+   *
+   *@param robot_namespace ROS namespace of the command executor node
+   */
+  void setRobotNamespace(const std::string& robot_namespace);
+
 private:
   /**
    * @brief Struct to hold information about a running process
@@ -83,6 +90,7 @@ private:
 
   mutable std::mutex mutex_;                                                 /**< Mutex for synchronizing access to the process map */
   std::unordered_map<std::string, std::shared_ptr<ProcessEntry>> processes_; /**< Map of running processes */
+  std::string robot_namespace_;                                              /**< Robot namespace */
 };
 } // namespace command
 } // namespace ROBOGait
