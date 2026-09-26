@@ -1,4 +1,5 @@
 #include <rmw/qos_profiles.h>
+#include <tf2_ros/qos.hpp>
 
 #include "Ros/QoSProfiles.hpp"
 
@@ -30,6 +31,10 @@ rclcpp::QoS QosProfiles::QOS_BEST_EFFORT()
       .history(RMW_QOS_POLICY_HISTORY_KEEP_LAST)
       .keep_last(5);
 }
+
+rclcpp::QoS QosProfiles::QOS_TF_DYNAMIC() { return tf2_ros::DynamicListenerQoS(); }
+
+rclcpp::QoS QosProfiles::QOS_TF_STATIC() { return tf2_ros::StaticListenerQoS(); }
 
 rmw_qos_profile_t QosProfiles::QOS_CLIENTS()
 {
