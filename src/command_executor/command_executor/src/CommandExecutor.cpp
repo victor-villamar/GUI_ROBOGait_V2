@@ -106,11 +106,21 @@ bool CommandExecutor::loadConfig()
 
 bool CommandExecutor::createRosInterfaces()
 {
+  services_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+  if (!services_callback_group_)
+  {
+    RCLCPP_ERROR(get_logger(), "[CommandExecutor::createRosInterfaces] Failed to create services callback group");
+    return false;
+  }
+
   srv_cmd_ = create_service<command_executor_msgs::srv::Cmd>(define::S_CMD,
-                                                             std::bind(&CommandExecutor::handleCommand, this, std::placeholders::_1, std::placeholders::_2));
+                                                             std::bind(&CommandExecutor::handleCommand, this, std::placeholders::_1, std::placeholders::_2),
+                                                             rclcpp::ServicesQoS(), services_callback_group_);
 
   srv_get_map_data_ = create_service<command_executor_msgs::srv::GetMapData>(
-      define::S_GET_MAP_DATA, std::bind(&CommandExecutor::handleGetMapData, this, std::placeholders::_1, std::placeholders::_2));
+      define::S_GET_MAP_DATA, std::bind(&CommandExecutor::handleGetMapData, this, std::placeholders::_1, std::placeholders::_2), rclcpp::ServicesQoS(),
+      services_callback_group_);
 
   pub_robot_status_ = create_publisher<command_executor_msgs::msg::RobotStatus>(define::T_ROBOT_STATUS, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT());
 
@@ -168,6 +178,14 @@ void CommandExecutor::handleCommand(const std::shared_ptr<command_executor_msgs:
   {
     bool ok = process_manager_.executeOneShotCommand(delete_cmd);
     RCLCPP_INFO(get_logger(), "[CommandExecutor::handleCommand] Delete command '%s' executed %s", delete_cmd.c_str(), ok ? "successfully" : "failed");
+    response->success = ok;
+    return;
+  }
+
+  if (request->execute && isMapSaverCommand(cmd))
+  {
+    const bool ok = process_manager_.executeOneShotCommand(cmd);
+    RCLCPP_INFO(get_logger(), "[CommandExecutor::handleCommand] Map saver command '%s' finished %s", cmd.c_str(), ok ? "successfully" : "with an error");
     response->success = ok;
     return;
   }
@@ -257,6 +275,24 @@ bool CommandExecutor::isDeleteCommand(const std::string& cmd, std::string& trans
 
   return true;
 }
+
+bool CommandExecutor::isMapSaverCommand(const std::string& cmd) const
+{
+  const std::string trimmed = ltrimCopy(cmd);
+  std::istringstream iss(trimmed);
+  std::string ros2;
+  std::string operation;
+  std::string package;
+  std::string executable;
+
+  if (!(iss >> ros2 >> operation >> package >> executable))
+  {
+    return false;
+  }
+
+  return ros2 == "ros2" && operation == "run" && package == "nav2_map_server" && executable == "map_saver_cli";
+}
+
 void CommandExecutor::handleGetMapData(const std::shared_ptr<command_executor_msgs::srv::GetMapData::Request>& request,
                                        std::shared_ptr<command_executor_msgs::srv::GetMapData::Response> response)
 {

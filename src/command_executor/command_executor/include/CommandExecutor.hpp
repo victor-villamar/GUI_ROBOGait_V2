@@ -152,11 +152,24 @@ private:
    */
   bool isDeleteCommand(const std::string& cmd, std::string& translated_cmd) const;
 
+  /**
+   * @brief Check whether a command runs the Nav2 map saver CLI
+   *
+   * Map saving is a finite operation whose exit status must be returned to the
+   * caller instead of being managed as a persistent process.
+   *
+   * @param cmd The command to check
+   *
+   * @return true if the command runs nav2_map_server/map_saver_cli
+   */
+  bool isMapSaverCommand(const std::string& cmd) const;
+
   rclcpp::Service<command_executor_msgs::srv::Cmd>::SharedPtr srv_cmd_;                    /**< Command service */
   rclcpp::Service<command_executor_msgs::srv::GetMapData>::SharedPtr srv_get_map_data_;    /**< Get map data service */
   rclcpp::Publisher<command_executor_msgs::msg::RobotStatus>::SharedPtr pub_robot_status_; /**< Robot status publisher */
   rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr sub_battery_status_;     /**< Battery status subscriber */
   rclcpp::TimerBase::SharedPtr timer_;                                                     /**< Timer */
+  rclcpp::CallbackGroup::SharedPtr services_callback_group_;                               /**< Dedicated callback group for services */
 
   std::vector<std::string> allow_list_; /**< List of allowed commands */
   RobotInfo robot_info_;                /**< Robot information */
