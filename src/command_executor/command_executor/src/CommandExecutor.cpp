@@ -116,11 +116,11 @@ bool CommandExecutor::createRosInterfaces()
 
   srv_cmd_ = create_service<command_executor_msgs::srv::Cmd>(define::S_CMD,
                                                              std::bind(&CommandExecutor::handleCommand, this, std::placeholders::_1, std::placeholders::_2),
-                                                             rmw_qos_profile_services_default, services_callback_group_);
+                                                             ROBOGait::ros::QosProfiles::QOS_SERVICES(), services_callback_group_);
 
   srv_get_map_data_ = create_service<command_executor_msgs::srv::GetMapData>(
       define::S_GET_MAP_DATA, std::bind(&CommandExecutor::handleGetMapData, this, std::placeholders::_1, std::placeholders::_2),
-      rmw_qos_profile_services_default, services_callback_group_);
+      ROBOGait::ros::QosProfiles::QOS_SERVICES(), services_callback_group_);
 
   pub_robot_status_ = create_publisher<command_executor_msgs::msg::RobotStatus>(define::T_ROBOT_STATUS, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT());
 

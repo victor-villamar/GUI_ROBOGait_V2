@@ -10,3 +10,11 @@ rclcpp::QoS QosProfiles::QOS_BEST_EFFORT()
       .history(RMW_QOS_POLICY_HISTORY_KEEP_LAST)
       .keep_last(5);
 }
+
+#ifdef ROBOGAIT_ROS_HUMBLE
+rmw_qos_profile_t QosProfiles::QOS_SERVICES() { return rmw_qos_profile_services_default; }
+#elif defined(ROBOGAIT_ROS_JAZZY) || defined(ROBOGAIT_ROS_LYRICAL)
+rclcpp::QoS QosProfiles::QOS_SERVICES() { return rclcpp::ServicesQoS(); }
+#else
+#error "Unsupported ROS 2 distribution"
+#endif

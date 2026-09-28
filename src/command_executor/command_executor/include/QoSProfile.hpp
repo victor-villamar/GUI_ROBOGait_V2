@@ -1,7 +1,10 @@
 #pragma once
 
 #include <rclcpp/qos.hpp>
+
+#ifdef ROBOGAIT_ROS_HUMBLE
 #include <rmw/types.h>
+#endif
 
 namespace ROBOGait
 {
@@ -21,6 +24,19 @@ public:
    * published messages.
    */
   static rclcpp::QoS QOS_BEST_EFFORT();
+
+  /**
+   * @brief Get the default QoS profile for service servers
+   *
+   * This quality of service is intended for service server communications
+   */
+#ifdef ROBOGAIT_ROS_HUMBLE
+  static rmw_qos_profile_t QOS_SERVICES();
+#elif defined(ROBOGAIT_ROS_JAZZY) || defined(ROBOGAIT_ROS_LYRICAL)
+  static rclcpp::QoS QOS_SERVICES();
+#else
+#error "Unsupported ROS 2 distribution"
+#endif
 };
 } // namespace ros
 } // namespace ROBOGait
