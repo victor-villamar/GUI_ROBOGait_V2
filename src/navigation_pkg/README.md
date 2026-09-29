@@ -112,6 +112,7 @@ En Ubuntu con ROS 2 pueden instalarse mediante:
 sudo apt install \
     ros-${ROS_DISTRO}-ament-cmake \
     ros-${ROS_DISTRO}-rosidl-default-generators \
+    ros-${ROS_DISTRO}-rosidl-default-runtime \
     ros-${ROS_DISTRO}-sensor-msgs
 ```
 
@@ -126,6 +127,8 @@ source install/setup.bash
 ```
 
 La compilación genera las representaciones de `User` y `CameraDetection` necesarias para C++, Python y los mecanismos de introspección disponibles en la instalación de ROS 2.
+
+La configuración es común a Humble, Jazzy y Lyrical. Como `navigation_pkg` solo genera interfaces, no define macros `ROBOGAIT_ROS_*` ni necesita condicionales por distribución: ROSIDL selecciona los generadores y *targets* proporcionados por el entorno ROS 2 activo.
 
 <!-- VALIDACIÓN DE LAS INTERFACES -->
 ## Validación de las interfaces

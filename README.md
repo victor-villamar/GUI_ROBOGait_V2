@@ -80,10 +80,13 @@ Para el entorno de desarrollo, el instalador valida estas combinaciones:
 |--------|---------|
 | 22.04  |  Humble |
 | 24.04  |  Jazzy  |
-| 26.04  |  Jazzy  |
 | 26.04  | Lyrical |
 
 La aplicación Docker también se construye seleccionando Humble, Jazzy o Lyrical mediante `ROS_DISTRO`.
+
+La distribución activa se obtiene del entorno cargado mediante `/opt/ros/${ROS_DISTRO}/setup.bash`. Los paquetes con código C++ dependiente de la API de ROS 2 validan ese valor en CMake y exponen exactamente una de las macros `ROBOGAIT_ROS_HUMBLE`, `ROBOGAIT_ROS_JAZZY` o `ROBOGAIT_ROS_LYRICAL`.
+
+Los paquetes que solo generan interfaces, como `command_executor_msgs` y `navigation_pkg`, no necesitan macros por distribución: ROSIDL utiliza los generadores y *targets* proporcionados por el entorno ROS 2 activo.
 
 <!-- INSTALACIÓN -->
 ## Instalación

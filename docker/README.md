@@ -64,6 +64,8 @@ Compose utiliza `network_mode: host` e `ipc: host`. De esta forma, el nodo ROS 2
 
 La imagen parte de `ros:${ROS_DISTRO}-ros-base` y se construye para ROS 2 *Humble*, *Jazzy* o *Lyrical*.
 
+El argumento de construcción `ROS_DISTRO` selecciona la imagen base. El Dockerfile carga `/opt/ros/${ROS_DISTRO}/setup.bash` antes de ejecutar `colcon`, por lo que CMake detecta la distribución desde el entorno y no necesita recibir `-DROBOGAIT_ROS_DISTRO=...`.
+
 Durante la construcción:
 
 1. Instala las herramientas de compilación, Qt 6, QML, Qt Virtual Keyboard y el controlador SQLite.
