@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 
 project(command_executor)
 
@@ -20,10 +20,6 @@ endif()
 string(TOUPPER "${ROBOGAIT_ROS_DISTRO_NORMALIZED}" ROBOGAIT_ROS_DISTRO_UPPER)
 message(STATUS "Building command_executor for ROS 2 ${ROBOGAIT_ROS_DISTRO_NORMALIZED}")
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # Find packages
 find_package(ament_cmake_ros REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -31,10 +27,17 @@ find_package(sensor_msgs REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
 find_package(command_executor_msgs REQUIRED)
 
-# Set include directories
-include_directories(
-    include
-)
+if(ROBOGAIT_ROS_DISTRO_NORMALIZED STREQUAL "lyrical")
+    set(ROBOGAIT_COMMAND_EXECUTOR_MSGS_TARGETS
+        command_executor_msgs::command_executor_msgs)
+    set(ROBOGAIT_SENSOR_MSGS_TARGETS
+        sensor_msgs::sensor_msgs)
+else()
+    set(ROBOGAIT_COMMAND_EXECUTOR_MSGS_TARGETS
+        ${command_executor_msgs_TARGETS})
+    set(ROBOGAIT_SENSOR_MSGS_TARGETS
+        ${sensor_msgs_TARGETS})
+endif()
 
 # Add library
 add_library(${PROJECT_NAME}_lib STATIC
@@ -49,31 +52,32 @@ target_compile_definitions(${PROJECT_NAME}_lib PUBLIC
     "ROBOGAIT_ROS_${ROBOGAIT_ROS_DISTRO_UPPER}"
 )
 
-ament_target_dependencies(${PROJECT_NAME}_lib
-    rclcpp
-    command_executor_msgs
-    sensor_msgs
-)
-
 target_include_directories(${PROJECT_NAME}_lib PUBLIC
-    include
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:include>"
 )
 
-target_link_libraries(${PROJECT_NAME}_lib
+target_link_libraries(${PROJECT_NAME}_lib PUBLIC
+    rclcpp::rclcpp
+    ${ROBOGAIT_COMMAND_EXECUTOR_MSGS_TARGETS}
+    ${ROBOGAIT_SENSOR_MSGS_TARGETS}
     Boost::system
     Boost::filesystem
 )
+
+if(ROBOGAIT_ROS_DISTRO_NORMALIZED STREQUAL "lyrical")
+    target_link_libraries(${PROJECT_NAME}_lib PUBLIC ament_cmake_ros_core::ament_ros_defaults)
+else()
+    target_compile_features(${PROJECT_NAME}_lib PUBLIC cxx_std_17)
+endif()
 
 add_executable(${PROJECT_NAME}_node
     src/main.cpp
 )
 
-ament_target_dependencies(${PROJECT_NAME}_node
-    rclcpp
-)
-
-target_link_libraries(${PROJECT_NAME}_node
+target_link_libraries(${PROJECT_NAME}_node PRIVATE
     ${PROJECT_NAME}_lib
+    rclcpp::rclcpp
 )
 
 install(TARGETS ${PROJECT_NAME}_node
@@ -105,15 +109,16 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}_lib
   )
 
-  ament_add_ros_isolated_gtest(test_command_executor_ros test/test_command_executor_ros.cpp)
-  target_include_directories(test_command_executor_ros PRIVATE include)
-  ament_target_dependencies(test_command_executor_ros
-    rclcpp
-    command_executor_msgs
-    sensor_msgs
-  )
+  if(COMMAND ament_add_ros_isolated_gtest)
+    ament_add_ros_isolated_gtest(test_command_executor_ros test/test_command_executor_ros.cpp)
+  else()
+    ament_add_gtest(test_command_executor_ros test/test_command_executor_ros.cpp)
+  endif()
   target_link_libraries(test_command_executor_ros
     ${PROJECT_NAME}_lib
+    rclcpp::rclcpp
+    ${ROBOGAIT_COMMAND_EXECUTOR_MSGS_TARGETS}
+    ${ROBOGAIT_SENSOR_MSGS_TARGETS}
   )
 endif()
 
