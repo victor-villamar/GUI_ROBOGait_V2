@@ -55,7 +55,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # *********************** ROS2 build packages ***********************
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update \
+    && apt-get dist-upgrade -y \
+    && apt-get install -y --no-install-recommends \
     ros-${ROS_DISTRO}-ament-cmake \
     ros-${ROS_DISTRO}-ament-index-cpp \
     ros-${ROS_DISTRO}-rclcpp \
