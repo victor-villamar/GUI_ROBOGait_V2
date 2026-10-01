@@ -97,8 +97,14 @@ void RoboGaitApplication::initCommon()
 
 bool RoboGaitApplication::initialize()
 {
-  // Load Boostrap YAML configuration
+// Load Boostrap YAML configuration
+#if defined(ROBOGAIT_ROS_HUMBLE) || defined(ROBOGAIT_ROS_JAZZY)
   const std::filesystem::path shared_dir = ament_index_cpp::get_package_share_directory(ROBOGait::ros::define::ROBOGAIT_GUI);
+#elif defined(ROBOGAIT_ROS_LYRICAL)
+  const std::filesystem::path shared_dir = ament_index_cpp::get_package_share_path(ROBOGait::ros::define::ROBOGAIT_GUI);
+#else
+#error "Unsupported ROS 2 distribution"
+#endif
   const std::filesystem::path bootstrap_path = (shared_dir / "params" / "bootstrap.yaml");
   const auto bootstrap_config = getBootstrapConfig(QString::fromStdString(bootstrap_path));
 

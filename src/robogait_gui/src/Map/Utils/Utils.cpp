@@ -216,7 +216,11 @@ bool generateMapPreview(const data::MapData& map_data, const QString& map_name)
     return false;
   }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+  image = image.flipped(Qt::Vertical);
+#else
   image = image.mirrored(false, true);
+#endif
 
   if (!image.save(file_path, "PNG", IMAGE_QUALITY))
   {
