@@ -1,4 +1,6 @@
+#include <cstdint>
 #include <functional>
+#include <vector>
 
 #include <QBuffer>
 #include <QDebug>
@@ -6,14 +8,15 @@
 
 #include "Context/RobotContext.hpp"
 #include "Perception/PersonDetectionMonitor.hpp"
+#include "Ros/MessageCompatibility.hpp"
 #include "Ros/QoSProfiles.hpp"
 #include "Ros/TopicsName.hpp"
 
 namespace
 {
-QImage buildQImageFromRosImage(const sensor_msgs::msg::Image& image)
+QImage buildQImageFromRosImage(const sensor_msgs::msg::Image& image, const std::vector<std::uint8_t>& image_data)
 {
-  const uchar* data = image.data.data();
+  const uchar* data = image_data.data();
   const int width = static_cast<int>(image.width);
   const int height = static_cast<int>(image.height);
   const int bytes_per_line = static_cast<int>(image.step);
@@ -149,20 +152,22 @@ void PersonDetectionMonitor::callbackCameraDetection(const navigation_pkg::msg::
 
 QString PersonDetectionMonitor::imageToDataUrl(const sensor_msgs::msg::Image& image) const
 {
-  if (image.height == 0 || image.width == 0 || image.step == 0 || image.data.empty())
+  const std::vector<std::uint8_t> image_data = ROBOGait::ros::compatibility::toByteVector(image);
+
+  if (image.height == 0 || image.width == 0 || image.step == 0 || image_data.empty())
   {
     qCritical() << "[PersonDetectionMonitor::imageToDataUrl] Empty image received";
     return QString();
   }
 
   const qsizetype required_size = static_cast<qsizetype>(image.step) * static_cast<qsizetype>(image.height);
-  if (static_cast<qsizetype>(image.data.size()) < required_size)
+  if (static_cast<qsizetype>(image_data.size()) < required_size)
   {
     qCritical() << "[PersonDetectionMonitor::imageToDataUrl] Image data is smaller than expected";
     return QString();
   }
 
-  const QImage q_image = buildQImageFromRosImage(image);
+  const QImage q_image = buildQImageFromRosImage(image, image_data);
 
   if (q_image.isNull())
   {
