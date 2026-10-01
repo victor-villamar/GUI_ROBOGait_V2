@@ -10,7 +10,14 @@
 #include <QQmlContext>
 #include <QStandardPaths>
 
+#if defined(ROBOGAIT_ROS_HUMBLE) || defined(ROBOGAIT_ROS_JAZZY)
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#elif defined(ROBOGAIT_ROS_LYRICAL)
+#include <ament_index_cpp/get_package_share_path.hpp>
+#else
+#error "Unsupported ROS 2 distribution"
+#endif
+
 #include <yaml-cpp/yaml.h>
 
 #include <geometry_msgs/msg/twist.hpp>
@@ -97,7 +104,7 @@ void RoboGaitApplication::initCommon()
 
 bool RoboGaitApplication::initialize()
 {
-// Load Boostrap YAML configuration
+  // Load Bootstrap YAML configuration
 #if defined(ROBOGAIT_ROS_HUMBLE) || defined(ROBOGAIT_ROS_JAZZY)
   const std::filesystem::path shared_dir = ament_index_cpp::get_package_share_directory(ROBOGait::ros::define::ROBOGAIT_GUI);
 #elif defined(ROBOGAIT_ROS_LYRICAL)
