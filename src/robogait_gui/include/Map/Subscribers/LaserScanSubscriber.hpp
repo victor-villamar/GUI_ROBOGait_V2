@@ -7,7 +7,7 @@
 #include <rclcpp/node.hpp>
 
 #include <sensor_msgs/msg/laser_scan.hpp>
-#include <tf2_ros/buffer.h>
+#include <tf2_ros/buffer.hpp>
 
 #include "Context/RobotContext.hpp"
 #include "Map/Data/LaserScanData.hpp"

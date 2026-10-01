@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include <tf2_ros/buffer.h>
+#include <tf2_ros/buffer.hpp>
 
 #include "Map/Data/ParticleCloudData.hpp"
 #include "Map/Source/SourceInterface.hpp"
