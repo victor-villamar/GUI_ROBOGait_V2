@@ -10,6 +10,7 @@
         <li><a href="#arquitectura-y-flujos">Arquitectura y flujos</a></li>
         <li><a href="#componentes-principales">Componentes principales</a></li>
         <li><a href="#dependencias">Dependencias</a></li>
+        <li><a href="#compatibilidad-entre-distribuciones">Compatibilidad entre distribuciones</a></li>
         <li><a href="#compilación">Compilación</a></li>
         <li><a href="#tests">Tests</a></li>
         <li><a href="#configuración">Configuración</a></li>
@@ -308,6 +309,24 @@ Por defecto, la base de datos se crea en:
 ```text
 ~/.local/robogait/db_robogait.db
 ```
+
+<!-- COMPATIBILIDAD ENTRE DISTRIBUCIONES -->
+## Compatibilidad entre distribuciones
+
+`robogait_gui` obtiene la distribución desde la variable de entorno `ROS_DISTRO`, definida al cargar `/opt/ros/${ROS_DISTRO}/setup.bash`. CMake acepta `humble`, `jazzy` y `lyrical`, y expone exactamente una macro al código C++: `ROBOGAIT_ROS_HUMBLE`, `ROBOGAIT_ROS_JAZZY` o `ROBOGAIT_ROS_LYRICAL`.
+
+La compilación condicional mantiene en un mismo código fuente las diferencias entre las APIs de cada distribución:
+
+* **Estándar de C++:** Humble y Jazzy utilizan C++17; Lyrical utiliza C++20.
+* **Dependencias ROS 2:** en Humble y Jazzy se enlazan los *targets* exportados en variables como `${nav_msgs_TARGETS}`; en Lyrical se utilizan *targets* importados como `nav_msgs::nav_msgs`. El mismo criterio se aplica a los demás paquetes de mensajes y servicios.
+* **QoS de clientes:** Humble conserva la API basada en `rmw_qos_profile_t`; Jazzy y Lyrical utilizan `rclcpp::QoS`.
+* **Datos binarios de mensajes:** [`MessageCompatibility`](include/Ros/MessageCompatibility.hpp) normaliza como `std::vector<std::uint8_t>` los datos de `sensor_msgs::msg::Image` y de `command_executor_msgs::srv::GetMapData`, independientemente del contenedor generado por ROSIDL.
+* **Directorio compartido del paquete:** Humble y Jazzy utilizan `ament_index_cpp::get_package_share_directory`; Lyrical utiliza `ament_index_cpp::get_package_share_path`.
+* **Valores predeterminados de Ament:** Lyrical enlaza además `ament_cmake_ros_core::ament_ros_defaults`.
+
+Las ramas que dependen de la distribución terminan con `#error` cuando no se ha definido ninguna macro compatible. Esto evita compilar silenciosamente con una API incorrecta.
+
+No es necesario pasar `-DROBOGAIT_ROS_DISTRO=...` a `colcon`: CMake obtiene el valor del entorno ROS 2 activo. La opción permanece disponible para configuraciones manuales y debe coincidir con la distribución cuyo entorno se haya cargado.
 
 <!-- COMPILACIÓN -->
 ## Compilación
