@@ -11,6 +11,7 @@
         <li><a href="#command-executor">Command Executor</a></li>
         <li><a href="#command-executor-msgs">Command Executor msgs</a></li>
         <li><a href="#dependencias">Dependencias</a></li>
+        <li><a href="#compatibilidad-entre-distribuciones">Compatibilidad entre distribuciones</a></li>
         <li><a href="#compilación">Compilación</a></li>
         <li><a href="#tests">Tests</a></li>
         <li><a href="#configuración">Configuración</a></li>
@@ -225,6 +226,7 @@ sudo apt install \
     ros-${ROS_DISTRO}-rclcpp \
     ros-${ROS_DISTRO}-sensor-msgs \
     ros-${ROS_DISTRO}-rosidl-default-generators \
+    ros-${ROS_DISTRO}-rosidl-default-runtime \
     libboost-system-dev \
     libboost-filesystem-dev
 ```
@@ -234,6 +236,21 @@ Para compilar los tests también se necesita:
 ```bash
 sudo apt install ros-${ROS_DISTRO}-ament-cmake-gtest
 ```
+
+<!-- COMPATIBILIDAD ENTRE DISTRIBUCIONES -->
+## Compatibilidad entre distribuciones
+
+`command_executor` obtiene la distribución desde la variable de entorno `ROS_DISTRO`, que queda definida al cargar `/opt/ros/${ROS_DISTRO}/setup.bash`. CMake acepta `humble`, `jazzy` y `lyrical`, y define exactamente una macro: `ROBOGAIT_ROS_HUMBLE`, `ROBOGAIT_ROS_JAZZY` o `ROBOGAIT_ROS_LYRICAL`.
+
+Las diferencias de compilación quedan encapsuladas en CMake y en el perfil QoS:
+
+* **Humble:** &rarr; conserva la API basada en `rmw_qos_profile_t` y compila con C++17.
+* **Jazzy:** &rarr; utiliza `rclcpp::QoS` y compila con C++17.
+* **Lyrical:** &rarr; utiliza `rclcpp::QoS` y los *targets* importados y valores predeterminados exportados por ROS 2.
+
+`command_executor_msgs` solo genera interfaces ROSIDL, por lo que utiliza directamente los generadores de la distribución cargada y no necesita macros condicionales.
+
+No es necesario pasar `-DROBOGAIT_ROS_DISTRO=...` a `colcon`: CMake lo obtiene del entorno ROS 2 activo.
 
 <!-- COMPILACIÓN -->
 ## Compilación
@@ -277,7 +294,7 @@ Validan componentes concretos sin levantar el nodo completo:
 
 * `test_command_executor_ros.cpp`
 
-  Se ejecuta mediante `ament_add_ros_isolated_gtest`, con un dominio ROS aislado. Comprueba:
+  Cuando `ament_add_ros_isolated_gtest` está disponible, se ejecuta con un dominio ROS aislado. En caso contrario, CMake utiliza `ament_add_gtest` como alternativa. Comprueba:
 
   * Que la inicialización falla cuando faltan parámetros obligatorios.
   * Que el nodo se inicializa con un archivo de configuración válido.

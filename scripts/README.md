@@ -123,6 +123,8 @@ colcon build \
     --packages-select command_executor_msgs navigation_pkg command_executor robogait_gui
 ```
 
+Antes de ejecutar `colcon`, `build_workspace.sh` carga el entorno de la distribución seleccionada. Esto define `ROS_DISTRO`, que los CMake de `command_executor` y `robogait_gui` utilizan para activar la rama correspondiente; no es necesario añadir `--cmake-args -DROBOGAIT_ROS_DISTRO=...`.
+
 Al finalizar, añade estas líneas a `.bashrc` si todavía no existen:
 
 ```bash
@@ -183,7 +185,7 @@ source install/setup.bash
 o bien:
 
 ```bash
-# ROS 2 Jazzy en Ubuntu 24.04 o Ubuntu 26.04
+# ROS 2 Jazzy en Ubuntu 24.04
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 ```

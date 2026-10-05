@@ -52,10 +52,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     qml6-module-qt-labs-settings \
     libqt6sql6-sqlite \
     hunspell-es \
+    && if apt-cache show qt6-svg-plugins >/dev/null 2>&1; then \
+      apt-get install -y --no-install-recommends qt6-svg-plugins; \
+    fi \
     && rm -rf /var/lib/apt/lists/*
 
 # *********************** ROS2 build packages ***********************
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update \
+    && apt-get dist-upgrade -y \
+    && apt-get install -y --no-install-recommends \
     ros-${ROS_DISTRO}-ament-cmake \
     ros-${ROS_DISTRO}-ament-index-cpp \
     ros-${ROS_DISTRO}-rclcpp \

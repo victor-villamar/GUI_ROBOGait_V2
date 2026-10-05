@@ -7,7 +7,7 @@
 #include <rclcpp/node.hpp>
 
 #include <nav2_msgs/msg/particle_cloud.hpp>
-#include <tf2_ros/buffer.h>
+#include <tf2_ros/buffer.hpp>
 
 #include "Context/RobotContext.hpp"
 #include "Map/Data/ParticleCloudData.hpp"

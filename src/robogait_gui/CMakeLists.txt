@@ -1,17 +1,39 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 
 project(robogait_gui VERSION 0.1 LANGUAGES CXX)
 
 option(BUILD_TESTING "Build robogait_gui tests" OFF)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
+set(ROBOGAIT_ROS_DISTRO "$ENV{ROS_DISTRO}" CACHE STRING
+    "ROS 2 distribution targeted by robogait_gui")
+set_property(CACHE ROBOGAIT_ROS_DISTRO PROPERTY STRINGS humble jazzy lyrical)
+
+string(TOLOWER "${ROBOGAIT_ROS_DISTRO}" ROBOGAIT_ROS_DISTRO_NORMALIZED)
+set(ROBOGAIT_SUPPORTED_ROS_DISTROS humble jazzy lyrical)
+
+if(NOT ROBOGAIT_ROS_DISTRO_NORMALIZED IN_LIST ROBOGAIT_SUPPORTED_ROS_DISTROS)
+    message(FATAL_ERROR
+        "Unsupported ROBOGAIT_ROS_DISTRO='${ROBOGAIT_ROS_DISTRO}'. "
+        "Expected one of: humble, jazzy, lyrical")
+endif()
+
+string(TOUPPER "${ROBOGAIT_ROS_DISTRO_NORMALIZED}" ROBOGAIT_ROS_DISTRO_UPPER)
+message(STATUS "Building robogait_gui for ROS 2 ${ROBOGAIT_ROS_DISTRO_NORMALIZED}")
+
+# Set the C++ standard required by each ROS 2 distribution
+if(ROBOGAIT_ROS_DISTRO_NORMALIZED STREQUAL "lyrical")
+    set(CMAKE_CXX_STANDARD 20)
+else()
+    set(CMAKE_CXX_STANDARD 17)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find packages
-find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(action_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
@@ -25,6 +47,32 @@ find_package(std_srvs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(command_executor_msgs REQUIRED)
 find_package(navigation_pkg REQUIRED)
+
+if(ROBOGAIT_ROS_DISTRO_NORMALIZED STREQUAL "lyrical")
+    set(ROBOGAIT_ACTION_MSGS_TARGETS action_msgs::action_msgs)
+    set(ROBOGAIT_SENSOR_MSGS_TARGETS sensor_msgs::sensor_msgs)
+    set(ROBOGAIT_GEOMETRY_MSGS_TARGETS geometry_msgs::geometry_msgs)
+    set(ROBOGAIT_NAV_MSGS_TARGETS nav_msgs::nav_msgs)
+    set(ROBOGAIT_MAP_MSGS_TARGETS map_msgs::map_msgs)
+    set(ROBOGAIT_NAV2_MSGS_TARGETS nav2_msgs::nav2_msgs)
+    set(ROBOGAIT_TF2_MSGS_TARGETS tf2_msgs::tf2_msgs)
+    set(ROBOGAIT_STD_SRVS_TARGETS std_srvs::std_srvs)
+    set(ROBOGAIT_COMMAND_EXECUTOR_MSGS_TARGETS
+        command_executor_msgs::command_executor_msgs)
+    set(ROBOGAIT_NAVIGATION_PKG_TARGETS navigation_pkg::navigation_pkg)
+else()
+    set(ROBOGAIT_ACTION_MSGS_TARGETS ${action_msgs_TARGETS})
+    set(ROBOGAIT_SENSOR_MSGS_TARGETS ${sensor_msgs_TARGETS})
+    set(ROBOGAIT_GEOMETRY_MSGS_TARGETS ${geometry_msgs_TARGETS})
+    set(ROBOGAIT_NAV_MSGS_TARGETS ${nav_msgs_TARGETS})
+    set(ROBOGAIT_MAP_MSGS_TARGETS ${map_msgs_TARGETS})
+    set(ROBOGAIT_NAV2_MSGS_TARGETS ${nav2_msgs_TARGETS})
+    set(ROBOGAIT_TF2_MSGS_TARGETS ${tf2_msgs_TARGETS})
+    set(ROBOGAIT_STD_SRVS_TARGETS ${std_srvs_TARGETS})
+    set(ROBOGAIT_COMMAND_EXECUTOR_MSGS_TARGETS
+        ${command_executor_msgs_TARGETS})
+    set(ROBOGAIT_NAVIGATION_PKG_TARGETS ${navigation_pkg_TARGETS})
+endif()
 
 find_package(Qt6 REQUIRED COMPONENTS
     Core
@@ -101,6 +149,7 @@ set(HEADERS
     include/Robot/RobotManager.hpp
     include/Robot/RobotPlacementController.hpp
     include/Ros/Define.hpp
+    include/Ros/MessageCompatibility.hpp
     include/Ros/QoSProfiles.hpp
     include/Ros/RosNodeManager.hpp
     include/Ros/TopicsName.hpp
@@ -187,6 +236,7 @@ set(SOURCES
     src/Robot/RobotManager.cpp
     src/Robot/RobotPlacementController.cpp
     src/Ros/Define.cpp
+    src/Ros/MessageCompatibility.cpp
     src/Ros/QoSProfiles.cpp
     src/Ros/RosNodeManager.cpp
     src/Ros/TopicsName.cpp
@@ -220,14 +270,6 @@ set(RESOURCES
     qmlresources.qrc
 )
 
-# Set library dependencies
-set(LIBS
-    rclcpp::rclcpp
-    ament_index_cpp::ament_index_cpp
-    ${geometry_msgs_LIBRARIES}
-    yaml-cpp
-)
-
 # Set Qt library dependencies
 set(QT_LIBS
     Qt6::Core
@@ -244,27 +286,18 @@ qt_add_resources(SOURCES
     ${RESOURCES}
 )
 
-# Include directories
-include_directories(
-    include
-
-    ${rclcpp_INCLUDE_DIRS}
-    ${geometry_msgs_INCLUDE_DIRS}
-    ${std_msgs_INCLUDE_DIRS}
-    ${nav_msgs_INCLUDE_DIRS}
-    ${tf2_INCLUDE_DIRS}
-    ${Qt6Core_INCLUDE_DIRS}
-    ${Qt6Gui_INCLUDE_DIRS}
-    ${Qt6Qml_INCLUDE_DIRS}
-    ${Qt6Quick_INCLUDE_DIRS}
-    ${Qt6Network_INCLUDE_DIRS}
-    ${Qt6Sql_INCLUDE_DIRS}
-)
-
 # Add executable
 add_executable(${PROJECT_NAME}
     ${SOURCES}
     ${HEADERS}
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    include
+)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    "ROBOGAIT_ROS_${ROBOGAIT_ROS_DISTRO_UPPER}"
 )
 
 option(ENABLE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
@@ -306,30 +339,33 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 
 endif()
 
-# Add dependencies
-ament_target_dependencies(${PROJECT_NAME}
-    rclcpp
-    ament_index_cpp
-    sensor_msgs
-    geometry_msgs
-    nav_msgs
-    map_msgs
-    nav2_msgs
-    tf2
-    tf2_msgs
-    tf2_ros
-    tf2_geometry_msgs
-    std_srvs
-    command_executor_msgs
-    navigation_pkg
-    yaml-cpp
-)
-
 # Link libraries
-target_link_libraries(${PROJECT_NAME}
-    ${LIBS}
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    rclcpp::rclcpp
+    rclcpp_action::rclcpp_action
+    ament_index_cpp::ament_index_cpp
+    ${ROBOGAIT_ACTION_MSGS_TARGETS}
+    ${ROBOGAIT_SENSOR_MSGS_TARGETS}
+    ${ROBOGAIT_GEOMETRY_MSGS_TARGETS}
+    ${ROBOGAIT_NAV_MSGS_TARGETS}
+    ${ROBOGAIT_MAP_MSGS_TARGETS}
+    ${ROBOGAIT_NAV2_MSGS_TARGETS}
+    tf2::tf2
+    ${ROBOGAIT_TF2_MSGS_TARGETS}
+    tf2_ros::tf2_ros
+    tf2_geometry_msgs::tf2_geometry_msgs
+    ${ROBOGAIT_STD_SRVS_TARGETS}
+    ${ROBOGAIT_COMMAND_EXECUTOR_MSGS_TARGETS}
+    ${ROBOGAIT_NAVIGATION_PKG_TARGETS}
+    yaml-cpp::yaml-cpp
     ${QT_LIBS}
 )
+
+if(ROBOGAIT_ROS_DISTRO_NORMALIZED STREQUAL "lyrical")
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        ament_cmake_ros_core::ament_ros_defaults
+    )
+endif()
 
 # Install
 install(TARGETS ${PROJECT_NAME}

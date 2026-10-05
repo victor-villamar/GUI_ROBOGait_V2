@@ -15,6 +15,7 @@
 #include "Map/Interaction/Geometry/StrokeProcessor.hpp"
 #include "Map/Utils/Utils.hpp"
 #include "Ros/Define.hpp"
+#include "Ros/MessageCompatibility.hpp"
 #include "Ros/QoSProfiles.hpp"
 #include "Ros/TopicsName.hpp"
 #include "Services/RobotServiceClient.hpp"
@@ -1130,7 +1131,7 @@ bool RobotServiceClient::callGetMapDataService(const std::string& map_name, std:
     }
 
     yaml_out = response->yaml_content;
-    pgm_out = response->pgm_content;
+    pgm_out = ROBOGait::ros::compatibility::toByteVector(*response);
     return true;
   }
   else

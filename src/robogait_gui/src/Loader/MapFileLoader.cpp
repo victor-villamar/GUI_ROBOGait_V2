@@ -6,7 +6,7 @@
 #include <limits>
 #include <utility>
 
-#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Quaternion.hpp>
 #include <yaml-cpp/yaml.h>
 
 #include "Loader/MapFileLoader.hpp"

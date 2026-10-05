@@ -27,4 +27,8 @@ install_qt6_dependencies()
     qml6-module-qt-labs-settings \
     libqt6sql6-sqlite \
     hunspell-es
+
+  if apt-cache show qt6-svg-plugins >/dev/null 2>&1; then
+    apt_install qt6-svg-plugins
+  fi
 }
