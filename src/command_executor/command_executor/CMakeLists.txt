@@ -24,7 +24,7 @@ message(STATUS "Building command_executor for ROS 2 ${ROBOGAIT_ROS_DISTRO_NORMAL
 find_package(ament_cmake_ros REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system filesystem)
+find_package(Boost CONFIG REQUIRED COMPONENTS filesystem)
 find_package(command_executor_msgs REQUIRED)
 
 if(ROBOGAIT_ROS_DISTRO_NORMALIZED STREQUAL "lyrical")
@@ -61,7 +61,6 @@ target_link_libraries(${PROJECT_NAME}_lib PUBLIC
     rclcpp::rclcpp
     ${ROBOGAIT_COMMAND_EXECUTOR_MSGS_TARGETS}
     ${ROBOGAIT_SENSOR_MSGS_TARGETS}
-    Boost::system
     Boost::filesystem
 )
 

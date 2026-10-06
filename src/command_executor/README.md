@@ -209,7 +209,7 @@ Dependencias principales de `command_executor`:
 * `rclcpp`
 * `sensor_msgs`
 * `command_executor_msgs`
-* Boost &rarr; `system` | `filesystem`
+* Boost &rarr; `filesystem` (Boost.System se utiliza como biblioteca de cabeceras)
 
 Dependencias principales de `command_executor_msgs`:
 
@@ -227,7 +227,6 @@ sudo apt install \
     ros-${ROS_DISTRO}-sensor-msgs \
     ros-${ROS_DISTRO}-rosidl-default-generators \
     ros-${ROS_DISTRO}-rosidl-default-runtime \
-    libboost-system-dev \
     libboost-filesystem-dev
 ```
 
