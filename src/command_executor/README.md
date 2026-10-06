@@ -247,6 +247,8 @@ Las diferencias de compilación quedan encapsuladas en CMake y en el perfil QoS:
 * **Jazzy:** &rarr; utiliza `rclcpp::QoS` y compila con C++17.
 * **Lyrical:** &rarr; utiliza `rclcpp::QoS` y los *targets* importados y valores predeterminados exportados por ROS 2.
 
+[`ProcessManager.hpp`](command_executor/include/ProcessManager.hpp) selecciona las cabeceras y el *namespace* de Boost.Process v1 según `BOOST_VERSION`. Humble y Jazzy utilizan las rutas tradicionales `boost/process/`, mientras que Boost 1.88 o posterior, incluido Boost 1.90 en Lyrical, utiliza `boost/process/v1/`.
+
 `command_executor_msgs` solo genera interfaces ROSIDL, por lo que utiliza directamente los generadores de la distribución cargada y no necesita macros condicionales.
 
 No es necesario pasar `-DROBOGAIT_ROS_DISTRO=...` a `colcon`: CMake lo obtiene del entorno ROS 2 activo.

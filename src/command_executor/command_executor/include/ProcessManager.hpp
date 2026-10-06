@@ -5,13 +5,30 @@
 #include <string>
 #include <unordered_map>
 
+#include <boost/version.hpp>
+
+#if BOOST_VERSION >= 108800
+#include <boost/process/v1/args.hpp>
+#include <boost/process/v1/child.hpp>
+#include <boost/process/v1/group.hpp>
+#include <boost/process/v1/io.hpp>
+#else
+#include <boost/process/args.hpp>
 #include <boost/process/child.hpp>
 #include <boost/process/group.hpp>
-
+#include <boost/process/io.hpp>
+#endif
 namespace ROBOGait
 {
 namespace command
 {
+
+#if BOOST_VERSION >= 108800
+namespace boost_process = boost::process::v1;
+#else
+namespace boost_process = boost::process;
+#endif
+
 /**
  * @brief ProcessManager class for managing system processes
  */
@@ -73,9 +90,9 @@ private:
    */
   struct ProcessEntry
   {
-    boost::process::group group;
-    boost::process::child child;
-    boost::process::pid_t pid{-1};
+    boost_process::group group;
+    boost_process::child child;
+    boost_process::pid_t pid{-1};
     bool is_stopping{false};
   };
 

@@ -7,16 +7,13 @@
 #include <signal.h>
 #include <thread>
 
-#include <boost/process/args.hpp>
-#include <boost/process/io.hpp>
-#include <boost/process/search_path.hpp>
-
 #include "ProcessManager.hpp"
 
 using namespace ROBOGait::command;
+namespace boost_process = ROBOGait::command::boost_process;
 namespace
 {
-bool waitForProcessExit(boost::process::child& child, std::chrono::milliseconds timeout, std::error_code& ec)
+bool waitForProcessExit(boost_process::child& child, std::chrono::milliseconds timeout, std::error_code& ec)
 {
   const auto deadline = std::chrono::steady_clock::now() + timeout;
 
@@ -109,15 +106,15 @@ bool ProcessManager::startProcess(const std::string& cmd)
 
   const std::string stderr_log_path = buildLogPath(robot_namespace_, "stderr");
 
-  boost::process::group group;
+  boost_process::group group;
 
   // clang-format off
-  boost::process::child child(
+  boost_process::child child(
     "/bin/bash",
-    boost::process::args({"-lc", cmd}),
+    boost_process::args({"-lc", cmd}),
     group,
-    boost::process::std_out > stdout_log_path,
-    boost::process::std_err > stderr_log_path
+    boost_process::std_out > stdout_log_path,
+    boost_process::std_err > stderr_log_path
   );
   // clang-format on
 
@@ -193,11 +190,11 @@ bool ProcessManager::executeOneShotCommand(const std::string& cmd)
   const std::string stderr_log_path = buildLogPath(robot_namespace_, "stderr");
 
   // clang-format off
-  boost::process::child child(
+  boost_process::child child(
     "/bin/bash",
-    boost::process::args({"-lc", cmd}),
-    boost::process::std_out > stdout_log_path,
-    boost::process::std_err > stderr_log_path
+    boost_process::args({"-lc", cmd}),
+    boost_process::std_out > stdout_log_path,
+    boost_process::std_err > stderr_log_path
   );
   // clang-format on
 
