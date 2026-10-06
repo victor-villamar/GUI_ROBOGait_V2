@@ -48,6 +48,18 @@ find_package(yaml-cpp REQUIRED)
 find_package(command_executor_msgs REQUIRED)
 find_package(navigation_pkg REQUIRED)
 
+# yaml-cpp exports an unnamespaced target on Ubuntu 22.04/Humble and a
+# namespaced target on newer Ubuntu/ROS 2 distributions.
+if(TARGET yaml-cpp::yaml-cpp)
+    set(ROBOGAIT_YAML_CPP_TARGET yaml-cpp::yaml-cpp)
+elseif(TARGET yaml-cpp)
+    set(ROBOGAIT_YAML_CPP_TARGET yaml-cpp)
+elseif(YAML_CPP_LIBRARIES)
+    set(ROBOGAIT_YAML_CPP_TARGET ${YAML_CPP_LIBRARIES})
+else()
+    message(FATAL_ERROR "yaml-cpp was found but did not export a usable target")
+endif()
+
 if(ROBOGAIT_ROS_DISTRO_NORMALIZED STREQUAL "lyrical")
     set(ROBOGAIT_ACTION_MSGS_TARGETS action_msgs::action_msgs)
     set(ROBOGAIT_SENSOR_MSGS_TARGETS sensor_msgs::sensor_msgs)
@@ -357,7 +369,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${ROBOGAIT_STD_SRVS_TARGETS}
     ${ROBOGAIT_COMMAND_EXECUTOR_MSGS_TARGETS}
     ${ROBOGAIT_NAVIGATION_PKG_TARGETS}
-    yaml-cpp::yaml-cpp
+    ${ROBOGAIT_YAML_CPP_TARGET}
     ${QT_LIBS}
 )
 
@@ -395,7 +407,7 @@ if(BUILD_TESTING)
     )
     target_include_directories(test_yaml_loader PRIVATE include)
     target_link_libraries(test_yaml_loader
-        yaml-cpp
+        ${ROBOGAIT_YAML_CPP_TARGET}
     )
 
     ament_add_gtest(test_bootstrap_loader
@@ -404,7 +416,7 @@ if(BUILD_TESTING)
     )
     target_include_directories(test_bootstrap_loader PRIVATE include)
     target_link_libraries(test_bootstrap_loader
-        yaml-cpp
+        ${ROBOGAIT_YAML_CPP_TARGET}
     )
 
     ament_add_gtest(test_path_data

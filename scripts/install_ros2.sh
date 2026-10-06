@@ -30,9 +30,11 @@ install_ros2_dependencies()
   apt_install \
     "ros-${ROS_DISTRO}-ros-base" \
     "ros-${ROS_DISTRO}-ament-cmake" \
+    "ros-${ROS_DISTRO}-ament-cmake-ros" \
     "ros-${ROS_DISTRO}-ament-index-cpp" \
     "ros-${ROS_DISTRO}-rclcpp" \
     "ros-${ROS_DISTRO}-rclcpp-action" \
+    "ros-${ROS_DISTRO}-action-msgs" \
     "ros-${ROS_DISTRO}-geometry-msgs" \
     "ros-${ROS_DISTRO}-sensor-msgs" \
     "ros-${ROS_DISTRO}-nav-msgs" \
