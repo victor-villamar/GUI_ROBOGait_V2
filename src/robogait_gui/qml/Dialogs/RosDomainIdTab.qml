@@ -122,6 +122,21 @@ Item {
                         clip: true
                         anchors.fill: parent
                         anchors.rightMargin: root.spinboxButtonPx + root.spinboxButtonMargin * 2
+
+                        onTextEdited: {
+                            if (!acceptableInput) {
+                                return
+                            }
+
+                            const parsedValue = domainSpinBox.valueFromText(
+                                text,
+                                domainSpinBox.locale
+                            )
+
+                            if (domainSpinBox.value !== parsedValue) {
+                                domainSpinBox.value = parsedValue
+                            }
+                        }
                     }
 
                     up.indicator: Rectangle {

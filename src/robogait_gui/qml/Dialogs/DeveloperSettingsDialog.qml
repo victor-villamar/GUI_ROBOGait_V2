@@ -255,6 +255,7 @@ Dialog {
                 Layout.preferredHeight: root.buttonHeightPx
                 text: qsTr("Aplicar")
                 enabled: developerSettings ? developerSettings.hasPendingChanges : false
+                opacity: enabled ? 1.0 : 0.5
             
                 property real holdProgress: 0
                 property bool holdToApply: true
