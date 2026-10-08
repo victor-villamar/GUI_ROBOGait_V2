@@ -344,7 +344,7 @@ source install/setup.bash
 |-----------------------------|:--------------------:|----------------------------------------------|
 |       `BUILD_TESTING`       |         `OFF`        |        Compila las pruebas del paquete       |
 | `ENABLE_WARNINGS_AS_ERRORS` |         `OFF`        | Trata los avisos del compilador como errores |
-|     `SHOW_VERBOSE_LOGS`     |         `OFF`        |  Conserva la salida de depuración detallada  |
+|    `DISABLE_DEBUG_LOGS`     |         `OFF`        |          Oculta la salida de `qDebug`        |
 |        `SIMULATION`         |         `OFF`        |  Utiliza la disposición de frames simulada   |
 |   `ROBOGAIT_ROS_DISTRO`     |     `$ROS_DISTRO`    |   Selecciona `humble`, `jazzy` o `lyrical`   |
 
@@ -352,6 +352,12 @@ Por ejemplo, para habilitar los tests:
 
 ```bash
 colcon build --packages-up-to robogait_gui --cmake-args -DBUILD_TESTING=ON
+```
+
+La salida de `qDebug()` está habilitada de forma predeterminada. Para ocultarla:
+
+```bash
+colcon build --packages-up-to robogait_gui --cmake-args -DDISABLE_DEBUG_LOGS=ON
 ```
 
 ### Robot real y simulación

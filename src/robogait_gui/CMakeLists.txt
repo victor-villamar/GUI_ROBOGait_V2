@@ -324,9 +324,9 @@ endif()
 
 option(ENABLE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 
-option(SHOW_VERBOSE_LOGS "Show verbose debug logs" OFF)
+option(DISABLE_DEBUG_LOGS "Disable qDebug log output" OFF)
 
-if(NOT SHOW_VERBOSE_LOGS)
+if(DISABLE_DEBUG_LOGS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         QT_NO_DEBUG_OUTPUT
     )
