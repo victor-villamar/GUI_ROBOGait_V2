@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 project(robogait_gui VERSION 0.1 LANGUAGES CXX)
 
 option(BUILD_TESTING "Build robogait_gui tests" OFF)
+option(SIMULATION "Use the simulation TF frame layout" OFF)
 
 set(ROBOGAIT_ROS_DISTRO "$ENV{ROS_DISTRO}" CACHE STRING
     "ROS 2 distribution targeted by robogait_gui")
@@ -312,7 +313,17 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     "ROBOGAIT_ROS_${ROBOGAIT_ROS_DISTRO_UPPER}"
 )
 
+if(SIMULATION)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        ROBOGAIT_SIMULATION
+    )
+    message(STATUS "ROBOGait TF frame layout: simulation")
+else()
+    message(STATUS "ROBOGait TF frame layout: real robot")
+endif()
+
 option(ENABLE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+
 option(SHOW_VERBOSE_LOGS "Show verbose debug logs" OFF)
 
 if(NOT SHOW_VERBOSE_LOGS)
@@ -534,6 +545,11 @@ if(BUILD_TESTING)
     target_link_libraries(test_robot_context
         Qt6::Core
     )
+    if(SIMULATION)
+        target_compile_definitions(test_robot_context PRIVATE
+            ROBOGAIT_SIMULATION
+        )
+    endif()
 endif()
 
 ament_package()
