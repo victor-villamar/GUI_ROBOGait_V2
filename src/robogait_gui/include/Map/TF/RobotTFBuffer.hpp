@@ -46,7 +46,7 @@ public:
   void setRobotContext(const ROBOGait::context::RobotContext& context);
 
   /**
-   * @brief Create a fresh buffer and subscribe to the selected robot TF topics
+   * @brief Create a fresh buffer and subscribe to the TF topics for the active build mode
    */
   void start();
 
