@@ -131,8 +131,13 @@ bool RobotServiceClient::startMapping()
   }
 
   const RobotServiceClient::CommandInfo& cmd_info = commands_[KEY_CARTOGRAPHER];
+  std::string args = cmd_info.append_args;
 
-  const std::string full_cmd = buildCommand(cmd_info.cmd, cmd_info.append_args);
+  const std::unordered_map<std::string, std::string> vars = {{"{namespace}", getRobotNamespace()}};
+
+  args = replacePlaceholders(args, vars);
+
+  const std::string full_cmd = buildCommand(cmd_info.cmd, args);
 
   CommandRequestContext context{CommandRequestType::StartMapping, std::string(KEY_CARTOGRAPHER), full_cmd, std::string()};
 
@@ -318,7 +323,8 @@ bool RobotServiceClient::startNavigation(const std::string& map_name)
   const RobotServiceClient::CommandInfo& cmd_info = commands_[KEY_NAVIGATION];
   std::string args = cmd_info.append_args;
 
-  const std::unordered_map<std::string, std::string> vars = {{"{map_path}", map_path},
+  const std::unordered_map<std::string, std::string> vars = {{"{namespace}", getRobotNamespace()},
+                                                             {"{map_path}", map_path},
                                                              {"{map_name}", safe_name},
                                                              {"{navigation_use_sim_time}", navigation_use_sim_time_arg},
                                                              {"{nav2_params_path}", nav2_params_path},
@@ -877,6 +883,13 @@ bool RobotServiceClient::useNavigationSimTime() const
 
 bool RobotServiceClient::callCommandServiceAsync(const std::string& cmd, bool execute, const CommandRequestContext& context)
 {
+  if (cmd.empty())
+  {
+    qCritical() << "[RobotServiceClient::callCommandServiceAsync] Command is empty";
+    handleCommandResponse(context, false);
+    return false;
+  }
+
   if (!initialized_)
   {
     qCritical() << "[RobotServiceClient::callCommandServiceAsync] RobotServiceClient is not initialized";
@@ -1149,6 +1162,23 @@ std::string RobotServiceClient::buildCommand(const std::string& cmd, const std::
   }
 
   return cmd + " " + args;
+}
+
+std::string RobotServiceClient::getRobotNamespace() const
+{
+  if (!context_ || !context_->isConfigured() || !context_->usesNamespace())
+  {
+    return std::string();
+  }
+
+  std::string robot_namespace = context_->topicNamespace().toStdString();
+
+  while (!robot_namespace.empty() && robot_namespace.front() == '/')
+  {
+    robot_namespace.erase(0, 1);
+  }
+
+  return robot_namespace;
 }
 
 bool RobotServiceClient::validateCommandKey(const std::string& key) const

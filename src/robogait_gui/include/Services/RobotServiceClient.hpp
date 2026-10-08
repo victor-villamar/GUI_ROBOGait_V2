@@ -451,6 +451,13 @@ private:
   std::string buildCommand(const std::string& cmd, const std::string& args);
 
   /**
+   * @brief Get the selected robot namespace without its leading slash
+   *
+   * @return The normalized namespace, or an empty string if no namespace is configured
+   */
+  std::string getRobotNamespace() const;
+
+  /**
    * @brief Validate a command key
    *
    * @param key The command key to validate
@@ -605,9 +612,9 @@ private:
 
   std::optional<nav_msgs::msg::Path> manual_follow_path_; /**< The last prepared manual path, if any */
 
-  bool initialized_;              /**< Flag indicating if the client is initialized */
-  bool nav_goal_active_;          /**< Flag indicating if there is an active navigation goal */
-  bool cancel_in_progress_;       /**< Flag indicating if a cancel is in progress for the active navigation goal */
+  bool initialized_;        /**< Flag indicating if the client is initialized */
+  bool nav_goal_active_;    /**< Flag indicating if there is an active navigation goal */
+  bool cancel_in_progress_; /**< Flag indicating if a cancel is in progress for the active navigation goal */
 
   std::chrono::seconds start_stop_timeout_s_; /**< Configurable timeout for STARTING/STOPPING transitions */
 
