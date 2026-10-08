@@ -48,7 +48,7 @@ void LaserScanSubscriber::setRobotContext(const ROBOGait::context::RobotContext&
 
   if (context_)
   {
-    map_frame_ = context_->resolveFrame(map_frame_);
+    map_frame_ = context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME);
   }
 }
 
@@ -128,7 +128,11 @@ void LaserScanSubscriber::callbackScan(const sensor_msgs::msg::LaserScan::Shared
 
   std::string scan_frame = msg->header.frame_id;
 
-  if (!scan_frame.empty() && scan_frame.front() == '/')
+  if (context_)
+  {
+    scan_frame = context_->resolveFrame(scan_frame);
+  }
+  else if (!scan_frame.empty() && scan_frame.front() == '/')
   {
     scan_frame.erase(0, 1);
   }

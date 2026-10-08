@@ -91,6 +91,11 @@ public:
 
 private:
   /**
+   * @brief Resolve the original frame IDs using the current robot context
+   */
+  void resolveFrames();
+
+  /**
    * @brief Timer callback to update the robot pose from TF
    */
   void updatePoseFromTF();
@@ -100,6 +105,8 @@ private:
   rclcpp::TimerBase::SharedPtr tf_timer_;
 
   data::RobotPoseData* robot_pose_data_;
+  std::string source_map_frame_;
+  std::string source_robot_frame_;
   std::string map_frame_;
   std::string robot_frame_;
   bool active_;

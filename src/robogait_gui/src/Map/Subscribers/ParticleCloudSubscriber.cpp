@@ -46,7 +46,7 @@ void ParticleCloudSubscriber::setRobotContext(const ROBOGait::context::RobotCont
 
   if (context_)
   {
-    map_frame_ = context_->resolveFrame(map_frame_);
+    map_frame_ = context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME);
   }
 }
 
@@ -126,7 +126,11 @@ void ParticleCloudSubscriber::callbackParticleCloud(const nav2_msgs::msg::Partic
 
   std::string cloud_frame = msg->header.frame_id;
 
-  if (!cloud_frame.empty() && cloud_frame.front() == '/')
+  if (context_)
+  {
+    cloud_frame = context_->resolveFrame(cloud_frame);
+  }
+  else if (!cloud_frame.empty() && cloud_frame.front() == '/')
   {
     cloud_frame.erase(0, 1);
   }
