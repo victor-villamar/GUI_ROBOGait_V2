@@ -12,7 +12,15 @@
 using namespace ROBOGait::map::subscribers;
 
 TFSubscriber::TFSubscriber() :
-    parent_node_(nullptr), robot_pose_data_(nullptr), map_frame_(""), robot_frame_(""), active_(false), warn_logged_(false), paused_(false)
+    parent_node_(nullptr),
+    robot_pose_data_(nullptr),
+    source_map_frame_(""),
+    source_robot_frame_(""),
+    map_frame_(""),
+    robot_frame_(""),
+    active_(false),
+    warn_logged_(false),
+    paused_(false)
 {
 }
 
@@ -27,8 +35,9 @@ void TFSubscriber::initialize(rclcpp::Node* parent_node, const std::string& map_
   }
 
   parent_node_ = parent_node;
-  map_frame_ = map_frame;
-  robot_frame_ = robot_frame;
+  source_map_frame_ = map_frame;
+  source_robot_frame_ = robot_frame;
+  resolveFrames();
 }
 
 void TFSubscriber::setRobotPoseData(data::RobotPoseData* robot_pose_data) { robot_pose_data_ = robot_pose_data; }
@@ -38,12 +47,20 @@ void TFSubscriber::setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer
 void TFSubscriber::setRobotContext(const ROBOGait::context::RobotContext& context)
 {
   context_ = context;
+  resolveFrames();
+}
 
+void TFSubscriber::resolveFrames()
+{
   if (context_)
   {
-    map_frame_ = context_->resolveFrame(map_frame_);
-    robot_frame_ = context_->resolveFrame(robot_frame_);
+    map_frame_ = context_->resolveFrame(source_map_frame_);
+    robot_frame_ = context_->resolveFrame(source_robot_frame_);
+    return;
   }
+
+  map_frame_ = source_map_frame_;
+  robot_frame_ = source_robot_frame_;
 }
 
 void TFSubscriber::start()
