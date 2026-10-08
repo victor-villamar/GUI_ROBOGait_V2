@@ -345,12 +345,42 @@ source install/setup.bash
 |       `BUILD_TESTING`       |         `OFF`        |        Compila las pruebas del paquete       |
 | `ENABLE_WARNINGS_AS_ERRORS` |         `OFF`        | Trata los avisos del compilador como errores |
 |     `SHOW_VERBOSE_LOGS`     |         `OFF`        |  Conserva la salida de depuración detallada  |
+|        `SIMULATION`         |         `OFF`        |  Utiliza la disposición de frames simulada   |
 |   `ROBOGAIT_ROS_DISTRO`     |     `$ROS_DISTRO`    |   Selecciona `humble`, `jazzy` o `lyrical`   |
 
 Por ejemplo, para habilitar los tests:
 
 ```bash
 colcon build --packages-up-to robogait_gui --cmake-args -DBUILD_TESTING=ON
+```
+
+### Robot real y simulación
+
+Por defecto, `SIMULATION=OFF` configura la resolución de frames para el robot
+real. Los frames relativos al robot reciben el namespace seleccionado, mientras
+que `map` permanece como frame global:
+
+```text
+base_link -> robot1/base_link
+odom      -> robot1/odom
+map       -> map
+```
+
+Para compilar la GUI para simulación debe activarse la opción:
+
+```bash
+colcon build --packages-up-to robogait_gui --cmake-args -DSIMULATION=ON
+```
+
+En este modo la GUI conserva los identificadores de frame publicados por el
+simulador. La opción no modifica la resolución de topics, que continúa aplicando
+el namespace del robot seleccionado.
+
+Para volver a compilar para el robot real se debe desactivar explícitamente la
+opción, ya que CMake conserva su valor en la caché del directorio de compilación:
+
+```bash
+colcon build --packages-up-to robogait_gui --cmake-args -DSIMULATION=OFF
 ```
 
 La distribución se obtiene del entorno ROS cargado. También puede indicarse
