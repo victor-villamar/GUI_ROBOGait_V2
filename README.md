@@ -35,6 +35,8 @@ Contiene los paquetes ROS 2 y el código fuente del proyecto:
 
 * [`navigation_pkg`](src/navigation_pkg/) &rarr; Interfaces ROS compartidas por compatibilidad con RoboMesh e interfaz experimental para detecciones de cámara. Consulte su documentación técnica en &rarr; [src/navigation_pkg/README.md](src/navigation_pkg/README.md).
 
+* [`nav2_msgs`](src/nav2_msgs/) &rarr; Subconjunto local de interfaces Nav2 Jazzy generado únicamente en Lyrical para que la GUI mantenga el contrato DDS del robot Jazzy. Consulte su documentación técnica en &rarr; [src/nav2_msgs/README.md](src/nav2_msgs/README.md).
+
 ### `scripts/`
 
 Contiene las funciones de instalación. Los scripts auxiliares son cargados por `install.sh` y no están diseñados para ejecutarse individualmente.
@@ -56,16 +58,17 @@ La construcción, configuración, ejecución y resolución de problemas se detal
 <!-- INSTALADOR PRINCIPAL -->
 ## Instalador principal
 
-[`install.sh`](install.sh) carga las funciones de `scripts/`, activa el modo estricto de Bash y guía al usuario mediante la selección de modalidad y distribución ROS 2. Las operaciones que necesitan privilegios solicitan la contraseña de `sudo` una vez y la reutilizan durante esa ejecución.
+[`install.sh`](install.sh) carga las funciones de `scripts/`, activa el modo estricto de Bash y guía al usuario mediante la selección de modalidad y, cuando corresponde, de distribución ROS 2. La recompilación del entorno de desarrollo detecta la distribución automáticamente. Las operaciones que necesitan privilegios solicitan la contraseña de `sudo` una vez y la reutilizan durante esa ejecución.
 
-|         Modalidad         |                              Instala y configura                             |                             Resultado                             |
-|---------------------------|:----------------------------------------------------------------------------:|-------------------------------------------------------------------|
-|  Ordenador de desarrollo  |        ROS 2, Qt 6, herramientas C++, dependencias y utilidades SQLite       |      Workspace compilado y entornos ROS añadidos a `.bashrc`      |
-| Dispositivo de aplicación | Docker Engine, grupos gráficos, entorno Docker, imagen y servicio de usuario |   GUI preparada para iniciarse mediante systemd y Docker Compose  |
-|        Solo Docker        |            Docker Engine, grupos gráficos, entorno Docker e imagen           | Imagen disponible para ejecución manual, sin instalar el servicio |
-|    Recompilar Docker      |             Reutiliza Docker y reconstruye la imagen existente              |      Imagen actualizada sin reinstalar ni reconfigurar Docker      |
+|             Modalidad            |                              Instala y configura                             |                              Resultado                             |
+|----------------------------------|:----------------------------------------------------------------------------:|--------------------------------------------------------------------|
+|      Ordenador de desarrollo     |        ROS 2, Qt 6, herramientas C++, dependencias y utilidades SQLite       |       Workspace compilado y entornos ROS añadidos a `.bashrc`      |
+|     Dispositivo de aplicación    | Docker Engine, grupos gráficos, entorno Docker, imagen y servicio de usuario |    GUI preparada para iniciarse mediante systemd y Docker Compose  |
+|            Solo Docker           |            Docker Engine, grupos gráficos, entorno Docker e imagen           |  Imagen disponible para ejecución manual, sin instalar el servicio |
+|        Recompilar Docker         |              Reutiliza Docker y reconstruye la imagen existente              |      Imagen actualizada sin reinstalar ni reconfigurar Docker      |
+| Recompilar entorno de desarrollo |     Detecta la instalación ROS 2 y vuelve a ejecutar `colcon build`          |       Workspace actualizado sin reinstalar dependencias            |
 
-El flujo de desarrollo compila mediante `colcon` los paquetes `command_executor_msgs`, `navigation_pkg`, `command_executor` y `robogait_gui`. Los flujos Docker construyen la imagen `robogait_gui:${ROS_DISTRO}`; únicamente la modalidad **Dispositivo de aplicación** crea `robogait-gui-docker.service`. La modalidad **Recompilar Docker** omite la instalación y configuración de Docker y actualiza solamente el entorno `.env` y la imagen.
+El flujo de desarrollo compila mediante `colcon` los paquetes `command_executor_msgs`, `navigation_pkg`, `command_executor` y `robogait_gui`. Cuando la distribución seleccionada es Lyrical también genera el paquete local `nav2_msgs`; en Humble y Jazzy utiliza el proporcionado por `/opt/ros`. La modalidad **Recompilar entorno de desarrollo** detecta automáticamente la distribución activa o instalada y repite esta compilación sin solicitar una versión ni reinstalar dependencias. Los flujos Docker construyen la imagen `robogait_gui:${ROS_DISTRO}`; únicamente la modalidad **Dispositivo de aplicación** crea `robogait-gui-docker.service`. La modalidad **Recompilar Docker** omite la instalación y configuración de Docker y actualiza solamente el entorno `.env` y la imagen.
 
 > [!WARNING]
 >
@@ -88,6 +91,8 @@ La distribución activa se obtiene del entorno cargado mediante `/opt/ros/${ROS_
 
 Los paquetes que solo generan interfaces, como `command_executor_msgs` y `navigation_pkg`, no necesitan macros por distribución: ROSIDL utiliza los generadores y *targets* proporcionados por el entorno ROS 2 activo.
 
+Las acciones de Navigation2 no mantienen el mismo contrato entre Jazzy y Lyrical. Para que una GUI Lyrical pueda comunicarse con el robot Jazzy, el workspace incluye un [`nav2_msgs` local](src/nav2_msgs/) con las definiciones Jazzy de `ComputePathToPose`, `NavigateToPose` y `FollowPath`, además de los mensajes de partículas utilizados por la GUI. Este override solo se compila en Lyrical; Humble y Jazzy continúan usando sus paquetes oficiales.
+
 <!-- INSTALACIÓN -->
 ## Instalación
 
@@ -100,7 +105,7 @@ chmod +x install.sh
 ./install.sh
 ```
 
-Seleccione una de las cuatro modalidades mostradas por el instalador. Después de instalar Docker, cierre la sesión y vuelva a entrar, o reinicie el equipo, para aplicar la pertenencia al grupo `docker`.
+Seleccione una de las cinco modalidades mostradas por el instalador. Después de instalar Docker, cierre la sesión y vuelva a entrar, o reinicie el equipo, para aplicar la pertenencia al grupo `docker`.
 
 Para instrucciones específicas consulte:
 

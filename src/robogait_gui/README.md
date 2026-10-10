@@ -323,6 +323,7 @@ La compilación condicional mantiene en un mismo código fuente las diferencias 
 * **Datos binarios de mensajes:** [`MessageCompatibility`](include/Ros/MessageCompatibility.hpp) normaliza como `std::vector<std::uint8_t>` los datos de `sensor_msgs::msg::Image` y de `command_executor_msgs::srv::GetMapData`, independientemente del contenedor generado por ROSIDL.
 * **Directorio compartido del paquete:** Humble y Jazzy utilizan `ament_index_cpp::get_package_share_directory`; Lyrical utiliza `ament_index_cpp::get_package_share_path`.
 * **Valores predeterminados de Ament:** Lyrical enlaza además `ament_cmake_ros_core::ament_ros_defaults`.
+* **Acciones Nav2:** las definiciones de `ComputePathToPose`, `NavigateToPose` y `FollowPath` han cambiado en Lyrical. La compilación Lyrical enlaza el paquete [`nav2_msgs`](../nav2_msgs/) local, generado con las interfaces Jazzy, para conservar el contrato DDS del robot. Humble y Jazzy utilizan el paquete instalado en `/opt/ros`.
 
 Las ramas que dependen de la distribución terminan con `#error` cuando no se ha definido ninguna macro compatible. Esto evita compilar silenciosamente con una API incorrecta.
 
@@ -331,12 +332,30 @@ No es necesario pasar `-DROBOGAIT_ROS_DISTRO=...` a `colcon`: CMake obtiene el v
 <!-- COMPILACIÓN -->
 ## Compilación
 
-Desde la raíz del repositorio y con el entorno ROS cargado:
+Para recompilar automáticamente el workspace después de una instalación de desarrollo, ejecute [`install.sh`](../../install.sh) y seleccione **Recompilación del entorno de desarrollo**. Esta modalidad detecta la distribución ROS 2 activa o instalada, aplica la selección correcta de `nav2_msgs` y no vuelve a instalar dependencias:
 
 ```bash
-colcon build --packages-up-to robogait_gui
+./install.sh
+```
+
+Para realizar la compilación manualmente, sitúese en la raíz del repositorio, cargue el entorno ROS correspondiente y utilice una selección explícita de paquetes. En Humble y Jazzy se excluye el paquete de compatibilidad local:
+
+```bash
+colcon build --merge-install --base-paths src \
+    --packages-ignore nav2_msgs \
+    --packages-select command_executor_msgs navigation_pkg robogait_gui
 source install/setup.bash
 ```
+
+En Lyrical se genera primero el `nav2_msgs` local dentro del mismo build:
+
+```bash
+colcon build --merge-install --base-paths src \
+    --packages-select nav2_msgs command_executor_msgs navigation_pkg robogait_gui
+source install/setup.bash
+```
+
+No utilice `--packages-up-to robogait_gui` en Humble o Jazzy: al existir un paquete fuente llamado `nav2_msgs`, esa opción también intentaría compilar el override reservado para Lyrical.
 
 ### Opciones de CMake
 
@@ -351,13 +370,13 @@ source install/setup.bash
 Por ejemplo, para habilitar los tests:
 
 ```bash
-colcon build --packages-up-to robogait_gui --cmake-args -DBUILD_TESTING=ON
+colcon build --packages-select robogait_gui --cmake-args -DBUILD_TESTING=ON
 ```
 
 La salida de `qDebug()` está habilitada de forma predeterminada. Para ocultarla:
 
 ```bash
-colcon build --packages-up-to robogait_gui --cmake-args -DDISABLE_DEBUG_LOGS=ON
+colcon build --packages-select robogait_gui --cmake-args -DDISABLE_DEBUG_LOGS=ON
 ```
 
 ### Robot real y simulación
@@ -375,7 +394,7 @@ map       -> map
 Para compilar la GUI para simulación debe activarse la opción:
 
 ```bash
-colcon build --packages-up-to robogait_gui --cmake-args -DSIMULATION=ON
+colcon build --packages-select robogait_gui --cmake-args -DSIMULATION=ON
 ```
 
 En este modo la GUI conserva los identificadores de frame publicados por el
@@ -386,14 +405,14 @@ Para volver a compilar para el robot real se debe desactivar explícitamente la
 opción, ya que CMake conserva su valor en la caché del directorio de compilación:
 
 ```bash
-colcon build --packages-up-to robogait_gui --cmake-args -DSIMULATION=OFF
+colcon build --packages-select robogait_gui --cmake-args -DSIMULATION=OFF
 ```
 
 La distribución se obtiene del entorno ROS cargado. También puede indicarse
 explícitamente:
 
 ```bash
-colcon build --packages-up-to robogait_gui --cmake-args -DROBOGAIT_ROS_DISTRO=jazzy
+colcon build --packages-select robogait_gui --cmake-args -DROBOGAIT_ROS_DISTRO=jazzy
 ```
 
 <!-- TESTS -->
@@ -441,7 +460,7 @@ Para compilarlos explícitamente:
 
 ```bash
 colcon build \
-    --packages-up-to robogait_gui \
+    --packages-select robogait_gui \
     --cmake-args -DBUILD_TESTING=ON
 ```
 
@@ -456,7 +475,7 @@ Para volver a una compilación normal sin tests:
 
 ```bash
 colcon build \
-    --packages-up-to robogait_gui \
+    --packages-select robogait_gui \
     --cmake-args -DBUILD_TESTING=OFF
 ```
 

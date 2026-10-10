@@ -72,6 +72,16 @@ rebuild_docker_only()
   echo "[install] Imagen reconstruida: robogait_gui:${ROS_DISTRO}"
 }
 
+rebuild_development_workspace()
+{
+  require_ubuntu
+  detect_installed_ros_distro
+  validate_ros_distro_for_host
+  build_workspace
+  log "Development workspace rebuild completed"
+  echo "[install] Workspace recompilado con ROS 2 ${ROS_DISTRO}"
+}
+
 main()
 {
   echo "ROBOGait installer"
@@ -79,7 +89,8 @@ main()
   echo "  2. Instalacion de aplicacion en un dispositivo"
   echo "  3. Instalacion de docker"
   echo "  4. Recompilacion de imagen Docker"
-  read -r -p "Opcion [1/2/3/4]: " option
+  echo "  5. Recompilacion del entorno de desarrollo"
+  read -r -p "Opcion [1/2/3/4/5]: " option
 
   case "${option}" in
     1)
@@ -93,6 +104,9 @@ main()
       ;;
     4)
       rebuild_docker_only
+      ;;
+    5)
+      rebuild_development_workspace
       ;;
     *)
       die "Opcion no valida"

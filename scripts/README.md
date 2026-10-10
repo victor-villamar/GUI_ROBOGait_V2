@@ -71,6 +71,9 @@ flowchart TD
     Mode -->|Recompilar Docker| Rebuild[Validar Docker existente y seleccionar ROS 2]
     Rebuild --> RebuildEnvironment[Actualizar entorno Docker]
     RebuildEnvironment --> RebuildImage[Reconstruir imagen robogait_gui]
+
+    Mode -->|Recompilar entorno de desarrollo| RebuildDev[Detectar ROS 2 instalado]
+    RebuildDev --> RebuildWorkspace[Compilar workspace con colcon]
 ```
 
 <!-- SCRIPTS -->
@@ -84,6 +87,7 @@ Proporciona las funciones comunes del instalador:
 * Solicitud y reutilización de la contraseña de `sudo` durante la ejecución.
 * Validación de Ubuntu.
 * Selección de ROS 2 Humble, Jazzy o Lyrical.
+* Detección automática de la distribución ROS 2 activa o instalada.
 * Validación de la combinación entre Ubuntu y ROS 2.
 * Instalación de paquetes APT y actualización idempotente de `.bashrc`.
 
@@ -113,17 +117,27 @@ Carga `/opt/ros/${ROS_DISTRO}/setup.bash` y compila estos paquetes:
 * `navigation_pkg`
 * `command_executor`
 * `robogait_gui`
+* `nav2_msgs`, únicamente cuando la distribución seleccionada es Lyrical
 
-La compilación utiliza:
+La selección equivalente es:
 
 ```bash
-colcon build \
-    --merge-install \
-    --base-paths src \
-    --packages-select command_executor_msgs navigation_pkg command_executor robogait_gui
+packages=(command_executor_msgs navigation_pkg command_executor robogait_gui)
+nav2_compat_args=(--packages-ignore nav2_msgs)
+
+if [ "${ROS_DISTRO}" = "lyrical" ]; then
+    packages=(nav2_msgs "${packages[@]}")
+    nav2_compat_args=()
+fi
+
+colcon build --merge-install --base-paths src \
+    "${nav2_compat_args[@]}" \
+    --packages-select "${packages[@]}"
 ```
 
 Antes de ejecutar `colcon`, `build_workspace.sh` carga el entorno de la distribución seleccionada. Esto define `ROS_DISTRO`, que los CMake de `command_executor` y `robogait_gui` utilizan para activar la rama correspondiente; no es necesario añadir `--cmake-args -DROBOGAIT_ROS_DISTRO=...`.
+
+El paquete local [`nav2_msgs`](../src/nav2_msgs/) conserva las interfaces de acciones Jazzy necesarias para que una GUI Lyrical se comunique con el robot Jazzy. En Humble y Jazzy se pasa `--packages-ignore nav2_msgs`, evitando que el paquete local sustituya al instalado por la distribución.
 
 Al finalizar, añade estas líneas a `.bashrc` si todavía no existen:
 
@@ -139,6 +153,8 @@ Elimina paquetes que puedan entrar en conflicto con Docker CE, configura el repo
 También ejecuta [`docker/setup_docker_env.sh`](../docker/setup_docker_env.sh), que prepara el directorio persistente del usuario y la configuración de Docker, y construye la imagen definida en [`docker/DockerFile`](../docker/DockerFile).
 
 La opción **Recompilar Docker** del instalador valida que Docker ya esté disponible y reutiliza estas funciones para actualizar `.env` y reconstruir la imagen. No instala paquetes, no modifica repositorios o grupos y no reinstala el servicio de usuario.
+
+La opción **Recompilar entorno de desarrollo** no solicita una distribución. Utiliza `ROS_DISTRO` si corresponde a un entorno compatible cargado; en caso contrario, detecta Humble, Jazzy o Lyrical bajo `/opt/ros`. Si hay varias instalaciones, selecciona la correspondiente a la versión de Ubuntu. Después ejecuta la misma compilación condicional de `build_workspace.sh`, sin instalar dependencias, solicitar contraseña ni modificar `.bashrc`.
 
 ### `install_docker_service.sh`
 
@@ -203,12 +219,13 @@ Tras instalar Docker, cierre la sesión y vuelva a entrar, o reinicie el equipo,
 <!-- CAMBIOS REALIZADOS EN EL SISTEMA -->
 ## Cambios realizados en el sistema
 
-|         Modalidad         |                                        Cambios principales                                        |
-|---------------------------|---------------------------------------------------------------------------------------------------|
-|         Desarrollo        |      Repositorio ROS 2, paquetes APT, locale, compilación del workspace y líneas en `.bashrc`     |
-| Dispositivo de aplicación | Repositorio y paquetes Docker, grupo `docker`, archivo `.env`, imagen local y servicio de usuario |
-|         Solo Docker       |            Repositorio y paquetes Docker, grupo `docker`, archivo `.env` e imagen local           |
-|    Recompilar Docker      |                     Archivo `.env` e imagen Docker local actualizados                             |
+|             Modalidad            |                                        Cambios principales                                        |
+|----------------------------------|---------------------------------------------------------------------------------------------------|
+|             Desarrollo           |      Repositorio ROS 2, paquetes APT, locale, compilación del workspace y líneas en `.bashrc`     |
+|     Dispositivo de aplicación    | Repositorio y paquetes Docker, grupo `docker`, archivo `.env`, imagen local y servicio de usuario |
+|             Solo Docker          |            Repositorio y paquetes Docker, grupo `docker`, archivo `.env` e imagen local           |
+|        Recompilar Docker         |                     Archivo `.env` e imagen Docker local actualizados                             |
+| Recompilar entorno de desarrollo |                      Artefactos `build/`, `install/` y `log/` actualizados                        |
 
 Los scripts intentan evitar duplicados en `.bashrc` y reutilizan la configuración existente cuando es posible. La instalación de Docker puede eliminar previamente paquetes incompatibles como `docker.io`, `podman-docker`, `containerd` o `runc`.
 
