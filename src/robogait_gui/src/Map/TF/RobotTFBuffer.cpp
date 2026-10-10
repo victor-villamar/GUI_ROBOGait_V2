@@ -63,13 +63,8 @@ void RobotTFBuffer::start()
     return;
   }
 
-#ifdef ROBOGAIT_SIMULATION
-  tf_topic_ = context_->resolveTopic(ROBOGait::ros::topics::T_TF);
-  tf_static_topic_ = context_->resolveTopic(ROBOGait::ros::topics::T_TF_STATIC);
-#else
   tf_topic_ = ROBOGait::ros::topics::T_TF;
   tf_static_topic_ = ROBOGait::ros::topics::T_TF_STATIC;
-#endif
 
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(parent_node_->get_clock());
   tf_buffer_->setUsingDedicatedThread(true);

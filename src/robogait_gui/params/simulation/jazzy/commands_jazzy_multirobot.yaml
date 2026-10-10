@@ -2,7 +2,7 @@
 
 cartographer:
   name: "slam_toolbox"
-  cmd: "ros2 launch turtlebot4_navigation slam.launch.py"
+  cmd: "ros2 launch $HOME/GUI_ROBOGait_V2/src/robogait_gui/launch/robogait_slam.launch.py"
   append_args: "namespace:=$ROBOT_NAMESPACE use_sim_time:=true sync:=true"
 
 map_saver:
@@ -17,5 +17,5 @@ delete_map:
 
 navigation:
   name: "bt_navigator"
-  cmd: "ros2 launch nav2_bringup bringup_launch.py"
+  cmd: "ros2 launch $HOME/GUI_ROBOGait_V2/src/robogait_gui/launch/robogait_nav2_bringup.launch.py"
   append_args: "namespace:=$ROBOT_NAMESPACE use_namespace:=true use_sim_time:={navigation_use_sim_time} slam:=False use_localization:=True autostart:=true use_composition:=False map:=$HOME{map_path}{map_name} params_file:=$HOME{nav2_params_path}{nav2_params_file}"

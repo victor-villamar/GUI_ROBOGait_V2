@@ -67,10 +67,8 @@ public:
   /**
    * @brief Resolve the frame name
    *
-   * @note In a real-robot build, robot-relative frames are prefixed with the
-   * selected namespace while the global map frame remains unprefixed. In a
-   * simulation build, frame names are only normalized because the simulator
-   * already publishes the required frame identifiers.
+   * @note Robot-relative frames are prefixed with the selected namespace while
+   * the global map frame remains unprefixed, following the RoboMesh TF layout
    *
    * @param frame The frame name to resolve
    *
