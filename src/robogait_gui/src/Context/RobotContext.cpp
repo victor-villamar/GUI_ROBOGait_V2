@@ -76,9 +76,6 @@ std::string RobotContext::resolveFrame(const std::string& frame) const
 {
   const std::string normalized = normalizeFrame(frame);
 
-#ifdef ROBOGAIT_SIMULATION
-  return normalized;
-#else
   if (normalized.empty() || normalized == "map" || !use_namespace_ || topic_namespace_.isEmpty())
   {
     return normalized;
@@ -97,7 +94,6 @@ std::string RobotContext::resolveFrame(const std::string& frame) const
   }
 
   return ns + "/" + normalized;
-#endif
 }
 
 QString RobotContext::normalizeNamespace(const QString& robot_namespace) const
