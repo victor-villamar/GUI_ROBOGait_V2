@@ -42,6 +42,8 @@ GUI del proyecto ROBOGait desarrollada con Qt 6, Qt Quick y ROS 2. Las funcional
 
 * [`qml/`](qml/) &rarr; Interfaz Qt Quick, vistas, controles y diálogos.
 
+* [`launch/`](launch/README.md) &rarr; Launchers auxiliares para adaptar la simulación TurtleBot 4 al contrato ROS 2 y TF de RoboMesh.
+
 * [`params/`](params/README.md) &rarr; Configuración predeterminada, comandos y variantes de simulación.
 
 * [`resources/`](resources/) &rarr; Iconos, logotipos y recursos gráficos.
@@ -364,7 +366,6 @@ No utilice `--packages-up-to robogait_gui` en Humble o Jazzy: al existir un paqu
 |       `BUILD_TESTING`       |         `OFF`        |        Compila las pruebas del paquete       |
 | `ENABLE_WARNINGS_AS_ERRORS` |         `OFF`        | Trata los avisos del compilador como errores |
 |    `DISABLE_DEBUG_LOGS`     |         `OFF`        |          Oculta la salida de `qDebug`        |
-|        `SIMULATION`         |         `OFF`        |  Utiliza la disposición de frames simulada   |
 |   `ROBOGAIT_ROS_DISTRO`     |     `$ROS_DISTRO`    |   Selecciona `humble`, `jazzy` o `lyrical`   |
 
 Por ejemplo, para habilitar los tests:
@@ -379,11 +380,9 @@ La salida de `qDebug()` está habilitada de forma predeterminada. Para ocultarla
 colcon build --packages-select robogait_gui --cmake-args -DDISABLE_DEBUG_LOGS=ON
 ```
 
-### Robot real y simulación
+### Contrato RoboMesh y simulación
 
-Por defecto, `SIMULATION=OFF` configura la resolución de frames para el robot
-real. Los frames relativos al robot reciben el namespace seleccionado, mientras
-que `map` permanece como frame global:
+La GUI utiliza una única disposición TF compatible con RoboMesh. Los frames relativos al robot reciben el namespace seleccionado, `map` permanece como frame global y las transformaciones se reciben desde `/tf` y `/tf_static`:
 
 ```text
 base_link -> robot1/base_link
@@ -391,25 +390,13 @@ odom      -> robot1/odom
 map       -> map
 ```
 
-Para compilar la GUI para simulación debe activarse la opción:
+#### Launchers auxiliares de TurtleBot 4
 
-```bash
-colcon build --packages-select robogait_gui --cmake-args -DSIMULATION=ON
-```
+La carpeta [`launch/`](launch/README.md) contiene los launchers que adaptan la simulación TurtleBot 4 Jazzy al contrato de RoboMesh: `/tf` y `/tf_static` globales, `map` global y frames del robot prefijados con su namespace. Gracias a esta adaptación ya no existe una compilación especial para simulación.
 
-En este modo la GUI conserva los identificadores de frame publicados por el
-simulador. La opción no modifica la resolución de topics, que continúa aplicando
-el namespace del robot seleccionado.
+Consulte la [documentación de los launchers](launch/README.md) para conocer la responsabilidad de cada archivo, sus argumentos, ejemplos de ejecución y comandos de diagnóstico.
 
-Para volver a compilar para el robot real se debe desactivar explícitamente la
-opción, ya que CMake conserva su valor en la caché del directorio de compilación:
-
-```bash
-colcon build --packages-select robogait_gui --cmake-args -DSIMULATION=OFF
-```
-
-La distribución se obtiene del entorno ROS cargado. También puede indicarse
-explícitamente:
+La distribución se obtiene del entorno ROS cargado. También puede indicarse explícitamente:
 
 ```bash
 colcon build --packages-select robogait_gui --cmake-args -DROBOGAIT_ROS_DISTRO=jazzy
