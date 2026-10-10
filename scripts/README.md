@@ -113,17 +113,27 @@ Carga `/opt/ros/${ROS_DISTRO}/setup.bash` y compila estos paquetes:
 * `navigation_pkg`
 * `command_executor`
 * `robogait_gui`
+* `nav2_msgs`, únicamente cuando la distribución seleccionada es Lyrical
 
-La compilación utiliza:
+La selección equivalente es:
 
 ```bash
-colcon build \
-    --merge-install \
-    --base-paths src \
-    --packages-select command_executor_msgs navigation_pkg command_executor robogait_gui
+packages=(command_executor_msgs navigation_pkg command_executor robogait_gui)
+nav2_compat_args=(--packages-ignore nav2_msgs)
+
+if [ "${ROS_DISTRO}" = "lyrical" ]; then
+    packages=(nav2_msgs "${packages[@]}")
+    nav2_compat_args=()
+fi
+
+colcon build --merge-install --base-paths src \
+    "${nav2_compat_args[@]}" \
+    --packages-select "${packages[@]}"
 ```
 
 Antes de ejecutar `colcon`, `build_workspace.sh` carga el entorno de la distribución seleccionada. Esto define `ROS_DISTRO`, que los CMake de `command_executor` y `robogait_gui` utilizan para activar la rama correspondiente; no es necesario añadir `--cmake-args -DROBOGAIT_ROS_DISTRO=...`.
+
+El paquete local [`nav2_msgs`](../src/nav2_msgs/) conserva las interfaces de acciones Jazzy necesarias para que una GUI Lyrical se comunique con el robot Jazzy. En Humble y Jazzy se pasa `--packages-ignore nav2_msgs`, evitando que el paquete local sustituya al instalado por la distribución.
 
 Al finalizar, añade estas líneas a `.bashrc` si todavía no existen:
 

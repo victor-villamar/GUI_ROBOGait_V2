@@ -21,7 +21,7 @@
 
 Este directorio contiene los recursos necesarios para construir y ejecutar `robogait_gui` dentro de un contenedor Docker. El despliegue proporciona Qt 6, ROS 2 y las dependencias de ejecución de la GUI sin instalarlas directamente en el dispositivo de aplicación.
 
-La imagen contiene los paquetes `command_executor_msgs`, `navigation_pkg` y `robogait_gui`. El nodo `command_executor` no forma parte del contenedor de la GUI: se ejecuta en el robot y se comunica con la aplicación mediante ROS 2.
+La imagen contiene los paquetes `command_executor_msgs`, `navigation_pkg` y `robogait_gui`. En Lyrical también contiene el paquete local `nav2_msgs`, que conserva las interfaces de acciones Jazzy utilizadas para comunicarse con el robot. El nodo `command_executor` no forma parte del contenedor de la GUI: se ejecuta en el robot y se comunica con la aplicación mediante ROS 2.
 
 La instalación automatizada de Docker se documenta en [scripts/README.md](../scripts/README.md).
 
@@ -70,7 +70,7 @@ Durante la construcción:
 
 1. Instala las herramientas de compilación, Qt 6, QML, Qt Virtual Keyboard y el controlador SQLite.
 2. Instala las dependencias ROS 2 utilizadas por la GUI.
-3. Compila `command_executor_msgs`, `navigation_pkg` y `robogait_gui` con `colcon`.
+3. Compila `command_executor_msgs`, `navigation_pkg` y `robogait_gui` con `colcon`. En Lyrical también genera el `nav2_msgs` local; en Humble y Jazzy lo ignora y utiliza el paquete de `/opt/ros`.
 4. Instala el workspace resultante en `/opt/ros/robogait`.
 5. Elimina el workspace temporal de compilación.
 6. Crea el usuario sin privilegios `robogait`, con UID y GID `1000` de forma predeterminada.
@@ -80,6 +80,16 @@ El entrypoint carga `/opt/ros/robogait/setup.bash` y finalmente ejecuta el coman
 ```bash
 ros2 run robogait_gui robogait_gui
 ```
+
+### Compatibilidad Nav2 en Lyrical
+
+Las versiones Jazzy y Lyrical de `ComputePathToPose`, `NavigateToPose` y `FollowPath` no comparten la misma estructura. Una GUI compilada directamente contra `ros-lyrical-nav2-msgs` puede descubrir un robot Jazzy, pero falla al intercambiar goals, resultados o feedback de esas acciones.
+
+Por este motivo, el Dockerfile copia [`src/nav2_msgs`](../src/nav2_msgs/) y lo compila únicamente cuando `ROS_DISTRO=lyrical`. El overlay instalado en `/opt/ros/robogait` tiene prioridad sobre `/opt/ros/lyrical`, por lo que la GUI utiliza las definiciones Jazzy sin modificar los includes del código fuente.
+
+> [!WARNING]
+>
+>La imagen `robogait_gui:lyrical` está preparada para comunicarse con un robot Jazzy. No debe utilizarse para ejecutar nodos Nav2 Lyrical dentro del mismo overlay.
 
 <!-- CONFIGURACIÓN -->
 ## Configuración

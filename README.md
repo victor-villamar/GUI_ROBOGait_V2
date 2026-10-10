@@ -35,6 +35,8 @@ Contiene los paquetes ROS 2 y el código fuente del proyecto:
 
 * [`navigation_pkg`](src/navigation_pkg/) &rarr; Interfaces ROS compartidas por compatibilidad con RoboMesh e interfaz experimental para detecciones de cámara. Consulte su documentación técnica en &rarr; [src/navigation_pkg/README.md](src/navigation_pkg/README.md).
 
+* [`nav2_msgs`](src/nav2_msgs/) &rarr; Subconjunto local de interfaces Nav2 Jazzy generado únicamente en Lyrical para que la GUI mantenga el contrato DDS del robot Jazzy. Consulte su documentación técnica en &rarr; [src/nav2_msgs/README.md](src/nav2_msgs/README.md).
+
 ### `scripts/`
 
 Contiene las funciones de instalación. Los scripts auxiliares son cargados por `install.sh` y no están diseñados para ejecutarse individualmente.
@@ -65,7 +67,7 @@ La construcción, configuración, ejecución y resolución de problemas se detal
 |        Solo Docker        |            Docker Engine, grupos gráficos, entorno Docker e imagen           | Imagen disponible para ejecución manual, sin instalar el servicio |
 |    Recompilar Docker      |             Reutiliza Docker y reconstruye la imagen existente              |      Imagen actualizada sin reinstalar ni reconfigurar Docker      |
 
-El flujo de desarrollo compila mediante `colcon` los paquetes `command_executor_msgs`, `navigation_pkg`, `command_executor` y `robogait_gui`. Los flujos Docker construyen la imagen `robogait_gui:${ROS_DISTRO}`; únicamente la modalidad **Dispositivo de aplicación** crea `robogait-gui-docker.service`. La modalidad **Recompilar Docker** omite la instalación y configuración de Docker y actualiza solamente el entorno `.env` y la imagen.
+El flujo de desarrollo compila mediante `colcon` los paquetes `command_executor_msgs`, `navigation_pkg`, `command_executor` y `robogait_gui`. Cuando la distribución seleccionada es Lyrical también genera el paquete local `nav2_msgs`; en Humble y Jazzy utiliza el proporcionado por `/opt/ros`. Los flujos Docker construyen la imagen `robogait_gui:${ROS_DISTRO}`; únicamente la modalidad **Dispositivo de aplicación** crea `robogait-gui-docker.service`. La modalidad **Recompilar Docker** omite la instalación y configuración de Docker y actualiza solamente el entorno `.env` y la imagen.
 
 > [!WARNING]
 >
@@ -87,6 +89,8 @@ La aplicación Docker también se construye seleccionando Humble, Jazzy o Lyrica
 La distribución activa se obtiene del entorno cargado mediante `/opt/ros/${ROS_DISTRO}/setup.bash`. Los paquetes con código C++ dependiente de la API de ROS 2 validan ese valor en CMake y exponen exactamente una de las macros `ROBOGAIT_ROS_HUMBLE`, `ROBOGAIT_ROS_JAZZY` o `ROBOGAIT_ROS_LYRICAL`.
 
 Los paquetes que solo generan interfaces, como `command_executor_msgs` y `navigation_pkg`, no necesitan macros por distribución: ROSIDL utiliza los generadores y *targets* proporcionados por el entorno ROS 2 activo.
+
+Las acciones de Navigation2 no mantienen el mismo contrato entre Jazzy y Lyrical. Para que una GUI Lyrical pueda comunicarse con el robot Jazzy, el workspace incluye un [`nav2_msgs` local](src/nav2_msgs/) con las definiciones Jazzy de `ComputePathToPose`, `NavigateToPose` y `FollowPath`, además de los mensajes de partículas utilizados por la GUI. Este override solo se compila en Lyrical; Humble y Jazzy continúan usando sus paquetes oficiales.
 
 <!-- INSTALACIÓN -->
 ## Instalación
