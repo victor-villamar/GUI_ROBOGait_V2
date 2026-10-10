@@ -20,7 +20,18 @@ build_workspace()
   fi
 
   cd "${ROOT_DIR}"
-  colcon build --merge-install --base-paths src --packages-select command_executor_msgs navigation_pkg command_executor robogait_gui
+
+  local packages=(command_executor_msgs navigation_pkg command_executor robogait_gui)
+  local nav2_compat_args=(--packages-ignore nav2_msgs)
+
+  if [ "${ROS_DISTRO}" = "lyrical" ]; then
+    packages=(nav2_msgs "${packages[@]}")
+    nav2_compat_args=()
+  fi
+
+  colcon build --merge-install --base-paths src \
+    "${nav2_compat_args[@]}" \
+    --packages-select "${packages[@]}"
 }
 
 configure_development_shell()
