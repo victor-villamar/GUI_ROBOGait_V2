@@ -71,6 +71,9 @@ flowchart TD
     Mode -->|Recompilar Docker| Rebuild[Validar Docker existente y seleccionar ROS 2]
     Rebuild --> RebuildEnvironment[Actualizar entorno Docker]
     RebuildEnvironment --> RebuildImage[Reconstruir imagen robogait_gui]
+
+    Mode -->|Recompilar entorno de desarrollo| RebuildDev[Detectar ROS 2 instalado]
+    RebuildDev --> RebuildWorkspace[Compilar workspace con colcon]
 ```
 
 <!-- SCRIPTS -->
@@ -84,6 +87,7 @@ Proporciona las funciones comunes del instalador:
 * Solicitud y reutilización de la contraseña de `sudo` durante la ejecución.
 * Validación de Ubuntu.
 * Selección de ROS 2 Humble, Jazzy o Lyrical.
+* Detección automática de la distribución ROS 2 activa o instalada.
 * Validación de la combinación entre Ubuntu y ROS 2.
 * Instalación de paquetes APT y actualización idempotente de `.bashrc`.
 
@@ -150,6 +154,8 @@ También ejecuta [`docker/setup_docker_env.sh`](../docker/setup_docker_env.sh), 
 
 La opción **Recompilar Docker** del instalador valida que Docker ya esté disponible y reutiliza estas funciones para actualizar `.env` y reconstruir la imagen. No instala paquetes, no modifica repositorios o grupos y no reinstala el servicio de usuario.
 
+La opción **Recompilar entorno de desarrollo** no solicita una distribución. Utiliza `ROS_DISTRO` si corresponde a un entorno compatible cargado; en caso contrario, detecta Humble, Jazzy o Lyrical bajo `/opt/ros`. Si hay varias instalaciones, selecciona la correspondiente a la versión de Ubuntu. Después ejecuta la misma compilación condicional de `build_workspace.sh`, sin instalar dependencias, solicitar contraseña ni modificar `.bashrc`.
+
 ### `install_docker_service.sh`
 
 Genera el servicio de usuario:
@@ -213,12 +219,13 @@ Tras instalar Docker, cierre la sesión y vuelva a entrar, o reinicie el equipo,
 <!-- CAMBIOS REALIZADOS EN EL SISTEMA -->
 ## Cambios realizados en el sistema
 
-|         Modalidad         |                                        Cambios principales                                        |
-|---------------------------|---------------------------------------------------------------------------------------------------|
-|         Desarrollo        |      Repositorio ROS 2, paquetes APT, locale, compilación del workspace y líneas en `.bashrc`     |
-| Dispositivo de aplicación | Repositorio y paquetes Docker, grupo `docker`, archivo `.env`, imagen local y servicio de usuario |
-|         Solo Docker       |            Repositorio y paquetes Docker, grupo `docker`, archivo `.env` e imagen local           |
-|    Recompilar Docker      |                     Archivo `.env` e imagen Docker local actualizados                             |
+|             Modalidad            |                                        Cambios principales                                        |
+|----------------------------------|---------------------------------------------------------------------------------------------------|
+|             Desarrollo           |      Repositorio ROS 2, paquetes APT, locale, compilación del workspace y líneas en `.bashrc`     |
+|     Dispositivo de aplicación    | Repositorio y paquetes Docker, grupo `docker`, archivo `.env`, imagen local y servicio de usuario |
+|             Solo Docker          |            Repositorio y paquetes Docker, grupo `docker`, archivo `.env` e imagen local           |
+|        Recompilar Docker         |                     Archivo `.env` e imagen Docker local actualizados                             |
+| Recompilar entorno de desarrollo |                      Artefactos `build/`, `install/` y `log/` actualizados                        |
 
 Los scripts intentan evitar duplicados en `.bashrc` y reutilizan la configuración existente cuando es posible. La instalación de Docker puede eliminar previamente paquetes incompatibles como `docker.io`, `podman-docker`, `containerd` o `runc`.
 

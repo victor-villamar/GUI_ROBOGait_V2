@@ -332,7 +332,13 @@ No es necesario pasar `-DROBOGAIT_ROS_DISTRO=...` a `colcon`: CMake obtiene el v
 <!-- COMPILACIÓN -->
 ## Compilación
 
-Desde la raíz del repositorio y con el entorno ROS cargado, utilice una selección explícita de paquetes. En Humble y Jazzy se excluye el paquete de compatibilidad local:
+Para recompilar automáticamente el workspace después de una instalación de desarrollo, ejecute [`install.sh`](../../install.sh) y seleccione **Recompilación del entorno de desarrollo**. Esta modalidad detecta la distribución ROS 2 activa o instalada, aplica la selección correcta de `nav2_msgs` y no vuelve a instalar dependencias:
+
+```bash
+./install.sh
+```
+
+Para realizar la compilación manualmente, sitúese en la raíz del repositorio, cargue el entorno ROS correspondiente y utilice una selección explícita de paquetes. En Humble y Jazzy se excluye el paquete de compatibilidad local:
 
 ```bash
 colcon build --merge-install --base-paths src \

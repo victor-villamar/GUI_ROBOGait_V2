@@ -90,7 +90,15 @@ La generación utiliza:
 <!-- COMPILACIÓN Y VALIDACIÓN -->
 ## Compilación y validación
 
-La instalación normal mediante [`install.sh`](../../install.sh) y la construcción Docker seleccionan automáticamente el paquete en Lyrical. Para compilarlo manualmente:
+La instalación normal mediante [`install.sh`](../../install.sh) y la construcción Docker seleccionan automáticamente el paquete en Lyrical. Para recompilar posteriormente todo el workspace, ejecute de nuevo el instalador y seleccione **Recompilación del entorno de desarrollo**:
+
+```bash
+./install.sh
+```
+
+Esta opción detecta la distribución ROS 2 activa o instalada sin solicitar una versión. En Lyrical incluye automáticamente este paquete local; en Humble y Jazzy lo excluye y utiliza el `nav2_msgs` de `/opt/ros`.
+
+Para generar únicamente este paquete de forma manual en Lyrical:
 
 ```bash
 source /opt/ros/lyrical/setup.bash
@@ -110,4 +118,4 @@ ros2 interface show nav2_msgs/msg/ParticleCloud
 
 En la imagen Docker Lyrical, `ros2 pkg prefix nav2_msgs` debe devolver `/opt/ros/robogait`.
 
-Las interfaces proceden de Navigation2 Jazzy
+Las interfaces proceden de Navigation2 Jazzy.
