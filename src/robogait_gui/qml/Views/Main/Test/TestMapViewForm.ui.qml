@@ -386,12 +386,12 @@ Rectangle {
                 anchors.margins: mapContentMargin
                 visible: mapAvailable
                 z: 1
-                isPanningEnabled: !placementEnabled &&
-                                  (!isTrajectoryStep || !goalPlacementEnabled) &&
-                                  (!isTrajectoryStep || !pathPlacementEnabled || (manualPathAvailable && !pathDragHandler.active)) &&
+                isPanningEnabled: (!isTrajectoryStep || !pathPlacementEnabled || (manualPathAvailable && !pathDragHandler.active)) &&
                                   !root.pathEditHandlesVisible
 
                 PlacementTapHandler {
+                    enabled: root.mapAvailable && root.isPositionStep &&
+                             root.placementEnabled && !root.testStarted
                     mapAvailable: root.mapAvailable
                     isPositionStep: root.isPositionStep
                     placementEnabled: root.placementEnabled
@@ -400,6 +400,8 @@ Rectangle {
                 }
 
                 TapHandler {
+                    enabled: root.mapAvailable && root.isNavigationStep &&
+                             root.goalPlacementEnabled && root.testStarted
                     acceptedButtons: Qt.LeftButton
                     gesturePolicy: TapHandler.DragThreshold
                     onTapped: {
