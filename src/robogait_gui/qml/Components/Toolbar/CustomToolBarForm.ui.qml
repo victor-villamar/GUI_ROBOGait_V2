@@ -103,7 +103,7 @@ Item {
             Text {
                 id: title
                 visible: brandRow.availableWidth >= brandRow.fullBrandWidth
-                text: "ROBOGAIT"
+                text: "ROBOMESH"
                 font.pixelSize: 20
                 color: "white"
                 font.bold: true
