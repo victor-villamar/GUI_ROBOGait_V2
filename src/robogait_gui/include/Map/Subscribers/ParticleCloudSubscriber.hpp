@@ -63,6 +63,11 @@ public:
   void setRobotContext(const ROBOGait::context::RobotContext& context);
 
   /**
+   * @brief Set the global frame used to transform particle poses
+   */
+  void setMapFrame(const std::string& map_frame);
+
+  /**
    * @brief Start the particle cloud subscriber
    */
   void start();
@@ -108,7 +113,6 @@ private:
 
   std::optional<ROBOGait::context::RobotContext> context_;
 };
-
 } // namespace subscribers
 } // namespace map
 } // namespace ROBOGait

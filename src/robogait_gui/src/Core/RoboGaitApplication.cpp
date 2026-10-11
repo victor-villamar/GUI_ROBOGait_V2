@@ -154,6 +154,10 @@ bool RoboGaitApplication::initialize()
   auto& developer_settings = ROBOGait::settings::DeveloperSettings::getInstance();
   developer_settings.initializeDefaults();
 
+  // Initialize RobotSettings singleton
+  auto& robot_settings = ROBOGait::settings::RobotSettings::getInstance();
+  robot_settings.initializeDefaults();
+
   // Initialize UiSizingSettings singleton
   auto& ui_sizing_settings = ROBOGait::settings::UiSizingSettings::getInstance();
   ui_sizing_settings.initializeDefaults();
@@ -344,6 +348,8 @@ ROBOGait::session::UserSession* RoboGaitApplication::userSession() { return user
 
 ROBOGait::settings::DeveloperSettings* RoboGaitApplication::developerSettings() { return &ROBOGait::settings::DeveloperSettings::getInstance(); }
 
+ROBOGait::settings::RobotSettings* RoboGaitApplication::robotSettings() { return &ROBOGait::settings::RobotSettings::getInstance(); }
+
 ROBOGait::settings::UiSizingSettings* RoboGaitApplication::uiSizingSettings() { return &ROBOGait::settings::UiSizingSettings::getInstance(); }
 
 ROBOGait::settings::TimeoutSettings* RoboGaitApplication::timeoutSettings() { return &ROBOGait::settings::TimeoutSettings::getInstance(); }
@@ -426,6 +432,7 @@ void RoboGaitApplication::setupQmlContext()
   qml_app_engine_->rootContext()->setContextProperty("userSession", user_session_.get());
   qml_app_engine_->rootContext()->setContextProperty("dbManager", databaseManager());
   qml_app_engine_->rootContext()->setContextProperty("developerSettings", developerSettings());
+  qml_app_engine_->rootContext()->setContextProperty("robotSettings", robotSettings());
   qml_app_engine_->rootContext()->setContextProperty("uiSizingSettings", uiSizingSettings());
   qml_app_engine_->rootContext()->setContextProperty("timeoutSettings", timeoutSettings());
 

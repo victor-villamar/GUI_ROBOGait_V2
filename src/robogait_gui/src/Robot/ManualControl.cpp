@@ -5,10 +5,10 @@
 
 #include <rclcpp/create_timer.hpp>
 
-#include "Loader/YamlLoader.hpp"
 #include "Robot/ManualControl.hpp"
 #include "Ros/Define.hpp"
 #include "Ros/QoSProfiles.hpp"
+#include "Settings/RobotSettings.hpp"
 
 using namespace ROBOGait::robot::control;
 
@@ -21,10 +21,22 @@ ManualControl::ManualControl() :
     angular_velocity_(0.0),
     max_linear_velocity_(MAX_LINEAR_VELOCITY),
     max_angular_velocity_(MAX_ANGULAR_VELOCITY),
-    velocity_limits_loaded_(false),
     timer_active_(false)
 {
-  velocity_limits_loaded_ = loadVelocityLimits();
+  auto& robot_settings = ROBOGait::settings::RobotSettings::getInstance();
+  updateVelocityLimits();
+
+  // clang-format off
+  connect(&robot_settings,
+          &ROBOGait::settings::RobotSettings::maxLinearVelocityChanged,
+          this,
+          &ManualControl::updateVelocityLimits);
+  connect(&robot_settings,
+          &ROBOGait::settings::RobotSettings::maxAngularVelocityChanged,
+          this,
+          &ManualControl::updateVelocityLimits);
+  // clang-format on
+
   qDebug() << "[ManualControl::ManualControl] Manual control created";
 }
 
@@ -39,11 +51,6 @@ void ManualControl::setROSNode(rclcpp::Node* node)
   }
 
   parent_node_ = node;
-
-  if (!velocity_limits_loaded_)
-  {
-    velocity_limits_loaded_ = loadVelocityLimits();
-  }
 
   // Create timer for publishing velocity commands
   timer_cmd_vel_ = parent_node_->create_wall_timer(ROBOGait::ros::define::TIME_TO_PUBLISH_CMD_VEL_MS,
@@ -142,30 +149,38 @@ double ManualControl::getMaxLinearVelocity() const { return max_linear_velocity_
 
 double ManualControl::getMaxAngularVelocity() const { return max_angular_velocity_; }
 
-bool ManualControl::loadVelocityLimits()
+void ManualControl::updateVelocityLimits()
 {
-  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+  auto& robot_settings = ROBOGait::settings::RobotSettings::getInstance();
+  const double max_linear_velocity = robot_settings.getMaxLinearVelocity();
+  const double max_angular_velocity = robot_settings.getMaxAngularVelocity();
 
-  if (!yaml_loader.isLoaded())
+  if (max_linear_velocity_ == max_linear_velocity && max_angular_velocity_ == max_angular_velocity)
   {
-    qWarning() << "[ManualControl::loadVelocityLimits] YAML configuration not loaded, using constructor defaults";
-    return false;
+    return;
   }
 
-  const double configured_max_linear_velocity = yaml_loader.getValue<double>("robot.max_linear_velocity", MAX_LINEAR_VELOCITY);
-  const double configured_max_angular_velocity = yaml_loader.getValue<double>("robot.max_angular_velocity", MAX_ANGULAR_VELOCITY);
+  max_linear_velocity_ = max_linear_velocity;
+  max_angular_velocity_ = max_angular_velocity;
 
-  const double sanitized_max_linear_velocity = configured_max_linear_velocity > 0.0 ? configured_max_linear_velocity : MAX_LINEAR_VELOCITY;
-  const double sanitized_max_angular_velocity = configured_max_angular_velocity > 0.0 ? configured_max_angular_velocity : MAX_ANGULAR_VELOCITY;
+  const double clamped_linear_velocity = std::max(-max_linear_velocity_, std::min(max_linear_velocity_, linear_velocity_));
+  const double clamped_angular_velocity = std::max(-max_angular_velocity_, std::min(max_angular_velocity_, angular_velocity_));
+  const bool velocity_changed = linear_velocity_ != clamped_linear_velocity || angular_velocity_ != clamped_angular_velocity;
 
-  if (max_linear_velocity_ != sanitized_max_linear_velocity || max_angular_velocity_ != sanitized_max_angular_velocity)
+  linear_velocity_ = clamped_linear_velocity;
+  angular_velocity_ = clamped_angular_velocity;
+
+  emit velocityLimitsChanged();
+
+  if (velocity_changed)
   {
-    max_linear_velocity_ = sanitized_max_linear_velocity;
-    max_angular_velocity_ = sanitized_max_angular_velocity;
-    emit velocityLimitsChanged();
-  }
+    emit velocityChanged();
 
-  return true;
+    if (pub_cmd_vel_)
+    {
+      publishVelocity();
+    }
+  }
 }
 
 void ManualControl::ensurePublisherCreated()

@@ -40,13 +40,29 @@ void ParticleCloudSubscriber::setParticleCloudData(data::ParticleCloudData* part
 
 void ParticleCloudSubscriber::setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer) { tf_buffer_ = tf_buffer; }
 
-void ParticleCloudSubscriber::setRobotContext(const ROBOGait::context::RobotContext& context)
-{
-  context_ = context;
+void ParticleCloudSubscriber::setRobotContext(const ROBOGait::context::RobotContext& context) { context_ = context; }
 
-  if (context_)
+void ParticleCloudSubscriber::setMapFrame(const std::string& map_frame)
+{
+  if (map_frame.empty() || map_frame_ == map_frame)
   {
-    map_frame_ = context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME);
+    return;
+  }
+
+  const bool restart = active_;
+  const std::shared_ptr<tf2_ros::Buffer> tf_buffer = tf_buffer_;
+
+  if (restart)
+  {
+    stop();
+  }
+
+  map_frame_ = map_frame;
+
+  if (restart)
+  {
+    setTFBuffer(tf_buffer);
+    start();
   }
 }
 

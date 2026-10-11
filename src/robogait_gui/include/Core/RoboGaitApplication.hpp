@@ -13,6 +13,7 @@
 #include "Loader/BootStrapLoader.hpp"
 #include "Ros/RosNodeManager.hpp"
 #include "Settings/DeveloperSettings.hpp"
+#include "Settings/RobotSettings.hpp"
 #include "Settings/TimeoutSettings.hpp"
 #include "Settings/UiSizingSettings.hpp"
 #include "User/UserSession.hpp"
@@ -99,6 +100,13 @@ public:
    * @return Pointer to DeveloperSettings
    */
   ROBOGait::settings::DeveloperSettings* developerSettings();
+
+  /**
+   * @brief Get the robot settings singleton instance
+   *
+   * @return Pointer to RobotSettings
+   */
+  ROBOGait::settings::RobotSettings* robotSettings();
 
   /**
    * @brief Get the UI sizing settings singleton instance

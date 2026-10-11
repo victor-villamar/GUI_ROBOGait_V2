@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include <tf2_ros/buffer.hpp>
 
@@ -47,6 +48,11 @@ public:
   void setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer);
 
   /**
+   * @brief Set the global map frame used for particle transformations
+   */
+  void setMapFrame(const std::string& map_frame);
+
+  /**
    * @brief Start the particle cloud source
    */
   void start() override;
@@ -82,7 +88,6 @@ private:
   std::shared_ptr<ROBOGait::map::subscribers::ParticleCloudSubscriber> subscriber_; /**< Particle cloud subscriber */
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;                                      /**< Shared TF buffer */
 };
-
 } // namespace source
 } // namespace map
 } // namespace ROBOGait

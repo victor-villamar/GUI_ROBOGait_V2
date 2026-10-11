@@ -12,7 +12,9 @@ Item {
     property var robotManager: (userSession && userSession.rosManager) ? userSession.rosManager.robotManager : null
 
     property bool detailsOpen: false
-    property int detailsCount: (robotManager && robotManager.robotStatusItems) ? robotManager.robotStatusItems.length : 0
+    readonly property bool canConfigure: userSession
+                                               && userSession.isAuthenticated
+                                               && (userSession.role === "doctor" || userSession.role === "manager")
 
     readonly property real badgeHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.badgeHeight, 0) : 56
     readonly property real badgeMenuItemHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.badgeMenuItemHeight, 0) : 44
@@ -23,8 +25,11 @@ Item {
     property int segmentHeight: Math.round(badgeMenuItemHeightPx)
     property int segmentPadding: 16
     property int dividerSize: 2
-    property int dividerCount: Math.max(0, detailsCount - 1)
-    property int menuWidth: badgeWidth
+    property int segmentCount: canConfigure ? 2 : 1
+    property int dividerCount: segmentCount - 1
+    property int menuWidth: Math.max(badgeWidth,
+                                     informationText.implicitWidth + segmentPadding * 2,
+                                     configurationText.implicitWidth + segmentPadding * 2)
 
     implicitHeight: Math.round(badgeHeightPx)
     implicitWidth: badgeWidth
@@ -122,7 +127,7 @@ Item {
         z: 3
         width: root.menuWidth
         height: root.detailsOpen
-              ? (root.segmentHeight * root.detailsCount + root.dividerSize * root.dividerCount)
+              ? (root.segmentHeight * root.segmentCount + root.dividerSize * root.dividerCount)
               : 0
         opacity: root.detailsOpen ? 1 : 0
         radius: 14
@@ -150,52 +155,75 @@ Item {
             anchors.fill: parent
             spacing: 0
 
-            Repeater {
-                model: root.robotManager ? root.robotManager.robotStatusItems : []
-                delegate: Item {
-                    width: parent.width
-                    height: root.segmentHeight
+            Rectangle {
+                width: parent.width
+                height: root.segmentHeight
+                color: informationArea.pressed ? AppTheme.badges.pressedBackground : "transparent"
 
-                    Row {
-                        anchors.fill: parent
-                        anchors.margins: 10
-                        spacing: 8
+                Text {
+                    id: informationText
+                    anchors.centerIn: parent
+                    text: qsTr("Información")
+                    color: AppTheme.badges.primary
+                    font.pixelSize: 12
+                    font.bold: true
+                }
 
-                        Text {
-                            id: labelText
-                            text: modelData.label + ":"
-                            color: AppTheme.badges.primary
-                            font.pixelSize: 12
-                            font.bold: true
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        Text {
-                            text: modelData.value
-                            color: AppTheme.badges.primary
-                            font.pixelSize: 12
-                            elide: Text.ElideRight
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: Math.max(0, parent.width - labelText.implicitWidth - parent.spacing)
-                        }
+                MouseArea {
+                    id: informationArea
+                    anchors.fill: parent
+                    onPressed: root.restartAutoCloseTimer()
+                    onClicked: {
+                        root.detailsOpen = false
+                        robotInformationDialog.open()
                     }
+                }
+            }
 
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.bottom: parent.bottom
-                        height: root.dividerSize
-                        color: AppTheme.badges.primary
-                        opacity: 0.35
-                        visible: index < (root.detailsCount - 1)
+            Rectangle {
+                width: parent.width
+                height: root.dividerSize
+                color: AppTheme.badges.primary
+                opacity: 0.35
+                visible: root.canConfigure
+            }
+
+            Rectangle {
+                width: parent.width
+                height: root.segmentHeight
+                visible: root.canConfigure
+                color: configurationArea.pressed ? AppTheme.badges.pressedBackground : "transparent"
+
+                Text {
+                    id: configurationText
+                    anchors.centerIn: parent
+                    text: qsTr("Configuración")
+                    color: AppTheme.badges.primary
+                    font.pixelSize: 12
+                    font.bold: true
+                }
+
+                MouseArea {
+                    id: configurationArea
+                    anchors.fill: parent
+                    enabled: root.canConfigure
+                    onPressed: root.restartAutoCloseTimer()
+                    onClicked: {
+                        root.detailsOpen = false
+                        robotSettingsDialog.openForCurrentSettings()
                     }
                 }
             }
         }
+    }
 
-        MouseArea {
-            anchors.fill: parent
-            onPressed: root.restartAutoCloseTimer()
-        }
+    RobotInformationDialog {
+        id: robotInformationDialog
+        robotManager: root.robotManager
+        robotDisplayName: root.robotDisplayName
+    }
+
+    RobotSettingsDialog {
+        id: robotSettingsDialog
     }
 }

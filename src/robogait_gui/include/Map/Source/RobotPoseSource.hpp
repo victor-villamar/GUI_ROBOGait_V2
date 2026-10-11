@@ -47,6 +47,11 @@ public:
    */
   void setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer);
 
+  /**
+   * @brief Set the global map frame and robot-relative base frame
+   */
+  void setFrames(const std::string& map_frame, const std::string& robot_frame);
+
   void start() override;
   void stop() override;
 
@@ -67,7 +72,6 @@ private:
   std::string map_frame_;                                                   /**< Map frame to use for TF lookups */
   std::string robot_frame_;                                                 /**< Robot frame to use for TF lookups */
 };
-
 } // namespace source
 } // namespace map
 } // namespace ROBOGait

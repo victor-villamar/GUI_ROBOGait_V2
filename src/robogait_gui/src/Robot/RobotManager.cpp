@@ -6,13 +6,14 @@
 #include <QDebug>
 #include <QVariantMap>
 
-#include "Loader/YamlLoader.hpp"
+#include "Context/RobotContext.hpp"
 #include "Map/Utils/Utils.hpp"
 #include "Robot/RobotManager.hpp"
 #include "Ros/Define.hpp"
 #include "Ros/QoSProfiles.hpp"
 #include "Ros/TopicsName.hpp"
 #include "Services/RobotServiceClient.hpp"
+#include "Settings/RobotSettings.hpp"
 
 using namespace ROBOGait::robot::manager;
 
@@ -31,6 +32,15 @@ RobotManager::RobotManager() :
   qInfo() << "[RobotManager::RobotManager] RobotManager created";
 
   manual_control_ = std::make_unique<ROBOGait::robot::control::ManualControl>();
+  auto& robot_settings = ROBOGait::settings::RobotSettings::getInstance();
+
+  // clang-format off
+  connect(&robot_settings,
+          &ROBOGait::settings::RobotSettings::cmdVelTopicChanged,
+          this,
+          &RobotManager::updateManualControlTopic);
+  // clang-format on
+
   map_visualization_manager_ = nullptr;
   robot_placement_controller_ = nullptr;
   robot_service_bridge_ = nullptr;
@@ -212,6 +222,8 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
 
     qDebug() << "[RobotManager::selectRobot] Selected robot:" << normalized_identifier << "Type:" << (is_namespace ? "namespace" : "node name");
 
+    updateManualControlTopic();
+
     // Update map visualization for new robot
     if (map_visualization_manager_)
     {
@@ -246,6 +258,11 @@ void RobotManager::selectRobot(const QString& robot_identifier, bool is_namespac
 void RobotManager::clearSelection()
 {
   pub_pose_initialize_.reset();
+
+  if (manual_control_)
+  {
+    manual_control_->destroyPublisher();
+  }
 
   if (use_topic_filter_)
   {
@@ -335,14 +352,9 @@ void RobotManager::enableManualControl()
     return;
   }
 
-  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+  updateManualControlTopic();
 
-  const std::string cmd_vel_topic = yaml_loader.getValue<std::string>("robot.cmd_vel_topic", ROBOGait::ros::topics::T_CMD_VEL);
-  const QString topic_name = buildTopicName(QString::fromStdString(cmd_vel_topic));
-
-  manual_control_->setTopicName(topic_name);
-
-  qDebug() << "[RobotManager::enableManualControl] Manual control enabled for topic:" << topic_name;
+  qDebug() << "[RobotManager::enableManualControl] Manual control enabled";
 }
 
 void RobotManager::disableManualControl()
@@ -382,7 +394,7 @@ void RobotManager::publishInitialPose(double x, double y, double theta)
 
   auto msg = geometry_msgs::msg::PoseWithCovarianceStamped();
 
-  msg.header.frame_id = ROBOGait::ros::topics::TF_MAP_FRAME;
+  msg.header.frame_id = ROBOGait::settings::RobotSettings::getInstance().getMapFrame().toStdString();
   msg.header.stamp = parent_node_->now();
 
   msg.pose.pose.position.x = x;
@@ -427,15 +439,34 @@ QString RobotManager::normalizeNamespace(const QString& robot_namespace) const
 
 QString RobotManager::buildTopicName(const QString& topic_suffix) const
 {
-  if (use_namespace_discovery_)
+  ROBOGait::context::RobotContext context;
+
+  if (!selected_robot_namespace_.isEmpty() && context.setSelectedRobot(selected_robot_namespace_, use_namespace_discovery_))
   {
-    return selected_robot_namespace_ + topic_suffix;
+    return QString::fromStdString(context.resolveTopic(topic_suffix.toStdString()));
   }
 
-  else
+  return topic_suffix;
+}
+
+void RobotManager::updateManualControlTopic()
+{
+  if (!manual_control_)
   {
-    return topic_suffix;
+    return;
   }
+
+  if (selected_robot_namespace_.isEmpty())
+  {
+    manual_control_->destroyPublisher();
+    return;
+  }
+
+  const QString configured_topic = ROBOGait::settings::RobotSettings::getInstance().getCmdVelTopic();
+  const QString resolved_topic = buildTopicName(configured_topic);
+  manual_control_->setTopicName(resolved_topic);
+
+  qDebug() << "[RobotManager::updateManualControlTopic] cmd_vel topic set to:" << resolved_topic;
 }
 
 void RobotManager::callbackRobotStatus(const command_executor_msgs::msg::RobotStatus::SharedPtr msg)

@@ -66,6 +66,11 @@ public:
   void setRobotContext(const ROBOGait::context::RobotContext& context);
 
   /**
+   * @brief Update the map and robot frames used for pose lookups
+   */
+  void setFrames(const std::string& map_frame, const std::string& robot_frame);
+
+  /**
    * @brief Start the TF subscriber
    */
   void start();

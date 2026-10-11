@@ -274,6 +274,11 @@ private:
   QString buildTopicName(const QString& topic_suffix) const;
 
   /**
+   * @brief Apply the configured cmd_vel topic to the selected robot
+   */
+  void updateManualControlTopic();
+
+  /**
    * @brief Callback for receiving robot_status messages
    *
    * @param msg Message received from robot

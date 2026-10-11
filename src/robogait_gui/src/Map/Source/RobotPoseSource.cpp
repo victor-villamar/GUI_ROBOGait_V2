@@ -58,6 +58,22 @@ void RobotPoseSource::setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buf
   }
 }
 
+void RobotPoseSource::setFrames(const std::string& map_frame, const std::string& robot_frame)
+{
+  if (map_frame.empty() || robot_frame.empty() || (map_frame_ == map_frame && robot_frame_ == robot_frame))
+  {
+    return;
+  }
+
+  map_frame_ = map_frame;
+  robot_frame_ = robot_frame;
+
+  if (tf_subscriber_)
+  {
+    tf_subscriber_->setFrames(map_frame_, robot_frame_);
+  }
+}
+
 void RobotPoseSource::start()
 {
   if (!initialized_ || !tf_subscriber_ || active_)
