@@ -75,6 +75,10 @@ public:
   Q_PROPERTY(int experimentSavePromptDelayMs
              READ getExperimentSavePromptDelayMs
              NOTIFY timeoutsChanged)
+
+  Q_PROPERTY(int buttonHoldMs
+             READ getButtonHoldMs
+             NOTIFY timeoutsChanged)
   // clang-format on
 
   int getAppShutdownDelayMs() const;
@@ -88,6 +92,7 @@ public:
   int getAutoLocalizationSpinTimeoutMs() const;
   int getAutoLocalizationSpinPublishPeriodMs() const;
   int getExperimentSavePromptDelayMs() const;
+  int getButtonHoldMs() const;
 
   /**
    * @brief Initialize timeout values from YAML with fallback to defaults
@@ -121,6 +126,7 @@ private:
   int auto_localization_spin_timeout_ms_;
   int auto_localization_spin_publish_period_ms_;
   int experiment_save_prompt_delay_ms_;
+  int button_hold_ms_;
 
   static constexpr int DEFAULT_APP_SHUTDOWN_DELAY_MS = 3000;
   static constexpr int DEFAULT_AUTH_MODE_DROPDOWN_AUTO_CLOSE_MS = 4000;
@@ -133,6 +139,7 @@ private:
   static constexpr int DEFAULT_AUTO_LOCALIZATION_SPIN_TIMEOUT_MS = 30000;
   static constexpr int DEFAULT_AUTO_LOCALIZATION_SPIN_PUBLISH_PERIOD_MS = 100;
   static constexpr int DEFAULT_EXPERIMENT_SAVE_PROMPT_DELAY_MS = 3000;
+  static constexpr int DEFAULT_BUTTON_HOLD_MS = 600;
 };
 
 } // namespace settings

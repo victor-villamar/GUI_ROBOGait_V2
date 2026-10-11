@@ -22,7 +22,8 @@ TimeoutSettings::TimeoutSettings() :
     test_busy_timeout_ms_(DEFAULT_TEST_BUSY_TIMEOUT_MS),
     auto_localization_spin_timeout_ms_(DEFAULT_AUTO_LOCALIZATION_SPIN_TIMEOUT_MS),
     auto_localization_spin_publish_period_ms_(DEFAULT_AUTO_LOCALIZATION_SPIN_PUBLISH_PERIOD_MS),
-    experiment_save_prompt_delay_ms_(DEFAULT_EXPERIMENT_SAVE_PROMPT_DELAY_MS)
+    experiment_save_prompt_delay_ms_(DEFAULT_EXPERIMENT_SAVE_PROMPT_DELAY_MS),
+    button_hold_ms_(DEFAULT_BUTTON_HOLD_MS)
 {
   qDebug() << "[TimeoutSettings::TimeoutSettings] TimeoutSettings created";
 }
@@ -48,6 +49,8 @@ int TimeoutSettings::getAutoLocalizationSpinTimeoutMs() const { return auto_loca
 int TimeoutSettings::getAutoLocalizationSpinPublishPeriodMs() const { return auto_localization_spin_publish_period_ms_; }
 
 int TimeoutSettings::getExperimentSavePromptDelayMs() const { return experiment_save_prompt_delay_ms_; }
+
+int TimeoutSettings::getButtonHoldMs() const { return button_hold_ms_; }
 
 void TimeoutSettings::initializeDefaults()
 {
@@ -98,6 +101,8 @@ void TimeoutSettings::initializeDefaults()
   experiment_save_prompt_delay_ms_ =
       sanitizePositive(yaml_loader.getValue<int>("timeouts.qml.experiment_save_prompt_delay_ms", DEFAULT_EXPERIMENT_SAVE_PROMPT_DELAY_MS),
                        DEFAULT_EXPERIMENT_SAVE_PROMPT_DELAY_MS);
+
+  button_hold_ms_ = sanitizePositive(yaml_loader.getValue<int>("timeouts.qml.button_hold_ms", DEFAULT_BUTTON_HOLD_MS), DEFAULT_BUTTON_HOLD_MS);
 
   emit timeoutsChanged();
 }

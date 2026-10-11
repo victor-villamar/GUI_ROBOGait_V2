@@ -259,7 +259,7 @@ Dialog {
             
                 property real holdProgress: 0
                 property bool holdToApply: true
-                property int applyHoldMs: 900
+                property int applyHoldMs: timeoutSettings ? timeoutSettings.buttonHoldMs : 900
 
                 NumberAnimation {
                     id: holdAnimation

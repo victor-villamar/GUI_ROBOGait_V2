@@ -71,6 +71,7 @@ timeouts:
     auto_localization_spin_timeout_ms: 30000
     auto_localization_spin_publish_period_ms: 100
     experiment_save_prompt_delay_ms: 3000
+    button_hold_ms: 600
 
 # Map Rendering Configuration
 map:

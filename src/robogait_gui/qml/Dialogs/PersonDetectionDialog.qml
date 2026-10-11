@@ -14,7 +14,7 @@ Popup {
     readonly property real dialogMarginPx: 16
     readonly property real contentMarginPx: 16
     readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 44
-    property int acceptHoldMs: 900
+    property int acceptHoldMs: timeoutSettings ? timeoutSettings.buttonHoldMs : 900
 
     width: parent ? Math.min(560, parent.width - dialogMarginPx * 2) : 560
     height: parent ? Math.min(620, parent.height - dialogMarginPx * 2) : 620

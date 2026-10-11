@@ -24,7 +24,7 @@ Dialog {
     property string acceptText: qsTr("Aceptar")
     property string rejectText: qsTr("Cancelar")
     property bool holdToAccept: true
-    property int acceptHoldMs: 900
+    property int acceptHoldMs: timeoutSettings ? timeoutSettings.buttonHoldMs : 900
     readonly property real buttonHeightPx: uiSizingSettings ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0) : 44
 
     function reposition()
