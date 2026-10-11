@@ -15,9 +15,6 @@ Dialog {
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
     parent: Overlay.overlay
 
-    readonly property real buttonHeightPx: uiSizingSettings
-                                                ? uiSizingSettings.interactivePx(uiSizingSettings.buttonHeight, 0)
-                                                : 52
     readonly property real listItemHeightPx: uiSizingSettings
                                                   ? uiSizingSettings.interactivePx(uiSizingSettings.listItemHeight, 0)
                                                   : 48
@@ -156,32 +153,6 @@ Dialog {
                         }
                     }
                 }
-            }
-
-            Button {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: 8
-                Layout.preferredWidth: 180
-                Layout.preferredHeight: root.buttonHeightPx
-                text: qsTr("Cerrar")
-
-                background: Rectangle {
-                    color: parent.down ? AppTheme.settings.primary : AppTheme.settings.white
-                    radius: 8
-                    border.color: AppTheme.settings.primaryDark
-                    border.width: 2
-                }
-
-                contentItem: Label {
-                    text: parent.text
-                    color: AppTheme.settings.primaryDark
-                    font.pixelSize: 16
-                    font.bold: true
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-
-                onClicked: root.close()
             }
         }
     }

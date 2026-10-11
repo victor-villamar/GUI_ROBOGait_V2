@@ -25,18 +25,39 @@ Dialog {
     readonly property real scrollTrackGap: 6
     readonly property real scrollTrackEdgeMargin: 2
     readonly property real scrollTrackReserve: scrollTrackWidth + scrollTrackGap + scrollTrackEdgeMargin
+    readonly property real desiredHeight: parent ? Math.min(760, parent.height * 0.9) : 760
+    readonly property bool generalValuesValid: isPositiveNumber(radiusField.text)
+                                                        && isPositiveNumber(linearVelocityField.text)
+                                                        && isPositiveNumber(angularVelocityField.text)
+    readonly property bool administratorValuesValid: !isAdmin
+                                                              || (cmdVelTopicField.acceptableInput
+                                                                  && scanTopicField.acceptableInput
+                                                                  && cameraTopicField.acceptableInput
+                                                                  && mapFrameField.acceptableInput
+                                                                  && robotFrameField.acceptableInput)
+    readonly property bool canSave: isAuthorized && generalValuesValid && administratorValuesValid
+    property var focusedField: null
 
     title: qsTr("Configuración del robot")
-    modal: true
+    modal: false
     dim: true
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
     parent: Overlay.overlay
 
     width: parent ? Math.min(760, parent.width * 0.94) : 760
-    height: parent ? Math.min(760, parent.height * 0.9) : 760
+    height: keyboardHelper.computedHeight
     x: parent ? Math.round((parent.width - width) / 2) : 0
-    y: parent ? Math.round((parent.height - height) / 2) : 0
+    y: parent ? keyboardHelper.computedY : 0
+
+    KeyboardAwareHelper {
+        id: keyboardHelper
+        target: root
+        maxDialogHeight: root.desiredHeight
+        topPadding: 20
+        keyboardPadding: 12
+        margin: topPadding + keyboardPadding
+    }
 
     function normalizedNumber(textValue) {
         return Number(String(textValue).trim().replace(",", "."))
@@ -47,24 +68,35 @@ Dialog {
         return isFinite(value) && value > 0
     }
 
-    function applyNumber(field, propertyName) {
-        if (robotSettings && isPositiveNumber(field.text)) {
-            robotSettings[propertyName] = normalizedNumber(field.text)
+    function ensureFocusedFieldVisible() {
+        if (!focusedField || !focusedField.activeFocus || !contentFlick) {
+            return
         }
 
-        if (robotSettings) {
-            field.text = String(robotSettings[propertyName])
+        const fieldPosition = focusedField.mapToItem(contentFlick.contentItem, 0, 0)
+        const margin = 12
+        const fieldTop = fieldPosition.y - margin
+        const fieldBottom = fieldPosition.y + focusedField.height + margin
+        const viewportTop = contentFlick.contentY
+        const viewportBottom = viewportTop + contentFlick.height
+        const maximumContentY = Math.max(0, contentFlick.contentHeight - contentFlick.height)
+
+        if (fieldTop < viewportTop) {
+            contentFlick.contentY = Math.max(0, fieldTop)
+        }
+        else if (fieldBottom > viewportBottom) {
+            contentFlick.contentY = Math.min(maximumContentY,
+                                            fieldBottom - contentFlick.height)
         }
     }
 
-    function applyText(field, propertyName) {
-        if (robotSettings && field.acceptableInput && field.text.trim().length > 0) {
-            robotSettings[propertyName] = field.text.trim()
+    function followFieldFocus(field) {
+        if (!field.activeFocus) {
+            return
         }
 
-        if (robotSettings) {
-            field.text = robotSettings[propertyName]
-        }
+        focusedField = field
+        Qt.callLater(ensureFocusedFieldVisible)
     }
 
     function syncFields() {
@@ -84,22 +116,25 @@ Dialog {
         robotMapPathField.text = robotSettings.robotMapPath
     }
 
-    function commitPendingEdits() {
-        if (!isAuthorized || !robotSettings) {
-            return
+    function saveChanges() {
+        if (!canSave || !robotSettings) {
+            return false
         }
 
-        applyNumber(radiusField, "robotRadius")
-        applyNumber(linearVelocityField, "maxLinearVelocity")
-        applyNumber(angularVelocityField, "maxAngularVelocity")
+        robotSettings.robotRadius = normalizedNumber(radiusField.text)
+        robotSettings.maxLinearVelocity = normalizedNumber(linearVelocityField.text)
+        robotSettings.maxAngularVelocity = normalizedNumber(angularVelocityField.text)
 
         if (isAdmin) {
-            applyText(cmdVelTopicField, "cmdVelTopic")
-            applyText(scanTopicField, "scanTopic")
-            applyText(cameraTopicField, "cameraDetectionTopic")
-            applyText(mapFrameField, "mapFrame")
-            applyText(robotFrameField, "robotFrame")
+            robotSettings.cmdVelTopic = cmdVelTopicField.text.trim()
+            robotSettings.scanTopic = scanTopicField.text.trim()
+            robotSettings.cameraDetectionTopic = cameraTopicField.text.trim()
+            robotSettings.mapFrame = mapFrameField.text.trim()
+            robotSettings.robotFrame = robotFrameField.text.trim()
         }
+
+        close()
+        return true
     }
 
     function openForCurrentSettings() {
@@ -118,9 +153,13 @@ Dialog {
     }
 
     onOpened: syncFields()
-    onAboutToHide: commitPendingEdits()
+    onHeightChanged: Qt.callLater(ensureFocusedFieldVisible)
+    onClosed: {
+        focusedField = null
+        Qt.inputMethod.hide()
+    }
 
-    Overlay.modal: KeyboardCompatibleOverlay {
+    Overlay.modeless: KeyboardCompatibleOverlay {
         anchors.fill: parent
         color: AppTheme.settings.overlayDim
         onBackgroundPressed: root.close()
@@ -241,7 +280,7 @@ Dialog {
 
                         Text {
                             Layout.fillWidth: true
-                            text: qsTr("Estos parámetros se aplican inmediatamente al robot seleccionado.")
+                            text: qsTr("Los cambios se aplicarán al robot seleccionado al pulsar Guardar.")
                             color: AppTheme.settings.groupDescription
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
@@ -267,7 +306,7 @@ Dialog {
                                 inputMethodHints: Qt.ImhFormattedNumbersOnly
                                 selectByMouse: true
                                 color: AppTheme.settings.primaryDark
-                                onEditingFinished: root.applyNumber(radiusField, "robotRadius")
+                                onActiveFocusChanged: root.followFieldFocus(radiusField)
 
                                 background: Rectangle {
                                     color: AppTheme.settings.white
@@ -293,7 +332,7 @@ Dialog {
                                 inputMethodHints: Qt.ImhFormattedNumbersOnly
                                 selectByMouse: true
                                 color: AppTheme.settings.primaryDark
-                                onEditingFinished: root.applyNumber(linearVelocityField, "maxLinearVelocity")
+                                onActiveFocusChanged: root.followFieldFocus(linearVelocityField)
 
                                 background: Rectangle {
                                     color: AppTheme.settings.white
@@ -319,7 +358,7 @@ Dialog {
                                 inputMethodHints: Qt.ImhFormattedNumbersOnly
                                 selectByMouse: true
                                 color: AppTheme.settings.primaryDark
-                                onEditingFinished: root.applyNumber(angularVelocityField, "maxAngularVelocity")
+                                onActiveFocusChanged: root.followFieldFocus(angularVelocityField)
 
                                 background: Rectangle {
                                     color: AppTheme.settings.white
@@ -386,7 +425,7 @@ Dialog {
                                 validator: RegularExpressionValidator {
                                     regularExpression: /^\/?[A-Za-z_][A-Za-z0-9_]*(\/[A-Za-z_][A-Za-z0-9_]*)*$/
                                 }
-                                onEditingFinished: root.applyText(cmdVelTopicField, "cmdVelTopic")
+                                onActiveFocusChanged: root.followFieldFocus(cmdVelTopicField)
 
                                 background: Rectangle {
                                     color: AppTheme.settings.white
@@ -413,7 +452,7 @@ Dialog {
                                 validator: RegularExpressionValidator {
                                     regularExpression: /^\/?[A-Za-z_][A-Za-z0-9_]*(\/[A-Za-z_][A-Za-z0-9_]*)*$/
                                 }
-                                onEditingFinished: root.applyText(scanTopicField, "scanTopic")
+                                onActiveFocusChanged: root.followFieldFocus(scanTopicField)
 
                                 background: Rectangle {
                                     color: AppTheme.settings.white
@@ -440,7 +479,7 @@ Dialog {
                                 validator: RegularExpressionValidator {
                                     regularExpression: /^\/?[A-Za-z_][A-Za-z0-9_]*(\/[A-Za-z_][A-Za-z0-9_]*)*$/
                                 }
-                                onEditingFinished: root.applyText(cameraTopicField, "cameraDetectionTopic")
+                                onActiveFocusChanged: root.followFieldFocus(cameraTopicField)
 
                                 background: Rectangle {
                                     color: AppTheme.settings.white
@@ -467,7 +506,7 @@ Dialog {
                                 validator: RegularExpressionValidator {
                                     regularExpression: /^[A-Za-z_][A-Za-z0-9_]*(\/[A-Za-z_][A-Za-z0-9_]*)*$/
                                 }
-                                onEditingFinished: root.applyText(mapFrameField, "mapFrame")
+                                onActiveFocusChanged: root.followFieldFocus(mapFrameField)
 
                                 background: Rectangle {
                                     color: AppTheme.settings.white
@@ -494,7 +533,7 @@ Dialog {
                                 validator: RegularExpressionValidator {
                                     regularExpression: /^[A-Za-z_][A-Za-z0-9_]*(\/[A-Za-z_][A-Za-z0-9_]*)*$/
                                 }
-                                onEditingFinished: root.applyText(robotFrameField, "robotFrame")
+                                onActiveFocusChanged: root.followFieldFocus(robotFrameField)
 
                                 background: Rectangle {
                                     color: AppTheme.settings.white
@@ -529,14 +568,6 @@ Dialog {
                             color: AppTheme.settings.primaryDark
                             font.pixelSize: 18
                             font.bold: true
-                        }
-
-                        Text {
-                            Layout.fillWidth: true
-                            text: qsTr("Información de solo lectura. Estas rutas dependen del montaje configurado al iniciar Docker.")
-                            color: AppTheme.settings.groupDescription
-                            font.pixelSize: 12
-                            wrapMode: Text.WordWrap
                         }
 
                         Text {
@@ -612,7 +643,7 @@ Dialog {
 
                         Text {
                             Layout.fillWidth: true
-                            text: qsTr("Los cambios solo se conservan durante la sesión actual y no modifican config.yaml.")
+                            text: qsTr("Los cambios guardados solo se conservan durante la sesión actual.")
                             color: AppTheme.settings.white
                             font.pixelSize: 11
                             wrapMode: Text.WordWrap
@@ -621,22 +652,24 @@ Dialog {
                 }
 
                 Button {
-                    id: doneButton
+                    id: saveButton
                     Layout.alignment: Qt.AlignHCenter
                     Layout.bottomMargin: 8
                     Layout.preferredWidth: 200
                     Layout.preferredHeight: root.buttonHeightPx
-                    text: qsTr("Cerrar")
+                    text: qsTr("Guardar")
+                    enabled: root.canSave
+                    opacity: enabled ? 1.0 : 0.5
 
                     background: Rectangle {
-                        color: doneButton.down ? AppTheme.settings.primary : AppTheme.settings.white
+                        color: saveButton.down ? AppTheme.settings.primary : AppTheme.settings.white
                         radius: 8
                         border.color: AppTheme.settings.primaryDark
                         border.width: 2
                     }
 
                     contentItem: Label {
-                        text: doneButton.text
+                        text: saveButton.text
                         color: AppTheme.settings.primaryDark
                         font.pixelSize: 16
                         font.bold: true
@@ -644,7 +677,7 @@ Dialog {
                         verticalAlignment: Text.AlignVCenter
                     }
 
-                    onClicked: root.close()
+                    onClicked: root.saveChanges()
                 }
             }
         }
