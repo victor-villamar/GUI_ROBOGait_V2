@@ -51,7 +51,7 @@ La construcción, configuración, ejecución y resolución de problemas se detal
 
 ### Archivos principales
 
-* [`install.sh`](install.sh) &rarr; Punto de entrada interactivo para instalar el entorno de desarrollo o desplegar la aplicación con Docker.
+* [`install.sh`](install.sh) &rarr; Punto de entrada interactivo para instalar el entorno de desarrollo o desplegar la aplicación de forma nativa o con Docker.
 
 * [`README.md`](README.md) &rarr; Documentación general y navegación hacia cada módulo.
 
@@ -60,15 +60,17 @@ La construcción, configuración, ejecución y resolución de problemas se detal
 
 [`install.sh`](install.sh) carga las funciones de `scripts/`, activa el modo estricto de Bash y guía al usuario mediante la selección de modalidad y, cuando corresponde, de distribución ROS 2. La recompilación del entorno de desarrollo detecta la distribución automáticamente. Las operaciones que necesitan privilegios solicitan la contraseña de `sudo` una vez y la reutilizan durante esa ejecución.
 
-|             Modalidad            |                              Instala y configura                             |                              Resultado                             |
-|----------------------------------|:----------------------------------------------------------------------------:|--------------------------------------------------------------------|
-|      Ordenador de desarrollo     |        ROS 2, Qt 6, herramientas C++, dependencias y utilidades SQLite       |       Workspace compilado y entornos ROS añadidos a `.bashrc`      |
-|     Dispositivo de aplicación    | Docker Engine, grupos gráficos, entorno Docker, imagen y servicio de usuario |    GUI preparada para iniciarse mediante systemd y Docker Compose  |
-|            Solo Docker           |            Docker Engine, grupos gráficos, entorno Docker e imagen           |  Imagen disponible para ejecución manual, sin instalar el servicio |
-|        Recompilar Docker         |              Reutiliza Docker y reconstruye la imagen existente              |      Imagen actualizada sin reinstalar ni reconfigurar Docker      |
-| Recompilar entorno de desarrollo |     Detecta la instalación ROS 2 y vuelve a ejecutar `colcon build`          |       Workspace actualizado sin reinstalar dependencias            |
+|             Modalidad            |                                Instala y configura                               |                              Resultado                             |
+|----------------------------------|:--------------------------------------------------------------------------------:|--------------------------------------------------------------------|
+|      Ordenador de desarrollo     |          ROS 2, Qt 6, herramientas C++, dependencias y utilidades SQLite         |     Workspace compilado, entorno y lanzador nativo configurados    |
+|     Dispositivo de aplicación    | El usuario elige instalación nativa o Docker; ambas crean un servicio de usuario |  GUI preparada para iniciarse mediante systemd en el modo elegido  |
+|            Solo Docker           |              Docker Engine, grupos gráficos, entorno Docker e imagen             |  Imagen disponible para ejecución manual, sin instalar el servicio |
+|        Recompilar Docker         |                Reutiliza Docker y reconstruye la imagen existente                |      Imagen actualizada sin reinstalar ni reconfigurar Docker      |
+| Recompilar entorno de desarrollo |       Detecta la instalación ROS 2 y vuelve a ejecutar `colcon build`            |       Workspace actualizado sin reinstalar dependencias            |
 
-El flujo de desarrollo compila mediante `colcon` los paquetes `command_executor_msgs`, `navigation_pkg`, `command_executor` y `robogait_gui`. Cuando la distribución seleccionada es Lyrical también genera el paquete local `nav2_msgs`; en Humble y Jazzy utiliza el proporcionado por `/opt/ros`. La modalidad **Recompilar entorno de desarrollo** detecta automáticamente la distribución activa o instalada y repite esta compilación sin solicitar una versión ni reinstalar dependencias. Los flujos Docker construyen la imagen `robogait_gui:${ROS_DISTRO}`; únicamente la modalidad **Dispositivo de aplicación** crea `robogait-gui-docker.service`. La modalidad **Recompilar Docker** omite la instalación y configuración de Docker y actualiza solamente el entorno `.env` y la imagen.
+El flujo de desarrollo compila mediante `colcon` los paquetes `command_executor_msgs`, `navigation_pkg`, `command_executor` y `robogait_gui`. Además instala un acceso nativo en el menú y en los favoritos de GNOME con `robogait.png`. La instalación nativa de un dispositivo realiza la misma preparación, pero no compila `command_executor`, y crea `robogait-gui-native.service`; el servicio carga los entornos ROS 2 y del workspace antes de ejecutar `ros2 run robogait_gui robogait_gui`. Cuando la distribución seleccionada es Lyrical también se genera el paquete local `nav2_msgs`; en Humble y Jazzy se utiliza el proporcionado por `/opt/ros`.
+
+La modalidad **Recompilar entorno de desarrollo** detecta automáticamente la distribución activa o instalada y repite la compilación completa sin solicitar una versión ni reinstalar dependencias. Los flujos Docker construyen la imagen `robogait_gui:${ROS_DISTRO}`; la variante Docker del dispositivo crea `robogait-gui-docker.service`. La modalidad **Recompilar Docker** omite la instalación y configuración de Docker y actualiza solamente el entorno `.env` y la imagen.
 
 > [!WARNING]
 >
@@ -77,7 +79,7 @@ El flujo de desarrollo compila mediante `colcon` los paquetes `command_executor_
 <!-- COMPATIBILIDAD -->
 ## Compatibilidad
 
-Para el entorno de desarrollo, el instalador valida estas combinaciones:
+Para las instalaciones nativas, el instalador valida estas combinaciones:
 
 | Ubuntu |   ROS 2 |
 |--------|---------|
@@ -85,7 +87,7 @@ Para el entorno de desarrollo, el instalador valida estas combinaciones:
 | 24.04  |  Jazzy  |
 | 26.04  | Lyrical |
 
-La aplicación Docker también se construye seleccionando Humble, Jazzy o Lyrical mediante `ROS_DISTRO`.
+La instalación nativa valida que la versión seleccionada sea compatible con Ubuntu. La aplicación Docker también se construye seleccionando Humble, Jazzy o Lyrical mediante `ROS_DISTRO`.
 
 La distribución activa se obtiene del entorno cargado mediante `/opt/ros/${ROS_DISTRO}/setup.bash`. Los paquetes con código C++ dependiente de la API de ROS 2 validan ese valor en CMake y exponen exactamente una de las macros `ROBOGAIT_ROS_HUMBLE`, `ROBOGAIT_ROS_JAZZY` o `ROBOGAIT_ROS_LYRICAL`.
 
@@ -105,7 +107,7 @@ chmod +x install.sh
 ./install.sh
 ```
 
-Seleccione una de las cinco modalidades mostradas por el instalador. Después de instalar Docker, cierre la sesión y vuelva a entrar, o reinicie el equipo, para aplicar la pertenencia al grupo `docker`.
+Seleccione una de las cinco modalidades mostradas por el instalador. En **Dispositivo de aplicación**, seleccione después **Docker** o **Nativa**. Después de instalar Docker, cierre la sesión y vuelva a entrar, o reinicie el equipo, para aplicar la pertenencia al grupo `docker`.
 
 Para instrucciones específicas consulte:
 

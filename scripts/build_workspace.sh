@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-build_workspace()
+build_selected_workspace()
 {
+  local include_command_executor="$1"
+
   log "Building ROBOGait workspace"
 
   # ROS setup scripts read optional environment variables that may be unset.
@@ -21,8 +23,12 @@ build_workspace()
 
   cd "${ROOT_DIR}"
 
-  local packages=(command_executor_msgs navigation_pkg command_executor robogait_gui)
+  local packages=(command_executor_msgs navigation_pkg robogait_gui)
   local nav2_compat_args=(--packages-ignore nav2_msgs)
+
+  if [ "${include_command_executor}" = true ]; then
+    packages=(command_executor_msgs navigation_pkg command_executor robogait_gui)
+  fi
 
   if [ "${ROS_DISTRO}" = "lyrical" ]; then
     packages=(nav2_msgs "${packages[@]}")
@@ -32,6 +38,16 @@ build_workspace()
   colcon build --merge-install --base-paths src \
     "${nav2_compat_args[@]}" \
     --packages-select "${packages[@]}"
+}
+
+build_workspace()
+{
+  build_selected_workspace true
+}
+
+build_application_workspace()
+{
+  build_selected_workspace false
 }
 
 configure_development_shell()
