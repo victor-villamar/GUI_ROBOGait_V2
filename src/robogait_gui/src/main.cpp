@@ -21,6 +21,8 @@ int main(int argc, char* argv[])
   signal(SIGTERM, signalHandler);
 
   qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
+  qputenv("QT_IM_MODULES", QByteArray("qtvirtualkeyboard"));
+  qputenv("QT_VIRTUALKEYBOARD_DESKTOP_DISABLE", QByteArray("1"));
 
   auto app = std::make_unique<ROBOGait::core::RoboGaitApplication>(argc, argv);
 
