@@ -337,7 +337,7 @@ void RobotManager::enableManualControl()
 
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
 
-  const std::string cmd_vel_topic = yaml_loader.getValue<std::string>("robot.cmd_vel_topic", ROBOGait::ros::topics::T_CMD_VEL);
+  const std::string cmd_vel_topic = yaml_loader.getValue<std::string>("topics.cmd_vel", ROBOGait::ros::topics::T_CMD_VEL);
   const QString topic_name = buildTopicName(QString::fromStdString(cmd_vel_topic));
 
   manual_control_->setTopicName(topic_name);

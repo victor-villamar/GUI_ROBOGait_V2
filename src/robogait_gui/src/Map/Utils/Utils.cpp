@@ -405,8 +405,7 @@ double getFollowPathMinInitialSpacingM()
     return DEFAULT_FOLLOW_PATH_MIN_INITIAL_SPACING_M;
   }
 
-  const double configured_spacing =
-      yaml_loader.getValue<double>("map.spline_path.follow_path_min_initial_spacing_m", DEFAULT_FOLLOW_PATH_MIN_INITIAL_SPACING_M);
+  const double configured_spacing = yaml_loader.getValue<double>("spline_path.follow_path_min_initial_spacing_m", DEFAULT_FOLLOW_PATH_MIN_INITIAL_SPACING_M);
   if (!std::isfinite(configured_spacing) || configured_spacing < 0.0)
   {
     qWarning() << "[utils::getFollowPathMinInitialSpacingM] Invalid follow_path_min_initial_spacing_m, using default:"
@@ -425,7 +424,7 @@ double getFollowPathMinPointSpacingM()
     return DEFAULT_FOLLOW_PATH_MIN_POINT_SPACING_M;
   }
 
-  const double configured_spacing = yaml_loader.getValue<double>("map.spline_path.follow_path_min_point_spacing_m", DEFAULT_FOLLOW_PATH_MIN_POINT_SPACING_M);
+  const double configured_spacing = yaml_loader.getValue<double>("spline_path.follow_path_min_point_spacing_m", DEFAULT_FOLLOW_PATH_MIN_POINT_SPACING_M);
   if (!std::isfinite(configured_spacing) || configured_spacing < 0.0)
   {
     qWarning() << "[utils::getFollowPathMinPointSpacingM] Invalid follow_path_min_point_spacing_m, using default:" << DEFAULT_FOLLOW_PATH_MIN_POINT_SPACING_M;
@@ -529,7 +528,6 @@ geometry_msgs::msg::Quaternion buildWaypointOrientation(const WaypointInput& way
   orientation.w = 1.0;
   return orientation;
 }
-
 } // namespace utils
 } // namespace map
 } // namespace ROBOGait

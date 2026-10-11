@@ -31,10 +31,10 @@ SplinePathEditor::SmoothingTuningPx loadSmoothingTuningPx(const ROBOGait::loader
     return tuning;
   }
 
-  tuning.resample_spacing_px = yaml_loader.getValue<double>("map.spline_path.resample_spacing_px", tuning.resample_spacing_px);
-  tuning.smoothing_window_radius = yaml_loader.getValue<int>("map.spline_path.smoothing_window_radius", tuning.smoothing_window_radius);
-  tuning.catmull_alpha = yaml_loader.getValue<double>("map.spline_path.catmull_alpha", tuning.catmull_alpha);
-  tuning.sample_spacing_px = yaml_loader.getValue<double>("map.spline_path.sample_spacing_px", tuning.sample_spacing_px);
+  tuning.resample_spacing_px = yaml_loader.getValue<double>("spline_path.resample_spacing_px", tuning.resample_spacing_px);
+  tuning.smoothing_window_radius = yaml_loader.getValue<int>("spline_path.smoothing_window_radius", tuning.smoothing_window_radius);
+  tuning.catmull_alpha = yaml_loader.getValue<double>("spline_path.catmull_alpha", tuning.catmull_alpha);
+  tuning.sample_spacing_px = yaml_loader.getValue<double>("spline_path.sample_spacing_px", tuning.sample_spacing_px);
   return tuning;
 }
 
@@ -47,8 +47,8 @@ SplinePathEditor::EditReductionTuningPx loadEditReductionTuningPx(const ROBOGait
     return tuning;
   }
 
-  tuning.simplify_tolerance_px = yaml_loader.getValue<double>("map.spline_path.simplify_tolerance_px", tuning.simplify_tolerance_px);
-  tuning.max_anchor_points = yaml_loader.getValue<int>("map.spline_path.max_anchor_points", tuning.max_anchor_points);
+  tuning.simplify_tolerance_px = yaml_loader.getValue<double>("spline_path.simplify_tolerance_px", tuning.simplify_tolerance_px);
+  tuning.max_anchor_points = yaml_loader.getValue<int>("spline_path.max_anchor_points", tuning.max_anchor_points);
   return tuning;
 }
 
@@ -104,15 +104,15 @@ MapVisualizationManager::MapVisualizationManager() :
 
   if (yaml_loader.isLoaded())
   {
-    const double configured_size = yaml_loader.getValue<double>("map.robot_size", robot_size_);
+    const double configured_radius = yaml_loader.getValue<double>("robot.radius", robot_size_ * 0.5);
 
-    if (configured_size > 0.0)
+    if (configured_radius > 0.0)
     {
-      robot_size_ = configured_size;
+      robot_size_ = configured_radius * 2.0;
     }
     else
     {
-      qWarning() << "[MapVisualizationManager::MapVisualizationManager] Invalid map.robot_size (must be > 0), using default:" << robot_size_;
+      qWarning() << "[MapVisualizationManager::MapVisualizationManager] Invalid robot.radius (must be > 0), using default radius:" << robot_size_ * 0.5;
     }
   }
   else
