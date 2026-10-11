@@ -168,6 +168,7 @@ set(HEADERS
     include/Services/RobotServiceBridge.hpp
     include/Services/RobotServiceClient.hpp
     include/Settings/DeveloperSettings.hpp
+    include/Settings/RobotSettings.hpp
     include/Settings/TimeoutSettings.hpp
     include/Settings/UiSizingSettings.hpp
     include/Themes/AppTheme.hpp
@@ -255,6 +256,7 @@ set(SOURCES
     src/Services/RobotServiceBridge.cpp
     src/Services/RobotServiceClient.cpp
     src/Settings/DeveloperSettings.cpp
+    src/Settings/RobotSettings.cpp
     src/Settings/TimeoutSettings.cpp
     src/Settings/UiSizingSettings.cpp
     src/Themes/AppTheme.cpp
@@ -409,6 +411,57 @@ if(BUILD_TESTING)
     target_include_directories(test_yaml_loader PRIVATE include)
     target_link_libraries(test_yaml_loader
         ${ROBOGAIT_YAML_CPP_TARGET}
+    )
+
+    ament_add_gtest(test_robot_settings
+        test/settings/test_robot_settings.cpp
+        src/Loader/YamlLoader.cpp
+        src/Ros/Define.cpp
+        src/Ros/TopicsName.cpp
+        src/Settings/RobotSettings.cpp
+        include/Settings/RobotSettings.hpp
+    )
+    target_include_directories(test_robot_settings PRIVATE include)
+    target_link_libraries(test_robot_settings
+        ${ROBOGAIT_YAML_CPP_TARGET}
+        Qt6::Core
+    )
+
+    ament_add_gtest(test_developer_settings
+        test/settings/test_developer_settings.cpp
+        src/Loader/YamlLoader.cpp
+        src/Settings/DeveloperSettings.cpp
+        include/Settings/DeveloperSettings.hpp
+    )
+    target_include_directories(test_developer_settings PRIVATE include)
+    target_link_libraries(test_developer_settings
+        ${ROBOGAIT_YAML_CPP_TARGET}
+        Qt6::Core
+    )
+
+    ament_add_gtest(test_timeout_settings
+        test/settings/test_timeout_settings.cpp
+        src/Loader/YamlLoader.cpp
+        src/Settings/TimeoutSettings.cpp
+        include/Settings/TimeoutSettings.hpp
+    )
+    target_include_directories(test_timeout_settings PRIVATE include)
+    target_link_libraries(test_timeout_settings
+        ${ROBOGAIT_YAML_CPP_TARGET}
+        Qt6::Core
+    )
+
+    ament_add_gtest(test_ui_sizing_settings
+        test/settings/test_ui_sizing_settings.cpp
+        src/Loader/YamlLoader.cpp
+        src/Settings/UiSizingSettings.cpp
+        include/Settings/UiSizingSettings.hpp
+    )
+    target_include_directories(test_ui_sizing_settings PRIVATE include)
+    target_link_libraries(test_ui_sizing_settings
+        ${ROBOGAIT_YAML_CPP_TARGET}
+        Qt6::Core
+        Qt6::Gui
     )
 
     ament_add_gtest(test_bootstrap_loader
