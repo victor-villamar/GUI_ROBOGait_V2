@@ -7,6 +7,10 @@ namespace ros
 {
 namespace topics
 {
+/**
+ * @brief Defines ROS2 topic, services, actions and TF frames names.
+ * All names can use a robot namespace, execept the map TF frame.
+ */
 // clang-format off
 // Topics
 const std::string T_CMD_VEL =                          "/cmd_vel";
@@ -32,7 +36,7 @@ const std::string A_COMPUTE_PATH_TO_POSE =             "/compute_path_to_pose";
 const std::string A_FOLLOW_PATH =                      "/follow_path";
 
 // TF Frames
-const std::string TF_MAP_FRAME =                       "map";
+const std::string TF_MAP_FRAME =                       "map"; // Global frame, never uses a robot namespace
 const std::string TF_ROBOT_FRAME =                     "base_link";
 // clang-format on
 } // namespace topics
