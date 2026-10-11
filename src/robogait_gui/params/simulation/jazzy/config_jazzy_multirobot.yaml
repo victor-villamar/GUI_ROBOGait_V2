@@ -1,100 +1,105 @@
+# Format: hierarchical YAML; two-space indentation groups each section.
+# Units: the _px, _mm, _m, _s, and _ms suffixes mean pixels, millimeters, meters, seconds, and milliseconds.
+# Paths without a leading '/' are relative to the home directory; do not change key names or placeholders in braces.
+
 # ROBOGait Configuration File
 
 # Ui Configuration
 ui:
-  button_height: 17.0
-  input_height: 17.0
-  combo_height: 17.0
-  dropdown_height: 17.0
-  list_item_height: 17.0
-  badge_height: 14.0
-  badge_menu_item_height: 14.0
-  icon_button_size: 14.0
-  icon_glyph_size: 12.0
-  tab_height: 14.0
-  checkbox_height: 14.0
-  checkbox_indicator_size: 10.0
-  spinbox_button_size: 10.0
-  joystick_stick_size: 17.0
-  pixel_density_override_px_per_mm: 0.0   # 0 = auto
-  min_pixel_density_px_per_mm: 2.5
-  max_pixel_density_px_per_mm: 5.5
-  reference_diagonal_inch: 13.0
-  min_scale: 0.85
-  max_scale: 1.15
-  calibration_factor: 1.0
-  min_interactive_px: 44.0
-  max_interactive_px: 96.0
+  button_height: 17.0                    # Base button height (mm)
+  input_height: 17.0                     # Base text field height (mm)
+  combo_height: 17.0                     # Base combo box height (mm)
+  dropdown_height: 17.0                  # Base drop-down height (mm)
+  list_item_height: 17.0                 # Base list item height (mm)
+  badge_height: 14.0                     # Base badge height (mm)
+  badge_menu_item_height: 14.0           # Badge menu item height (mm)
+  icon_button_size: 14.0                 # Icon button size (mm)
+  icon_glyph_size: 12.0                  # Icon glyph size (mm)
+  tab_height: 14.0                       # Base tab height (mm)
+  checkbox_height: 14.0                  # Base checkbox height (mm)
+  checkbox_indicator_size: 10.0          # Checkbox indicator size (mm)
+  spinbox_button_size: 10.0              # Spin box button size (mm)
+  joystick_stick_size: 17.0              # Joystick handle diameter (mm)
+  pixel_density_override_px_per_mm: 0.0  # Forced display density (px/mm); 0 selects automatic detection
+  min_pixel_density_px_per_mm: 2.5       # Minimum accepted display density (px/mm)
+  max_pixel_density_px_per_mm: 5.5       # Maximum accepted display density (px/mm)
+  reference_diagonal_inch: 13.0          # Reference display diagonal (inches)
+  min_scale: 0.85                        # Minimum UI scale factor
+  max_scale: 1.15                        # Maximum UI scale factor
+  calibration_factor: 1.0                # Manual correction applied to the calculated scale
+  min_interactive_px: 44.0               # Minimum interactive size (px)
+  max_interactive_px: 96.0               # Maximum interactive size (px)
 
 # Node Configuration
 node:
-  namespace: "RoboGait_GUI"
+  namespace: "RoboGait_GUI"  # ROS 2 namespace of the GUI node.
 
 # Database Configuration
 database:
-  path: ".local/robogait"
-  filename: "db_robogait.db"
+  path: ".local/robogait"     # Database directory, relative to the user's home directory
+  filename: "db_robogait.db"  # SQLite file name
 
 # ROS2 Configuration
 ros2:
-  domain_id: 0
-  use_namespace_discovery: true
-  use_topic_filter: true
+  domain_id: 0                   # DDS domain used by the ROS 2 nodes
+  use_namespace_discovery: true  # Discovers robots from ROS 2 namespaces
+  use_topic_filter: true         # Filters discovered topics against the expected topics
 
 # Robot Configuration
 robot:
-  radius: 0.189 # TurtleBot 4 footprint radius
-  max_linear_velocity: 0.22
-  max_angular_velocity: 2.84
+  radius: 0.326               # Robot footprint radius (m)
+  max_linear_velocity: 0.22   # Maximum linear velocity allowed by the GUI (m/s)
+  max_angular_velocity: 2.84  # Maximum angular velocity allowed by the GUI (rad/s)
 
 # ROS Topic Configuration
 topics:
-  cmd_vel: "/cmd_vel_unstamped"
-  scan: "/scan"
-  camera_detection: "/camera_detection"
+  cmd_vel: "/cmd_vel_unstamped"          # ROS 2 velocity command topic
+  scan: "/scan"                          # ROS 2 laser scan topic
+  camera_detection: "/camera_detection"  # ROS 2 camera detection topic
 
 # TF Frame Configuration
 frames:
-  map: "map"
-  robot: "base_link"
+  map: "map"          # Global map TF frame
+  robot: "base_link"  # Robot base TF frame
 
 # Navigation Configuration
 navigation:
-  use_sim_time: true
-  nav2_params_path: "/.local/robogait/params/"
-  nav2_params_file: "nav2_params.yaml"
+  use_sim_time: false                           # Uses the clock published by the simulator
+  nav2_params_path: "/.local/robogait/params/"  # Path to the Nav2 parameters on the robot
+  nav2_params_file: "nav2_params.yaml"          # Nav2 parameter file name
   manual_follow_path:
-    controller_id: "ManualPath" # Controller used by direct FollowPath for manually drawn paths
-    goal_checker_id: "general_goal_checker"
+    controller_id: "ManualPath"                 # Controller plugin for manually drawn paths
+    goal_checker_id: "general_goal_checker"     # Plugin that determines whether the goal was reached
 
 # Timeout Configuration
 timeouts:
-  start_stop_timeout_s: 25
+  start_stop_timeout_s: 25                         # Maximum wait when starting or stopping processes (s)
   qml:
-    app_shutdown_delay_ms: 3000
-    auth_mode_dropdown_auto_close_ms: 4000
-    register_default_idle_timeout_ms: 10000
-    register_sign_in_idle_timeout_ms: 60000
-    badge_auto_close_ms: 3000
-    robot_badge_auto_close_ms: 6000
-    error_rectangle_delayed_close_ms: 5000
-    test_busy_timeout_ms: 25000
-    auto_localization_spin_timeout_ms: 30000
-    auto_localization_spin_publish_period_ms: 100
-    experiment_save_prompt_delay_ms: 3000
+    app_shutdown_delay_ms: 3000                    # Delay before closing the application (ms)
+    auth_mode_dropdown_auto_close_ms: 4000         # Time before closing the authentication selector (ms)
+    register_default_idle_timeout_ms: 10000        # Maximum idle time on the standard registration screen (ms)
+    register_sign_in_idle_timeout_ms: 60000        # Maximum idle time during sign-in (ms)
+    badge_auto_close_ms: 3000                      # Badge display duration (ms)
+    robot_badge_auto_close_ms: 6000                # Robot badge display duration (ms)
+    error_rectangle_delayed_close_ms: 5000         # Delay before hiding an error message (ms)
+    test_busy_timeout_ms: 25000                    # Maximum wait for a busy test (ms)
+    auto_localization_spin_timeout_ms: 30000       # Maximum auto-localization spin duration (ms)
+    auto_localization_spin_publish_period_ms: 100  # Publishing period during the localization spin (ms)
+    experiment_save_prompt_delay_ms: 3000          # Delay before prompting to save an experiment (ms)
+    button_hold_ms: 600                            # Minimum time used to detect a long press (ms)
 
 # Map Rendering Configuration
 map:
-  image_path: ".local/robogait/maps/" # local path where map images are stored
-  map_path:   "/maps/"                # path used in service calls (relative to the robot's home directory)
+  image_path: ".local/robogait/maps/"  # Local directory where map images are stored
+  map_path:   "/maps/"                 # Map path used in robot service calls
 
 # Spline Path Configuration
 spline_path:
-  resample_spacing_px: 5.0
-  smoothing_window_radius: 2
-  catmull_alpha: 0.5
-  sample_spacing_px: 4.0
-  simplify_tolerance_px: 8.0
-  max_anchor_points: 28
-  follow_path_min_initial_spacing_m: 0.08
-  follow_path_min_point_spacing_m: 0.12
+  resample_spacing_px: 5.0                 # Spacing used to resample the stroke (px)
+  smoothing_window_radius: 2               # Smoothing window radius (samples)
+  catmull_alpha: 0.5                       # Catmull-Rom spline alpha parameter
+  sample_spacing_px: 4.0                   # Spacing between spline samples (px)
+  simplify_tolerance_px: 8.0               # Stroke simplification tolerance (px)
+  max_anchor_points: 28                    # Maximum number of retained control points
+  follow_path_min_initial_spacing_m: 0.08  # Minimum distance from the robot to the first point (m)
+  follow_path_min_point_spacing_m: 0.12    # Minimum spacing between submitted points (m)

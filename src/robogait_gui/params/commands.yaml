@@ -1,21 +1,25 @@
+# Format: each block defines one process with name, cmd, and append_args.
+# The GUI replaces {name} placeholders; the shell expands $HOME and $ROBOT_NAMESPACE.
+# Strings are passed to the shell; preserve quotes, spaces, and argument order.
+
 # Real robot commands
 
 cartographer:
-  name: "slam_toolbox"
-  cmd: "ros2 launch roverrobotics_driver multi_slam_launch.py"
-  append_args: "robot_namespace:={namespace}"
+  name: "slam_toolbox"                                          # Internal process name used by the GUI
+  cmd: "ros2 launch roverrobotics_driver multi_slam_launch.py"  # Base command executed by the GUI
+  append_args: "robot_namespace:={namespace}"                   # Arguments appended to the base command
 
 map_saver:
-  name: "map_saver"
-  cmd: "ros2 run nav2_map_server map_saver_cli"
-  append_args: "-t {map_topic} -f $HOME{map_path}{map_name} --occ 0.65 --free 0.196 --ros-args -p save_map_timeout:=15.0 -p use_sim_time:=false"
+  name: "map_saver"                                                                                                                               # Internal process name used by the GUI
+  cmd: "ros2 run nav2_map_server map_saver_cli"                                                                                                   # Base command executed by the GUI
+  append_args: "-t {map_topic} -f $HOME{map_path}{map_name} --occ 0.65 --free 0.196 --ros-args -p save_map_timeout:=15.0 -p use_sim_time:=false"  # Arguments appended to the base command
 
 delete_map:
-  name: "delete_map"
-  cmd: "ros2 delete"
-  append_args: "$HOME{map_path}{map_name}*"
+  name: "delete_map"                         # Internal process name used by the GUI
+  cmd: "ros2 delete"                         # Base command executed by the GUI
+  append_args: "$HOME{map_path}{map_name}*"  # Arguments appended to the base command
 
 navigation:
-  name: "bt_navigator"
-  cmd: "ros2 launch roverrobotics_driver multi_navigation_nuevo.launch.py"
-  append_args: "namespace:={namespace} use_namespace:=true map:=$HOME{map_path}{map_name}"
+  name: "bt_navigator"                                                                      # Internal process name used by the GUI
+  cmd: "ros2 launch roverrobotics_driver multi_navigation_nuevo.launch.py"                  # Base command executed by the GUI
+  append_args: "namespace:={namespace} use_namespace:=true map:=$HOME{map_path}{map_name}"  # Arguments appended to the base command

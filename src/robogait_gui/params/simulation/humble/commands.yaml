@@ -1,19 +1,23 @@
+# Format: each block defines one process with name, cmd, and append_args.
+# The GUI replaces {name} placeholders; the shell expands $HOME and $ROBOT_NAMESPACE.
+# Strings are passed to the shell; preserve quotes, spaces, and argument order.
+
 cartographer:
-  name: "cartographer_node"
-  cmd: "ros2 launch turtlebot3_cartographer cartographer.launch.py"
-  append_args: "use_sim_time:=True" # use simulation time
+  name: "cartographer_node"                                          # Internal process name used by the GUI
+  cmd: "ros2 launch turtlebot3_cartographer cartographer.launch.py"  # Base command executed by the GUI
+  append_args: "use_sim_time:=True"                                  # Arguments appended to the base command
 
 map_saver:
-  name: "map_saver"
-  cmd: "ros2 run nav2_map_server map_saver_cli"
-  append_args: "-t {map_topic} -f $HOME{map_path}{map_name} --occ 0.65 --free 0.196" # map file path
+  name: "map_saver"                                                                   # Internal process name used by the GUI
+  cmd: "ros2 run nav2_map_server map_saver_cli"                                       # Base command executed by the GUI
+  append_args: "-t {map_topic} -f $HOME{map_path}{map_name} --occ 0.65 --free 0.196"  # Arguments appended to the base command
 
 delete_map:
-  name: "delete_map"
-  cmd: "ros2 delete"
-  append_args: "$HOME{map_path}{map_name}*" # map file path
+  name: "delete_map"                         # Internal process name used by the GUI
+  cmd: "ros2 delete"                         # Base command executed by the GUI
+  append_args: "$HOME{map_path}{map_name}*"  # Arguments appended to the base command
 
 navigation:
-  name: "bt_navigator"
-  cmd: "ros2 launch turtlebot3_navigation2 navigation2.launch.py"
-  append_args: "use_sim_time:={navigation_use_sim_time} map:=$HOME{map_path}{map_name} params_file:=$HOME{nav2_params_path}{nav2_params_file}" # navigation launch arguments
+  name: "bt_navigator"                                                                                                                          # Internal process name used by the GUI
+  cmd: "ros2 launch turtlebot3_navigation2 navigation2.launch.py"                                                                               # Base command executed by the GUI
+  append_args: "use_sim_time:={navigation_use_sim_time} map:=$HOME{map_path}{map_name} params_file:=$HOME{nav2_params_path}{nav2_params_file}"  # Arguments appended to the base command

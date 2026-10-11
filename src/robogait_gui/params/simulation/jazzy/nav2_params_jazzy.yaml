@@ -1,429 +1,433 @@
+# Format: each ROS 2 node stores its values under ros__parameters; indentation defines the hierarchy.
+# Common units: distances in m, times in s, angles in rad, and frequencies in Hz unless stated otherwise.
+# Lists name plugins or [x, y, theta] axes; frame and topic names must match TF and ROS 2.
+
 # Nav2 parameters adapted for ROS 2 Jazzy.
 # Robot-specific dimensions, velocities and controller tuning are preserved.
 
 amcl:
   ros__parameters:
-    alpha1: 0.2
-    alpha2: 0.2
-    alpha3: 0.2
-    alpha4: 0.2
-    alpha5: 0.2
-    base_frame_id: "base_footprint"
-    beam_skip_distance: 0.5
-    beam_skip_error_threshold: 0.9
-    beam_skip_threshold: 0.3
-    do_beamskip: false
-    global_frame_id: "map"
-    lambda_short: 0.1
-    laser_likelihood_max_dist: 2.0
-    laser_max_range: 100.0
-    laser_min_range: -1.0
-    laser_model_type: "likelihood_field"
-    max_beams: 60
-    max_particles: 2000
-    min_particles: 500
-    odom_frame_id: "odom"
-    pf_err: 0.05
-    pf_z: 0.99
-    recovery_alpha_fast: 0.0
-    recovery_alpha_slow: 0.0
-    resample_interval: 1
-    robot_model_type: "nav2_amcl::DifferentialMotionModel"
-    save_pose_rate: 0.5
-    sigma_hit: 0.2
-    tf_broadcast: true
-    transform_tolerance: 1.0
-    update_min_a: 0.2
-    update_min_d: 0.25
-    z_hit: 0.5
-    z_max: 0.05
-    z_rand: 0.5
-    z_short: 0.05
-    scan_topic: scan
+    alpha1: 0.2  # Expected rotational noise from odometric rotation.
+    alpha2: 0.2  # Expected rotational noise from odometric translation.
+    alpha3: 0.2  # Expected translational noise from odometric translation.
+    alpha4: 0.2  # Expected translational noise from odometric rotation.
+    alpha5: 0.2  # Translational noise for the omnidirectional model.
+    base_frame_id: "base_footprint"  # Robot base TF frame.
+    beam_skip_distance: 0.5  # Maximum distance for skipping disagreeing beams (m).
+    beam_skip_error_threshold: 0.9  # Fraction of erroneous beams that disables beam skipping.
+    beam_skip_threshold: 0.3  # Fraction of disagreeing particles required to skip a beam.
+    do_beamskip: false  # Enables skipping disagreeing laser beams.
+    global_frame_id: "map"  # Global TF frame used by AMCL.
+    lambda_short: 0.1  # Exponential rate of the short-reading component.
+    laser_likelihood_max_dist: 2.0  # Maximum obstacle distance used by the laser model (m).
+    laser_max_range: 100.0  # Maximum laser range used by AMCL (m).
+    laser_min_range: -1.0  # Minimum laser range; a negative value uses the message value (m).
+    laser_model_type: "likelihood_field"  # Probabilistic model applied to laser measurements.
+    max_beams: 60  # Maximum number of laser beams used per update.
+    max_particles: 2000  # Maximum number of filter particles.
+    min_particles: 500  # Minimum number of filter particles.
+    odom_frame_id: "odom"  # Odometry TF frame.
+    pf_err: 0.05  # Maximum permitted particle filter error.
+    pf_z: 0.99  # Particle filter statistical confidence.
+    recovery_alpha_fast: 0.0  # Fast recovery rate after loss of localization.
+    recovery_alpha_slow: 0.0  # Slow recovery rate after loss of localization.
+    resample_interval: 1  # Number of updates between particle resampling steps.
+    robot_model_type: "nav2_amcl::DifferentialMotionModel"  # AMCL motion model class.
+    save_pose_rate: 0.5  # Last-pose saving frequency (Hz).
+    sigma_hit: 0.2  # Standard deviation of the laser hit component (m).
+    tf_broadcast: true  # Publishes the global AMCL transform.
+    transform_tolerance: 1.0  # Allowed timing margin for TF transforms (s).
+    update_min_a: 0.2  # Minimum rotation required to update the filter (rad).
+    update_min_d: 0.25  # Minimum displacement required to update the filter (m).
+    z_hit: 0.5  # Weight assigned to matching laser readings.
+    z_max: 0.05  # Weight assigned to maximum-range readings.
+    z_rand: 0.5  # Weight assigned to random laser readings.
+    z_short: 0.05  # Weight assigned to unexpectedly short laser readings.
+    scan_topic: scan  # LaserScan topic consumed by AMCL.
 
 bt_navigator:
   ros__parameters:
-    global_frame: map
-    robot_base_frame: base_link
-    odom_topic: /odom
-    bt_loop_duration: 10
-    default_server_timeout: 20
-    wait_for_service_timeout: 1000
-    action_server_result_timeout: 900.0
-    navigators: ["navigate_to_pose", "navigate_through_poses"]
+    global_frame: map  # Global reference TF frame.
+    robot_base_frame: base_link  # Robot base TF frame.
+    odom_topic: /odom  # ROS 2 odometry topic.
+    bt_loop_duration: 10  # Behavior tree loop period (ms).
+    default_server_timeout: 20  # Default timeout for BT server calls (ms).
+    wait_for_service_timeout: 1000  # Maximum wait for service availability (ms).
+    action_server_result_timeout: 900.0  # Maximum retention time for action results (s).
+    navigators: ["navigate_to_pose", "navigate_through_poses"]  # Navigators loaded by the BT server.
     navigate_to_pose:
-      plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
+      plugin: "nav2_bt_navigator::NavigateToPoseNavigator"  # Plugin class to load.
     navigate_through_poses:
-      plugin: "nav2_bt_navigator::NavigateThroughPosesNavigator"
+      plugin: "nav2_bt_navigator::NavigateThroughPosesNavigator"  # Plugin class to load.
     # Jazzy loads built-in BT plugins automatically and uses its default trees.
-    error_code_names:
+    error_code_names:  # Error codes exposed by the navigator.
       - compute_path_error_code
       - follow_path_error_code
 
 controller_server:
   ros__parameters:
-    controller_frequency: 10.0
-    min_x_velocity_threshold: 0.001
-    min_y_velocity_threshold: 0.5
-    min_theta_velocity_threshold: 0.001
-    failure_tolerance: 0.3
-    progress_checker_plugins: ["progress_checker"]
-    goal_checker_plugins: ["general_goal_checker"]
-    controller_plugins: ["FollowPath", "ManualPath"]
+    controller_frequency: 10.0  # Control loop frequency (Hz).
+    min_x_velocity_threshold: 0.001  # Minimum X velocity considered nonzero (m/s).
+    min_y_velocity_threshold: 0.5  # Minimum Y velocity considered nonzero (m/s).
+    min_theta_velocity_threshold: 0.001  # Minimum angular velocity considered nonzero (rad/s).
+    failure_tolerance: 0.3  # Permitted controller failure duration (s).
+    progress_checker_plugins: ["progress_checker"]  # Available progress checkers.
+    goal_checker_plugins: ["general_goal_checker"]  # Available goal checkers.
+    controller_plugins: ["FollowPath", "ManualPath"]  # Available local controllers.
 
     # Progress checker parameters
     progress_checker:
-      plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.01
-      movement_time_allowance: 1000.0
+      plugin: "nav2_controller::SimpleProgressChecker"  # Plugin class to load.
+      required_movement_radius: 0.01  # Minimum movement required to count as progress (m).
+      movement_time_allowance: 1000.0  # Time allowed to make progress (s).
 
     general_goal_checker:
-      stateful: True
-      plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      stateful: True  # Preserves state between evaluation cycles.
+      plugin: "nav2_controller::SimpleGoalChecker"  # Plugin class to load.
+      xy_goal_tolerance: 0.25  # Goal position tolerance (m).
+      yaw_goal_tolerance: 0.25  # Goal angular tolerance (rad).
 
     # DWB parameters
     FollowPath:
-      plugin: "dwb_core::DWBLocalPlanner"
-      debug_trajectory_details: True
-      min_vel_x: 0.0
-      min_vel_y: 0.0
-      max_vel_x: 0.22
-      max_vel_y: 0.0
-      max_vel_theta: 1.0
-      min_speed_xy: 0.0
-      max_speed_xy: 0.22
-      min_speed_theta: 0.0
+      plugin: "dwb_core::DWBLocalPlanner"  # Plugin class to load.
+      debug_trajectory_details: True  # Publishes trajectory evaluation details.
+      min_vel_x: 0.0  # Minimum sampled X velocity (m/s).
+      min_vel_y: 0.0  # Minimum sampled Y velocity (m/s).
+      max_vel_x: 0.22  # Maximum sampled X velocity (m/s).
+      max_vel_y: 0.0  # Maximum sampled Y velocity (m/s).
+      max_vel_theta: 1.0  # Maximum sampled angular velocity (rad/s).
+      min_speed_xy: 0.0  # Minimum linear speed magnitude (m/s).
+      max_speed_xy: 0.22  # Maximum linear speed magnitude (m/s).
+      min_speed_theta: 0.0  # Minimum angular speed magnitude (rad/s).
       # Add high threshold velocity for turtlebot 3 issue.
       # https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/75
-      acc_lim_x: 2.5
-      acc_lim_y: 0.0
-      acc_lim_theta: 3.2
-      decel_lim_x: -2.5
-      decel_lim_y: 0.0
-      decel_lim_theta: -3.2
-      vx_samples: 20
-      vy_samples: 0
-      vtheta_samples: 40
-      sim_time: 1.5
-      linear_granularity: 0.05
-      angular_granularity: 0.025
-      transform_tolerance: 0.2
-      xy_goal_tolerance: 0.05
-      trans_stopped_velocity: 0.25
-      short_circuit_trajectory_evaluation: True
-      stateful: True
-      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      BaseObstacle.scale: 0.02
-      PathAlign.scale: 32.0
-      PathAlign.forward_point_distance: 0.1
-      GoalAlign.scale: 24.0
-      GoalAlign.forward_point_distance: 0.1
-      PathDist.scale: 32.0
-      GoalDist.scale: 24.0
-      RotateToGoal.scale: 32.0
-      RotateToGoal.slowing_factor: 5.0
-      RotateToGoal.lookahead_time: -1.0
+      acc_lim_x: 2.5  # Maximum X acceleration (m/s^2).
+      acc_lim_y: 0.0  # Maximum Y acceleration (m/s^2).
+      acc_lim_theta: 3.2  # Maximum angular acceleration (rad/s^2).
+      decel_lim_x: -2.5  # Maximum X deceleration (m/s^2; negative value).
+      decel_lim_y: 0.0  # Maximum Y deceleration (m/s^2; negative value).
+      decel_lim_theta: -3.2  # Maximum angular deceleration (rad/s^2; negative value).
+      vx_samples: 20  # Number of X velocity samples.
+      vy_samples: 0  # Number of Y velocity samples.
+      vtheta_samples: 40  # Number of angular velocity samples.
+      sim_time: 1.5  # Trajectory simulation horizon (s).
+      linear_granularity: 0.05  # Linear simulation step (m).
+      angular_granularity: 0.025  # Angular simulation step (rad).
+      transform_tolerance: 0.2  # Allowed timing margin for TF transforms (s).
+      xy_goal_tolerance: 0.05  # Goal position tolerance (m).
+      trans_stopped_velocity: 0.25  # Threshold for considering translation stopped (m/s).
+      short_circuit_trajectory_evaluation: True  # Stops evaluation when an invalid trajectory is found.
+      stateful: True  # Preserves state between evaluation cycles.
+      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]  # Critics used to score candidate trajectories.
+      BaseObstacle.scale: 0.02  # Obstacle critic weight.
+      PathAlign.scale: 32.0  # Path alignment weight.
+      PathAlign.forward_point_distance: 0.1  # Forward distance used for path alignment (m).
+      GoalAlign.scale: 24.0  # Goal alignment weight.
+      GoalAlign.forward_point_distance: 0.1  # Forward distance used for goal alignment (m).
+      PathDist.scale: 32.0  # Path distance weight.
+      GoalDist.scale: 24.0  # Goal distance weight.
+      RotateToGoal.scale: 32.0  # Final goal rotation weight.
+      RotateToGoal.slowing_factor: 5.0  # Velocity reduction factor while rotating to the goal.
+      RotateToGoal.lookahead_time: -1.0  # Rotation lookahead; a negative value uses the full trajectory (s).
 
     ManualPath:
-      plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
-      desired_linear_vel: 0.20
-      lookahead_dist: 0.35
-      min_lookahead_dist: 0.20
-      max_lookahead_dist: 0.55
-      lookahead_time: 0.6
-      rotate_to_heading_angular_vel: 1.0
-      transform_tolerance: 0.2
-      use_velocity_scaled_lookahead_dist: false
-      use_interpolation: true
-      min_approach_linear_velocity: 0.07
-      approach_velocity_scaling_dist: 0.30
-      use_collision_detection: false
-      max_allowed_time_to_collision_up_to_carrot: 1.0
-      use_regulated_linear_velocity_scaling: true
-      use_cost_regulated_linear_velocity_scaling: true
-      regulated_linear_scaling_min_radius: 0.30
-      regulated_linear_scaling_min_speed: 0.08
-      use_fixed_curvature_lookahead: false
-      curvature_lookahead_dist: 0.16
-      use_rotate_to_heading: false
-      rotate_to_heading_min_angle: 0.785
-      max_angular_accel: 3.2
-      allow_reversing: false
-      max_robot_pose_search_dist: 10.0
+      plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"  # Plugin class to load.
+      desired_linear_vel: 0.20  # Nominal path-following linear velocity (m/s).
+      lookahead_dist: 0.35  # Nominal lookahead distance (m).
+      min_lookahead_dist: 0.20  # Minimum lookahead distance (m).
+      max_lookahead_dist: 0.55  # Maximum lookahead distance (m).
+      lookahead_time: 0.6  # Horizon used to calculate dynamic lookahead (s).
+      rotate_to_heading_angular_vel: 1.0  # Angular velocity used to align the robot (rad/s).
+      transform_tolerance: 0.2  # Allowed timing margin for TF transforms (s).
+      use_velocity_scaled_lookahead_dist: false  # Scales lookahead distance with velocity.
+      use_interpolation: true  # Interpolates an exact point on the path.
+      min_approach_linear_velocity: 0.07  # Minimum approach linear velocity (m/s).
+      approach_velocity_scaling_dist: 0.30  # Distance at which velocity reduction begins (m).
+      use_collision_detection: false  # Checks for collisions during motion.
+      max_allowed_time_to_collision_up_to_carrot: 1.0  # Maximum collision-detection horizon (s).
+      use_regulated_linear_velocity_scaling: true  # Reduces velocity in tight curves.
+      use_cost_regulated_linear_velocity_scaling: true  # Reduces velocity according to costmap cost.
+      regulated_linear_scaling_min_radius: 0.30  # Curve radius that activates velocity regulation (m).
+      regulated_linear_scaling_min_speed: 0.08  # Minimum speed after curvature regulation (m/s).
+      use_fixed_curvature_lookahead: false  # Uses a fixed distance to estimate curvature.
+      curvature_lookahead_dist: 0.16  # Distance used to estimate curvature (m).
+      use_rotate_to_heading: false  # Allows in-place alignment before following the path.
+      rotate_to_heading_min_angle: 0.785  # Minimum angular error for rotating in place (rad).
+      max_angular_accel: 3.2  # Maximum angular acceleration (rad/s^2).
+      allow_reversing: false  # Allows following the path in reverse.
+      max_robot_pose_search_dist: 10.0  # Maximum distance used to find the robot pose on the path (m).
 
 local_costmap:
   local_costmap:
     ros__parameters:
-      update_frequency: 5.0
-      publish_frequency: 2.0
-      global_frame: odom
-      robot_base_frame: base_link
-      rolling_window: true
-      width: 3
-      height: 3
-      resolution: 0.05
-      robot_radius: 0.1
-      plugins: ["obstacle_layer", "voxel_layer", "inflation_layer"]
+      update_frequency: 5.0  # Costmap update frequency (Hz).
+      publish_frequency: 2.0  # Costmap publication frequency (Hz).
+      global_frame: odom  # Global reference TF frame.
+      robot_base_frame: base_link  # Robot base TF frame.
+      rolling_window: true  # Centers and moves the costmap with the robot.
+      width: 3  # Costmap width (m).
+      height: 3  # Costmap height (m).
+      resolution: 0.05  # Costmap cell size (m/cell).
+      robot_radius: 0.1  # Circular radius used for collision checks (m).
+      plugins: ["obstacle_layer", "voxel_layer", "inflation_layer"]  # Layers loaded into the costmap.
       inflation_layer:
-        plugin: "nav2_costmap_2d::InflationLayer"
-        inflation_radius: 1.0
-        cost_scaling_factor: 3.0
+        plugin: "nav2_costmap_2d::InflationLayer"  # Plugin class to load.
+        inflation_radius: 1.0  # Obstacle inflation radius (m).
+        cost_scaling_factor: 3.0  # Exponential cost decay around obstacles.
       obstacle_layer:
-        plugin: "nav2_costmap_2d::ObstacleLayer"
-        enabled: True
-        observation_sources: scan
+        plugin: "nav2_costmap_2d::ObstacleLayer"  # Plugin class to load.
+        enabled: True  # Enables this component.
+        observation_sources: scan  # Sensor sources used by this layer.
         scan:
-          topic: /scan
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "LaserScan"
+          topic: /scan  # ROS 2 topic for this data source.
+          max_obstacle_height: 2.0  # Maximum height accepted as an obstacle (m).
+          clearing: True  # Allows ray tracing to clear cells.
+          marking: True  # Allows the source to mark occupied cells.
+          data_type: "LaserScan"  # ROS 2 message type for this source.
       voxel_layer:
-        plugin: "nav2_costmap_2d::VoxelLayer"
-        enabled: True
-        publish_voxel_map: True
-        origin_z: 0.0
-        z_resolution: 0.05
-        z_voxels: 16
-        max_obstacle_height: 2.0
-        mark_threshold: 0
-        observation_sources: scan
+        plugin: "nav2_costmap_2d::VoxelLayer"  # Plugin class to load.
+        enabled: True  # Enables this component.
+        publish_voxel_map: True  # Publishes the voxel grid for debugging.
+        origin_z: 0.0  # Vertical origin of the voxel grid (m).
+        z_resolution: 0.05  # Height of each voxel (m).
+        z_voxels: 16  # Number of voxels on the vertical axis.
+        max_obstacle_height: 2.0  # Maximum height accepted as an obstacle (m).
+        mark_threshold: 0  # Minimum occupied voxels required to mark a cell.
+        observation_sources: scan  # Sensor sources used by this layer.
         scan:
-          topic: /scan
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "LaserScan"
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+          topic: /scan  # ROS 2 topic for this data source.
+          max_obstacle_height: 2.0  # Maximum height accepted as an obstacle (m).
+          clearing: True  # Allows ray tracing to clear cells.
+          marking: True  # Allows the source to mark occupied cells.
+          data_type: "LaserScan"  # ROS 2 message type for this source.
+          raytrace_max_range: 3.0  # Maximum range for clearing obstacles (m).
+          raytrace_min_range: 0.0  # Minimum range for clearing obstacles (m).
+          obstacle_max_range: 2.5  # Maximum range for marking obstacles (m).
+          obstacle_min_range: 0.0  # Minimum range for marking obstacles (m).
       static_layer:
-        map_subscribe_transient_local: True
-      always_send_full_costmap: True
+        map_subscribe_transient_local: True  # Uses transient-local QoS to receive the latest map.
+      always_send_full_costmap: True  # Always publishes the complete costmap.
 global_costmap:
   global_costmap:
     ros__parameters:
-      update_frequency: 1.0
-      publish_frequency: 1.0
-      global_frame: map
-      robot_base_frame: base_link
-      robot_radius: 0.1
-      resolution: 0.05
-      track_unknown_space: true
-      plugins: ["static_layer", "obstacle_layer", "voxel_layer", "inflation_layer"]
+      update_frequency: 1.0  # Costmap update frequency (Hz).
+      publish_frequency: 1.0  # Costmap publication frequency (Hz).
+      global_frame: map  # Global reference TF frame.
+      robot_base_frame: base_link  # Robot base TF frame.
+      robot_radius: 0.1  # Circular radius used for collision checks (m).
+      resolution: 0.05  # Costmap cell size (m/cell).
+      track_unknown_space: true  # Preserves cells representing unknown space.
+      plugins: ["static_layer", "obstacle_layer", "voxel_layer", "inflation_layer"]  # Layers loaded into the costmap.
       obstacle_layer:
-        plugin: "nav2_costmap_2d::ObstacleLayer"
-        enabled: True
-        observation_sources: scan
+        plugin: "nav2_costmap_2d::ObstacleLayer"  # Plugin class to load.
+        enabled: True  # Enables this component.
+        observation_sources: scan  # Sensor sources used by this layer.
         scan:
-          topic: /scan
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "LaserScan"
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+          topic: /scan  # ROS 2 topic for this data source.
+          max_obstacle_height: 2.0  # Maximum height accepted as an obstacle (m).
+          clearing: True  # Allows ray tracing to clear cells.
+          marking: True  # Allows the source to mark occupied cells.
+          data_type: "LaserScan"  # ROS 2 message type for this source.
+          raytrace_max_range: 3.0  # Maximum range for clearing obstacles (m).
+          raytrace_min_range: 0.0  # Minimum range for clearing obstacles (m).
+          obstacle_max_range: 2.5  # Maximum range for marking obstacles (m).
+          obstacle_min_range: 0.0  # Minimum range for marking obstacles (m).
       voxel_layer:
-        plugin: "nav2_costmap_2d::VoxelLayer"
-        enabled: True
-        publish_voxel_map: True
-        origin_z: 0.0
-        z_resolution: 0.05
-        z_voxels: 16
-        max_obstacle_height: 2.0
-        mark_threshold: 0
-        observation_sources: scan
+        plugin: "nav2_costmap_2d::VoxelLayer"  # Plugin class to load.
+        enabled: True  # Enables this component.
+        publish_voxel_map: True  # Publishes the voxel grid for debugging.
+        origin_z: 0.0  # Vertical origin of the voxel grid (m).
+        z_resolution: 0.05  # Height of each voxel (m).
+        z_voxels: 16  # Number of voxels on the vertical axis.
+        max_obstacle_height: 2.0  # Maximum height accepted as an obstacle (m).
+        mark_threshold: 0  # Minimum occupied voxels required to mark a cell.
+        observation_sources: scan  # Sensor sources used by this layer.
         scan:
-          topic: /scan
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "LaserScan"
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+          topic: /scan  # ROS 2 topic for this data source.
+          max_obstacle_height: 2.0  # Maximum height accepted as an obstacle (m).
+          clearing: True  # Allows ray tracing to clear cells.
+          marking: True  # Allows the source to mark occupied cells.
+          data_type: "LaserScan"  # ROS 2 message type for this source.
+          raytrace_max_range: 3.0  # Maximum range for clearing obstacles (m).
+          raytrace_min_range: 0.0  # Minimum range for clearing obstacles (m).
+          obstacle_max_range: 2.5  # Maximum range for marking obstacles (m).
+          obstacle_min_range: 0.0  # Minimum range for marking obstacles (m).
       static_layer:
-        plugin: "nav2_costmap_2d::StaticLayer"
-        map_subscribe_transient_local: True
+        plugin: "nav2_costmap_2d::StaticLayer"  # Plugin class to load.
+        map_subscribe_transient_local: True  # Uses transient-local QoS to receive the latest map.
       inflation_layer:
-        plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.55
-      always_send_full_costmap: True
+        plugin: "nav2_costmap_2d::InflationLayer"  # Plugin class to load.
+        cost_scaling_factor: 3.0  # Exponential cost decay around obstacles.
+        inflation_radius: 0.55  # Obstacle inflation radius (m).
+      always_send_full_costmap: True  # Always publishes the complete costmap.
 map_server:
   ros__parameters:
-    yaml_filename: "map.yaml"
+    yaml_filename: "map.yaml"  # Static map YAML file.
 
 map_saver:
   ros__parameters:
-    save_map_timeout: 5.0
-    free_thresh_default: 0.25
-    occupied_thresh_default: 0.65
-    map_subscribe_transient_local: True
+    save_map_timeout: 5.0  # Maximum time allowed to save a map (s).
+    free_thresh_default: 0.25  # Maximum probability for classifying a cell as free.
+    occupied_thresh_default: 0.65  # Minimum probability for classifying a cell as occupied.
+    map_subscribe_transient_local: True  # Uses transient-local QoS to receive the latest map.
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 20.0
-    planner_plugins: ["GridBased"]
+    expected_planner_frequency: 20.0  # Expected planner frequency (Hz).
+    planner_plugins: ["GridBased"]  # Available global planners.
     GridBased:
-      plugin: "nav2_navfn_planner::NavfnPlanner"
-      tolerance: 0.5
-      use_astar: false
-      allow_unknown: true
+      plugin: "nav2_navfn_planner::NavfnPlanner"  # Plugin class to load.
+      tolerance: 0.5  # Maximum distance to an approximate goal (m).
+      use_astar: false  # Uses A* instead of Dijkstra.
+      allow_unknown: true  # Allows planning through unknown space.
 
 smoother_server:
   ros__parameters:
-    smoother_plugins: ["simple_smoother"]
+    smoother_plugins: ["simple_smoother"]  # Available path smoothers.
     simple_smoother:
-      plugin: "nav2_smoother::SimpleSmoother"
-      tolerance: 1.0e-10
-      max_its: 1000
-      do_refinement: True
+      plugin: "nav2_smoother::SimpleSmoother"  # Plugin class to load.
+      tolerance: 1.0e-10  # Convergence tolerance of the smoothing algorithm.
+      max_its: 1000  # Maximum number of smoothing iterations.
+      do_refinement: True  # Repeats smoothing to refine the result.
 
 behavior_server:
   ros__parameters:
-    local_costmap_topic: local_costmap/costmap_raw
-    global_costmap_topic: global_costmap/costmap_raw
-    local_footprint_topic: local_costmap/published_footprint
-    global_footprint_topic: global_costmap/published_footprint
-    cycle_frequency: 10.0
-    behavior_plugins: ["spin", "backup", "drive_on_heading", "assisted_teleop", "wait"]
+    local_costmap_topic: local_costmap/costmap_raw  # Raw local costmap topic.
+    global_costmap_topic: global_costmap/costmap_raw  # Raw global costmap topic.
+    local_footprint_topic: local_costmap/published_footprint  # Footprint topic in the local costmap.
+    global_footprint_topic: global_costmap/published_footprint  # Footprint topic in the global costmap.
+    cycle_frequency: 10.0  # Behavior execution frequency (Hz).
+    behavior_plugins: ["spin", "backup", "drive_on_heading", "assisted_teleop", "wait"]  # Available recovery behaviors.
     spin:
-      plugin: "nav2_behaviors::Spin"
+      plugin: "nav2_behaviors::Spin"  # Plugin class to load.
     backup:
-      plugin: "nav2_behaviors::BackUp"
+      plugin: "nav2_behaviors::BackUp"  # Plugin class to load.
     drive_on_heading:
-      plugin: "nav2_behaviors::DriveOnHeading"
+      plugin: "nav2_behaviors::DriveOnHeading"  # Plugin class to load.
     assisted_teleop:
-      plugin: "nav2_behaviors::AssistedTeleop"
+      plugin: "nav2_behaviors::AssistedTeleop"  # Plugin class to load.
     wait:
-      plugin: "nav2_behaviors::Wait"
-    local_frame: odom
-    global_frame: map
-    robot_base_frame: base_link
-    transform_tolerance: 0.1
-    simulate_ahead_time: 2.0
-    max_rotational_vel: 1.0
-    min_rotational_vel: 0.4
-    rotational_acc_lim: 3.2
+      plugin: "nav2_behaviors::Wait"  # Plugin class to load.
+    local_frame: odom  # Local reference TF frame.
+    global_frame: map  # Global reference TF frame.
+    robot_base_frame: base_link  # Robot base TF frame.
+    transform_tolerance: 0.1  # Allowed timing margin for TF transforms (s).
+    simulate_ahead_time: 2.0  # Simulation horizon used for collision checks (s).
+    max_rotational_vel: 1.0  # Maximum behavior angular velocity (rad/s).
+    min_rotational_vel: 0.4  # Minimum behavior angular velocity (rad/s).
+    rotational_acc_lim: 3.2  # Maximum angular acceleration (rad/s^2).
 
 waypoint_follower:
   ros__parameters:
-    loop_rate: 20
-    stop_on_failure: false
-    action_server_result_timeout: 900.0
-    waypoint_task_executor_plugin: "wait_at_waypoint"
+    loop_rate: 20  # Waypoint follower loop frequency (Hz).
+    stop_on_failure: false  # Stops the sequence when a waypoint fails.
+    action_server_result_timeout: 900.0  # Maximum retention time for action results (s).
+    waypoint_task_executor_plugin: "wait_at_waypoint"  # Plugin executed upon reaching each waypoint.
     wait_at_waypoint:
-      plugin: "nav2_waypoint_follower::WaitAtWaypoint"
-      enabled: True
-      waypoint_pause_duration: 200
+      plugin: "nav2_waypoint_follower::WaitAtWaypoint"  # Plugin class to load.
+      enabled: True  # Enables this component.
+      waypoint_pause_duration: 200  # Pause at each waypoint (ms).
 
 route_server:
   ros__parameters:
-    boundary_radius_to_achieve_node: 1.0
-    radius_to_achieve_node: 2.0
-    smooth_corners: true
-    operations: ["AdjustSpeedLimit", "ReroutingService", "CollisionMonitor"]
+    boundary_radius_to_achieve_node: 1.0  # Radius for reaching route boundary nodes (m).
+    radius_to_achieve_node: 2.0  # Radius for considering a route node reached (m).
+    smooth_corners: true  # Smooths corners in the calculated route.
+    operations: ["AdjustSpeedLimit", "ReroutingService", "CollisionMonitor"]  # Operations applied while calculating routes.
     ReroutingService:
-      plugin: "nav2_route::ReroutingService"
+      plugin: "nav2_route::ReroutingService"  # Plugin class to load.
     AdjustSpeedLimit:
-      plugin: "nav2_route::AdjustSpeedLimit"
+      plugin: "nav2_route::AdjustSpeedLimit"  # Plugin class to load.
     CollisionMonitor:
-      plugin: "nav2_route::CollisionMonitor"
-      max_collision_dist: 3.0
-    edge_cost_functions: ["DistanceScorer", "CostmapScorer"]
+      plugin: "nav2_route::CollisionMonitor"  # Plugin class to load.
+      max_collision_dist: 3.0  # Maximum collision search distance (m).
+    edge_cost_functions: ["DistanceScorer", "CostmapScorer"]  # Functions used to score route edges.
     DistanceScorer:
-      plugin: "nav2_route::DistanceScorer"
+      plugin: "nav2_route::DistanceScorer"  # Plugin class to load.
     CostmapScorer:
-      plugin: "nav2_route::CostmapScorer"
+      plugin: "nav2_route::CostmapScorer"  # Plugin class to load.
 
 velocity_smoother:
   ros__parameters:
-    smoothing_frequency: 20.0
-    stamp_smoothed_velocity_with_smoothing_time: False
-    scale_velocities: False
-    feedback: "OPEN_LOOP"
-    max_velocity: [0.22, 0.0, 1.0]
-    min_velocity: [-0.22, 0.0, -1.0]
-    max_accel: [2.5, 0.0, 3.2]
-    max_decel: [-2.5, 0.0, -3.2]
-    odom_topic: "odom"
-    odom_duration: 0.1
-    deadband_velocity: [0.0, 0.0, 0.0]
-    velocity_timeout: 1.0
+    smoothing_frequency: 20.0  # Velocity smoothing frequency (Hz).
+    stamp_smoothed_velocity_with_smoothing_time: False  # Stamps output with the smoothing time.
+    scale_velocities: False  # Scales all axes together when limiting acceleration.
+    feedback: "OPEN_LOOP"  # Velocity smoother feedback source.
+    max_velocity: [0.22, 0.0, 1.0]  # Maximum [x, y, theta] velocities in m/s and rad/s.
+    min_velocity: [-0.22, 0.0, -1.0]  # Minimum [x, y, theta] velocities in m/s and rad/s.
+    max_accel: [2.5, 0.0, 3.2]  # Maximum [x, y, theta] accelerations in m/s^2 and rad/s^2.
+    max_decel: [-2.5, 0.0, -3.2]  # Maximum [x, y, theta] decelerations in m/s^2 and rad/s^2.
+    odom_topic: "odom"  # ROS 2 odometry topic.
+    odom_duration: 0.1  # Odometry time window used for feedback (s).
+    deadband_velocity: [0.0, 0.0, 0.0]  # Velocity deadband for [x, y, theta].
+    velocity_timeout: 1.0  # Time without commands before publishing zero velocity (s).
 
 collision_monitor:
   ros__parameters:
-    base_frame_id: "base_footprint"
-    odom_frame_id: "odom"
-    cmd_vel_in_topic: "cmd_vel_smoothed"
-    cmd_vel_out_topic: "cmd_vel"
-    state_topic: "collision_monitor_state"
-    transform_tolerance: 0.2
-    source_timeout: 1.0
-    base_shift_correction: True
-    stop_pub_timeout: 2.0
-    polygons: ["FootprintApproach"]
+    base_frame_id: "base_footprint"  # Robot base TF frame.
+    odom_frame_id: "odom"  # Odometry TF frame.
+    cmd_vel_in_topic: "cmd_vel_smoothed"  # Velocity input topic for the monitor.
+    cmd_vel_out_topic: "cmd_vel"  # Safe velocity output topic.
+    state_topic: "collision_monitor_state"  # Topic where monitor state is published.
+    transform_tolerance: 0.2  # Allowed timing margin for TF transforms (s).
+    source_timeout: 1.0  # Maximum permitted sensor data age (s).
+    base_shift_correction: True  # Corrects base displacement caused by latency.
+    stop_pub_timeout: 2.0  # Duration for which stop commands are published (s).
+    polygons: ["FootprintApproach"]  # Safety zones evaluated by the monitor.
     FootprintApproach:
-      type: "polygon"
-      action_type: "approach"
-      footprint_topic: "/local_costmap/published_footprint"
-      time_before_collision: 1.2
-      simulation_time_step: 0.1
-      min_points: 6
-      visualize: False
-      enabled: True
-    observation_sources: ["scan"]
+      type: "polygon"  # Geometric or sensor type of this component.
+      action_type: "approach"  # Action applied when entering the zone.
+      footprint_topic: "/local_costmap/published_footprint"  # ROS 2 robot footprint topic.
+      time_before_collision: 1.2  # Minimum predicted time before collision (s).
+      simulation_time_step: 0.1  # Prediction time step (s).
+      min_points: 6  # Minimum sensor points required to activate the zone.
+      visualize: False  # Publishes controller visualization data.
+      enabled: True  # Enables this component.
+    observation_sources: ["scan"]  # Sensor sources used by this layer.
     scan:
-      type: "scan"
-      topic: "/scan"
-      min_height: 0.15
-      max_height: 2.0
-      enabled: True
+      type: "scan"  # Geometric or sensor type of this component.
+      topic: "/scan"  # ROS 2 topic for this data source.
+      min_height: 0.15  # Minimum accepted point height (m).
+      max_height: 2.0  # Maximum accepted point height (m).
+      enabled: True  # Enables this component.
 
 docking_server:
   ros__parameters:
-    controller_frequency: 50.0
-    initial_perception_timeout: 5.0
-    wait_charge_timeout: 5.0
-    dock_approach_timeout: 30.0
-    undock_linear_tolerance: 0.05
-    undock_angular_tolerance: 0.1
-    max_retries: 3
-    base_frame: "base_link"
-    fixed_frame: "odom"
-    dock_backwards: false
-    dock_prestaging_tolerance: 0.5
-    dock_plugins: ["simple_charging_dock"]
+    controller_frequency: 50.0  # Control loop frequency (Hz).
+    initial_perception_timeout: 5.0  # Maximum wait for initial dock detection (s).
+    wait_charge_timeout: 5.0  # Maximum wait for charging detection (s).
+    dock_approach_timeout: 30.0  # Maximum dock approach time (s).
+    undock_linear_tolerance: 0.05  # Linear undocking tolerance (m).
+    undock_angular_tolerance: 0.1  # Angular undocking tolerance (rad).
+    max_retries: 3  # Maximum number of docking retries.
+    base_frame: "base_link"  # Base TF frame used for docking.
+    fixed_frame: "odom"  # Fixed TF frame used for docking.
+    dock_backwards: false  # Approaches the dock in reverse.
+    dock_prestaging_tolerance: 0.5  # Dock prestaging pose tolerance (m).
+    dock_plugins: ["simple_charging_dock"]  # Available dock type plugins.
     simple_charging_dock:
-      plugin: "opennav_docking::SimpleChargingDock"
-      docking_threshold: 0.05
-      staging_x_offset: -0.7
-      use_external_detection_pose: true
-      use_battery_status: false
-      use_stall_detection: false
-      external_detection_timeout: 1.0
-      external_detection_translation_x: -0.18
-      external_detection_translation_y: 0.0
-      external_detection_rotation_roll: -1.57
-      external_detection_rotation_pitch: -1.57
-      external_detection_rotation_yaw: 0.0
-      filter_coef: 0.1
+      plugin: "opennav_docking::SimpleChargingDock"  # Plugin class to load.
+      docking_threshold: 0.05  # Distance at which docking is considered complete (m).
+      staging_x_offset: -0.7  # X offset of the dock prestaging pose (m).
+      use_external_detection_pose: true  # Uses an external pose to locate the dock.
+      use_battery_status: false  # Confirms docking through battery status.
+      use_stall_detection: false  # Confirms contact by detecting motor stall.
+      external_detection_timeout: 1.0  # Maximum age of the external detection (s).
+      external_detection_translation_x: -0.18  # X correction for the external detection (m).
+      external_detection_translation_y: 0.0  # Y correction for the external detection (m).
+      external_detection_rotation_roll: -1.57  # Roll correction for the external detection (rad).
+      external_detection_rotation_pitch: -1.57  # Pitch correction for the external detection (rad).
+      external_detection_rotation_yaw: 0.0  # Yaw correction for the external detection (rad).
+      filter_coef: 0.1  # Dock pose filter coefficient.
     controller:
-      k_phi: 3.0
-      k_delta: 2.0
-      v_linear_min: 0.15
-      v_linear_max: 0.15
-      use_collision_detection: true
-      costmap_topic: "local_costmap/costmap_raw"
-      footprint_topic: "local_costmap/published_footprint"
-      transform_tolerance: 0.1
-      projection_time: 5.0
-      simulation_step: 0.1
-      dock_collision_threshold: 0.3
+      k_phi: 3.0  # Angular correction gain relative to distance.
+      k_delta: 2.0  # Angular convergence gain toward the dock.
+      v_linear_min: 0.15  # Minimum docking linear velocity (m/s).
+      v_linear_max: 0.15  # Maximum docking linear velocity (m/s).
+      use_collision_detection: true  # Checks for collisions during motion.
+      costmap_topic: "local_costmap/costmap_raw"  # Costmap topic used for collision checking.
+      footprint_topic: "local_costmap/published_footprint"  # ROS 2 robot footprint topic.
+      transform_tolerance: 0.1  # Allowed timing margin for TF transforms (s).
+      projection_time: 5.0  # Collision projection horizon (s).
+      simulation_step: 0.1  # Projection time step (s).
+      dock_collision_threshold: 0.3  # Distance from the dock where collisions are ignored (m).
