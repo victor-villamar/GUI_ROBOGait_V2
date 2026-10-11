@@ -61,6 +61,32 @@ void LaserSource::setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer)
   }
 }
 
+void LaserSource::setScanTopic(const std::string& scan_topic)
+{
+  if (subscriber_)
+  {
+    subscriber_->setScanTopic(scan_topic);
+  }
+
+  if (scan_data_)
+  {
+    scan_data_->reset();
+  }
+}
+
+void LaserSource::setMapFrame(const std::string& map_frame)
+{
+  if (subscriber_)
+  {
+    subscriber_->setMapFrame(map_frame);
+  }
+
+  if (scan_data_)
+  {
+    scan_data_->reset();
+  }
+}
+
 void LaserSource::start()
 {
   if (!initialized_ || active_ || !subscriber_)

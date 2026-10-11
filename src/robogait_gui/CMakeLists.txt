@@ -427,6 +427,29 @@ if(BUILD_TESTING)
         Qt6::Core
     )
 
+    ament_add_gtest(test_manual_control_settings
+        test/settings/test_manual_control_settings.cpp
+        src/Loader/YamlLoader.cpp
+        src/Robot/ManualControl.cpp
+        src/Ros/Define.cpp
+        src/Ros/QoSProfiles.cpp
+        src/Ros/TopicsName.cpp
+        src/Settings/RobotSettings.cpp
+        include/Robot/ManualControl.hpp
+        include/Settings/RobotSettings.hpp
+    )
+    target_include_directories(test_manual_control_settings PRIVATE include)
+    target_compile_definitions(test_manual_control_settings PRIVATE
+        "ROBOGAIT_ROS_${ROBOGAIT_ROS_DISTRO_UPPER}"
+    )
+    target_link_libraries(test_manual_control_settings
+        rclcpp::rclcpp
+        ${ROBOGAIT_GEOMETRY_MSGS_TARGETS}
+        tf2_ros::tf2_ros
+        ${ROBOGAIT_YAML_CPP_TARGET}
+        Qt6::Core
+    )
+
     ament_add_gtest(test_developer_settings
         test/settings/test_developer_settings.cpp
         src/Loader/YamlLoader.cpp

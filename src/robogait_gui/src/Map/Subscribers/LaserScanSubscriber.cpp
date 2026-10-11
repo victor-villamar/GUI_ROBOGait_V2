@@ -18,6 +18,7 @@ using namespace ROBOGait::map::subscribers;
 LaserScanSubscriber::LaserScanSubscriber() :
     parent_node_(nullptr),
     laser_scan_data_(nullptr),
+    scan_topic_(ROBOGait::ros::topics::T_SCAN),
     map_frame_(ROBOGait::ros::topics::TF_MAP_FRAME),
     active_(false),
     warn_logged_(false),
@@ -42,13 +43,53 @@ void LaserScanSubscriber::setLaserScanData(data::LaserScanData* laser_scan_data)
 
 void LaserScanSubscriber::setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer) { tf_buffer_ = tf_buffer; }
 
-void LaserScanSubscriber::setRobotContext(const ROBOGait::context::RobotContext& context)
-{
-  context_ = context;
+void LaserScanSubscriber::setRobotContext(const ROBOGait::context::RobotContext& context) { context_ = context; }
 
-  if (context_)
+void LaserScanSubscriber::setScanTopic(const std::string& scan_topic)
+{
+  if (scan_topic.empty() || scan_topic_ == scan_topic)
   {
-    map_frame_ = context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME);
+    return;
+  }
+
+  const bool restart = active_;
+  const std::shared_ptr<tf2_ros::Buffer> tf_buffer = tf_buffer_;
+
+  if (restart)
+  {
+    stop();
+  }
+
+  scan_topic_ = scan_topic;
+
+  if (restart)
+  {
+    setTFBuffer(tf_buffer);
+    start();
+  }
+}
+
+void LaserScanSubscriber::setMapFrame(const std::string& map_frame)
+{
+  if (map_frame.empty() || map_frame_ == map_frame)
+  {
+    return;
+  }
+
+  const bool restart = active_;
+  const std::shared_ptr<tf2_ros::Buffer> tf_buffer = tf_buffer_;
+
+  if (restart)
+  {
+    stop();
+  }
+
+  map_frame_ = map_frame;
+
+  if (restart)
+  {
+    setTFBuffer(tf_buffer);
+    start();
   }
 }
 
@@ -71,7 +112,7 @@ void LaserScanSubscriber::start()
     return;
   }
 
-  std::string scan_topic = ROBOGait::ros::topics::T_SCAN;
+  std::string scan_topic = scan_topic_;
 
   if (context_)
   {

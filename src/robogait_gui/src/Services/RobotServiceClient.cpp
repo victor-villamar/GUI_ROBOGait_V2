@@ -19,6 +19,7 @@
 #include "Ros/QoSProfiles.hpp"
 #include "Ros/TopicsName.hpp"
 #include "Services/RobotServiceClient.hpp"
+#include "Settings/RobotSettings.hpp"
 
 using namespace ROBOGait::ros::service;
 
@@ -260,7 +261,7 @@ bool RobotServiceClient::requestMapData(const std::string& map_name)
   }
 
   auto occupancy_grid = map_result.occupancy_grid.value();
-  occupancy_grid.header.frame_id = context_ ? context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME) : ROBOGait::ros::topics::TF_MAP_FRAME;
+  occupancy_grid.header.frame_id = ROBOGait::settings::RobotSettings::getInstance().getMapFrame().toStdString();
 
   return publishMapDataOnce(occupancy_grid);
 }
@@ -536,7 +537,7 @@ bool RobotServiceClient::computePathToPose(double x, double y, double theta)
   }
 
   nav2_msgs::action::ComputePathToPose::Goal goal_msg;
-  goal_msg.goal.header.frame_id = context_ ? context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME) : ROBOGait::ros::topics::TF_MAP_FRAME;
+  goal_msg.goal.header.frame_id = ROBOGait::settings::RobotSettings::getInstance().getMapFrame().toStdString();
   goal_msg.goal.header.stamp = parent_node_->now();
   goal_msg.goal.pose.position.x = x;
   goal_msg.goal.pose.position.y = y;
@@ -572,7 +573,7 @@ bool RobotServiceClient::navigateToPose(double x, double y, double theta)
   }
 
   nav2_msgs::action::NavigateToPose::Goal goal_msg;
-  goal_msg.pose.header.frame_id = context_ ? context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME) : ROBOGait::ros::topics::TF_MAP_FRAME;
+  goal_msg.pose.header.frame_id = ROBOGait::settings::RobotSettings::getInstance().getMapFrame().toStdString();
   goal_msg.pose.header.stamp = parent_node_->now();
   goal_msg.pose.pose.position.x = x;
   goal_msg.pose.pose.position.y = y;
@@ -625,7 +626,7 @@ bool RobotServiceClient::setManualFollowPath(const QVariantList& points)
     return false;
   }
 
-  const std::string frame = context_ ? context_->resolveFrame(ROBOGait::ros::topics::TF_MAP_FRAME) : ROBOGait::ros::topics::TF_MAP_FRAME;
+  const std::string frame = ROBOGait::settings::RobotSettings::getInstance().getMapFrame().toStdString();
 
   nav_msgs::msg::Path path;
   path.header.frame_id = frame;

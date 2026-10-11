@@ -140,9 +140,9 @@ private:
   void publishVelocity();
 
   /**
-   * @brief Load velocity limits from YAML with fallback to defaults
+   * @brief Synchronize velocity limits with the current runtime robot settings
    */
-  bool loadVelocityLimits();
+  void updateVelocityLimits();
 
   rclcpp::Node* parent_node_;                                           /**< Pointer to the ROS node */
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_vel_; /**< Publisher for cmd_vel topic */
@@ -153,7 +153,6 @@ private:
   double angular_velocity_;     /**< Current angular velocity in rad/s */
   double max_linear_velocity_;  /**< Maximum linear velocity in m/s */
   double max_angular_velocity_; /**< Maximum angular velocity in rad/s */
-  bool velocity_limits_loaded_; /**< Flag to indicate if velocity limits were loaded from YAML */
   bool timer_active_;           /**< Flag to indicate if the timer is active */
 
   static constexpr double MAX_LINEAR_VELOCITY = 0.22;  /**< Maximum linear velocity */

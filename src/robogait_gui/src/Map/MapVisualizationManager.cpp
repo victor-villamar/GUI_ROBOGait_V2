@@ -13,6 +13,7 @@
 #include "Loader/YamlLoader.hpp"
 #include "Map/MapVisualizationManager.hpp"
 #include "Map/Utils/Utils.hpp"
+#include "Settings/RobotSettings.hpp"
 
 using namespace ROBOGait::map::manager;
 
@@ -101,24 +102,32 @@ MapVisualizationManager::MapVisualizationManager() :
   }
 
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+  auto& robot_settings = ROBOGait::settings::RobotSettings::getInstance();
 
-  if (yaml_loader.isLoaded())
-  {
-    const double configured_radius = yaml_loader.getValue<double>("robot.radius", robot_size_ * 0.5);
+  robot_size_ = robot_settings.getRobotRadius() * 2.0;
+  laser_source_->setScanTopic(robot_settings.getScanTopic().toStdString());
+  laser_source_->setMapFrame(robot_settings.getMapFrame().toStdString());
+  particle_source_->setMapFrame(robot_settings.getMapFrame().toStdString());
+  pose_source_->setFrames(robot_settings.getMapFrame().toStdString(), robot_settings.getRobotFrame().toStdString());
 
-    if (configured_radius > 0.0)
-    {
-      robot_size_ = configured_radius * 2.0;
-    }
-    else
-    {
-      qWarning() << "[MapVisualizationManager::MapVisualizationManager] Invalid robot.radius (must be > 0), using default radius:" << robot_size_ * 0.5;
-    }
-  }
-  else
-  {
-    qWarning() << "[MapVisualizationManager::MapVisualizationManager] YAML not loaded, using default robot_size:" << robot_size_;
-  }
+  // clang-format off
+  connect(&robot_settings,
+          &ROBOGait::settings::RobotSettings::robotRadiusChanged,
+          this,
+          &MapVisualizationManager::onRobotRadiusChanged);
+  connect(&robot_settings,
+          &ROBOGait::settings::RobotSettings::scanTopicChanged,
+          this,
+          &MapVisualizationManager::onScanTopicChanged);
+  connect(&robot_settings,
+          &ROBOGait::settings::RobotSettings::mapFrameChanged,
+          this,
+          &MapVisualizationManager::onFramesChanged);
+  connect(&robot_settings,
+          &ROBOGait::settings::RobotSettings::robotFrameChanged,
+          this,
+          &MapVisualizationManager::onFramesChanged);
+  // clang-format on
 
   if (spline_path_editor_)
   {
@@ -145,6 +154,132 @@ MapVisualizationManager::~MapVisualizationManager()
   destroyLayers();
 
   qInfo() << "[MapVisualizationManager] Map Visualization Manager destroyed";
+}
+
+void MapVisualizationManager::onRobotRadiusChanged()
+{
+  robot_size_ = ROBOGait::settings::RobotSettings::getInstance().getRobotRadius() * 2.0;
+
+  if (robot_layer_)
+  {
+    robot_layer_->setRobotSize(robot_size_);
+    robot_layer_->update();
+  }
+
+  if (goal_robot_layer_)
+  {
+    goal_robot_layer_->setRobotSize(robot_size_);
+    goal_robot_layer_->update();
+  }
+
+  if (robot_layer_item_)
+  {
+    robot_layer_item_->update();
+  }
+
+  if (goal_robot_layer_item_)
+  {
+    goal_robot_layer_item_->update();
+  }
+}
+
+void MapVisualizationManager::onScanTopicChanged()
+{
+  if (!laser_source_)
+  {
+    return;
+  }
+
+  laser_source_->setScanTopic(ROBOGait::settings::RobotSettings::getInstance().getScanTopic().toStdString());
+  updateAvailability();
+}
+
+void MapVisualizationManager::onFramesChanged()
+{
+  auto& robot_settings = ROBOGait::settings::RobotSettings::getInstance();
+  const std::string map_frame = robot_settings.getMapFrame().toStdString();
+  const std::string robot_frame = robot_settings.getRobotFrame().toStdString();
+
+  const bool pose_was_active = pose_source_ && pose_source_->isActive();
+  const bool laser_was_active = laser_source_ && laser_source_->isActive();
+  const bool particle_was_active = particle_source_ && particle_source_->isActive();
+  const bool tf_was_active = robot_tf_buffer_ && robot_tf_buffer_->isActive();
+
+  if (pose_source_)
+  {
+    pose_source_->stop();
+  }
+
+  if (laser_source_)
+  {
+    laser_source_->stop();
+  }
+
+  if (particle_source_)
+  {
+    particle_source_->stop();
+  }
+
+  if (robot_tf_buffer_)
+  {
+    robot_tf_buffer_->stop();
+  }
+
+  if (pose_source_)
+  {
+    pose_source_->setFrames(map_frame, robot_frame);
+  }
+
+  if (laser_source_)
+  {
+    laser_source_->setMapFrame(map_frame);
+  }
+
+  if (particle_source_)
+  {
+    particle_source_->setMapFrame(map_frame);
+  }
+
+  if (tf_was_active && robot_tf_buffer_)
+  {
+    robot_tf_buffer_->start();
+    const std::shared_ptr<tf2_ros::Buffer> tf_buffer = robot_tf_buffer_->getBuffer();
+
+    if (tf_buffer)
+    {
+      if (pose_source_)
+      {
+        pose_source_->setTFBuffer(tf_buffer);
+      }
+
+      if (laser_source_)
+      {
+        laser_source_->setTFBuffer(tf_buffer);
+      }
+
+      if (particle_source_)
+      {
+        particle_source_->setTFBuffer(tf_buffer);
+      }
+
+      if (pose_was_active && pose_source_)
+      {
+        pose_source_->start();
+      }
+
+      if (laser_was_active && laser_source_)
+      {
+        laser_source_->start();
+      }
+
+      if (particle_was_active && particle_source_)
+      {
+        particle_source_->start();
+      }
+    }
+  }
+
+  updateAvailability();
 }
 
 void MapVisualizationManager::setROSNode(rclcpp::Node* parent_node)

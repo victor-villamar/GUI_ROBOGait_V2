@@ -50,11 +50,43 @@ void TFSubscriber::setRobotContext(const ROBOGait::context::RobotContext& contex
   resolveFrames();
 }
 
+void TFSubscriber::setFrames(const std::string& map_frame, const std::string& robot_frame)
+{
+  if (map_frame.empty() || robot_frame.empty() || (source_map_frame_ == map_frame && source_robot_frame_ == robot_frame))
+  {
+    return;
+  }
+
+  const bool restart = active_;
+
+  if (tf_timer_)
+  {
+    tf_timer_->cancel();
+    tf_timer_.reset();
+  }
+  active_ = false;
+
+  source_map_frame_ = map_frame;
+  source_robot_frame_ = robot_frame;
+  resolveFrames();
+  warn_logged_ = false;
+
+  if (robot_pose_data_)
+  {
+    robot_pose_data_->reset();
+  }
+
+  if (restart)
+  {
+    start();
+  }
+}
+
 void TFSubscriber::resolveFrames()
 {
   if (context_)
   {
-    map_frame_ = context_->resolveFrame(source_map_frame_);
+    map_frame_ = source_map_frame_;
     robot_frame_ = context_->resolveFrame(source_robot_frame_);
     return;
   }

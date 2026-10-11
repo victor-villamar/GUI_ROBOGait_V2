@@ -11,6 +11,7 @@
 #include "Ros/MessageCompatibility.hpp"
 #include "Ros/QoSProfiles.hpp"
 #include "Ros/TopicsName.hpp"
+#include "Settings/RobotSettings.hpp"
 
 namespace
 {
@@ -46,8 +47,23 @@ QImage buildQImageFromRosImage(const sensor_msgs::msg::Image& image, const std::
 using namespace ROBOGait::perception::monitor;
 
 PersonDetectionMonitor::PersonDetectionMonitor(QObject* parent) :
-    QObject(parent), parent_node_(nullptr), selected_robot_namespace_(), use_namespace_discovery_(true), sub_camera_detection_(nullptr), is_monitoring_(false)
+    QObject(parent),
+    parent_node_(nullptr),
+    selected_robot_namespace_(),
+    camera_detection_topic_(QString::fromStdString(ROBOGait::ros::topics::T_CAMERA_DETECTION)),
+    use_namespace_discovery_(true),
+    sub_camera_detection_(nullptr),
+    is_monitoring_(false)
 {
+  auto& robot_settings = ROBOGait::settings::RobotSettings::getInstance();
+  camera_detection_topic_ = robot_settings.getCameraDetectionTopic();
+
+  // clang-format off
+  connect(&robot_settings,
+          &ROBOGait::settings::RobotSettings::cameraDetectionTopicChanged,
+          this,
+          [this]() { setTopicName(ROBOGait::settings::RobotSettings::getInstance().getCameraDetectionTopic()); });
+  // clang-format on
 }
 
 void PersonDetectionMonitor::setROSNode(rclcpp::Node* parent_node)
@@ -72,6 +88,28 @@ void PersonDetectionMonitor::setSelectedRobot(const QString& robot_namespace, bo
   use_namespace_discovery_ = use_namespace_discovery;
 }
 
+void PersonDetectionMonitor::setTopicName(const QString& topic_name)
+{
+  if (topic_name.isEmpty() || camera_detection_topic_ == topic_name)
+  {
+    return;
+  }
+
+  const bool restart = is_monitoring_;
+
+  if (restart)
+  {
+    stopMonitoring();
+  }
+
+  camera_detection_topic_ = topic_name;
+
+  if (restart)
+  {
+    startMonitoring();
+  }
+}
+
 bool PersonDetectionMonitor::startMonitoring()
 {
   if (is_monitoring_)
@@ -93,7 +131,7 @@ bool PersonDetectionMonitor::startMonitoring()
     return false;
   }
 
-  const std::string full_camera_topic = context.resolveTopic(ROBOGait::ros::topics::T_CAMERA_DETECTION);
+  const std::string full_camera_topic = context.resolveTopic(camera_detection_topic_.toStdString());
 
   sub_camera_detection_ = parent_node_->create_subscription<navigation_pkg::msg::CameraDetection>(
       full_camera_topic, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(),

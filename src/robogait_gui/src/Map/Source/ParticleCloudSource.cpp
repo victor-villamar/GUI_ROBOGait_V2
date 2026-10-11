@@ -61,6 +61,19 @@ void ParticleCloudSource::setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf
   }
 }
 
+void ParticleCloudSource::setMapFrame(const std::string& map_frame)
+{
+  if (subscriber_)
+  {
+    subscriber_->setMapFrame(map_frame);
+  }
+
+  if (cloud_data_)
+  {
+    cloud_data_->reset();
+  }
+}
+
 void ParticleCloudSource::start()
 {
   if (!initialized_ || active_ || !subscriber_)

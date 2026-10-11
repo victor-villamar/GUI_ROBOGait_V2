@@ -33,6 +33,7 @@ public:
 
   void setROSNode(rclcpp::Node* parent_node);
   void setSelectedRobot(const QString& robot_namespace, bool use_namespace_discovery);
+  void setTopicName(const QString& topic_name);
 
   Q_INVOKABLE bool startMonitoring();
   Q_INVOKABLE void stopMonitoring();
@@ -48,6 +49,7 @@ private:
 
   rclcpp::Node* parent_node_;
   QString selected_robot_namespace_;
+  QString camera_detection_topic_;
   bool use_namespace_discovery_;
   rclcpp::Subscription<navigation_pkg::msg::CameraDetection>::SharedPtr sub_camera_detection_;
   bool is_monitoring_;

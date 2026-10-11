@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include <tf2_ros/buffer.hpp>
 
@@ -47,6 +48,16 @@ public:
   void setTFBuffer(const std::shared_ptr<tf2_ros::Buffer>& tf_buffer);
 
   /**
+   * @brief Set the base laser scan topic
+   */
+  void setScanTopic(const std::string& scan_topic);
+
+  /**
+   * @brief Set the global map frame used for laser transformations
+   */
+  void setMapFrame(const std::string& map_frame);
+
+  /**
    * @brief Start the laser source
    */
   void start() override;
@@ -82,7 +93,6 @@ private:
   std::shared_ptr<ROBOGait::map::subscribers::LaserScanSubscriber> subscriber_; /**< Laser scan subscriber */
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;                                  /**< Shared TF buffer */
 };
-
 } // namespace source
 } // namespace map
 } // namespace ROBOGait

@@ -63,6 +63,16 @@ public:
   void setRobotContext(const ROBOGait::context::RobotContext& context);
 
   /**
+   * @brief Set the base scan topic used with the current robot context
+   */
+  void setScanTopic(const std::string& scan_topic);
+
+  /**
+   * @brief Set the global frame used to transform laser points
+   */
+  void setMapFrame(const std::string& map_frame);
+
+  /**
    * @brief Start the laser scan subscriber
    */
   void start();
@@ -102,13 +112,13 @@ private:
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;                            /**< TF buffer for transform lookups */
 
   data::LaserScanData* laser_scan_data_; /**< Laser scan data */
+  std::string scan_topic_;               /**< Base laser scan topic */
   std::string map_frame_;                /**< The map frame for transforming laser scan points */
   bool active_;                          /**< Flag indicating if the subscriber is active */
   bool warn_logged_;                     /**< Flag indicating if a warning has been logged */
 
   std::optional<ROBOGait::context::RobotContext> context_;
 };
-
 } // namespace subscribers
 } // namespace map
 } // namespace ROBOGait
