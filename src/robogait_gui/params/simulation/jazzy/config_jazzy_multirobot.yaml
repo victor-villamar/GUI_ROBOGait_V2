@@ -64,7 +64,7 @@ frames:
 
 # Navigation Configuration
 navigation:
-  use_sim_time: false                           # Uses the clock published by the simulator
+  use_sim_time: true                            # Uses the clock published by the simulator
   nav2_params_path: "/.local/robogait/params/"  # Path to the Nav2 parameters on the robot
   nav2_params_file: "nav2_params.yaml"          # Nav2 parameter file name
   manual_follow_path:

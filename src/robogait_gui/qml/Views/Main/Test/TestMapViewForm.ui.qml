@@ -401,7 +401,7 @@ Rectangle {
 
                 TapHandler {
                     enabled: root.mapAvailable && root.isNavigationStep &&
-                             root.goalPlacementEnabled && root.testStarted
+                             root.goalPlacementEnabled && !root.testStarted
                     acceptedButtons: Qt.LeftButton
                     gesturePolicy: TapHandler.DragThreshold
                     onTapped: {

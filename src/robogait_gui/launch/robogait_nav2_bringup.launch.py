@@ -3,32 +3,53 @@
 import os
 
 from ament_index_python.packages import get_package_share_directory
+
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     GroupAction,
-    OpaqueFunction,
     SetEnvironmentVariable,
-    SetLaunchConfiguration,
 )
 from launch.conditions import IfCondition
-from launch.substitutions import EqualsSubstitution, LaunchConfiguration, NotEqualsSubstitution
+from launch.substitution import Substitution
+from launch.substitutions import (
+    EqualsSubstitution,
+    LaunchConfiguration,
+    NotEqualsSubstitution,
+)
+from launch.utilities import (
+    normalize_to_list_of_substitutions,
+    perform_substitutions,
+)
+
 from launch_ros.actions import Node, PushRosNamespace, SetParameter
 from launch_ros.descriptions import ParameterFile
+
 from nav2_common.launch import ReplaceString, RewrittenYaml
 
 
-def _normalise_namespace(context):
-    namespace = LaunchConfiguration('namespace').perform(context).strip().strip('/')
-    if not namespace:
-        raise RuntimeError('The namespace argument must contain a robot namespace')
-    return [SetLaunchConfiguration('namespace', namespace)]
+class _NormalisedNamespace(Substitution):
+    """Resolve a robot namespace without leading or trailing separators."""
+
+    def __init__(self, namespace):
+        super().__init__()
+        self._namespace = normalize_to_list_of_substitutions(namespace)
+
+    def perform(self, context):
+        namespace = perform_substitutions(
+            context, self._namespace
+        ).strip().strip('/')
+        if not namespace:
+            raise RuntimeError(
+                'The namespace argument must contain a robot namespace'
+            )
+        return namespace
 
 
 def generate_launch_description():
     bringup_share = get_package_share_directory('nav2_bringup')
 
-    namespace = LaunchConfiguration('namespace')
+    namespace = _NormalisedNamespace(LaunchConfiguration('namespace'))
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
     params_file = LaunchConfiguration('params_file')
@@ -213,6 +234,5 @@ def generate_launch_description():
 
     return LaunchDescription(arguments + [
         SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
-        OpaqueFunction(function=_normalise_namespace),
         namespaced_stack,
     ])
