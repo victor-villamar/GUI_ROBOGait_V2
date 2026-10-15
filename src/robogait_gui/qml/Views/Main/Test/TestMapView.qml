@@ -54,6 +54,8 @@ TestMapViewForm {
     property var manualFollowPathPoints: []
     property bool repeatedExperimentMode: false
     property bool personDetectionInProgress: false
+    property bool navigationSpeedLimitPublisherPrepared: false
+    property bool navigationSpeedLimitApplied: false
 
     readonly property var manualControl: (userSession && userSession.rosManager && userSession.rosManager.robotManager)
                                             ? userSession.rosManager.robotManager.manualControl
@@ -250,6 +252,12 @@ TestMapViewForm {
             return
         }
 
+        if (!prepareNavigationSpeedLimitPublisher()) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo preparar el control de velocidad de navegación")
+            errorPopup.open()
+            return
+        }
+
         if (personDetectionInProgress) {
             return
         }
@@ -263,6 +271,53 @@ TestMapViewForm {
 
         personDetectionInProgress = true
         busyDialog.openWithMessage(qsTr("Detectando persona..."))
+    }
+
+    function prepareNavigationSpeedLimitPublisher() {
+        if (navigationSpeedLimitPublisherPrepared) {
+            return true
+        }
+
+        if (!robotServiceBridge || !robotServiceBridge.prepareNavigationSpeedLimitPublisher) {
+            return false
+        }
+
+        navigationSpeedLimitPublisherPrepared = robotServiceBridge.prepareNavigationSpeedLimitPublisher()
+        return navigationSpeedLimitPublisherPrepared
+    }
+
+    function applyConfiguredNavigationSpeedLimit() {
+        if (!prepareNavigationSpeedLimitPublisher()
+                || !robotServiceBridge.applyConfiguredNavigationSpeedLimit) {
+            navigationSpeedLimitApplied = false
+            return false
+        }
+
+        navigationSpeedLimitApplied = robotServiceBridge.applyConfiguredNavigationSpeedLimit()
+        return navigationSpeedLimitApplied
+    }
+
+    function resetNavigationSpeedLimit() {
+        navigationSpeedLimitApplied = false
+
+        if (!navigationSpeedLimitPublisherPrepared) {
+            return true
+        }
+
+        if (!robotServiceBridge || !robotServiceBridge.resetNavigationSpeedLimit) {
+            return false
+        }
+
+        return robotServiceBridge.resetNavigationSpeedLimit()
+    }
+
+    function destroyNavigationSpeedLimitPublisher() {
+        if (robotServiceBridge && robotServiceBridge.destroyNavigationSpeedLimitPublisher) {
+            robotServiceBridge.destroyNavigationSpeedLimitPublisher()
+        }
+
+        navigationSpeedLimitPublisherPrepared = false
+        navigationSpeedLimitApplied = false
     }
 
     function stopPersonDetection() {
@@ -1145,9 +1200,14 @@ TestMapViewForm {
         exiting = true
         busyDialog.openWithMessage(qsTr("Saliendo..."))
 
+        resetNavigationSpeedLimit()
+
         if (robotServiceBridge && robotServiceBridge.activeCommandKey === "navigation") {
             var okStop = robotServiceBridge.stopNavigation()
             if (!okStop) {
+                if (testStarted) {
+                    applyConfiguredNavigationSpeedLimit()
+                }
                 busyDialog.close()
                 exiting = false
                 exitAndQuit = false
@@ -1185,6 +1245,7 @@ TestMapViewForm {
     function finalizeExit() {
         exiting = false
         busyDialog.close()
+        destroyNavigationSpeedLimitPublisher()
         if (experimentSavePromptTimer.running) {
             experimentSavePromptTimer.stop()
         }
@@ -1286,6 +1347,13 @@ TestMapViewForm {
         if (!robotServiceBridge) {
             busyDialog.close()
             errorPopup.errorRectangleTextError.text = qsTr("Error: No hay conexión con el robot")
+            errorPopup.open()
+            return
+        }
+
+        if (!prepareNavigationSpeedLimitPublisher()) {
+            busyDialog.close()
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo preparar el control de velocidad de navegación")
             errorPopup.open()
             return
         }
@@ -1476,6 +1544,12 @@ TestMapViewForm {
         }
 
         if (!goalPlacementEnabled && !pathPlacementEnabled) {
+            return
+        }
+
+        if (!applyConfiguredNavigationSpeedLimit()) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo establecer el límite de velocidad de navegación")
+            errorPopup.open()
             return
         }
 
@@ -1700,6 +1774,8 @@ TestMapViewForm {
         stopAutoLocalizationSpin()
         stopPersonDetection()
         closePersonDetectionDialog()
+        resetNavigationSpeedLimit()
+        destroyNavigationSpeedLimitPublisher()
 
         if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
             var mapVizManager = userSession.rosManager.robotManager.mapVisualizationManager
@@ -1961,6 +2037,9 @@ TestMapViewForm {
 
             if (exiting)
             {
+                if (testStarted) {
+                    applyConfiguredNavigationSpeedLimit()
+                }
                 exiting = false
                 busyDialog.close()
                 errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo detener la navegación")
@@ -2067,6 +2146,14 @@ TestMapViewForm {
             }
 
             stopPersonDetection()
+
+            if (!applyConfiguredNavigationSpeedLimit()) {
+                personDetectionConfirmed = false
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo establecer el límite de velocidad de navegación")
+                errorPopup.open()
+                return
+            }
+
             personDetectionConfirmed = true
             personDetectionDialog.openWithDetection(qsTr("Numero de personas detectadas (%1)").arg(detections), imageSource)
         }
@@ -2206,6 +2293,9 @@ TestMapViewForm {
             }
 
             if (exiting) {
+                if (testStarted) {
+                    applyConfiguredNavigationSpeedLimit()
+                }
                 exiting = false
                 exitAndQuit = false
                 errorPopup.errorRectangleTextError.text = qsTr("Error: Tiempo de espera agotado al salir de la prueba")

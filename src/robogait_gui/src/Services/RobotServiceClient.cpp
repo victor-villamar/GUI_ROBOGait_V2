@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <filesystem>
 #include <optional>
 #include <vector>
@@ -37,6 +38,7 @@ RobotServiceClient::RobotServiceClient() :
     initialized_(false),
     nav_goal_active_(false),
     cancel_in_progress_(false),
+    navigation_speed_limit_applied_(false),
     start_stop_timeout_s_(START_STOP_TIMEOUT)
 {
   qInfo() << "[RobotServiceClient::RobotServiceClient] RobotServiceClient created";
@@ -91,6 +93,12 @@ bool RobotServiceClient::isInitialized() const { return initialized_; }
 
 void RobotServiceClient::setRobotContext(const ROBOGait::context::RobotContext& context)
 {
+  if (pub_navigation_speed_limit_)
+  {
+    resetNavigationSpeedLimit();
+    destroyNavigationSpeedLimitPublisher();
+  }
+
   context_ = context;
 
   if (initialized_)
@@ -104,6 +112,12 @@ void RobotServiceClient::setRobotContext(const ROBOGait::context::RobotContext& 
 
 void RobotServiceClient::clearRobotContext()
 {
+  if (!resetNavigationSpeedLimit())
+  {
+    qWarning() << "[RobotServiceClient::clearRobotContext] Failed to reset navigation speed limit";
+  }
+  destroyNavigationSpeedLimitPublisher();
+
   if (context_)
   {
     context_->clear();
@@ -357,6 +371,119 @@ bool RobotServiceClient::stopNavigation()
 
   return stopCommand(KEY_NAVIGATION);
 }
+
+bool RobotServiceClient::prepareNavigationSpeedLimitPublisher()
+{
+  if (!initialized_)
+  {
+    qCritical() << "[RobotServiceClient::prepareNavigationSpeedLimitPublisher] RobotServiceClient is not initialized, cannot create publisher";
+    return false;
+  }
+
+  if (!parent_node_)
+  {
+    qCritical() << "[RobotServiceClient::prepareNavigationSpeedLimitPublisher] Parent node is not available, cannot create publisher";
+    return false;
+  }
+
+  if (!context_ || !context_->isConfigured())
+  {
+    qCritical() << "[RobotServiceClient::prepareNavigationSpeedLimitPublisher] Robot context is not configured, cannot create publisher";
+    return false;
+  }
+
+  if (pub_navigation_speed_limit_)
+  {
+    return true;
+  }
+
+  const std::string topic_name = context_->resolveTopic(ROBOGait::ros::topics::T_SPEED_LIMIT);
+  pub_navigation_speed_limit_ = parent_node_->create_publisher<nav2_msgs::msg::SpeedLimit>(topic_name, ROBOGait::ros::QosProfiles::QOS_RELIABLE());
+
+  if (!pub_navigation_speed_limit_)
+  {
+    qCritical() << "[RobotServiceClient::prepareNavigationSpeedLimitPublisher] Failed to create publisher for topic:" << topic_name.c_str();
+    return false;
+  }
+
+  navigation_speed_limit_applied_ = false;
+  qDebug() << "[RobotServiceClient::prepareNavigationSpeedLimitPublisher] Publisher created for topic:" << topic_name.c_str();
+  return true;
+}
+
+bool RobotServiceClient::publishNavigationSpeedLimit(double speed_limit)
+{
+  if (!std::isfinite(speed_limit) || speed_limit <= 0.0)
+  {
+    qCritical() << "[RobotServiceClient::publishNavigationSpeedLimit] Speed limit must be finite and positive:" << speed_limit;
+    return false;
+  }
+
+  if (!prepareNavigationSpeedLimitPublisher())
+  {
+    return false;
+  }
+
+  auto& robot_settings = ROBOGait::settings::RobotSettings::getInstance();
+  const double safe_maximum = robot_settings.getMaxAllowedLinearVelocity();
+  const double effective_limit = std::min(speed_limit, safe_maximum);
+
+  if (effective_limit != speed_limit)
+  {
+    qWarning() << "[RobotServiceClient::publishNavigationSpeedLimit] Requested speed limit" << speed_limit
+               << "m/s exceeds the RobotSettings maximum; clamped to" << effective_limit << "m/s";
+  }
+
+  nav2_msgs::msg::SpeedLimit message;
+  message.header.stamp = parent_node_->now();
+  message.percentage = false;
+  message.speed_limit = effective_limit;
+  pub_navigation_speed_limit_->publish(message);
+  navigation_speed_limit_applied_ = true;
+
+  qDebug() << "[RobotServiceClient::publishNavigationSpeedLimit] Published absolute speed limit:" << effective_limit << "m/s";
+  return true;
+}
+
+bool RobotServiceClient::resetNavigationSpeedLimit()
+{
+  navigation_speed_limit_applied_ = false;
+
+  if (!pub_navigation_speed_limit_)
+  {
+    return true;
+  }
+
+  if (!parent_node_)
+  {
+    qCritical() << "[RobotServiceClient::resetNavigationSpeedLimit] Parent node is not available, cannot reset speed limit";
+    return false;
+  }
+
+  nav2_msgs::msg::SpeedLimit message;
+  message.header.stamp = parent_node_->now();
+  message.percentage = false;
+  message.speed_limit = 0.0;
+  pub_navigation_speed_limit_->publish(message);
+
+  qDebug() << "[RobotServiceClient::resetNavigationSpeedLimit] Restored the configured Nav2 controller speed";
+  return true;
+}
+
+void RobotServiceClient::destroyNavigationSpeedLimitPublisher()
+{
+  navigation_speed_limit_applied_ = false;
+
+  if (!pub_navigation_speed_limit_)
+  {
+    return;
+  }
+
+  pub_navigation_speed_limit_.reset();
+  qDebug() << "[RobotServiceClient::destroyNavigationSpeedLimitPublisher] Publisher destroyed";
+}
+
+bool RobotServiceClient::isNavigationSpeedLimitApplied() const { return navigation_speed_limit_applied_; }
 
 bool RobotServiceClient::reinitializeGlobalLocalization()
 {

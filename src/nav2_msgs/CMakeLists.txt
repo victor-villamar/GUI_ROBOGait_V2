@@ -19,6 +19,7 @@ find_package(std_msgs REQUIRED)
 set(msg_files
     "msg/Particle.msg"
     "msg/ParticleCloud.msg"
+    "msg/SpeedLimit.msg"
 )
 
 # Keep these definitions aligned with the Nav2 Jazzy wire API. The package is

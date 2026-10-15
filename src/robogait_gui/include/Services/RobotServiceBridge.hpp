@@ -127,6 +127,32 @@ public:
    */
   Q_INVOKABLE bool stopNavigation();
 
+  /**
+   * @brief Prepare speed limit publisher for the current test
+   *
+   * @return true if the publisher is available, false otherwise
+   */
+  Q_INVOKABLE bool prepareNavigationSpeedLimitPublisher();
+
+  /**
+   * @brief Publish RobotSettings::maxLinearVelocity as the active Nav2 limit
+   *
+   * @return true if the limit was published, false otherwise
+   */
+  Q_INVOKABLE bool applyConfiguredNavigationSpeedLimit();
+
+  /**
+   * @brief Restore the controller's configured base speed
+   *
+   * @return true if the reset was published or no publisher exists, false otherwise
+   */
+  Q_INVOKABLE bool resetNavigationSpeedLimit();
+
+  /**
+   * @brief Destroy the Nav2 speed limit publisher
+   */
+  Q_INVOKABLE void destroyNavigationSpeedLimitPublisher();
+
   /** @brief Reinitialize the global localization
    *
    * @return true if the global localization was reinitialized successfully, false otherwise

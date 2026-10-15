@@ -18,6 +18,7 @@ extern const std::string T_SCAN;
 extern const std::string T_PARTICLE_CLOUD;
 extern const std::string T_POSE_INITIALIZE;
 extern const std::string T_CAMERA_DETECTION;
+extern const std::string T_SPEED_LIMIT;
 extern const std::string T_TF;
 extern const std::string T_TF_STATIC;
 
