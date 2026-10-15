@@ -28,6 +28,7 @@ Dialog {
     readonly property real scrollTrackGap: 6
     readonly property real scrollTrackEdgeMargin: 2
     readonly property real scrollTrackReserve: scrollTrackWidth + scrollTrackGap + scrollTrackEdgeMargin
+    readonly property real contentVerticalMargin: 10
 
     signal saveRequested(string annotations)
 
@@ -82,14 +83,17 @@ Dialog {
             Item {
                 id: content
                 width: flick.width
-                implicitHeight: Math.max(formColumn.implicitHeight, flick.height)
+                implicitHeight: Math.max(
+                                    flick.height,
+                                    formColumn.y + formColumn.implicitHeight + root.contentVerticalMargin)
 
                 Column {
                     id: formColumn
                     width: Math.min(680, Math.max(0, content.width - 24 - root.scrollTrackReserve))
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.top: parent.top
-                    anchors.topMargin: Math.max(10, Math.round((flick.height - formColumn.implicitHeight) / 2))
+                    anchors.topMargin: Math.max(root.contentVerticalMargin,
+                                                Math.round((flick.height - formColumn.implicitHeight) / 2))
                     spacing: 10
 
                     Text {
