@@ -38,7 +38,7 @@ Una GUI compilada directamente contra `nav2_msgs` de Lyrical puede descubrir los
 ## Estructura del paquete
 
 * [`action/`](action/) &rarr; Definiciones de las acciones Nav2 utilizadas por la GUI.
-* [`msg/`](msg/) &rarr; Mensajes necesarios para visualizar la nube de partículas.
+* [`msg/`](msg/) &rarr; Mensajes necesarios para visualizar la nube de partículas y limitar la velocidad de Nav2.
 * [`CMakeLists.txt`](CMakeLists.txt) &rarr; Generación de interfaces y validación de que el entorno activo sea Lyrical.
 * [`package.xml`](package.xml) &rarr; Metadatos y dependencias ROS 2.
 * [`README.md`](README.md) &rarr; Documentación del paquete de compatibilidad.
@@ -55,8 +55,9 @@ El paquete genera únicamente las interfaces de Jazzy consumidas por `robogait_g
 |        [`FollowPath.action`](action/FollowPath.action)        |     Seguimiento de una trayectoria manual     |
 |               [`Particle.msg`](msg/Particle.msg)              |          Pose y peso de una partícula         |
 |          [`ParticleCloud.msg`](msg/ParticleCloud.msg)         | Conjunto de partículas mostrado sobre el mapa |
+|             [`SpeedLimit.msg`](msg/SpeedLimit.msg)            |     Límite lineal dinámico enviado a Nav2     |
 
-`Particle` y `ParticleCloud` se incluyen porque el override sustituye el paquete `nav2_msgs` completo, no archivos individuales. Omitirlos mezclaría headers y bibliotecas de tipos del paquete local y del instalado en `/opt/ros`.
+Estos mensajes se incluyen porque el override sustituye el paquete `nav2_msgs` completo, no archivos individuales. Omitirlos mezclaría headers y bibliotecas de tipos del paquete local y del instalado en `/opt/ros`.
 
 <!-- COMPATIBILIDAD ENTRE DISTRIBUCIONES -->
 ## Compatibilidad entre distribuciones
@@ -114,6 +115,7 @@ ros2 interface show nav2_msgs/action/ComputePathToPose
 ros2 interface show nav2_msgs/action/NavigateToPose
 ros2 interface show nav2_msgs/action/FollowPath
 ros2 interface show nav2_msgs/msg/ParticleCloud
+ros2 interface show nav2_msgs/msg/SpeedLimit
 ```
 
 En la imagen Docker Lyrical, `ros2 pkg prefix nav2_msgs` debe devolver `/opt/ros/robogait`.
