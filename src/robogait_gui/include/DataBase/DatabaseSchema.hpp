@@ -11,10 +11,10 @@ namespace db
 {
 
 /**
- * @brief Manages database schema creation and versioning
+ * @brief Manages database schema creation
  *
  * This class is responsible for creating the database schema
- * and ensuring it is up to date.
+ * for new database files.
  */
 class DatabaseSchema
 {
@@ -93,8 +93,6 @@ private:
    * @return DbResultVoid indicating success or failure
    */
   static DbResultVoid executeSql(const QSqlDatabase& db, const QString& sql, const QString& description);
-
-  static constexpr int CURRENT_SCHEMA_VERSION = 1; /**< Current schema version */
 };
 
 } // namespace db

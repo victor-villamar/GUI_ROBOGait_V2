@@ -81,6 +81,7 @@ struct PatientRow
  * @param details The details of the map
  * @param create_day The creation date of the map
  * @param id_user The unique identifier for the user who created the map
+ * @param archived_at Timestamp when the map was removed from the robot, or empty while available
  */
 struct MapRow
 {
@@ -91,6 +92,16 @@ struct MapRow
   QString create_day;
   int id_user = -1;
   bool map_save = false;
+  QString archived_at;
+};
+
+/**
+ * @brief Data affected by permanently deleting a patient
+ */
+struct PatientDeletionImpact
+{
+  int experiment_count = 0;
+  int doctor_count = 0;
 };
 
 /**

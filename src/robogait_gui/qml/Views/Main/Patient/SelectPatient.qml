@@ -13,6 +13,7 @@ SelectPatientForm {
 
     property int pendingDeletePatientId: -1
     property string pendingDeletePatientDisplay: ""
+    property bool pendingPatientPermanentDeletion: false
 
 
     function refreshPatients()
@@ -70,9 +71,41 @@ SelectPatientForm {
     }
 
     onPatientDeleteRequested: function(patientId, display) {
+        if (!dbManager) {
+            return
+        }
+
+        var impact = dbManager.getPatientDeletionImpact(patientId)
+        if (!impact.valid) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: %1").arg(dbManager.lastError)
+            errorPopup.open()
+            return
+        }
+
+        if (!impact.can_delete) {
+            errorPopup.errorRectangleTextError.text = qsTr("No se puede quitar este paciente porque eres su único doctor y tiene pruebas registradas.")
+            errorPopup.open()
+            return
+        }
+
         pendingDeletePatientId = patientId
         pendingDeletePatientDisplay = display
-        deleteConfirmDialog.message = qsTr("¿Borrar el paciente %1?").arg(display)
+        pendingPatientPermanentDeletion = impact.permanent
+
+        if (pendingPatientPermanentDeletion) {
+            var testLabel = impact.experiment_count === 1 ? qsTr("prueba") : qsTr("pruebas")
+            var doctorLabel = impact.doctor_count === 1 ? qsTr("doctor") : qsTr("doctores")
+            deleteConfirmDialog.message = qsTr("Se eliminará permanentemente el paciente %1, junto con %2 %3 y su asociación con %4 %5. Esta acción no se puede deshacer.")
+                                                  .arg(display)
+                                                  .arg(impact.experiment_count)
+                                                  .arg(testLabel)
+                                                  .arg(impact.doctor_count)
+                                                  .arg(doctorLabel)
+        }
+        else {
+            deleteConfirmDialog.message = qsTr("¿Quitar a %1 de tus pacientes? Si está asociado a otros doctores, su información se conservará.")
+                                                  .arg(display)
+        }
         deleteConfirmDialog.openWithMessage(deleteConfirmDialog.message)
     }
 
@@ -114,6 +147,11 @@ SelectPatientForm {
                 errorPopup.errorRectangleTextError.text = qsTr("Error: %1").arg(dbManager.lastError)
                 errorPopup.open()
                 return
+            }
+
+            if (userSession && userSession.currentPatient
+                    && userSession.currentPatient.id === pendingDeletePatientId) {
+                userSession.clearPatient()
             }
 
             refreshPatients()

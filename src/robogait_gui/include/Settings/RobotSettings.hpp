@@ -43,6 +43,14 @@ public:
              WRITE setMaxAngularVelocity
              NOTIFY maxAngularVelocityChanged)
 
+  Q_PROPERTY(double maxAllowedLinearVelocity
+             READ getMaxAllowedLinearVelocity
+             CONSTANT)
+
+  Q_PROPERTY(double maxAllowedAngularVelocity
+             READ getMaxAllowedAngularVelocity
+             CONSTANT)
+
   Q_PROPERTY(QString cmdVelTopic
              READ getCmdVelTopic
              WRITE setCmdVelTopic
@@ -80,6 +88,8 @@ public:
   double getRobotRadius() const;
   double getMaxLinearVelocity() const;
   double getMaxAngularVelocity() const;
+  double getMaxAllowedLinearVelocity() const;
+  double getMaxAllowedAngularVelocity() const;
   QString getCmdVelTopic() const;
   QString getScanTopic() const;
   QString getCameraDetectionTopic() const;
@@ -139,6 +149,8 @@ private:
   static constexpr double DEFAULT_ROBOT_RADIUS = 0.326;
   static constexpr double DEFAULT_MAX_LINEAR_VELOCITY = 0.22;
   static constexpr double DEFAULT_MAX_ANGULAR_VELOCITY = 2.84;
+  static constexpr double MAX_ALLOWED_LINEAR_VELOCITY = 1.0;
+  static constexpr double MAX_ALLOWED_ANGULAR_VELOCITY = 4.0;
   static constexpr const char* DEFAULT_MAP_IMAGE_PATH = ".local/robogait/maps/";
   static constexpr const char* DEFAULT_ROBOT_MAP_PATH = "/maps/";
 };

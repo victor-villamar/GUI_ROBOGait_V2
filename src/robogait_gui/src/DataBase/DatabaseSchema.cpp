@@ -90,6 +90,7 @@ DbResultVoid DatabaseSchema::createMapTable(const QSqlDatabase& db)
       create_day TEXT NOT NULL,
       id_user INTEGER NOT NULL,
       map_save INTEGER DEFAULT 0,
+      archived_at TEXT DEFAULT NULL,
       FOREIGN KEY (id_user) REFERENCES "user"(id)
     )
   )";
@@ -107,7 +108,7 @@ DbResultVoid DatabaseSchema::createExperimentsTable(const QSqlDatabase& db)
       date TEXT NOT NULL,
       comment TEXT,
       id_user INTEGER,
-      FOREIGN KEY (id_patient) REFERENCES patient(id),
+      FOREIGN KEY (id_patient) REFERENCES patient(id) ON DELETE CASCADE,
       FOREIGN KEY (id_map) REFERENCES map(id),
       FOREIGN KEY (id_user) REFERENCES "user"(id)
     )
@@ -155,6 +156,30 @@ DbResultVoid DatabaseSchema::createIndexes(const QSqlDatabase& db)
     )";
 
     if (auto result = executeSql(db, sql, "index on id_patient"); !statusOk(result))
+    {
+      return result;
+    }
+  }
+
+  {
+    const QString sql = R"(
+      CREATE INDEX IF NOT EXISTS idx_experiments_patient
+      ON experiments(id_patient)
+    )";
+
+    if (auto result = executeSql(db, sql, "index on experiment patient"); !statusOk(result))
+    {
+      return result;
+    }
+  }
+
+  {
+    const QString sql = R"(
+      CREATE INDEX IF NOT EXISTS idx_experiments_map
+      ON experiments(id_map)
+    )";
+
+    if (auto result = executeSql(db, sql, "index on experiment map"); !statusOk(result))
     {
       return result;
     }

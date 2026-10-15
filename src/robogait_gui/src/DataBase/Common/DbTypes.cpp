@@ -71,6 +71,8 @@ QVariantMap toVariantMap(const MapDetails& map_details)
   map["create_day"] = map_details.map.create_day;
   map["create_by_name"] = create_by_name;
   map["map_save"] = map_details.map.map_save;
+  map["archived_at"] = map_details.map.archived_at;
+  map["archived"] = !map_details.map.archived_at.isEmpty();
   return map;
 }
 } // namespace db
