@@ -140,6 +140,7 @@ erDiagram
       TEXT create_day
       INTEGER id_user FK
       INTEGER map_save
+      TEXT archived_at
    }
 
    EXPERIMENT {
@@ -163,6 +164,8 @@ erDiagram
 > [!NOTE]
 >
 >`PK` (*Primary Key* o clave primaria) identifica de forma única cada registro de una tabla. `FK` (*Foreign Key* o clave foránea) almacena la clave primaria de otra tabla para establecer una relación entre ambas. Por ejemplo, `EXPERIMENT.id_patient` es una `FK` que referencia a `PATIENT.id`, su `PK`.
+>
+>Los mapas retirados del robot conservan sus metadatos mediante `MAP.archived_at` cuando existen pruebas asociadas. La eliminación permanente de un paciente por un administrador elimina también sus experimentos mediante `ON DELETE CASCADE`.
 
 ### Visualización de mapas
 
