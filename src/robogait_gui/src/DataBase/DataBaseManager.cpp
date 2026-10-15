@@ -560,7 +560,23 @@ bool DataBaseManager::deletePatient(int patient_id)
     return false;
   }
 
-  const auto result = patient_repository_.deletePatientByIdForUserName(patient_id, user_name_);
+  const auto impact_result = patient_repository_.getPatientDeletionImpactByIdForUserName(patient_id, user_name_);
+  if (!statusOk(impact_result))
+  {
+    const auto error = std::get<DbError>(impact_result);
+    setLastError(error.message);
+    return false;
+  }
+
+  const auto impact = std::get<PatientDeletionImpact>(impact_result);
+  if (user_role_ != "manager" && impact.experiment_count > 0 && impact.doctor_count <= 1)
+  {
+    setLastError("No se puede quitar al unico doctor de un paciente con pruebas registradas");
+    return false;
+  }
+
+  const auto result = user_role_ == "manager" ? patient_repository_.deletePatientPermanentlyByIdForUserName(patient_id, user_name_)
+                                              : patient_repository_.deletePatientByIdForUserName(patient_id, user_name_);
 
   if (!statusOk(result))
   {
@@ -570,8 +586,49 @@ bool DataBaseManager::deletePatient(int patient_id)
   }
 
   setLastError("");
-  qDebug() << "[DataBaseManager::deletePatient] Patient unlinked successfully for user:" << user_name_;
+  qDebug() << "[DataBaseManager::deletePatient] Patient deletion completed for user:" << user_name_ << "role:" << user_role_;
   return true;
+}
+
+QVariantMap DataBaseManager::getPatientDeletionImpact(int patient_id)
+{
+  QVariantMap impact_map;
+  impact_map["valid"] = false;
+
+  if (!db_.isOpen())
+  {
+    setLastError("La base de datos no esta abierta");
+    return impact_map;
+  }
+
+  if (user_role_ == "guest" || user_name_.trimmed().isEmpty())
+  {
+    setLastError("Accion no permitida para usuario invitado");
+    return impact_map;
+  }
+
+  if (patient_id <= 0)
+  {
+    setLastError("ID de paciente invalido");
+    return impact_map;
+  }
+
+  const auto result = patient_repository_.getPatientDeletionImpactByIdForUserName(patient_id, user_name_);
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return impact_map;
+  }
+
+  const auto impact = std::get<PatientDeletionImpact>(result);
+  impact_map["valid"] = true;
+  impact_map["experiment_count"] = impact.experiment_count;
+  impact_map["doctor_count"] = impact.doctor_count;
+  impact_map["permanent"] = user_role_ == "manager";
+  impact_map["can_delete"] = user_role_ == "manager" || impact.experiment_count == 0 || impact.doctor_count > 1;
+  setLastError("");
+  return impact_map;
 }
 
 bool DataBaseManager::deleteExperiment(int experiment_id)
@@ -757,6 +814,40 @@ bool DataBaseManager::mapExists(const QString& map_name)
   return false;
 }
 
+QVariantMap DataBaseManager::getMapDeletionImpact(const QString& map_name)
+{
+  QVariantMap impact_map;
+  impact_map["valid"] = false;
+
+  if (!db_.isOpen())
+  {
+    setLastError("La base de datos no esta abierta");
+    return impact_map;
+  }
+
+  const QString trimmed_name = map_name.trimmed();
+  if (trimmed_name.isEmpty())
+  {
+    setLastError("Nombre de mapa invalido");
+    return impact_map;
+  }
+
+  const auto result = map_repository_.countExperimentsByMapName(trimmed_name);
+  if (!statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    setLastError(error.message);
+    return impact_map;
+  }
+
+  const int experiment_count = std::get<int>(result);
+  impact_map["valid"] = true;
+  impact_map["experiment_count"] = experiment_count;
+  impact_map["will_archive"] = experiment_count > 0;
+  setLastError("");
+  return impact_map;
+}
+
 bool DataBaseManager::registerMap(const QString& map_name, const QString& location, const QString& details)
 {
   if (!db_.isOpen())
@@ -810,7 +901,17 @@ bool DataBaseManager::deleteMap(const QString& map_name)
     return false;
   }
 
-  const auto result = map_repository_.deleteMapByName(map_name);
+  const QString trimmed_name = map_name.trimmed();
+  const auto impact_result = map_repository_.countExperimentsByMapName(trimmed_name);
+  if (!statusOk(impact_result))
+  {
+    const auto error = std::get<DbError>(impact_result);
+    setLastError(error.message);
+    return false;
+  }
+
+  const int experiment_count = std::get<int>(impact_result);
+  const auto result = experiment_count > 0 ? map_repository_.archiveMapByName(trimmed_name) : map_repository_.deleteMapByName(trimmed_name);
 
   if (!statusOk(result))
   {
@@ -820,7 +921,7 @@ bool DataBaseManager::deleteMap(const QString& map_name)
   }
 
   setLastError("");
-  qDebug() << "[DataBaseManager::deleteMap] Map deleted successfully:" << map_name;
+  qDebug() << "[DataBaseManager::deleteMap] Map" << (experiment_count > 0 ? "archived" : "deleted") << "successfully:" << trimmed_name;
   return true;
 }
 

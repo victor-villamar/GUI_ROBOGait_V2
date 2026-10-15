@@ -154,3 +154,73 @@ TEST_F(DataBaseManagerTest, GuestAndInvalidOperationsReturnErrors)
   EXPECT_TRUE(manager.listPatients().isEmpty());
   EXPECT_EQ(manager.getLastError(), "Accion no permitida para usuario invitado");
 }
+
+TEST_F(DataBaseManagerTest, ArchivesReferencedMapsAndManagerPermanentlyDeletesPatientData)
+{
+  auto& manager = ROBOGait::db::DataBaseManager::getInstance();
+
+  ASSERT_TRUE(manager.initialize(databasePath()));
+  ASSERT_TRUE(manager.login("admin", "a"));
+  ASSERT_EQ(manager.getUserRole(), "manager");
+
+  ASSERT_TRUE(manager.registerPatient("Ana", "Lopez", 34, 62.5, 168.0, "left knee"));
+  const QVariantList patients = manager.listPatients();
+  ASSERT_EQ(patients.size(), 1);
+  const int patient_id = patients[0].toMap()["id"].toInt();
+
+  ASSERT_TRUE(manager.registerMap("Lab", "Room 1", "first floor"));
+  ASSERT_TRUE(manager.saveExperiment("Ana", "Lopez", "Lab", "baseline"));
+
+  const QVariantMap map_impact = manager.getMapDeletionImpact("Lab");
+  EXPECT_TRUE(map_impact["valid"].toBool());
+  EXPECT_TRUE(map_impact["will_archive"].toBool());
+  EXPECT_EQ(map_impact["experiment_count"].toInt(), 1);
+
+  ASSERT_TRUE(manager.deleteMap("Lab"));
+  EXPECT_TRUE(manager.listMaps().isEmpty());
+  EXPECT_TRUE(manager.mapExists("Lab"));
+  EXPECT_TRUE(manager.getMapDetails("Lab")["archived"].toBool());
+  ASSERT_EQ(manager.getPatientTests(patient_id).size(), 1);
+  EXPECT_FALSE(manager.saveExperiment("Ana", "Lopez", "Lab", "must not use archived map"));
+
+  const QVariantMap patient_impact = manager.getPatientDeletionImpact(patient_id);
+  EXPECT_TRUE(patient_impact["valid"].toBool());
+  EXPECT_TRUE(patient_impact["permanent"].toBool());
+  EXPECT_EQ(patient_impact["experiment_count"].toInt(), 1);
+  EXPECT_EQ(patient_impact["doctor_count"].toInt(), 1);
+
+  ASSERT_TRUE(manager.deletePatient(patient_id));
+  EXPECT_TRUE(manager.listPatients().isEmpty());
+
+  const QVariantMap map_impact_after_patient_deletion = manager.getMapDeletionImpact("Lab");
+  EXPECT_TRUE(map_impact_after_patient_deletion["valid"].toBool());
+  EXPECT_EQ(map_impact_after_patient_deletion["experiment_count"].toInt(), 0);
+}
+
+TEST_F(DataBaseManagerTest, DoctorCannotOrphanPatientHistory)
+{
+  auto& manager = ROBOGait::db::DataBaseManager::getInstance();
+
+  ASSERT_TRUE(manager.initialize(databasePath()));
+  ASSERT_TRUE(manager.login("a", "a"));
+  ASSERT_EQ(manager.getUserRole(), "doctor");
+
+  ASSERT_TRUE(manager.registerPatient("Ana", "Lopez", 34, 62.5, 168.0, "left knee"));
+  const QVariantList patients = manager.listPatients();
+  ASSERT_EQ(patients.size(), 1);
+  const int patient_id = patients[0].toMap()["id"].toInt();
+
+  ASSERT_TRUE(manager.registerMap("Lab", "Room 1", "first floor"));
+  ASSERT_TRUE(manager.saveExperiment("Ana", "Lopez", "Lab", "baseline"));
+
+  const QVariantMap impact = manager.getPatientDeletionImpact(patient_id);
+  EXPECT_TRUE(impact["valid"].toBool());
+  EXPECT_FALSE(impact["permanent"].toBool());
+  EXPECT_FALSE(impact["can_delete"].toBool());
+  EXPECT_EQ(impact["experiment_count"].toInt(), 1);
+  EXPECT_EQ(impact["doctor_count"].toInt(), 1);
+
+  EXPECT_FALSE(manager.deletePatient(patient_id));
+  EXPECT_EQ(manager.listPatients().size(), 1);
+  EXPECT_EQ(manager.getPatientTests(patient_id).size(), 1);
+}

@@ -16,6 +16,7 @@ SelectMapForm {
     property string pendingMapLocation: ""
     property string pendingMapDescription: ""
     property string pendingDeleteMapName: ""
+    property bool pendingDeleteMapHasHistory: false
     property bool waitingForMappingStart: false
     property bool waitingForDeleteMap: false
 
@@ -60,6 +61,37 @@ SelectMapForm {
         }
     }
 
+    function completeMapDeletion() {
+        var databaseUpdated = dbManager.deleteMap(pendingDeleteMapName)
+        if (!databaseUpdated) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: %1").arg(dbManager.lastError)
+            errorPopup.open()
+            return
+        }
+
+        if (!pendingDeleteMapHasHistory
+                                        && userSession && userSession.rosManager
+                                        && userSession.rosManager.robotManager) {
+            var previewDeleted = userSession.rosManager.robotManager.deleteMapPreview(pendingDeleteMapName)
+            if (!previewDeleted) {
+                errorPopup.errorRectangleTextError.text = qsTr("Advertencia: No se pudo borrar la vista previa del mapa")
+                errorPopup.open()
+            }
+        }
+
+        if (mapDetailsDialog.visible && mapDetailsDialog.mapName === pendingDeleteMapName) {
+            mapDetailsDialog.close()
+        }
+
+        if (userSession && userSession.currentMapName === pendingDeleteMapName) {
+            userSession.clearMap()
+        }
+
+        selectedMapName = ""
+        mapsListView.currentIndex = -1
+        loadMaps()
+    }
+
     StackView.onActivated: loadMaps()
 
     onAddMapRequested: mapRegisterDialog.open()
@@ -82,8 +114,29 @@ SelectMapForm {
     }
 
     onMapDeleteRequested: function(mapIndex, mapNameValue) {
+        if (!dbManager) {
+            return
+        }
+
+        var impact = dbManager.getMapDeletionImpact(mapNameValue)
+        if (!impact.valid) {
+            errorPopup.errorRectangleTextError.text = qsTr("Error: %1").arg(dbManager.lastError)
+            errorPopup.open()
+            return
+        }
+
         pendingDeleteMapName = mapNameValue
-        deleteConfirmDialog.message = qsTr("¿Borrar el mapa %1?").arg(mapNameValue)
+        pendingDeleteMapHasHistory = impact.will_archive
+        if (pendingDeleteMapHasHistory) {
+            var testLabel = impact.experiment_count === 1 ? qsTr("prueba") : qsTr("pruebas")
+            deleteConfirmDialog.message = qsTr("El mapa %1 está asociado a %2 %3. Se eliminará del robot, pero se conservará en el historial y dejará de estar disponible para nuevas sesiones.")
+                                                  .arg(mapNameValue)
+                                                  .arg(impact.experiment_count)
+                                                  .arg(testLabel)
+        }
+        else {
+            deleteConfirmDialog.message = qsTr("¿Borrar completamente el mapa %1?").arg(mapNameValue)
+        }
         deleteConfirmDialog.openWithMessage(deleteConfirmDialog.message)
     }
 
@@ -140,45 +193,23 @@ SelectMapForm {
         acceptText: qsTr("Borrar")
 
         onAccepted: {
-            if (!dbManager) {
+            if (!dbManager || !robotServiceBridge) {
+                errorPopup.errorRectangleTextError.text = qsTr("Error: No hay un robot disponible para borrar el mapa")
+                errorPopup.open()
                 return
             }
 
             waitingForDeleteMap = true
+            busyDialog.openWithMessage(qsTr("Borrando mapa del robot..."))
             var okRemote = robotServiceBridge.deleteMap(pendingDeleteMapName)
             if(!okRemote)
             {
                 waitingForDeleteMap = false
+                busyDialog.close()
                 errorPopup.errorRectangleTextError.text = qsTr("Advertencia: No se pudo borrar el mapa en el robot")
                 errorPopup.open()
                 return
             }
-
-            var ok = dbManager.deleteMap(pendingDeleteMapName)
-            if (!ok) {
-                errorPopup.errorRectangleTextError.text = qsTr("Error: %1").arg(dbManager.lastError)
-                errorPopup.open()
-                return
-            }
-
-            var previewDeleted = true
-            if (userSession && userSession.rosManager && userSession.rosManager.robotManager) {
-                previewDeleted = userSession.rosManager.robotManager.deleteMapPreview(pendingDeleteMapName)
-            }
-
-            if (!previewDeleted) {
-                errorPopup.errorRectangleTextError.text = qsTr("Advertencia: No se pudo borrar la vista previa del mapa")
-                errorPopup.open()
-                return
-            }
-
-            if (mapDetailsDialog.visible && mapDetailsDialog.mapName === pendingDeleteMapName) {
-                mapDetailsDialog.close()
-                selectedMapName = ""
-                mapsListView.currentIndex = -1
-            }
-
-            loadMaps()
         }
     }
 
@@ -228,11 +259,15 @@ SelectMapForm {
             }
 
             if (waitingForDeleteMap) {
+                waitingForDeleteMap = false
+                busyDialog.close()
                 if (!success) {
                     errorPopup.errorRectangleTextError.text = qsTr("Advertencia: No se pudo borrar el mapa en el robot")
                     errorPopup.open()
+                    return
                 }
-                waitingForDeleteMap = false
+
+                completeMapDeletion()
             }
         }
     }

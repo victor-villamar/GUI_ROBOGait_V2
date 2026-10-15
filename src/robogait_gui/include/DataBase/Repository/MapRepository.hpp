@@ -66,6 +66,16 @@ public:
   DbResultVoid setMapSaved(const QString& map_name, bool saved);
 
   /**
+   * @brief Count experiments that retain historical references to a map
+   */
+  DbResult<int> countExperimentsByMapName(const QString& map_name);
+
+  /**
+   * @brief Mark a map as unavailable on the robot while preserving its history
+   */
+  DbResultVoid archiveMapByName(const QString& map_name);
+
+  /**
    * @brief Delete a specific map by name
    *
    * @param map_name The name of the map

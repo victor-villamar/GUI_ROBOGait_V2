@@ -245,6 +245,11 @@ public:
   Q_INVOKABLE bool registerPatient(const QString& name, const QString& last_name, int age, double weight, double height, const QString& description);
 
   /**
+   * @brief Describe the records affected by deleting or unlinking a patient
+   */
+  Q_INVOKABLE QVariantMap getPatientDeletionImpact(int patient_id);
+
+  /**
    * @brief Remove the current user's association with a patient (and delete if orphaned)
    *
    * @param patient_id The ID of the patient to delete
@@ -295,6 +300,11 @@ public:
   Q_INVOKABLE bool mapExists(const QString& map_name);
 
   /**
+   * @brief Describe whether a map will be deleted or archived
+   */
+  Q_INVOKABLE QVariantMap getMapDeletionImpact(const QString& map_name);
+
+  /**
    * @brief Register a new map
    *
    * @param map_name The map name
@@ -305,7 +315,7 @@ public:
   Q_INVOKABLE bool registerMap(const QString& map_name, const QString& location, const QString& details);
 
   /**
-   * @brief Delete a map by name
+   * @brief Delete an unused map, or archive it when experiments reference it
    *
    * @param map_name The map name
    * @return True if the deletion was successful, false otherwise

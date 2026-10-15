@@ -199,7 +199,8 @@ DbResultVoid PatientRepository::deletePatientByIdForUserName(int patient_id, con
   const QString delete_patient_sql =
       "DELETE FROM patient "
       "WHERE id = :patient_id "
-      "  AND NOT EXISTS (SELECT 1 FROM patient_doctor WHERE id_patient = :patient_id);";
+      "  AND NOT EXISTS (SELECT 1 FROM patient_doctor WHERE id_patient = :patient_id) "
+      "  AND NOT EXISTS (SELECT 1 FROM experiments WHERE id_patient = :patient_id);";
   // clang-format on
 
   if (auto result = prepareQuery(delete_patient_query, delete_patient_sql); !statusOk(result))
@@ -224,6 +225,78 @@ DbResultVoid PatientRepository::deletePatientByIdForUserName(int patient_id, con
   }
 
   return makeSuccess();
+}
+
+DbResultVoid PatientRepository::deletePatientPermanentlyByIdForUserName(int patient_id, const QString& user_name)
+{
+  QSqlQuery query(getDataBase());
+  const QString sql = "DELETE FROM patient "
+                      "WHERE id = :patient_id "
+                      "  AND EXISTS ("
+                      "    SELECT 1 FROM patient_doctor pd "
+                      "    JOIN \"user\" u ON u.id = pd.id_doctor "
+                      "    WHERE pd.id_patient = :patient_id "
+                      "      AND u.username = :username AND u.role = 'manager'"
+                      "  );";
+
+  if (auto result = prepareQuery(query, sql); !statusOk(result))
+  {
+    return result;
+  }
+
+  query.bindValue(":patient_id", patient_id);
+  query.bindValue(":username", user_name);
+
+  if (auto result = executeQuery(query); !statusOk(result))
+  {
+    return result;
+  }
+
+  if (query.numRowsAffected() == 0)
+  {
+    return makeFailure(DbErrorCode::NOT_FOUND, "Patient not found or does not belong to the user", sql);
+  }
+
+  return makeSuccess();
+}
+
+DbResult<PatientDeletionImpact> PatientRepository::getPatientDeletionImpactByIdForUserName(int patient_id, const QString& user_name)
+{
+  QSqlQuery query(getDataBase());
+  const QString sql = "SELECT "
+                      "  (SELECT COUNT(*) FROM experiments e WHERE e.id_patient = p.id), "
+                      "  (SELECT COUNT(*) FROM patient_doctor pd_all WHERE pd_all.id_patient = p.id) "
+                      "FROM patient p "
+                      "WHERE p.id = :patient_id "
+                      "  AND EXISTS ("
+                      "    SELECT 1 FROM patient_doctor pd "
+                      "    JOIN \"user\" u ON u.id = pd.id_doctor "
+                      "    WHERE pd.id_patient = p.id AND u.username = :username"
+                      "  );";
+
+  if (auto result = prepareQuery(query, sql); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<PatientDeletionImpact>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  query.bindValue(":patient_id", patient_id);
+  query.bindValue(":username", user_name);
+  if (auto result = executeQuery(query); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<PatientDeletionImpact>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  if (!query.next())
+  {
+    return makeFailureT<PatientDeletionImpact>(DbErrorCode::NOT_FOUND, "Patient not found or does not belong to the user", sql);
+  }
+
+  PatientDeletionImpact impact;
+  impact.experiment_count = query.value(0).toInt();
+  impact.doctor_count = query.value(1).toInt();
+  return impact;
 }
 
 DbResult<QVector<PatientRow>> PatientRepository::listPatientsForUserName(const QString& user_name)

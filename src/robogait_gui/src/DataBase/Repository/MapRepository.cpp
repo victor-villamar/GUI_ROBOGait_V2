@@ -40,7 +40,9 @@ DbResult<QVector<QString>> MapRepository::listMapNames()
   // clang-format off
     const QString sql =
         "SELECT name "
-        "FROM map;";
+        "FROM map "
+        "WHERE archived_at IS NULL "
+        "ORDER BY name;";
   // clang-format on
 
   if (auto result = prepareQuery(query, sql); !statusOk(result))
@@ -69,7 +71,7 @@ DbResult<MapDetails> MapRepository::getMapDetailsByName(const QString& map_name)
 
   // clang-format off
   const QString sql =
-      "SELECT m.id, m.name, m.location, m.details, m.create_day, m.id_user, m.map_save, u.name, u.lastname "
+      "SELECT m.id, m.name, m.location, m.details, m.create_day, m.id_user, m.map_save, m.archived_at, u.name, u.lastname "
       "FROM map m "
       "JOIN \"user\" u ON m.id_user = u.id "
       "WHERE m.name = :name;";
@@ -102,8 +104,9 @@ DbResult<MapDetails> MapRepository::getMapDetailsByName(const QString& map_name)
   details.map.create_day = query.value(4).toString();
   details.map.id_user = query.value(5).toInt();
   details.map.map_save = (query.value(6).toInt() != 0);
-  details.user_name = query.value(7).toString();
-  details.user_last_name = query.value(8).toString();
+  details.map.archived_at = query.value(7).toString();
+  details.user_name = query.value(8).toString();
+  details.user_last_name = query.value(9).toString();
 
   return details;
 }
@@ -128,6 +131,62 @@ DbResultVoid MapRepository::setMapSaved(const QString& map_name, bool saved)
   query.bindValue(":name", map_name);
 
   return executeQuery(query);
+}
+
+DbResult<int> MapRepository::countExperimentsByMapName(const QString& map_name)
+{
+  QSqlQuery query(getDataBase());
+  const QString sql = "SELECT COUNT(e.id) "
+                      "FROM map m "
+                      "LEFT JOIN experiments e ON e.id_map = m.id "
+                      "WHERE m.name = :name "
+                      "GROUP BY m.id;";
+
+  if (auto result = prepareQuery(query, sql); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<int>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  query.bindValue(":name", map_name);
+  if (auto result = executeQuery(query); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<int>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  if (!query.next())
+  {
+    return makeFailureT<int>(DbErrorCode::NOT_FOUND, "Map not found", sql);
+  }
+
+  return query.value(0).toInt();
+}
+
+DbResultVoid MapRepository::archiveMapByName(const QString& map_name)
+{
+  QSqlQuery query(getDataBase());
+  const QString sql = "UPDATE map "
+                      "SET archived_at = CURRENT_TIMESTAMP "
+                      "WHERE name = :name AND archived_at IS NULL;";
+
+  if (auto result = prepareQuery(query, sql); !statusOk(result))
+  {
+    return result;
+  }
+
+  query.bindValue(":name", map_name);
+  if (auto result = executeQuery(query); !statusOk(result))
+  {
+    return result;
+  }
+
+  if (query.numRowsAffected() == 0)
+  {
+    return makeFailure(DbErrorCode::NOT_FOUND, "Map not found or already archived", sql);
+  }
+
+  return makeSuccess();
 }
 
 DbResultVoid MapRepository::deleteMapByName(const QString& map_name)

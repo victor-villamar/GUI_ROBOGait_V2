@@ -52,6 +52,16 @@ public:
   DbResultVoid deletePatientByIdForUserName(int patient_id, const QString& user_name);
 
   /**
+   * @brief Permanently delete a patient and all cascading data for an authorized manager
+   */
+  DbResultVoid deletePatientPermanentlyByIdForUserName(int patient_id, const QString& user_name);
+
+  /**
+   * @brief Count records affected by a permanent patient deletion
+   */
+  DbResult<PatientDeletionImpact> getPatientDeletionImpactByIdForUserName(int patient_id, const QString& user_name);
+
+  /**
    * @brief List all patients for a specific user
    *
    * @param user_name The username of the user associated with the patients

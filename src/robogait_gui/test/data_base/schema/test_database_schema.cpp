@@ -67,6 +67,42 @@ protected:
     return query.value(0).toInt() == 1;
   }
 
+  bool columnExists(const QString& table_name, const QString& column_name)
+  {
+    QSqlQuery query(db_);
+    if (!query.exec(QString("PRAGMA table_info(%1)").arg(table_name)))
+    {
+      return false;
+    }
+
+    while (query.next())
+    {
+      if (query.value(1).toString() == column_name)
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  QString patientForeignKeyDeleteAction()
+  {
+    QSqlQuery query(db_);
+    if (!query.exec("PRAGMA foreign_key_list(experiments)"))
+    {
+      return {};
+    }
+
+    while (query.next())
+    {
+      if (query.value(2).toString() == "patient" && query.value(3).toString() == "id_patient")
+      {
+        return query.value(6).toString();
+      }
+    }
+    return {};
+  }
+
   QString connection_name_;
   QSqlDatabase db_;
 
@@ -87,8 +123,12 @@ TEST_F(DatabaseSchemaTest, InitializesTablesIndexesAndDefaultUsers)
   EXPECT_TRUE(tableExists("map"));
   EXPECT_TRUE(tableExists("experiments"));
   EXPECT_TRUE(tableExists("patient_doctor"));
+  EXPECT_TRUE(columnExists("map", "archived_at"));
+  EXPECT_EQ(patientForeignKeyDeleteAction(), "CASCADE");
   EXPECT_TRUE(indexExists("idx_patient_doctor_doctor"));
   EXPECT_TRUE(indexExists("idx_patient_doctor_patient"));
+  EXPECT_TRUE(indexExists("idx_experiments_patient"));
+  EXPECT_TRUE(indexExists("idx_experiments_map"));
 
   QSqlQuery query(db_);
   ASSERT_TRUE(query.exec("SELECT username, role, password FROM \"user\" ORDER BY id"));

@@ -21,7 +21,7 @@ DbResult<int> ExperimentRepository::insertExperiment(const QString& patient_name
         "SELECT p.id, m.id, u.id, CURRENT_TIMESTAMP, :comment "
         "FROM patient p, map m, \"user\" u "
         "WHERE p.name = :p_name AND p.lastname = :p_lastname "
-        "  AND m.name = :m_name "
+        "  AND m.name = :m_name AND m.archived_at IS NULL "
         "  AND u.username = :u_name;";
   // clang-format on
 
@@ -41,6 +41,11 @@ DbResult<int> ExperimentRepository::insertExperiment(const QString& patient_name
   {
     const auto error = std::get<DbError>(result);
     return makeFailureT<int>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  if (query.numRowsAffected() == 0)
+  {
+    return makeFailureT<int>(DbErrorCode::NOT_FOUND, "Patient, active map or user not found", sql);
   }
 
   QSqlQuery last_id_query(getDataBase());
