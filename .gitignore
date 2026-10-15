@@ -65,3 +65,6 @@ COLCON_IGNORE
 
 # Docker environment
 .env
+
+# Pycache files
+__pycache__/
