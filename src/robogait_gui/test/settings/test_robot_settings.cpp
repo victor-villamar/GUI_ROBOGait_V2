@@ -42,6 +42,8 @@ TEST(RobotSettingsTest, LoadsValidatesUpdatesInMemoryAndNotifies)
   EXPECT_DOUBLE_EQ(settings.getRobotRadius(), 0.326);
   EXPECT_DOUBLE_EQ(settings.getMaxLinearVelocity(), 0.22);
   EXPECT_DOUBLE_EQ(settings.getMaxAngularVelocity(), 2.84);
+  EXPECT_DOUBLE_EQ(settings.getMaxAllowedLinearVelocity(), 1.0);
+  EXPECT_DOUBLE_EQ(settings.getMaxAllowedAngularVelocity(), 4.0);
   EXPECT_EQ(settings.getCmdVelTopic(), QStringLiteral("/cmd_vel"));
   EXPECT_EQ(settings.getScanTopic(), QStringLiteral("/scan"));
   EXPECT_EQ(settings.getCameraDetectionTopic(), QStringLiteral("/camera_detection"));
@@ -52,6 +54,8 @@ TEST(RobotSettingsTest, LoadsValidatesUpdatesInMemoryAndNotifies)
 
   QObject connection_context;
   int radius_changes = 0;
+  int linear_velocity_changes = 0;
+  int angular_velocity_changes = 0;
   int scan_topic_changes = 0;
   int robot_frame_changes = 0;
 
@@ -59,6 +63,12 @@ TEST(RobotSettingsTest, LoadsValidatesUpdatesInMemoryAndNotifies)
   QObject::connect(&settings,
                    &ROBOGait::settings::RobotSettings::robotRadiusChanged,
                    &connection_context, [&radius_changes]() { ++radius_changes; });
+  QObject::connect(&settings,
+                   &ROBOGait::settings::RobotSettings::maxLinearVelocityChanged,
+                   &connection_context, [&linear_velocity_changes]() { ++linear_velocity_changes; });
+  QObject::connect(&settings,
+                   &ROBOGait::settings::RobotSettings::maxAngularVelocityChanged,
+                   &connection_context, [&angular_velocity_changes]() { ++angular_velocity_changes; });
   QObject::connect(&settings,
                    &ROBOGait::settings::RobotSettings::scanTopicChanged,
                    &connection_context, [&scan_topic_changes]() { ++scan_topic_changes; });
@@ -77,24 +87,48 @@ TEST(RobotSettingsTest, LoadsValidatesUpdatesInMemoryAndNotifies)
   settings.setRobotFrame(QStringLiteral("robot/base_footprint"));
 
   EXPECT_EQ(radius_changes, 1);
+  EXPECT_EQ(linear_velocity_changes, 1);
+  EXPECT_EQ(angular_velocity_changes, 1);
   EXPECT_EQ(scan_topic_changes, 1);
   EXPECT_EQ(robot_frame_changes, 1);
   EXPECT_DOUBLE_EQ(settings.getRobotRadius(), 0.4);
+  EXPECT_DOUBLE_EQ(settings.getMaxLinearVelocity(), 0.35);
+  EXPECT_DOUBLE_EQ(settings.getMaxAngularVelocity(), 1.5);
   EXPECT_EQ(settings.getScanTopic(), QStringLiteral("/front_scan"));
   EXPECT_EQ(settings.getRobotFrame(), QStringLiteral("robot/base_footprint"));
 
   settings.setRobotRadius(-1.0);
   settings.setMaxLinearVelocity(std::numeric_limits<double>::infinity());
+  settings.setMaxAngularVelocity(std::numeric_limits<double>::infinity());
   settings.setScanTopic(QStringLiteral("/invalid topic"));
   settings.setRobotFrame(QStringLiteral("/base_link"));
 
   EXPECT_EQ(radius_changes, 1);
+  EXPECT_EQ(linear_velocity_changes, 1);
+  EXPECT_EQ(angular_velocity_changes, 1);
   EXPECT_EQ(scan_topic_changes, 1);
   EXPECT_EQ(robot_frame_changes, 1);
   EXPECT_DOUBLE_EQ(settings.getRobotRadius(), 0.4);
   EXPECT_DOUBLE_EQ(settings.getMaxLinearVelocity(), 0.35);
+  EXPECT_DOUBLE_EQ(settings.getMaxAngularVelocity(), 1.5);
   EXPECT_EQ(settings.getScanTopic(), QStringLiteral("/front_scan"));
   EXPECT_EQ(settings.getRobotFrame(), QStringLiteral("robot/base_footprint"));
+
+  settings.setMaxLinearVelocity(1.0);
+  settings.setMaxAngularVelocity(4.0);
+
+  EXPECT_EQ(linear_velocity_changes, 2);
+  EXPECT_EQ(angular_velocity_changes, 2);
+  EXPECT_DOUBLE_EQ(settings.getMaxLinearVelocity(), 1.0);
+  EXPECT_DOUBLE_EQ(settings.getMaxAngularVelocity(), 4.0);
+
+  settings.setMaxLinearVelocity(1.01);
+  settings.setMaxAngularVelocity(4.01);
+
+  EXPECT_EQ(linear_velocity_changes, 2);
+  EXPECT_EQ(angular_velocity_changes, 2);
+  EXPECT_DOUBLE_EQ(settings.getMaxLinearVelocity(), 1.0);
+  EXPECT_DOUBLE_EQ(settings.getMaxAngularVelocity(), 4.0);
 
   const YAML::Node unchanged_config = YAML::LoadFile(config_path.string());
   EXPECT_DOUBLE_EQ(unchanged_config["robot"]["radius"].as<double>(), 0.326);

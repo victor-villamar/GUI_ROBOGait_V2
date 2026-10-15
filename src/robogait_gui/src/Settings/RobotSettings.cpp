@@ -14,6 +14,8 @@ namespace
 {
 bool isValidPositiveValue(double value) { return std::isfinite(value) && value > 0.0; }
 
+bool isValidBoundedPositiveValue(double value, double maximum) { return isValidPositiveValue(value) && value <= maximum; }
+
 bool isValidTopic(const QString& topic)
 {
   static const QRegularExpression topic_pattern(QStringLiteral(R"(^/?[A-Za-z_][A-Za-z0-9_]*(/[A-Za-z_][A-Za-z0-9_]*)*$)"));
@@ -54,6 +56,10 @@ double RobotSettings::getMaxLinearVelocity() const { return max_linear_velocity_
 
 double RobotSettings::getMaxAngularVelocity() const { return max_angular_velocity_; }
 
+double RobotSettings::getMaxAllowedLinearVelocity() const { return MAX_ALLOWED_LINEAR_VELOCITY; }
+
+double RobotSettings::getMaxAllowedAngularVelocity() const { return MAX_ALLOWED_ANGULAR_VELOCITY; }
+
 QString RobotSettings::getCmdVelTopic() const { return cmd_vel_topic_; }
 
 QString RobotSettings::getScanTopic() const { return scan_topic_; }
@@ -85,9 +91,9 @@ void RobotSettings::setRobotRadius(double radius)
 
 void RobotSettings::setMaxLinearVelocity(double velocity)
 {
-  if (!isValidPositiveValue(velocity))
+  if (!isValidBoundedPositiveValue(velocity, MAX_ALLOWED_LINEAR_VELOCITY))
   {
-    qWarning() << "[RobotSettings::setMaxLinearVelocity] Velocity must be a finite positive value:" << velocity;
+    qWarning() << "[RobotSettings::setMaxLinearVelocity] Velocity must be finite, positive and not exceed" << MAX_ALLOWED_LINEAR_VELOCITY << "m/s:" << velocity;
     return;
   }
 
@@ -100,9 +106,10 @@ void RobotSettings::setMaxLinearVelocity(double velocity)
 
 void RobotSettings::setMaxAngularVelocity(double velocity)
 {
-  if (!isValidPositiveValue(velocity))
+  if (!isValidBoundedPositiveValue(velocity, MAX_ALLOWED_ANGULAR_VELOCITY))
   {
-    qWarning() << "[RobotSettings::setMaxAngularVelocity] Velocity must be a finite positive value:" << velocity;
+    qWarning() << "[RobotSettings::setMaxAngularVelocity] Velocity must be finite, positive and not exceed" << MAX_ALLOWED_ANGULAR_VELOCITY
+               << "rad/s:" << velocity;
     return;
   }
 
@@ -209,8 +216,8 @@ void RobotSettings::initializeDefaults()
   const double max_angular_velocity = yaml_loader.getValue<double>("robot.max_angular_velocity", DEFAULT_MAX_ANGULAR_VELOCITY);
 
   robot_radius_ = isValidPositiveValue(robot_radius) ? robot_radius : DEFAULT_ROBOT_RADIUS;
-  max_linear_velocity_ = isValidPositiveValue(max_linear_velocity) ? max_linear_velocity : DEFAULT_MAX_LINEAR_VELOCITY;
-  max_angular_velocity_ = isValidPositiveValue(max_angular_velocity) ? max_angular_velocity : DEFAULT_MAX_ANGULAR_VELOCITY;
+  max_linear_velocity_ = isValidBoundedPositiveValue(max_linear_velocity, MAX_ALLOWED_LINEAR_VELOCITY) ? max_linear_velocity : DEFAULT_MAX_LINEAR_VELOCITY;
+  max_angular_velocity_ = isValidBoundedPositiveValue(max_angular_velocity, MAX_ALLOWED_ANGULAR_VELOCITY) ? max_angular_velocity : DEFAULT_MAX_ANGULAR_VELOCITY;
 
   const QString default_cmd_vel_topic = QString::fromStdString(ROBOGait::ros::topics::T_CMD_VEL);
   const QString default_scan_topic = QString::fromStdString(ROBOGait::ros::topics::T_SCAN);

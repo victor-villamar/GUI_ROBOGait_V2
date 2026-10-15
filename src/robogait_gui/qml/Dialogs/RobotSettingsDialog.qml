@@ -26,9 +26,23 @@ Dialog {
     readonly property real scrollTrackEdgeMargin: 2
     readonly property real scrollTrackReserve: scrollTrackWidth + scrollTrackGap + scrollTrackEdgeMargin
     readonly property real desiredHeight: parent ? Math.min(760, parent.height * 0.9) : 760
+    readonly property real maxLinearVelocityLimit: robotSettings
+                                                           ? robotSettings.maxAllowedLinearVelocity
+                                                           : 1.0
+    readonly property real maxAngularVelocityLimit: robotSettings
+                                                            ? robotSettings.maxAllowedAngularVelocity
+                                                            : 4.0
+    readonly property bool linearVelocityValid: isPositiveNumberAtMost(linearVelocityField.text,
+                                                                        maxLinearVelocityLimit)
+    readonly property bool angularVelocityValid: isPositiveNumberAtMost(angularVelocityField.text,
+                                                                         maxAngularVelocityLimit)
+    readonly property bool linearVelocityExceedsLimit: isPositiveNumber(linearVelocityField.text)
+                                                                && normalizedNumber(linearVelocityField.text) > maxLinearVelocityLimit
+    readonly property bool angularVelocityExceedsLimit: isPositiveNumber(angularVelocityField.text)
+                                                                 && normalizedNumber(angularVelocityField.text) > maxAngularVelocityLimit
     readonly property bool generalValuesValid: isPositiveNumber(radiusField.text)
-                                                        && isPositiveNumber(linearVelocityField.text)
-                                                        && isPositiveNumber(angularVelocityField.text)
+                                                        && linearVelocityValid
+                                                        && angularVelocityValid
     readonly property bool administratorValuesValid: !isAdmin
                                                               || (cmdVelTopicField.acceptableInput
                                                                   && scanTopicField.acceptableInput
@@ -66,6 +80,11 @@ Dialog {
     function isPositiveNumber(textValue) {
         const value = normalizedNumber(textValue)
         return isFinite(value) && value > 0
+    }
+
+    function isPositiveNumberAtMost(textValue, maximum) {
+        const value = normalizedNumber(textValue)
+        return isFinite(value) && value > 0 && value <= maximum
     }
 
     function ensureFocusedFieldVisible() {
@@ -337,11 +356,31 @@ Dialog {
                                 background: Rectangle {
                                     color: AppTheme.settings.white
                                     radius: 6
-                                    border.color: root.isPositiveNumber(linearVelocityField.text)
+                                    border.color: root.linearVelocityValid
                                                   ? AppTheme.settings.primaryDark
-                                                  : AppTheme.settings.statusWarning
+                                                  : AppTheme.dialogsCommon.errorText
                                     border.width: 1
                                 }
+                            }
+
+                            Item {
+                                Layout.preferredWidth: 1
+                                Layout.preferredHeight: linearVelocityWarning.visible
+                                                        ? linearVelocityWarning.implicitHeight
+                                                        : 0
+                                visible: linearVelocityWarning.visible
+                            }
+
+                            Text {
+                                id: linearVelocityWarning
+                                Layout.fillWidth: true
+                                visible: root.linearVelocityExceedsLimit
+                                text: qsTr("La velocidad de movimiento no puede superar %1 m/s.")
+                                      .arg(root.maxLinearVelocityLimit)
+                                color: AppTheme.dialogsCommon.errorText
+                                font.pixelSize: 12
+                                font.bold: true
+                                wrapMode: Text.WordWrap
                             }
 
                             Text {
@@ -363,11 +402,31 @@ Dialog {
                                 background: Rectangle {
                                     color: AppTheme.settings.white
                                     radius: 6
-                                    border.color: root.isPositiveNumber(angularVelocityField.text)
+                                    border.color: root.angularVelocityValid
                                                   ? AppTheme.settings.primaryDark
-                                                  : AppTheme.settings.statusWarning
+                                                  : AppTheme.dialogsCommon.errorText
                                     border.width: 1
                                 }
+                            }
+
+                            Item {
+                                Layout.preferredWidth: 1
+                                Layout.preferredHeight: angularVelocityWarning.visible
+                                                        ? angularVelocityWarning.implicitHeight
+                                                        : 0
+                                visible: angularVelocityWarning.visible
+                            }
+
+                            Text {
+                                id: angularVelocityWarning
+                                Layout.fillWidth: true
+                                visible: root.angularVelocityExceedsLimit
+                                text: qsTr("La velocidad de giro no puede superar %1 rad/s.")
+                                      .arg(root.maxAngularVelocityLimit)
+                                color: AppTheme.dialogsCommon.errorText
+                                font.pixelSize: 12
+                                font.bold: true
+                                wrapMode: Text.WordWrap
                             }
                         }
                     }
