@@ -68,7 +68,7 @@ navigation:
   nav2_params_path: "/.local/robogait/params/"  # Path to the Nav2 parameters on the robot
   nav2_params_file: "nav2_params.yaml"          # Nav2 parameter file name
   manual_follow_path:
-    controller_id: "ManualPath"                 # Controller plugin for manually drawn paths
+    controller_id: "FollowPath"                 # Controller plugin for manually drawn paths
     goal_checker_id: "general_goal_checker"     # Plugin that determines whether the goal was reached
 
 # Timeout Configuration

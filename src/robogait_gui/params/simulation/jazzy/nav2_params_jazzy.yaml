@@ -73,7 +73,7 @@ controller_server:
     failure_tolerance: 0.3  # Permitted controller failure duration (s).
     progress_checker_plugins: ["progress_checker"]  # Available progress checkers.
     goal_checker_plugins: ["general_goal_checker"]  # Available goal checkers.
-    controller_plugins: ["FollowPath", "ManualPath"]  # Available local controllers.
+    controller_plugins: ["FollowPath"]  # Available local controllers.
 
     # Progress checker parameters
     progress_checker:
@@ -87,50 +87,8 @@ controller_server:
       xy_goal_tolerance: 0.25  # Goal position tolerance (m).
       yaw_goal_tolerance: 0.25  # Goal angular tolerance (rad).
 
-    # DWB parameters
+    # Shared RPP controller used by NavigateToPose and manually drawn paths.
     FollowPath:
-      plugin: "dwb_core::DWBLocalPlanner"  # Plugin class to load.
-      debug_trajectory_details: True  # Publishes trajectory evaluation details.
-      min_vel_x: 0.0  # Minimum sampled X velocity (m/s).
-      min_vel_y: 0.0  # Minimum sampled Y velocity (m/s).
-      max_vel_x: 0.22  # Maximum sampled X velocity (m/s).
-      max_vel_y: 0.0  # Maximum sampled Y velocity (m/s).
-      max_vel_theta: 1.0  # Maximum sampled angular velocity (rad/s).
-      min_speed_xy: 0.0  # Minimum linear speed magnitude (m/s).
-      max_speed_xy: 0.22  # Maximum linear speed magnitude (m/s).
-      min_speed_theta: 0.0  # Minimum angular speed magnitude (rad/s).
-      # Add high threshold velocity for turtlebot 3 issue.
-      # https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/75
-      acc_lim_x: 2.5  # Maximum X acceleration (m/s^2).
-      acc_lim_y: 0.0  # Maximum Y acceleration (m/s^2).
-      acc_lim_theta: 3.2  # Maximum angular acceleration (rad/s^2).
-      decel_lim_x: -2.5  # Maximum X deceleration (m/s^2; negative value).
-      decel_lim_y: 0.0  # Maximum Y deceleration (m/s^2; negative value).
-      decel_lim_theta: -3.2  # Maximum angular deceleration (rad/s^2; negative value).
-      vx_samples: 20  # Number of X velocity samples.
-      vy_samples: 0  # Number of Y velocity samples.
-      vtheta_samples: 40  # Number of angular velocity samples.
-      sim_time: 1.5  # Trajectory simulation horizon (s).
-      linear_granularity: 0.05  # Linear simulation step (m).
-      angular_granularity: 0.025  # Angular simulation step (rad).
-      transform_tolerance: 0.2  # Allowed timing margin for TF transforms (s).
-      xy_goal_tolerance: 0.05  # Goal position tolerance (m).
-      trans_stopped_velocity: 0.25  # Threshold for considering translation stopped (m/s).
-      short_circuit_trajectory_evaluation: True  # Stops evaluation when an invalid trajectory is found.
-      stateful: True  # Preserves state between evaluation cycles.
-      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]  # Critics used to score candidate trajectories.
-      BaseObstacle.scale: 0.02  # Obstacle critic weight.
-      PathAlign.scale: 32.0  # Path alignment weight.
-      PathAlign.forward_point_distance: 0.1  # Forward distance used for path alignment (m).
-      GoalAlign.scale: 24.0  # Goal alignment weight.
-      GoalAlign.forward_point_distance: 0.1  # Forward distance used for goal alignment (m).
-      PathDist.scale: 32.0  # Path distance weight.
-      GoalDist.scale: 24.0  # Goal distance weight.
-      RotateToGoal.scale: 32.0  # Final goal rotation weight.
-      RotateToGoal.slowing_factor: 5.0  # Velocity reduction factor while rotating to the goal.
-      RotateToGoal.lookahead_time: -1.0  # Rotation lookahead; a negative value uses the full trajectory (s).
-
-    ManualPath:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"  # Plugin class to load.
       desired_linear_vel: 0.20  # Nominal path-following linear velocity (m/s).
       lookahead_dist: 0.35  # Nominal lookahead distance (m).
@@ -143,7 +101,7 @@ controller_server:
       use_interpolation: true  # Interpolates an exact point on the path.
       min_approach_linear_velocity: 0.07  # Minimum approach linear velocity (m/s).
       approach_velocity_scaling_dist: 0.30  # Distance at which velocity reduction begins (m).
-      use_collision_detection: false  # Checks for collisions during motion.
+      use_collision_detection: true  # Checks for collisions during motion.
       max_allowed_time_to_collision_up_to_carrot: 1.0  # Maximum collision-detection horizon (s).
       use_regulated_linear_velocity_scaling: true  # Reduces velocity in tight curves.
       use_cost_regulated_linear_velocity_scaling: true  # Reduces velocity according to costmap cost.

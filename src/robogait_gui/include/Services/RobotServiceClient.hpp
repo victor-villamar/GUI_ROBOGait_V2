@@ -629,7 +629,7 @@ private:
       "navigation.manual_follow_path.goal_checker_id"; /**< Config key for direct FollowPath manual-path goal checker id */
   static constexpr std::string_view CONFIG_NAVIGATION_USE_SIM_TIME = "navigation.use_sim_time"; /**< Config key for Nav2 simulation time */
 
-  static constexpr std::string_view DEFAULT_MANUAL_FOLLOW_PATH_CONTROLLER_ID = "ManualPath";      /**< Default controller used for manual spline paths */
+  static constexpr std::string_view DEFAULT_MANUAL_FOLLOW_PATH_CONTROLLER_ID = "FollowPath";      /**< Default controller used for manual spline paths */
   static constexpr std::string_view DEFAULT_FOLLOW_PATH_GOAL_CHECKER_ID = "general_goal_checker"; /**< Default FollowPath goal checker id */
 
   static constexpr std::chrono::milliseconds HEALTH_CHECK_PERIOD = std::chrono::milliseconds(100); /**< Health check period */
