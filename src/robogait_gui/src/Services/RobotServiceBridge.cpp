@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 
+#include <QDebug>
 #include <QMetaObject>
 #include <QVariantMap>
 
@@ -8,6 +9,7 @@
 
 #include "Map/Utils/Utils.hpp"
 #include "Services/RobotServiceBridge.hpp"
+#include "Settings/RobotSettings.hpp"
 
 using namespace ROBOGait::qml::service;
 
@@ -28,6 +30,20 @@ RobotServiceBridge::RobotServiceBridge(QObject* parent) : QObject(parent), statu
   syncFromClient();
 
   auto& client = ROBOGait::ros::service::RobotServiceClient::getInstance();
+  auto& robot_settings = ROBOGait::settings::RobotSettings::getInstance();
+
+  // clang-format off
+  connect(&robot_settings,
+          &ROBOGait::settings::RobotSettings::maxLinearVelocityChanged,
+          this,
+          [this]() {
+            auto& service_client = ROBOGait::ros::service::RobotServiceClient::getInstance();
+            if (service_client.isNavigationSpeedLimitApplied() && !applyConfiguredNavigationSpeedLimit())
+            {
+              qWarning() << "[RobotServiceBridge::RobotServiceBridge] Failed to update the active navigation speed limit";
+            }
+          });
+  // clang-format on
 
   // clang-format off
   client.setRequestCallback([this](bool success) {
@@ -87,6 +103,24 @@ bool RobotServiceBridge::requestMapData(const QString& map_name)
 }
 
 bool RobotServiceBridge::stopNavigation() { return ROBOGait::ros::service::RobotServiceClient::getInstance().stopNavigation(); }
+
+bool RobotServiceBridge::prepareNavigationSpeedLimitPublisher()
+{
+  return ROBOGait::ros::service::RobotServiceClient::getInstance().prepareNavigationSpeedLimitPublisher();
+}
+
+bool RobotServiceBridge::applyConfiguredNavigationSpeedLimit()
+{
+  const double speed_limit = ROBOGait::settings::RobotSettings::getInstance().getMaxLinearVelocity();
+  return ROBOGait::ros::service::RobotServiceClient::getInstance().publishNavigationSpeedLimit(speed_limit);
+}
+
+bool RobotServiceBridge::resetNavigationSpeedLimit() { return ROBOGait::ros::service::RobotServiceClient::getInstance().resetNavigationSpeedLimit(); }
+
+void RobotServiceBridge::destroyNavigationSpeedLimitPublisher()
+{
+  ROBOGait::ros::service::RobotServiceClient::getInstance().destroyNavigationSpeedLimitPublisher();
+}
 
 bool RobotServiceBridge::startNavigation(const QString& map_name)
 {

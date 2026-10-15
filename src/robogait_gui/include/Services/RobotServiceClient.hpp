@@ -22,6 +22,7 @@
 #include <nav2_msgs/action/compute_path_to_pose.hpp>
 #include <nav2_msgs/action/follow_path.hpp>
 #include <nav2_msgs/action/navigate_to_pose.hpp>
+#include <nav2_msgs/msg/speed_limit.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/path.hpp>
 #include <std_srvs/srv/empty.hpp>
@@ -184,6 +185,42 @@ public:
    * @return true if the navigation process was stopped successfully, false otherwise
    */
   bool stopNavigation();
+
+  /**
+   * @brief Create the publisher used to limit Nav2 controller speed during a test
+   *
+   * @return true if the publisher is available, false otherwise
+   */
+  bool prepareNavigationSpeedLimitPublisher();
+
+  /**
+   * @brief Publish an absolute Nav2 linear speed limit
+   *
+   * The requested value is clamped to the maximum linear velocity accepted by
+   * RobotSettings so navigation and manual control share the same safety limit.
+   *
+   * @param speed_limit Requested maximum linear velocity in m/s
+   *
+   * @return true if the limit was published, false otherwise
+   */
+  bool publishNavigationSpeedLimit(double speed_limit);
+
+  /**
+   * @brief Restore the controller's configured base speed by publishing zero
+   *
+   * @return true if the reset was published or no publisher exists, false otherwise
+   */
+  bool resetNavigationSpeedLimit();
+
+  /**
+   * @brief Destroy the Nav2 speed limit publisher
+   */
+  void destroyNavigationSpeedLimitPublisher();
+
+  /**
+   * @brief Check whether a non-zero navigation speed limit has been published
+   */
+  bool isNavigationSpeedLimitApplied() const;
 
   /** @brief Reinitialize the global localization
    *
@@ -585,11 +622,12 @@ private:
    */
   void resultFollowPathCallback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::FollowPath>::WrappedResult& result);
 
-  rclcpp::Node* parent_node_;                                                          /**< The parent ROS2 node */
-  rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedPtr cli_cmd_;                 /**< The command service client */
-  rclcpp::Client<command_executor_msgs::srv::GetMapData>::SharedPtr cli_get_map_data_; /**< The get map data service client */
-  rclcpp::Client<std_srvs::srv::Empty>::SharedPtr cli_global_localization_;            /**< Global localization service client */
-  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_map_data_;            /**< Publisher for map data */
+  rclcpp::Node* parent_node_;                                                           /**< The parent ROS2 node */
+  rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedPtr cli_cmd_;                  /**< The command service client */
+  rclcpp::Client<command_executor_msgs::srv::GetMapData>::SharedPtr cli_get_map_data_;  /**< The get map data service client */
+  rclcpp::Client<std_srvs::srv::Empty>::SharedPtr cli_global_localization_;             /**< Global localization service client */
+  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_map_data_;             /**< Publisher for map data */
+  rclcpp::Publisher<nav2_msgs::msg::SpeedLimit>::SharedPtr pub_navigation_speed_limit_; /**< Publisher for the Nav2 linear speed limit */
 
   rclcpp_action::Client<nav2_msgs::action::ComputePathToPose>::SharedPtr ac_compute_path_to_pose_; /**< Action client for compute path to pose */
   rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr ac_navigate_to_pose_;        /**< Action client for navigate to pose */
@@ -612,9 +650,10 @@ private:
 
   std::optional<nav_msgs::msg::Path> manual_follow_path_; /**< The last prepared manual path, if any */
 
-  bool initialized_;        /**< Flag indicating if the client is initialized */
-  bool nav_goal_active_;    /**< Flag indicating if there is an active navigation goal */
-  bool cancel_in_progress_; /**< Flag indicating if a cancel is in progress for the active navigation goal */
+  bool initialized_;                    /**< Flag indicating if the client is initialized */
+  bool nav_goal_active_;                /**< Flag indicating if there is an active navigation goal */
+  bool cancel_in_progress_;             /**< Flag indicating if a cancel is in progress for the active navigation goal */
+  bool navigation_speed_limit_applied_; /**< Flag indicating if a non-zero Nav2 speed limit is active */
 
   std::chrono::seconds start_stop_timeout_s_; /**< Configurable timeout for STARTING/STOPPING transitions */
 
