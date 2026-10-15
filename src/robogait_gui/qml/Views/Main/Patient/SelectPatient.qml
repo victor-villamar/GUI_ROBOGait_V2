@@ -101,7 +101,8 @@ SelectPatientForm {
                                                   .arg(testLabel)
                                                   .arg(impact.doctor_count)
                                                   .arg(doctorLabel)
-        } else {
+        }
+        else {
             deleteConfirmDialog.message = qsTr("¿Quitar a %1 de tus pacientes? Si está asociado a otros doctores, su información se conservará.")
                                                   .arg(display)
         }

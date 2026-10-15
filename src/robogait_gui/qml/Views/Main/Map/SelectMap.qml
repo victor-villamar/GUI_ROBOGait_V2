@@ -129,7 +129,7 @@ SelectMapForm {
         pendingDeleteMapHasHistory = impact.will_archive
         if (pendingDeleteMapHasHistory) {
             var testLabel = impact.experiment_count === 1 ? qsTr("prueba") : qsTr("pruebas")
-            deleteConfirmDialog.message = qsTr("El mapa %1 está asociado a %2 %3. Se eliminará del robot, pero se conservará en el historial y dejará de estar disponible para nuevas sesiones.")
+            deleteConfirmDialog.message = qsTr("El mapa %1 está asociado a %2 %3. Se eliminará del robot y dejará de estar disponible para nuevas sesiones.")
                                                   .arg(mapNameValue)
                                                   .arg(impact.experiment_count)
                                                   .arg(testLabel)
