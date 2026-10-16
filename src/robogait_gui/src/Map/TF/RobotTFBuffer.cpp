@@ -69,9 +69,9 @@ void RobotTFBuffer::start()
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(parent_node_->get_clock());
   tf_buffer_->setUsingDedicatedThread(true);
 
-  sub_tf_ = parent_node_->create_subscription<TFMessage>(tf_topic_, ROBOGait::ros::QosProfiles::QOS_TF_DYNAMIC(),
+  sub_tf_ = parent_node_->create_subscription<TFMessage>(tf_topic_, ROBOGait::ros::qos_profiles::QOS_TF_DYNAMIC(),
                                                          std::bind(&RobotTFBuffer::callbackTF, this, std::placeholders::_1));
-  sub_tf_static_ = parent_node_->create_subscription<TFMessage>(tf_static_topic_, ROBOGait::ros::QosProfiles::QOS_TF_STATIC(),
+  sub_tf_static_ = parent_node_->create_subscription<TFMessage>(tf_static_topic_, ROBOGait::ros::qos_profiles::QOS_TF_STATIC(),
                                                                 std::bind(&RobotTFBuffer::callbackTFStatic, this, std::placeholders::_1));
 
   active_ = true;

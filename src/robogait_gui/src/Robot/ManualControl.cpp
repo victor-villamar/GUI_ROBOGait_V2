@@ -204,7 +204,7 @@ void ManualControl::ensurePublisherCreated()
   }
 
   qDebug() << "[ManualControl::ensurePublisherCreated] Creating publisher for topic:" << topic_name_;
-  pub_cmd_vel_ = parent_node_->create_publisher<geometry_msgs::msg::Twist>(topic_name_.toStdString(), ROBOGait::ros::QosProfiles::QOS_RELIABLE());
+  pub_cmd_vel_ = parent_node_->create_publisher<geometry_msgs::msg::Twist>(topic_name_.toStdString(), ROBOGait::ros::qos_profiles::QOS_RELIABLE());
 }
 
 void ManualControl::publishVelocity()

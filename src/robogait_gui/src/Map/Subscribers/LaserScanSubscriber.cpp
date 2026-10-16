@@ -119,7 +119,7 @@ void LaserScanSubscriber::start()
     scan_topic = context_->resolveTopic(scan_topic);
   }
 
-  sub_scan_ = parent_node_->create_subscription<sensor_msgs::msg::LaserScan>(scan_topic, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(),
+  sub_scan_ = parent_node_->create_subscription<sensor_msgs::msg::LaserScan>(scan_topic, ROBOGait::ros::qos_profiles::QOS_BEST_EFFORT(),
                                                                              std::bind(&LaserScanSubscriber::callbackScan, this, std::placeholders::_1));
 
   active_ = true;

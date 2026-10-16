@@ -33,6 +33,6 @@ rclcpp::QoS QOS_SERVICES();
 #else
 #error "Unsupported ROS 2 distribution"
 #endif
-}; // namespace qos_profiles
+} // namespace qos_profiles
 } // namespace ros
 } // namespace ROBOGait

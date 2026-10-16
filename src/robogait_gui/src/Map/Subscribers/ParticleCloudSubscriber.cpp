@@ -93,7 +93,7 @@ void ParticleCloudSubscriber::start()
   }
 
   sub_cloud_ = parent_node_->create_subscription<nav2_msgs::msg::ParticleCloud>(
-      cloud_topic, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(), std::bind(&ParticleCloudSubscriber::callbackParticleCloud, this, std::placeholders::_1));
+      cloud_topic, ROBOGait::ros::qos_profiles::QOS_BEST_EFFORT(), std::bind(&ParticleCloudSubscriber::callbackParticleCloud, this, std::placeholders::_1));
 
   active_ = true;
   warn_logged_ = false;

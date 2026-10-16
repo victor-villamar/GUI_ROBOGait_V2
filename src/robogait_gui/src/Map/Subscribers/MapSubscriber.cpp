@@ -50,11 +50,11 @@ void MapSubscriber::start()
   const std::string map_topic = context_->resolveTopic(ROBOGait::ros::topics::T_MAP);
   const std::string map_updates_topic = context_->resolveTopic(ROBOGait::ros::topics::T_MAP_UPDATES);
 
-  sub_map_ = parent_node_->create_subscription<nav_msgs::msg::OccupancyGrid>(map_topic, ROBOGait::ros::QosProfiles::QOS_RELIABLE_LATCH().keep_last(1),
+  sub_map_ = parent_node_->create_subscription<nav_msgs::msg::OccupancyGrid>(map_topic, ROBOGait::ros::qos_profiles::QOS_RELIABLE_LATCH().keep_last(1),
                                                                              std::bind(&MapSubscriber::callbackMap, this, std::placeholders::_1));
 
   sub_map_update_ = parent_node_->create_subscription<map_msgs::msg::OccupancyGridUpdate>(
-      map_updates_topic, ROBOGait::ros::QosProfiles::QOS_RELIABLE().keep_last(10), std::bind(&MapSubscriber::callbackMapUpdate, this, std::placeholders::_1));
+      map_updates_topic, ROBOGait::ros::qos_profiles::QOS_RELIABLE().keep_last(10), std::bind(&MapSubscriber::callbackMapUpdate, this, std::placeholders::_1));
 
   active_ = true;
 }

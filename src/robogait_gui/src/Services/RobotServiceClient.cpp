@@ -398,7 +398,7 @@ bool RobotServiceClient::prepareNavigationSpeedLimitPublisher()
   }
 
   const std::string topic_name = context_->resolveTopic(ROBOGait::ros::topics::T_SPEED_LIMIT);
-  pub_navigation_speed_limit_ = parent_node_->create_publisher<nav2_msgs::msg::SpeedLimit>(topic_name, ROBOGait::ros::QosProfiles::QOS_RELIABLE());
+  pub_navigation_speed_limit_ = parent_node_->create_publisher<nav2_msgs::msg::SpeedLimit>(topic_name, ROBOGait::ros::qos_profiles::QOS_RELIABLE());
 
   if (!pub_navigation_speed_limit_)
   {
@@ -1359,7 +1359,7 @@ bool RobotServiceClient::rebuildClient()
   }
 
   cli_cmd_ = parent_node_->create_client<command_executor_msgs::srv::Cmd>(resolveServiceName(ROBOGait::ros::topics::S_CMD),
-                                                                          ROBOGait::ros::QosProfiles::QOS_CLIENTS(), cb_group_);
+                                                                          ROBOGait::ros::qos_profiles::QOS_CLIENTS(), cb_group_);
 
   if (!cli_cmd_)
   {
@@ -1368,7 +1368,7 @@ bool RobotServiceClient::rebuildClient()
   }
 
   cli_get_map_data_ = parent_node_->create_client<command_executor_msgs::srv::GetMapData>(resolveServiceName(ROBOGait::ros::topics::S_GET_MAP_DATA),
-                                                                                          ROBOGait::ros::QosProfiles::QOS_CLIENTS(), cb_group_);
+                                                                                          ROBOGait::ros::qos_profiles::QOS_CLIENTS(), cb_group_);
 
   if (!cli_get_map_data_)
   {
@@ -1378,7 +1378,7 @@ bool RobotServiceClient::rebuildClient()
   }
 
   cli_global_localization_ = parent_node_->create_client<std_srvs::srv::Empty>(resolveServiceName(ROBOGait::ros::topics::S_REINITIALIZE_GLOBAL_LOCALIZATION),
-                                                                               ROBOGait::ros::QosProfiles::QOS_CLIENTS(), cb_group_);
+                                                                               ROBOGait::ros::qos_profiles::QOS_CLIENTS(), cb_group_);
 
   if (!cli_global_localization_)
   {
@@ -1740,7 +1740,7 @@ bool RobotServiceClient::publishMapDataOnce(const nav_msgs::msg::OccupancyGrid& 
   if (!pub_map_data_)
   {
     std::string topic_name = context_ ? context_->resolveTopic(ROBOGait::ros::topics::T_MAP) : ROBOGait::ros::topics::T_MAP;
-    pub_map_data_ = parent_node_->create_publisher<nav_msgs::msg::OccupancyGrid>(topic_name, ROBOGait::ros::QosProfiles::QOS_RELIABLE_LATCH());
+    pub_map_data_ = parent_node_->create_publisher<nav_msgs::msg::OccupancyGrid>(topic_name, ROBOGait::ros::qos_profiles::QOS_RELIABLE_LATCH());
     if (!pub_map_data_)
     {
       qCritical() << "[RobotServiceClient::publishMapDataOnce] Failed to create map data publisher";

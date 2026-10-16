@@ -134,7 +134,7 @@ bool PersonDetectionMonitor::startMonitoring()
   const std::string full_camera_topic = context.resolveTopic(camera_detection_topic_.toStdString());
 
   sub_camera_detection_ = parent_node_->create_subscription<navigation_pkg::msg::CameraDetection>(
-      full_camera_topic, ROBOGait::ros::QosProfiles::QOS_BEST_EFFORT(),
+      full_camera_topic, ROBOGait::ros::qos_profiles::QOS_BEST_EFFORT(),
       std::bind(&PersonDetectionMonitor::callbackCameraDetection, this, std::placeholders::_1));
 
   is_monitoring_ = true;

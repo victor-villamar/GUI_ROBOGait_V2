@@ -3,9 +3,14 @@
 
 #include "Ros/QoSProfiles.hpp"
 
-using namespace ROBOGait::ros;
+namespace ROBOGait
+{
+namespace ros
+{
+namespace qos_profiles
+{
 
-rclcpp::QoS QosProfiles::QOS_RELIABLE()
+rclcpp::QoS QOS_RELIABLE()
 {
   return rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default))
       .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -14,7 +19,7 @@ rclcpp::QoS QosProfiles::QOS_RELIABLE()
       .keep_last(5);
 }
 
-rclcpp::QoS QosProfiles::QOS_RELIABLE_LATCH()
+rclcpp::QoS QOS_RELIABLE_LATCH()
 {
   return rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default))
       .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -23,7 +28,7 @@ rclcpp::QoS QosProfiles::QOS_RELIABLE_LATCH()
       .keep_last(5);
 }
 
-rclcpp::QoS QosProfiles::QOS_BEST_EFFORT()
+rclcpp::QoS QOS_BEST_EFFORT()
 {
   return rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default))
       .reliability(RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
@@ -32,12 +37,12 @@ rclcpp::QoS QosProfiles::QOS_BEST_EFFORT()
       .keep_last(5);
 }
 
-rclcpp::QoS QosProfiles::QOS_TF_DYNAMIC() { return tf2_ros::DynamicListenerQoS(); }
+rclcpp::QoS QOS_TF_DYNAMIC() { return tf2_ros::DynamicListenerQoS(); }
 
-rclcpp::QoS QosProfiles::QOS_TF_STATIC() { return tf2_ros::StaticListenerQoS(); }
+rclcpp::QoS QOS_TF_STATIC() { return tf2_ros::StaticListenerQoS(); }
 
 #ifdef ROBOGAIT_ROS_HUMBLE
-rmw_qos_profile_t QosProfiles::QOS_CLIENTS()
+rmw_qos_profile_t QOS_CLIENTS()
 {
   return rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default))
       .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -47,7 +52,7 @@ rmw_qos_profile_t QosProfiles::QOS_CLIENTS()
       .get_rmw_qos_profile();
 }
 #elif defined(ROBOGAIT_ROS_JAZZY) || defined(ROBOGAIT_ROS_LYRICAL)
-rclcpp::QoS QosProfiles::QOS_CLIENTS()
+rclcpp::QoS QOS_CLIENTS()
 {
   return rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default))
       .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -58,3 +63,6 @@ rclcpp::QoS QosProfiles::QOS_CLIENTS()
 #else
 #error "Unsupported ROS 2 distribution"
 #endif
+} // namespace qos_profiles
+} // namespace ros
+} // namespace ROBOGait
