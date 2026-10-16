@@ -117,16 +117,16 @@ TEST_F(CommandExecutorRosTest, InitializeWithConfigAndRejectInvalidCommand)
   auto robot_status_future = robot_status_promise.get_future();
   bool robot_status_received = false;
 
-  auto subscription = test_node->create_subscription<command_executor_msgs::msg::RobotStatus>(
-      ROBOGait::command::define::T_ROBOT_STATUS, rclcpp::QoS(1).best_effort(),
-      [&](const command_executor_msgs::msg::RobotStatus::SharedPtr msg)
-      {
-        if (!robot_status_received)
-        {
-          robot_status_received = true;
-          robot_status_promise.set_value(*msg);
-        }
-      });
+  auto subscription =
+      test_node->create_subscription<command_executor_msgs::msg::RobotStatus>(ROBOGait::command::define::T_ROBOT_STATUS, rclcpp::QoS(1).best_effort(),
+                                                                              [&](const command_executor_msgs::msg::RobotStatus::SharedPtr msg)
+                                                                              {
+                                                                                if (!robot_status_received)
+                                                                                {
+                                                                                  robot_status_received = true;
+                                                                                  robot_status_promise.set_value(*msg);
+                                                                                }
+                                                                              });
 
   spinUntil(executor, [&]() { return robot_status_received; }, 2s);
   ASSERT_TRUE(robot_status_received);

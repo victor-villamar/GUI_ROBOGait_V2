@@ -1,8 +1,12 @@
 #include "QoSProfile.hpp"
 
-using namespace ROBOGait::ros;
-
-rclcpp::QoS QosProfiles::QOS_BEST_EFFORT()
+namespace ROBOGait
+{
+namespace ros
+{
+namespace qos_profiles
+{
+rclcpp::QoS QOS_BEST_EFFORT()
 {
   return rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default))
       .reliability(RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
@@ -12,9 +16,12 @@ rclcpp::QoS QosProfiles::QOS_BEST_EFFORT()
 }
 
 #ifdef ROBOGAIT_ROS_HUMBLE
-rmw_qos_profile_t QosProfiles::QOS_SERVICES() { return rmw_qos_profile_services_default; }
+rmw_qos_profile_t QOS_SERVICES() { return rmw_qos_profile_services_default; }
 #elif defined(ROBOGAIT_ROS_JAZZY) || defined(ROBOGAIT_ROS_LYRICAL)
-rclcpp::QoS QosProfiles::QOS_SERVICES() { return rclcpp::ServicesQoS(); }
+rclcpp::QoS QOS_SERVICES() { return rclcpp::ServicesQoS(); }
 #else
 #error "Unsupported ROS 2 distribution"
 #endif
+} // namespace qos_profiles
+} // namespace ros
+} // namespace ROBOGait
