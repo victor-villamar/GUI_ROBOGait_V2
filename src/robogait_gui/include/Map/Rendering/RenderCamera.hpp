@@ -95,7 +95,7 @@ private:
   QPointF center_;       /**< Current view center */
   double zoom_;          /**< Current zoom level */
 
-  static constexpr double MIN_ZOOM = 70.0;  /**< Minimum zoom level */
+  static constexpr double MIN_ZOOM = 30.0;  /**< Minimum zoom level */
   static constexpr double MAX_ZOOM = 470.0; /**< Maximum zoom level */
 };
 
