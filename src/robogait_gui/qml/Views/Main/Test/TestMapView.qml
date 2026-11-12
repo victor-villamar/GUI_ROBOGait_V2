@@ -30,6 +30,7 @@ TestMapViewForm {
     signal appExitFinished()
 
     property bool waitingForNavigationStart: false
+    property bool waitingForMapData: false
 
     property bool autoLocalizationActive: false
     property bool autoLocalizationWaitingForNav: false
@@ -1362,8 +1363,10 @@ TestMapViewForm {
 
         var mapName = (userSession.currentMapName || "").trim()
 
+        waitingForMapData = true
         var okMap = robotServiceBridge.requestMapData(mapName)
         if (!okMap) {
+            waitingForMapData = false
             busyDialog.close()
             errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo cargar el mapa")
             errorPopup.open()
@@ -1377,6 +1380,7 @@ TestMapViewForm {
 
     onMapAvailableChanged: {
         if (mapAvailable) {
+            waitingForMapData = false
             busyDialog.close()
         }
     }
@@ -1995,6 +1999,16 @@ TestMapViewForm {
         }
 
         function onRequestFinished(success) {
+            if (waitingForMapData) {
+                waitingForMapData = false
+                if (!success) {
+                    busyDialog.close()
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo cargar el mapa")
+                    errorPopup.open()
+                }
+                return
+            }
+
             if (autoLocalizationWaitingForService)
             {
                 autoLocalizationWaitingForService = false
@@ -2304,6 +2318,7 @@ TestMapViewForm {
             }
 
             if (!mapAvailable) {
+                waitingForMapData = false
                 errorPopup.errorRectangleTextError.text = qsTr("Error: Tiempo de espera agotado al cargar el mapa")
                 errorPopup.open()
             }

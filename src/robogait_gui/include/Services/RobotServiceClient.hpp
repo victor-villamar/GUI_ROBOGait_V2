@@ -1,12 +1,13 @@
 #pragma once
 
 #include <chrono>
+#include <cstdint>
 #include <functional>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <vector>
 
 #include <QVariantList>
 
@@ -138,7 +139,7 @@ public:
   /**
    * @brief Start the mapping process
    *
-   * @return true if the mapping process was started successfully, false otherwise
+   * @return true if the asynchronous start request was queued, false otherwise
    */
   bool startMapping();
 
@@ -148,7 +149,7 @@ public:
    * @param save_map Whether to save the map
    * @param map_name The name of the map to save
    *
-   * @return true if the mapping process was stopped successfully, false otherwise
+   * @return true if the asynchronous stop request was queued, false otherwise
    */
   bool stopMapping(bool save_map, const std::string& map_name);
 
@@ -157,7 +158,7 @@ public:
    *
    * @param map_name The name of the map to delete
    *
-   * @return true if the map was deleted successfully, false otherwise
+   * @return true if the asynchronous delete request was queued, false otherwise
    */
   bool deleteMap(const std::string& map_name);
 
@@ -166,7 +167,7 @@ public:
    *
    * @param map_name The name of the map to request data for
    *
-   * @return true if the map data was requested successfully, false otherwise
+   * @return true if the asynchronous map data request was queued, false otherwise
    */
   bool requestMapData(const std::string& map_name);
 
@@ -175,14 +176,14 @@ public:
    *
    * @param map_name The name of the map to use for navigation
    *
-   * @return true if the navigation process was started successfully, false otherwise
+   * @return true if the asynchronous start request was queued, false otherwise
    */
   bool startNavigation(const std::string& map_name);
 
   /**
    * @brief Stop the navigation process
    *
-   * @return true if the navigation process was stopped successfully, false otherwise
+   * @return true if the asynchronous stop request was queued, false otherwise
    */
   bool stopNavigation();
 
@@ -224,7 +225,7 @@ public:
 
   /** @brief Reinitialize the global localization
    *
-   * @return true if the global localization was reinitialized successfully, false otherwise
+   * @return true if the asynchronous localization request was queued, false otherwise
    */
   bool reinitializeGlobalLocalization();
 
@@ -261,7 +262,7 @@ public:
   CommandStatus getCommandStatus(const std::string& key) const;
 
   /**
-   * @brief Set callback invoked when a command service request completes
+   * @brief Set callback invoked when an asynchronous service request completes
    */
   void setRequestCallback(const std::function<void(bool)>& callback);
 
@@ -272,7 +273,7 @@ public:
    * @param y Goal y in map frame
    * @param theta Goal yaw in radians
    *
-   * @return true if the request was sent, false otherwise
+   * @return true if the asynchronous action request was queued, false otherwise
    */
   bool computePathToPose(double x, double y, double theta);
 
@@ -283,7 +284,7 @@ public:
    * @param y Goal y in map frame
    * @param theta Goal yaw in radians
    *
-   * @return true if the request was sent, false otherwise
+   * @return true if the asynchronous action request was queued, false otherwise
    */
   bool navigateToPose(double x, double y, double theta);
 
@@ -294,6 +295,8 @@ public:
 
   /**
    * @brief Follow the last prepared path from the manual path flow
+   *
+   * @return true if the asynchronous action request was queued, false otherwise
    */
   bool followLastComputedPath();
 
@@ -347,6 +350,83 @@ private:
   };
 
   /**
+   * @brief Enum to represent the type of an asynchronous ROS operation
+   */
+  enum class OperationType
+  {
+    StartMapping,       /**< Start mapping command service operation */
+    DeleteMap,          /**< Delete map command service operation */
+    StartNavigation,    /**< Start navigation command service operation */
+    SaveMap,            /**< Save map command service operation */
+    StopCommand,        /**< Stop command service operation */
+    GetMapData,         /**< Get map data service operation */
+    GlobalLocalization, /**< Global localization service operation */
+    ComputePathToPose,  /**< Compute path to pose action operation */
+    NavigateToPose,     /**< Navigate to pose action operation */
+    FollowPath          /**< Follow path action operation */
+  };
+
+  /**
+   * @brief Enum to represent the current phase of an asynchronous ROS operation
+   */
+  enum class OperationPhase
+  {
+    WaitingEndpoint,        /**< Waiting for a service or action server to become available */
+    WaitingServiceResponse, /**< Waiting for a response to a service request */
+    WaitingGoalResponse     /**< Waiting for an action server to accept or reject a goal */
+  };
+
+  /**
+   * @brief Enum to represent why a pending operation ended before normal completion
+   */
+  enum class OperationStopReason
+  {
+    Timeout,           /**< The configured timeout expired */
+    ContextInvalidated /**< The selected robot context changed or was cleared */
+  };
+
+  /** @brief Unique identifier assigned to a pending operation */
+  using OperationId = std::uint64_t;
+
+  /** @brief Callback invoked when a pending operation times out or its context is invalidated */
+  using OperationStopCallback = std::function<void(OperationStopReason)>;
+
+  /** @brief Callback invoked periodically while an operation waits for a ROS endpoint */
+  using OperationPollCallback = std::function<void()>;
+
+  /**
+   * @brief Struct to hold the state of a pending asynchronous ROS operation
+   *
+   * @param id The unique identifier of the operation
+   * @param type The type of the operation
+   * @param phase The current phase of the operation
+   * @param deadline The steady-clock time point at which the current phase expires
+   * @param context_generation The robot context generation in which the operation was created
+   */
+  struct PendingOperation
+  {
+    OperationId id;
+    OperationType type;
+    OperationPhase phase;
+    std::chrono::steady_clock::time_point deadline;
+    std::uint64_t context_generation;
+  };
+
+  /**
+   * @brief Struct to hold a pending operation and its cleanup callback
+   *
+   * @param operation The metadata and current state of the pending operation
+   * @param poll_callback The callback used to check endpoint readiness without blocking
+   * @param stop_callback The cleanup callback invoked on timeout or context invalidation
+   */
+  struct PendingOperationEntry
+  {
+    PendingOperation operation;
+    OperationPollCallback poll_callback;
+    OperationStopCallback stop_callback;
+  };
+
+  /**
    * @brief Constructor of the RobotServiceClient class
    */
   RobotServiceClient();
@@ -371,6 +451,58 @@ private:
   bool loadTimeouts();
 
   /**
+   * @brief Register a new asynchronous operation using the configured timeout for its phase
+   *
+   * @param type Operation type
+   * @param phase Initial operation phase
+   * @param stop_callback Cleanup callback invoked on timeout or context invalidation
+   *
+   * @return Metadata token that must be captured by asynchronous callbacks
+   */
+  PendingOperation registerPendingOperation(OperationType type, OperationPhase phase, OperationStopCallback stop_callback = {});
+
+  /**
+   * @brief Move a pending operation to another phase and restart its phase timeout
+   *
+   * @return true when the operation is still current and was updated, false for a stale callback
+   */
+  bool transitionPendingOperation(OperationId id, std::uint64_t context_generation, OperationPhase phase, OperationStopCallback stop_callback = {});
+
+  /**
+   * @brief Set the non-blocking readiness callback for a pending operation
+   *
+   * @return true when the operation is still current and was updated, false for a stale callback
+   */
+  bool setPendingOperationPollCallback(OperationId id, std::uint64_t context_generation, OperationPollCallback poll_callback);
+
+  /**
+   * @brief Check whether an asynchronous callback belongs to the current robot context
+   */
+  bool isContextGenerationCurrent(std::uint64_t context_generation);
+
+  /**
+   * @brief Finish and remove a pending operation
+   *
+   * @return Operation metadata, or std::nullopt when the callback is stale
+   */
+  std::optional<PendingOperation> completePendingOperation(OperationId id, std::uint64_t context_generation);
+
+  /**
+   * @brief Invalidate all operations belonging to the current robot context
+   */
+  void invalidatePendingOperations();
+
+  /**
+   * @brief Remove expired operations and run their cleanup callbacks
+   */
+  void onPendingOperationsTimer();
+
+  /**
+   * @brief Get the configured timeout for an operation phase
+   */
+  std::chrono::milliseconds timeoutForPhase(OperationPhase phase) const;
+
+  /**
    * @brief Read a navigation plugin id from configuration
    *
    * @param key YAML key
@@ -393,7 +525,7 @@ private:
    * @param execute Whether to execute the command
    * @param context Metadata to route completion handling
    *
-   * @return true if the service call was successful, false otherwise
+   * @return true if the asynchronous service operation was queued, false otherwise
    */
   bool callCommandServiceAsync(const std::string& cmd, bool execute, const CommandRequestContext& context);
 
@@ -467,15 +599,13 @@ private:
   void notifyNavigationResult(NavigationResult result);
 
   /**
-   * @brief Call the get map data service to retrieve YAML and PGM info for a map
+   * @brief Call the get map data service asynchronously and publish the resulting map
    *
    * @param map_name The name of the map
-   * @param yaml_out Output parameter to hold the retrieved YAML info (if successful)
-   * @param pgm_out Output parameter to hold the retrieved PGM info (if successful)
    *
-   * @return true if the service call was successful and data was retrieved, false otherwise
+   * @return true if the operation was queued, false otherwise
    */
-  bool callGetMapDataService(const std::string& map_name, std::optional<std::string>& yaml_out, std::optional<std::vector<uint8_t>>& pgm_out);
+  bool callGetMapDataServiceAsync(const std::string& map_name);
 
   /**
    * @brief Build a command string
@@ -526,7 +656,7 @@ private:
    *
    * @param map_name The name of the map to save
    *
-   * @return true if the map was saved successfully, false otherwise
+   * @return true if the asynchronous save request was queued, false otherwise
    */
   bool saveMap(const std::string& map_name);
 
@@ -535,7 +665,7 @@ private:
    *
    * @param key The key of the command to stop
    *
-   * @return true if the command was stopped successfully, false otherwise
+   * @return true if the asynchronous stop request was queued, false otherwise
    */
   bool stopCommand(const std::string& key);
 
@@ -637,6 +767,7 @@ private:
   rclcpp_action::ClientGoalHandle<nav2_msgs::action::FollowPath>::SharedPtr follow_path_goal_handle_; /**< Active follow path goal handle */
   rclcpp::CallbackGroup::SharedPtr cb_group_;                                                         /**< The callback group for the command executor */
   rclcpp::TimerBase::SharedPtr timer_health_;                                                         /**< The health timer */
+  rclcpp::TimerBase::SharedPtr timer_pending_operations_;                                             /**< Timer that expires asynchronous ROS operations */
 
   std::function<void(bool)> request_callback_;                                 /**< Callback to notify the result of command service requests */
   std::function<void(bool, const nav_msgs::msg::Path&)> path_result_callback_; /**< Callback for compute path results */
@@ -660,6 +791,11 @@ private:
   std::chrono::milliseconds service_response_timeout_;      /**< Maximum wait for a service response after sending its request */
   std::chrono::milliseconds action_goal_response_timeout_;  /**< Maximum wait for an action server to accept or reject a goal */
   std::chrono::milliseconds readiness_poll_period_;         /**< Interval between non-blocking ROS endpoint readiness checks */
+
+  std::mutex pending_operations_mutex_;                                       /**< Protects pending operation state shared by Qt and ROS threads */
+  std::unordered_map<OperationId, PendingOperationEntry> pending_operations_; /**< Operations waiting for an endpoint or asynchronous response */
+  OperationId next_operation_id_;                                             /**< Monotonic identifier assigned to the next operation */
+  std::uint64_t context_generation_;                                          /**< Incremented whenever the selected robot context changes */
 
   static constexpr const char* KEY_CARTOGRAPHER = "cartographer"; /**< Key for the cartographer command */
   static constexpr const char* KEY_MAP_SAVER = "map_saver";       /**< Key for the map saver command */

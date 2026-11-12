@@ -79,7 +79,7 @@ public:
   /**
    * @brief Start the mapping process
    *
-   * @return true if the mapping process was started successfully, false otherwise
+   * @return true if the asynchronous start request was queued, false otherwise
    */
   Q_INVOKABLE bool startMapping();
 
@@ -89,7 +89,7 @@ public:
    * @param save_map Whether to save the map
    * @param map_name The name of the map to save
    *
-   * @return true if the mapping process was stopped successfully, false otherwise
+   * @return true if the asynchronous stop request was queued, false otherwise
    */
   Q_INVOKABLE bool stopMapping(bool save_map, const QString& map_name);
 
@@ -98,7 +98,7 @@ public:
    *
    * @param map_name The name of the map to delete
    *
-   * @return true if the map was deleted successfully, false otherwise
+   * @return true if the asynchronous delete request was queued, false otherwise
    */
   Q_INVOKABLE bool deleteMap(const QString& map_name);
 
@@ -107,7 +107,7 @@ public:
    *
    * @param map_name The name of the map to request data for
    *
-   * @return true if the map data was requested successfully, false otherwise
+   * @return true if the asynchronous map data request was queued, false otherwise
    */
   Q_INVOKABLE bool requestMapData(const QString& map_name);
 
@@ -116,14 +116,14 @@ public:
    *
    * @param map_name The name of the map to use for navigation
    *
-   * @return true if the navigation process was started successfully, false otherwise
+   * @return true if the asynchronous start request was queued, false otherwise
    */
   Q_INVOKABLE bool startNavigation(const QString& map_name);
 
   /**
    * @brief Stop the navigation process
    *
-   * @return true if the navigation process was stopped successfully, false otherwise
+   * @return true if the asynchronous stop request was queued, false otherwise
    */
   Q_INVOKABLE bool stopNavigation();
 
@@ -155,7 +155,7 @@ public:
 
   /** @brief Reinitialize the global localization
    *
-   * @return true if the global localization was reinitialized successfully, false otherwise
+   * @return true if the asynchronous localization request was queued, false otherwise
    */
   Q_INVOKABLE bool reinitializeGlobalLocalization();
 
@@ -166,7 +166,7 @@ public:
    * @param y Goal y in map frame
    * @param theta Goal yaw in radians
    *
-   * @return true if the request was sent, false otherwise
+   * @return true if the asynchronous action request was queued, false otherwise
    */
   Q_INVOKABLE bool computePathToPose(double x, double y, double theta);
 
@@ -177,7 +177,7 @@ public:
    * @param y Goal y in map frame
    * @param theta Goal yaw in radians
    *
-   * @return true if the request was sent, false otherwise
+   * @return true if the asynchronous action request was queued, false otherwise
    */
   Q_INVOKABLE bool navigateToPose(double x, double y, double theta);
 
@@ -198,7 +198,7 @@ public:
   /**
    * @brief Follow the last prepared manual path
    *
-   * @return true if the request was sent, false otherwise
+   * @return true if the asynchronous action request was queued, false otherwise
    */
   Q_INVOKABLE bool followLastComputedPath();
 
