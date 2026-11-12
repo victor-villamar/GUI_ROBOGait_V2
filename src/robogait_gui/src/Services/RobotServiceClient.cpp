@@ -2,6 +2,8 @@
 #include <cmath>
 #include <filesystem>
 #include <optional>
+#include <qdebug.h>
+#include <qglobal.h>
 #include <vector>
 
 #include <action_msgs/srv/cancel_goal.hpp>
@@ -39,7 +41,11 @@ RobotServiceClient::RobotServiceClient() :
     nav_goal_active_(false),
     cancel_in_progress_(false),
     navigation_speed_limit_applied_(false),
-    start_stop_timeout_s_(START_STOP_TIMEOUT)
+    start_stop_timeout_s_(START_STOP_TIMEOUT),
+    endpoint_availability_timeout_(ENDPOINT_AVAILABILITY_TIMEOUT),
+    service_response_timeout_(SERVICE_RESPONSE_TIMEOUT),
+    action_goal_response_timeout_(ACTION_GOAL_RESPONSE_TIMEOUT),
+    readiness_poll_period_(READINESS_POLL_PERIOD)
 {
   qInfo() << "[RobotServiceClient::RobotServiceClient] RobotServiceClient created";
 }
@@ -973,11 +979,39 @@ bool RobotServiceClient::loadCommands()
 bool RobotServiceClient::loadTimeouts()
 {
   auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  const auto load_positive_milliseconds = [&yaml_loader](const char* key, std::chrono::milliseconds fallback)
+  {
+    const int default_value_ms = static_cast<int>(fallback.count());
+    const int configured_value_ms = yaml_loader.getValue<int>(key, default_value_ms);
+
+    if (configured_value_ms <= 0)
+    {
+      qCritical() << "[RobotServiceClient::loadTimeouts] Invalid value for" << key << ":" << configured_value_ms << "ms; using default" << default_value_ms
+                  << "ms";
+      return fallback;
+    }
+
+    return std::chrono::milliseconds(configured_value_ms);
+  };
+
   const int default_start_stop_timeout_s = static_cast<int>(START_STOP_TIMEOUT.count());
   const int configured_start_stop_timeout_s = yaml_loader.getValue<int>("timeouts.start_stop_timeout_s", default_start_stop_timeout_s);
   const int sanitized_start_stop_timeout_s = std::max(1, configured_start_stop_timeout_s);
 
   start_stop_timeout_s_ = std::chrono::seconds(sanitized_start_stop_timeout_s);
+  endpoint_availability_timeout_ = load_positive_milliseconds("timeouts.ros.endpoint_availability_ms", ENDPOINT_AVAILABILITY_TIMEOUT);
+  service_response_timeout_ = load_positive_milliseconds("timeouts.ros.service_response_ms", SERVICE_RESPONSE_TIMEOUT);
+  action_goal_response_timeout_ = load_positive_milliseconds("timeouts.ros.action_goal_response_ms", ACTION_GOAL_RESPONSE_TIMEOUT);
+  readiness_poll_period_ = load_positive_milliseconds("timeouts.ros.readiness_poll_ms", READINESS_POLL_PERIOD);
+
+  qDebug() << "[RobotServiceClient::loadTimeouts] Loaded timeouts:"
+           << "start/stop=" << start_stop_timeout_s_.count() << "s,"
+           << "endpoint availability=" << endpoint_availability_timeout_.count() << "ms,"
+           << "service response=" << service_response_timeout_.count() << "ms,"
+           << "action goal response=" << action_goal_response_timeout_.count() << "ms,"
+           << "readiness poll=" << readiness_poll_period_.count() << "ms";
+
   return true;
 }
 

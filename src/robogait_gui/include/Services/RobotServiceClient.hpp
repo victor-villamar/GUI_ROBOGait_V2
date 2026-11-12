@@ -655,7 +655,11 @@ private:
   bool cancel_in_progress_;             /**< Flag indicating if a cancel is in progress for the active navigation goal */
   bool navigation_speed_limit_applied_; /**< Flag indicating if a non-zero Nav2 speed limit is active */
 
-  std::chrono::seconds start_stop_timeout_s_; /**< Configurable timeout for STARTING/STOPPING transitions */
+  std::chrono::seconds start_stop_timeout_s_;               /**< Configurable timeout for STARTING/STOPPING transitions */
+  std::chrono::milliseconds endpoint_availability_timeout_; /**< Maximum wait for a ROS service or action server to become available */
+  std::chrono::milliseconds service_response_timeout_;      /**< Maximum wait for a service response after sending its request */
+  std::chrono::milliseconds action_goal_response_timeout_;  /**< Maximum wait for an action server to accept or reject a goal */
+  std::chrono::milliseconds readiness_poll_period_;         /**< Interval between non-blocking ROS endpoint readiness checks */
 
   static constexpr const char* KEY_CARTOGRAPHER = "cartographer"; /**< Key for the cartographer command */
   static constexpr const char* KEY_MAP_SAVER = "map_saver";       /**< Key for the map saver command */
@@ -671,8 +675,12 @@ private:
   static constexpr std::string_view DEFAULT_MANUAL_FOLLOW_PATH_CONTROLLER_ID = "FollowPath";      /**< Default controller used for manual spline paths */
   static constexpr std::string_view DEFAULT_FOLLOW_PATH_GOAL_CHECKER_ID = "general_goal_checker"; /**< Default FollowPath goal checker id */
 
-  static constexpr std::chrono::milliseconds HEALTH_CHECK_PERIOD = std::chrono::milliseconds(100); /**< Health check period */
-  static constexpr std::chrono::seconds START_STOP_TIMEOUT = std::chrono::seconds(25);             /**< Start/stop timeout */
+  static constexpr std::chrono::milliseconds HEALTH_CHECK_PERIOD = std::chrono::milliseconds(100);            /**< Health check period */
+  static constexpr std::chrono::seconds START_STOP_TIMEOUT = std::chrono::seconds(25);                        /**< Start/stop timeout */
+  static constexpr std::chrono::milliseconds ENDPOINT_AVAILABILITY_TIMEOUT = std::chrono::milliseconds(5000); /**< Endpoint availability timeout */
+  static constexpr std::chrono::milliseconds SERVICE_RESPONSE_TIMEOUT = std::chrono::milliseconds(5000);      /**< Service response timeout */
+  static constexpr std::chrono::milliseconds ACTION_GOAL_RESPONSE_TIMEOUT = std::chrono::milliseconds(5000);  /**< Action goal response timeout */
+  static constexpr std::chrono::milliseconds READINESS_POLL_PERIOD = std::chrono::milliseconds(100);          /**< Endpoint readiness poll period */
 };
 } // namespace service
 } // namespace ros
