@@ -29,6 +29,7 @@ const std::string T_TF_STATIC =                        "/tf_static";
 // Services
 const std::string S_CMD =                              define::COMMAND_EXECUTOR + "/cmd";
 const std::string S_GET_MAP_DATA =                     define::COMMAND_EXECUTOR + "/get_map_data";
+const std::string S_AMCL_GET_STATE =                   "/amcl/get_state";
 const std::string S_REINITIALIZE_GLOBAL_LOCALIZATION = "/reinitialize_global_localization";
 
 // Actions

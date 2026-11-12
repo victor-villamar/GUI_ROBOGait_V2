@@ -38,6 +38,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(map_msgs REQUIRED)
+find_package(lifecycle_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_msgs REQUIRED)
@@ -66,6 +67,7 @@ if(ROBOGAIT_ROS_DISTRO_NORMALIZED STREQUAL "lyrical")
     set(ROBOGAIT_GEOMETRY_MSGS_TARGETS geometry_msgs::geometry_msgs)
     set(ROBOGAIT_NAV_MSGS_TARGETS nav_msgs::nav_msgs)
     set(ROBOGAIT_MAP_MSGS_TARGETS map_msgs::map_msgs)
+    set(ROBOGAIT_LIFECYCLE_MSGS_TARGETS lifecycle_msgs::lifecycle_msgs)
     set(ROBOGAIT_NAV2_MSGS_TARGETS nav2_msgs::nav2_msgs)
     set(ROBOGAIT_TF2_MSGS_TARGETS tf2_msgs::tf2_msgs)
     set(ROBOGAIT_STD_SRVS_TARGETS std_srvs::std_srvs)
@@ -78,6 +80,7 @@ else()
     set(ROBOGAIT_GEOMETRY_MSGS_TARGETS ${geometry_msgs_TARGETS})
     set(ROBOGAIT_NAV_MSGS_TARGETS ${nav_msgs_TARGETS})
     set(ROBOGAIT_MAP_MSGS_TARGETS ${map_msgs_TARGETS})
+    set(ROBOGAIT_LIFECYCLE_MSGS_TARGETS ${lifecycle_msgs_TARGETS})
     set(ROBOGAIT_NAV2_MSGS_TARGETS ${nav2_msgs_TARGETS})
     set(ROBOGAIT_TF2_MSGS_TARGETS ${tf2_msgs_TARGETS})
     set(ROBOGAIT_STD_SRVS_TARGETS ${std_srvs_TARGETS})
@@ -364,6 +367,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${ROBOGAIT_GEOMETRY_MSGS_TARGETS}
     ${ROBOGAIT_NAV_MSGS_TARGETS}
     ${ROBOGAIT_MAP_MSGS_TARGETS}
+    ${ROBOGAIT_LIFECYCLE_MSGS_TARGETS}
     ${ROBOGAIT_NAV2_MSGS_TARGETS}
     tf2::tf2
     ${ROBOGAIT_TF2_MSGS_TARGETS}

@@ -47,6 +47,22 @@ public:
   };
   Q_ENUM(NavigationResult)
 
+  /**
+   * @brief Enum to identify the asynchronous service operation that completed
+   */
+  enum RequestType
+  {
+    REQUEST_START_MAPPING = 0,  /**< Start mapping command request */
+    REQUEST_DELETE_MAP,         /**< Delete map command request */
+    REQUEST_START_NAVIGATION,   /**< Start navigation command request */
+    REQUEST_SAVE_MAP,           /**< Save map command request */
+    REQUEST_STOP_COMMAND,       /**< Stop command request */
+    REQUEST_GET_MAP_DATA,       /**< Get map data request */
+    REQUEST_AMCL_READINESS,     /**< Wait for AMCL to become active */
+    REQUEST_GLOBAL_LOCALIZATION /**< Global localization request */
+  };
+  Q_ENUM(RequestType)
+
   // clang-format off
   Q_PROPERTY(int status
              READ getStatus
@@ -160,6 +176,13 @@ public:
   Q_INVOKABLE bool reinitializeGlobalLocalization();
 
   /**
+   * @brief Wait asynchronously until the AMCL lifecycle node is active
+   *
+   * @return true if the readiness operation was queued, false otherwise
+   */
+  Q_INVOKABLE bool waitForAmclActive();
+
+  /**
    * @brief Compute path to a goal pose
    *
    * @param x Goal x in map frame
@@ -211,7 +234,7 @@ public:
 
 signals:
   void statusChanged();                                        // Emitted when the status changes
-  void requestFinished(bool success);                          // Emitted when a command request finishes
+  void requestFinished(RequestType requestType, bool success); // Emitted when a typed service request finishes
   void pathComputed(bool success, const QVariantList& points); // Emitted when path action finishes
   void navigationFinished(int resultCode);                     // Emitted when navigate action finishes
 
@@ -241,6 +264,15 @@ private:
    * @return Equivalent bridge navigation result
    */
   static NavigationResult toBridgeNavigationResult(ROBOGait::ros::service::RobotServiceClient::NavigationResult result);
+
+  /**
+   * @brief Convert RobotServiceClient request type to bridge request type
+   *
+   * @param type Request type from RobotServiceClient
+   *
+   * @return Equivalent bridge request type
+   */
+  static RequestType toBridgeRequestType(ROBOGait::ros::service::RobotServiceClient::RequestType type);
 
   int status_;                 /**< The current status of the command executor */
   QString active_command_key_; /**< The active command key */

@@ -46,9 +46,10 @@ RobotServiceBridge::RobotServiceBridge(QObject* parent) : QObject(parent), statu
   // clang-format on
 
   // clang-format off
-  client.setRequestCallback([this](bool success) {
+  client.setRequestCallback([this](ROBOGait::ros::service::RobotServiceClient::RequestType type, bool success) {
+    const RequestType mapped_type = toBridgeRequestType(type);
     QMetaObject::invokeMethod(this,
-                              [this, success]() { emit requestFinished(success); },
+                              [this, mapped_type, success]() { emit requestFinished(mapped_type, success); },
                               Qt::QueuedConnection);
   });
   // clang-format on
@@ -128,6 +129,8 @@ bool RobotServiceBridge::startNavigation(const QString& map_name)
 }
 
 bool RobotServiceBridge::reinitializeGlobalLocalization() { return ROBOGait::ros::service::RobotServiceClient::getInstance().reinitializeGlobalLocalization(); }
+
+bool RobotServiceBridge::waitForAmclActive() { return ROBOGait::ros::service::RobotServiceClient::getInstance().waitForAmclActive(); }
 
 bool RobotServiceBridge::computePathToPose(double x, double y, double theta)
 {
@@ -222,5 +225,29 @@ RobotServiceBridge::NavigationResult RobotServiceBridge::toBridgeNavigationResul
     case ROBOGait::ros::service::RobotServiceClient::NavigationResult::UNKNOWN:
     default:
       return RobotServiceBridge::NavigationResult::NAV_UNKNOWN;
+  }
+}
+
+RobotServiceBridge::RequestType RobotServiceBridge::toBridgeRequestType(ROBOGait::ros::service::RobotServiceClient::RequestType type)
+{
+  switch (type)
+  {
+    case ROBOGait::ros::service::RobotServiceClient::RequestType::StartMapping:
+      return RobotServiceBridge::RequestType::REQUEST_START_MAPPING;
+    case ROBOGait::ros::service::RobotServiceClient::RequestType::DeleteMap:
+      return RobotServiceBridge::RequestType::REQUEST_DELETE_MAP;
+    case ROBOGait::ros::service::RobotServiceClient::RequestType::StartNavigation:
+      return RobotServiceBridge::RequestType::REQUEST_START_NAVIGATION;
+    case ROBOGait::ros::service::RobotServiceClient::RequestType::SaveMap:
+      return RobotServiceBridge::RequestType::REQUEST_SAVE_MAP;
+    case ROBOGait::ros::service::RobotServiceClient::RequestType::StopCommand:
+      return RobotServiceBridge::RequestType::REQUEST_STOP_COMMAND;
+    case ROBOGait::ros::service::RobotServiceClient::RequestType::GetMapData:
+      return RobotServiceBridge::RequestType::REQUEST_GET_MAP_DATA;
+    case ROBOGait::ros::service::RobotServiceClient::RequestType::AmclReadiness:
+      return RobotServiceBridge::RequestType::REQUEST_AMCL_READINESS;
+    case ROBOGait::ros::service::RobotServiceClient::RequestType::GlobalLocalization:
+    default:
+      return RobotServiceBridge::RequestType::REQUEST_GLOBAL_LOCALIZATION;
   }
 }

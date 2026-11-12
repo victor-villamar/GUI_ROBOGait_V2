@@ -20,6 +20,7 @@
 
 #include <command_executor_msgs/srv/cmd.hpp>
 #include <command_executor_msgs/srv/get_map_data.hpp>
+#include <lifecycle_msgs/srv/get_state.hpp>
 #include <nav2_msgs/action/compute_path_to_pose.hpp>
 #include <nav2_msgs/action/follow_path.hpp>
 #include <nav2_msgs/action/navigate_to_pose.hpp>
@@ -67,6 +68,21 @@ public:
     SUCCEEDED = 1, /**< Goal reached */
     CANCELED = 2,  /**< Goal canceled */
     ABORTED = 3    /**< Goal aborted */
+  };
+
+  /**
+   * @brief Enum to identify the asynchronous service operation that completed
+   */
+  enum class RequestType
+  {
+    StartMapping,      /**< Start mapping command request */
+    DeleteMap,         /**< Delete map command request */
+    StartNavigation,   /**< Start navigation command request */
+    SaveMap,           /**< Save map command request */
+    StopCommand,       /**< Stop command request */
+    GetMapData,        /**< Get map data request */
+    AmclReadiness,     /**< Wait for the AMCL lifecycle node to become active */
+    GlobalLocalization /**< Global localization request */
   };
 
   /**
@@ -230,6 +246,13 @@ public:
   bool reinitializeGlobalLocalization();
 
   /**
+   * @brief Wait asynchronously until the AMCL lifecycle node is active
+   *
+   * @return true if the readiness operation was queued, false otherwise
+   */
+  bool waitForAmclActive();
+
+  /**
    * @brief Check if a ROS2 node is alive
    *
    * @param node_name The name of the ROS2 node
@@ -263,8 +286,10 @@ public:
 
   /**
    * @brief Set callback invoked when an asynchronous service request completes
+   *
+   * @param callback Callback receiving the request type and its terminal result
    */
-  void setRequestCallback(const std::function<void(bool)>& callback);
+  void setRequestCallback(const std::function<void(RequestType, bool)>& callback);
 
   /**
    * @brief Request a path computation to a target pose
@@ -322,7 +347,7 @@ public:
 
 private:
   /**
-   * @brief Enum to represent the type of a command request, used for routing the handling of command service responses
+   * @brief Enum to represent the type of a command request, used for routing command service responses
    */
   enum class CommandRequestType
   {
@@ -330,7 +355,7 @@ private:
     DeleteMap,       /**< Delete map command */
     StartNavigation, /**< Start navigation command */
     SaveMap,         /**< Save map command */
-    StopCommand      /**< Stop command request, used for any command stop request and routes to same handling logic */
+    StopCommand      /**< Stop command request */
   };
 
   /**
@@ -360,6 +385,7 @@ private:
     SaveMap,            /**< Save map command service operation */
     StopCommand,        /**< Stop command service operation */
     GetMapData,         /**< Get map data service operation */
+    AmclReadiness,      /**< AMCL lifecycle readiness operation */
     GlobalLocalization, /**< Global localization service operation */
     ComputePathToPose,  /**< Compute path to pose action operation */
     NavigateToPose,     /**< Navigate to pose action operation */
@@ -373,7 +399,8 @@ private:
   {
     WaitingEndpoint,        /**< Waiting for a service or action server to become available */
     WaitingServiceResponse, /**< Waiting for a response to a service request */
-    WaitingGoalResponse     /**< Waiting for an action server to accept or reject a goal */
+    WaitingGoalResponse,    /**< Waiting for an action server to accept or reject a goal */
+    WaitingLifecycleActive  /**< Waiting for a lifecycle node to reach the active state */
   };
 
   /**
@@ -464,9 +491,16 @@ private:
   /**
    * @brief Move a pending operation to another phase and restart its phase timeout
    *
+   * @param id Operation identifier
+   * @param context_generation Robot context generation captured by the operation
+   * @param phase New operation phase
+   * @param stop_callback Cleanup callback invoked on timeout or context invalidation
+   * @param deadline Optional absolute deadline preserved across repeated readiness requests
+   *
    * @return true when the operation is still current and was updated, false for a stale callback
    */
-  bool transitionPendingOperation(OperationId id, std::uint64_t context_generation, OperationPhase phase, OperationStopCallback stop_callback = {});
+  bool transitionPendingOperation(OperationId id, std::uint64_t context_generation, OperationPhase phase, OperationStopCallback stop_callback = {},
+                                  std::optional<std::chrono::steady_clock::time_point> deadline = std::nullopt);
 
   /**
    * @brief Set the non-blocking readiness callback for a pending operation
@@ -587,11 +621,21 @@ private:
   void handleGlobalLocalizationResult(bool success);
 
   /**
-   * @brief Notify the result of a command service request through the callback
+   * @brief Notify the terminal result of an asynchronous service operation
    *
-   * @param success Whether the command service request was successful
+   * @param type The type of request that completed
+   * @param success Whether the request was successful
    */
-  void notifyRequestResult(bool success);
+  void notifyRequestResult(RequestType type, bool success);
+
+  /**
+   * @brief Query AMCL lifecycle state without blocking
+   *
+   * @param operation_id Identifier of the AMCL readiness operation
+   * @param context_generation Robot context generation captured by the operation
+   * @param activation_deadline Absolute deadline for AMCL to become active
+   */
+  void pollAmclState(OperationId operation_id, std::uint64_t context_generation, std::chrono::steady_clock::time_point activation_deadline);
 
   /**
    * @brief Notify the result of a navigation action through the callback
@@ -755,6 +799,7 @@ private:
   rclcpp::Node* parent_node_;                                                           /**< The parent ROS2 node */
   rclcpp::Client<command_executor_msgs::srv::Cmd>::SharedPtr cli_cmd_;                  /**< The command service client */
   rclcpp::Client<command_executor_msgs::srv::GetMapData>::SharedPtr cli_get_map_data_;  /**< The get map data service client */
+  rclcpp::Client<lifecycle_msgs::srv::GetState>::SharedPtr cli_amcl_get_state_;         /**< The AMCL lifecycle state service client */
   rclcpp::Client<std_srvs::srv::Empty>::SharedPtr cli_global_localization_;             /**< Global localization service client */
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_map_data_;             /**< Publisher for map data */
   rclcpp::Publisher<nav2_msgs::msg::SpeedLimit>::SharedPtr pub_navigation_speed_limit_; /**< Publisher for the Nav2 linear speed limit */
@@ -769,7 +814,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_health_;                                                         /**< The health timer */
   rclcpp::TimerBase::SharedPtr timer_pending_operations_;                                             /**< Timer that expires asynchronous ROS operations */
 
-  std::function<void(bool)> request_callback_;                                 /**< Callback to notify the result of command service requests */
+  std::function<void(RequestType, bool)> request_callback_;                    /**< Callback to notify typed service request results */
   std::function<void(bool, const nav_msgs::msg::Path&)> path_result_callback_; /**< Callback for compute path results */
   std::function<void(NavigationResult)> navigation_result_callback_;           /**< Callback for navigation action results */
 

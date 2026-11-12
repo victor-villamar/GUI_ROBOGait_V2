@@ -62,6 +62,7 @@ Rectangle {
     property bool particleCloudAvailable: false
     property int mapContentMargin: 10
     property bool placementEnabled: false
+    property bool autoLocalizationEnabled: true
     property bool orientationEnabled: false
     property bool orientationOverride: false
     property bool goalPlacementEnabled: false
@@ -713,6 +714,7 @@ Rectangle {
                     isPositionStep: root.isPositionStep
                     isOrientationStep: root.isOrientationStep
                     placementEnabled: root.placementEnabled
+                    autoLocalizationEnabled: root.autoLocalizationEnabled
                     orientationEnabled: root.orientationEnabled
                     placementController: root.placementController
 

@@ -29,6 +29,8 @@ using namespace ROBOGait::ros::service;
 
 namespace
 {
+constexpr std::uint8_t LIFECYCLE_ACTIVE_STATE_ID = 3; /**< Stable PRIMARY_STATE_ACTIVE id from lifecycle_msgs/State */
+
 template <typename OperationType> const char* operationTypeName(OperationType type)
 {
   switch (type)
@@ -45,6 +47,8 @@ template <typename OperationType> const char* operationTypeName(OperationType ty
       return "StopCommand";
     case OperationType::GetMapData:
       return "GetMapData";
+    case OperationType::AmclReadiness:
+      return "AmclReadiness";
     case OperationType::GlobalLocalization:
       return "GlobalLocalization";
     case OperationType::ComputePathToPose:
@@ -68,6 +72,8 @@ template <typename OperationPhase> const char* operationPhaseName(OperationPhase
       return "WaitingServiceResponse";
     case OperationPhase::WaitingGoalResponse:
       return "WaitingGoalResponse";
+    case OperationPhase::WaitingLifecycleActive:
+      return "WaitingLifecycleActive";
     default:
       return "Unknown";
   }
@@ -195,6 +201,7 @@ void RobotServiceClient::clearRobotContext()
   }
   cli_cmd_.reset();
   cli_get_map_data_.reset();
+  cli_amcl_get_state_.reset();
   cli_global_localization_.reset();
   ac_compute_path_to_pose_.reset();
   ac_navigate_to_pose_.reset();
@@ -543,14 +550,14 @@ bool RobotServiceClient::reinitializeGlobalLocalization()
   if (!initialized_)
   {
     qCritical() << "[RobotServiceClient::reinitializeGlobalLocalization] RobotServiceClient is not initialized";
-    notifyRequestResult(false);
+    notifyRequestResult(RequestType::GlobalLocalization, false);
     return false;
   }
 
   if (!cli_global_localization_)
   {
     qCritical() << "[RobotServiceClient::reinitializeGlobalLocalization] Global localization client is not available";
-    notifyRequestResult(false);
+    notifyRequestResult(RequestType::GlobalLocalization, false);
     return false;
   }
 
@@ -640,6 +647,133 @@ bool RobotServiceClient::reinitializeGlobalLocalization()
   }
 
   return true;
+}
+
+bool RobotServiceClient::waitForAmclActive()
+{
+  if (!initialized_)
+  {
+    qCritical() << "[RobotServiceClient::waitForAmclActive] RobotServiceClient is not initialized";
+    notifyRequestResult(RequestType::AmclReadiness, false);
+    return false;
+  }
+
+  if (!cli_amcl_get_state_)
+  {
+    qCritical() << "[RobotServiceClient::waitForAmclActive] AMCL lifecycle client is not available";
+    notifyRequestResult(RequestType::AmclReadiness, false);
+    return false;
+  }
+
+  const PendingOperation operation = registerPendingOperation(OperationType::AmclReadiness, OperationPhase::WaitingLifecycleActive,
+                                                              [this](OperationStopReason reason)
+                                                              {
+                                                                if (reason == OperationStopReason::Timeout)
+                                                                {
+                                                                  qCritical()
+                                                                      << "[RobotServiceClient::waitForAmclActive] AMCL did not become active before timeout";
+                                                                  notifyRequestResult(RequestType::AmclReadiness, false);
+                                                                }
+                                                              });
+
+  const auto poll_callback = [this, operation]() { pollAmclState(operation.id, operation.context_generation, operation.deadline); };
+  return setPendingOperationPollCallback(operation.id, operation.context_generation, poll_callback);
+}
+
+void RobotServiceClient::pollAmclState(OperationId operation_id, std::uint64_t context_generation, std::chrono::steady_clock::time_point activation_deadline)
+{
+  if (!cli_amcl_get_state_ || !cli_amcl_get_state_->service_is_ready())
+  {
+    return;
+  }
+
+  if (!transitionPendingOperation(operation_id, context_generation, OperationPhase::WaitingServiceResponse))
+  {
+    return;
+  }
+
+  auto request = std::make_shared<lifecycle_msgs::srv::GetState::Request>();
+
+  try
+  {
+    const auto request_handle = cli_amcl_get_state_->async_send_request(
+        request,
+        [this, operation_id, context_generation, activation_deadline](rclcpp::Client<lifecycle_msgs::srv::GetState>::SharedFuture future)
+        {
+          bool active = false;
+          try
+          {
+            const auto response = future.get();
+            active = response && response->current_state.id == LIFECYCLE_ACTIVE_STATE_ID;
+          }
+          catch (const std::exception& exception)
+          {
+            qCritical() << "[RobotServiceClient::pollAmclState] Failed to read AMCL lifecycle response:" << exception.what();
+            if (completePendingOperation(operation_id, context_generation))
+            {
+              notifyRequestResult(RequestType::AmclReadiness, false);
+            }
+            return;
+          }
+
+          if (active)
+          {
+            if (completePendingOperation(operation_id, context_generation))
+            {
+              qDebug() << "[RobotServiceClient::pollAmclState] AMCL lifecycle node is active";
+              notifyRequestResult(RequestType::AmclReadiness, true);
+            }
+            return;
+          }
+
+          if (!transitionPendingOperation(
+                  operation_id, context_generation, OperationPhase::WaitingLifecycleActive,
+                  [this](OperationStopReason reason)
+                  {
+                    if (reason == OperationStopReason::Timeout)
+                    {
+                      qCritical() << "[RobotServiceClient::waitForAmclActive] AMCL did not become active before timeout";
+                      notifyRequestResult(RequestType::AmclReadiness, false);
+                    }
+                  },
+                  activation_deadline))
+          {
+            return;
+          }
+
+          const auto poll_callback = [this, operation_id, context_generation, activation_deadline]()
+          { pollAmclState(operation_id, context_generation, activation_deadline); };
+          setPendingOperationPollCallback(operation_id, context_generation, poll_callback);
+        });
+
+    const auto request_id = request_handle.request_id;
+    const bool pending = transitionPendingOperation(operation_id, context_generation, OperationPhase::WaitingServiceResponse,
+                                                    [this, request_id](OperationStopReason reason)
+                                                    {
+                                                      if (cli_amcl_get_state_)
+                                                      {
+                                                        cli_amcl_get_state_->remove_pending_request(request_id);
+                                                      }
+                                                      if (reason == OperationStopReason::Timeout)
+                                                      {
+                                                        qCritical() << "[RobotServiceClient::pollAmclState] AMCL lifecycle response timed out";
+                                                        notifyRequestResult(RequestType::AmclReadiness, false);
+                                                      }
+                                                    });
+
+    if (!pending && isContextGenerationCurrent(context_generation) && cli_amcl_get_state_)
+    {
+      cli_amcl_get_state_->remove_pending_request(request_id);
+    }
+  }
+  catch (const std::exception& exception)
+  {
+    if (completePendingOperation(operation_id, context_generation))
+    {
+      qCritical() << "[RobotServiceClient::pollAmclState] Failed to send AMCL lifecycle request:" << exception.what();
+      notifyRequestResult(RequestType::AmclReadiness, false);
+    }
+  }
 }
 
 bool RobotServiceClient::isNodeAlive(const std::string& node_name) const
@@ -759,7 +893,7 @@ RobotServiceClient::CommandStatus RobotServiceClient::getCommandStatus(const std
   return it->second.status;
 }
 
-void RobotServiceClient::setRequestCallback(const std::function<void(bool)>& callback) { request_callback_ = callback; }
+void RobotServiceClient::setRequestCallback(const std::function<void(RequestType, bool)>& callback) { request_callback_ = callback; }
 
 bool RobotServiceClient::computePathToPose(double x, double y, double theta)
 {
@@ -1339,7 +1473,8 @@ RobotServiceClient::PendingOperation RobotServiceClient::registerPendingOperatio
   return operation;
 }
 
-bool RobotServiceClient::transitionPendingOperation(OperationId id, std::uint64_t context_generation, OperationPhase phase, OperationStopCallback stop_callback)
+bool RobotServiceClient::transitionPendingOperation(OperationId id, std::uint64_t context_generation, OperationPhase phase, OperationStopCallback stop_callback,
+                                                    std::optional<std::chrono::steady_clock::time_point> deadline)
 {
   std::lock_guard<std::mutex> lock(pending_operations_mutex_);
   const auto it = pending_operations_.find(id);
@@ -1350,7 +1485,7 @@ bool RobotServiceClient::transitionPendingOperation(OperationId id, std::uint64_
   }
 
   it->second.operation.phase = phase;
-  it->second.operation.deadline = std::chrono::steady_clock::now() + timeoutForPhase(phase);
+  it->second.operation.deadline = deadline.value_or(std::chrono::steady_clock::now() + timeoutForPhase(phase));
   it->second.poll_callback = {};
   it->second.stop_callback = std::move(stop_callback);
   return true;
@@ -1470,6 +1605,8 @@ std::chrono::milliseconds RobotServiceClient::timeoutForPhase(OperationPhase pha
       return service_response_timeout_;
     case OperationPhase::WaitingGoalResponse:
       return action_goal_response_timeout_;
+    case OperationPhase::WaitingLifecycleActive:
+      return endpoint_availability_timeout_;
     default:
       return endpoint_availability_timeout_;
   }
@@ -1667,9 +1804,6 @@ void RobotServiceClient::handleCommandResponse(const CommandRequestContext& cont
     case CommandRequestType::StopCommand:
       handleStopCommandResult(success, context.command_key, context.full_cmd);
       break;
-    default:
-      notifyRequestResult(success);
-      break;
   }
 }
 
@@ -1679,14 +1813,14 @@ void RobotServiceClient::handleStartMappingResult(bool success, const std::strin
   {
     qCritical() << "[RobotServiceClient::startMapping] Failed to initialize mapping";
     setCommandState(KEY_CARTOGRAPHER, RobotServiceClient::CommandStatus::ERROR, full_cmd);
-    notifyRequestResult(false);
+    notifyRequestResult(RequestType::StartMapping, false);
     return;
   }
 
   setCommandState(KEY_CARTOGRAPHER, RobotServiceClient::CommandStatus::STARTING, full_cmd);
   startHealthTimer();
   qDebug() << "[RobotServiceClient::startMapping] Successfully initialized mapping";
-  notifyRequestResult(true);
+  notifyRequestResult(RequestType::StartMapping, true);
 }
 
 void RobotServiceClient::handleDeleteMapResult(bool success, const std::string& map_name)
@@ -1694,12 +1828,12 @@ void RobotServiceClient::handleDeleteMapResult(bool success, const std::string& 
   if (!success)
   {
     qCritical() << "[RobotServiceClient::deleteMap] Failed to delete map";
-    notifyRequestResult(false);
+    notifyRequestResult(RequestType::DeleteMap, false);
     return;
   }
 
   qDebug() << "[RobotServiceClient::deleteMap] Successfully deleted map " << QString::fromStdString(map_name);
-  notifyRequestResult(true);
+  notifyRequestResult(RequestType::DeleteMap, true);
 }
 
 void RobotServiceClient::handleStartNavigationResult(bool success, const std::string& full_cmd, const std::string& map_name)
@@ -1708,14 +1842,14 @@ void RobotServiceClient::handleStartNavigationResult(bool success, const std::st
   {
     qCritical() << "[RobotServiceClient::startNavigation] Failed to start navigation";
     setCommandState(KEY_NAVIGATION, RobotServiceClient::CommandStatus::ERROR, full_cmd);
-    notifyRequestResult(false);
+    notifyRequestResult(RequestType::StartNavigation, false);
     return;
   }
 
   setCommandState(KEY_NAVIGATION, RobotServiceClient::CommandStatus::STARTING, full_cmd);
   startHealthTimer();
   qDebug() << "[RobotServiceClient::startNavigation] Successfully started navigation with map " << QString::fromStdString(map_name);
-  notifyRequestResult(true);
+  notifyRequestResult(RequestType::StartNavigation, true);
 }
 
 void RobotServiceClient::handleSaveMapResult(bool success, const std::string& full_cmd)
@@ -1724,7 +1858,7 @@ void RobotServiceClient::handleSaveMapResult(bool success, const std::string& fu
   {
     qCritical() << "[RobotServiceClient::saveMap] Failed to save map";
     setCommandState(KEY_MAP_SAVER, RobotServiceClient::CommandStatus::ERROR, full_cmd);
-    notifyRequestResult(false);
+    notifyRequestResult(RequestType::SaveMap, false);
     return;
   }
 
@@ -1733,7 +1867,7 @@ void RobotServiceClient::handleSaveMapResult(bool success, const std::string& fu
   if (!stopCommand(KEY_CARTOGRAPHER))
   {
     qCritical() << "[RobotServiceClient::saveMap] Map was saved but mapping could not be stopped";
-    notifyRequestResult(false);
+    notifyRequestResult(RequestType::SaveMap, false);
   }
 }
 
@@ -1743,13 +1877,13 @@ void RobotServiceClient::handleStopCommandResult(bool success, const std::string
   {
     qCritical() << "[RobotServiceClient::stopCommand] Failed to stop command for key: " << QString::fromStdString(key);
     setCommandState(key, RobotServiceClient::CommandStatus::ERROR, full_cmd);
-    notifyRequestResult(false);
+    notifyRequestResult(RequestType::StopCommand, false);
     return;
   }
 
   setCommandState(key, RobotServiceClient::CommandStatus::STOPPING, full_cmd);
   startHealthTimer();
-  notifyRequestResult(true);
+  notifyRequestResult(RequestType::StopCommand, true);
 }
 
 void RobotServiceClient::handleGlobalLocalizationResult(bool success)
@@ -1757,19 +1891,19 @@ void RobotServiceClient::handleGlobalLocalizationResult(bool success)
   if (!success)
   {
     qCritical() << "[RobotServiceClient::reinitializeGlobalLocalization] Failed to call global localization service";
-    notifyRequestResult(false);
+    notifyRequestResult(RequestType::GlobalLocalization, false);
     return;
   }
 
   qDebug() << "[RobotServiceClient::reinitializeGlobalLocalization] Global localization request sent";
-  notifyRequestResult(true);
+  notifyRequestResult(RequestType::GlobalLocalization, true);
 }
 
-void RobotServiceClient::notifyRequestResult(bool success)
+void RobotServiceClient::notifyRequestResult(RequestType type, bool success)
 {
   if (request_callback_)
   {
-    request_callback_(success);
+    request_callback_(type, success);
   }
 }
 
@@ -1837,7 +1971,7 @@ bool RobotServiceClient::callGetMapDataServiceAsync(const std::string& map_name)
                                  if (reason == OperationStopReason::Timeout)
                                  {
                                    qCritical() << "[RobotServiceClient::callGetMapDataServiceAsync] Service did not become available before timeout";
-                                   notifyRequestResult(false);
+                                   notifyRequestResult(RequestType::GetMapData, false);
                                  }
                                });
 
@@ -1903,7 +2037,7 @@ bool RobotServiceClient::callGetMapDataServiceAsync(const std::string& map_name)
               qCritical() << "[RobotServiceClient::callGetMapDataServiceAsync] Failed to process service response:" << exception.what();
             }
 
-            notifyRequestResult(success);
+            notifyRequestResult(RequestType::GetMapData, success);
           });
 
       const auto request_id = request_handle.request_id;
@@ -1917,7 +2051,7 @@ bool RobotServiceClient::callGetMapDataServiceAsync(const std::string& map_name)
                                                         if (reason == OperationStopReason::Timeout)
                                                         {
                                                           qCritical() << "[RobotServiceClient::callGetMapDataServiceAsync] Service response timed out";
-                                                          notifyRequestResult(false);
+                                                          notifyRequestResult(RequestType::GetMapData, false);
                                                         }
                                                       });
 
@@ -1931,7 +2065,7 @@ bool RobotServiceClient::callGetMapDataServiceAsync(const std::string& map_name)
       if (completePendingOperation(operation_id, context_generation))
       {
         qCritical() << "[RobotServiceClient::callGetMapDataServiceAsync] Failed to send service request:" << exception.what();
-        notifyRequestResult(false);
+        notifyRequestResult(RequestType::GetMapData, false);
       }
     }
   };
@@ -2034,6 +2168,17 @@ bool RobotServiceClient::rebuildClient()
     return false;
   }
 
+  cli_amcl_get_state_ = parent_node_->create_client<lifecycle_msgs::srv::GetState>(resolveServiceName(ROBOGait::ros::topics::S_AMCL_GET_STATE),
+                                                                                   ROBOGait::ros::qos_profiles::QOS_CLIENTS(), cb_group_);
+
+  if (!cli_amcl_get_state_)
+  {
+    qCritical() << "[RobotServiceClient::rebuildClient] Failed to create AMCL lifecycle client";
+    cli_cmd_.reset();
+    cli_get_map_data_.reset();
+    return false;
+  }
+
   cli_global_localization_ = parent_node_->create_client<std_srvs::srv::Empty>(resolveServiceName(ROBOGait::ros::topics::S_REINITIALIZE_GLOBAL_LOCALIZATION),
                                                                                ROBOGait::ros::qos_profiles::QOS_CLIENTS(), cb_group_);
 
@@ -2042,6 +2187,7 @@ bool RobotServiceClient::rebuildClient()
     qCritical() << "[RobotServiceClient::rebuildClient] Failed to create global localization client";
     cli_cmd_.reset();
     cli_get_map_data_.reset();
+    cli_amcl_get_state_.reset();
     return false;
   }
 
@@ -2054,6 +2200,7 @@ bool RobotServiceClient::rebuildClient()
     qCritical() << "[RobotServiceClient::rebuildClient] Failed to create compute_path_to_pose action client";
     cli_cmd_.reset();
     cli_get_map_data_.reset();
+    cli_amcl_get_state_.reset();
     cli_global_localization_.reset();
     return false;
   }
@@ -2067,6 +2214,7 @@ bool RobotServiceClient::rebuildClient()
     qCritical() << "[RobotServiceClient::rebuildClient] Failed to create navigate_to_pose action client";
     cli_cmd_.reset();
     cli_get_map_data_.reset();
+    cli_amcl_get_state_.reset();
     cli_global_localization_.reset();
     ac_compute_path_to_pose_.reset();
     return false;
@@ -2081,6 +2229,7 @@ bool RobotServiceClient::rebuildClient()
     qCritical() << "[RobotServiceClient::rebuildClient] Failed to create follow_path action client";
     cli_cmd_.reset();
     cli_get_map_data_.reset();
+    cli_amcl_get_state_.reset();
     cli_global_localization_.reset();
     ac_compute_path_to_pose_.reset();
     ac_navigate_to_pose_.reset();

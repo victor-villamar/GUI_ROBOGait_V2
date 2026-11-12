@@ -25,6 +25,7 @@ extern const std::string T_TF_STATIC;
 // Services
 extern const std::string S_CMD;
 extern const std::string S_GET_MAP_DATA;
+extern const std::string S_AMCL_GET_STATE;
 extern const std::string S_REINITIALIZE_GLOBAL_LOCALIZATION;
 
 // Actions
