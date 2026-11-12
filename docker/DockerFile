@@ -71,6 +71,7 @@ RUN apt-get update \
     ros-${ROS_DISTRO}-sensor-msgs \
     ros-${ROS_DISTRO}-nav-msgs \
     ros-${ROS_DISTRO}-map-msgs \
+    ros-${ROS_DISTRO}-lifecycle-msgs \
     ros-${ROS_DISTRO}-nav2-msgs \
     ros-${ROS_DISTRO}-std-srvs \
     ros-${ROS_DISTRO}-tf2 \

@@ -18,10 +18,6 @@ extern const std::chrono::milliseconds TIME_TO_PUBLISH_CMD_VEL_MS;   // (20 Hz)
 //------ NODES NAME DEFINITIONS ------
 extern const std::string ROBOGAIT_GUI;
 extern const std::string COMMAND_EXECUTOR;
-
-// Max time to wait for service response
-extern const std::chrono::seconds SERVICE_CALL_TIMEOUT;
-
 } // namespace define
 } // namespace ros
 } // namespace ROBOGait

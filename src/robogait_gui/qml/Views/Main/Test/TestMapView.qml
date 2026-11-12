@@ -969,12 +969,13 @@ TestMapViewForm {
 
     function startAutoLocalizationSpin() {
         if (!manualControl || !userSession || !userSession.rosManager || !userSession.rosManager.robotManager) {
-            return
+            return false
         }
 
         userSession.rosManager.robotManager.enableManualControl()
         autoLocalizationSpinTimer.start()
         autoLocalizationStopTimer.start()
+        return true
     }
 
     function stopAutoLocalizationSpin() {
@@ -2055,7 +2056,9 @@ TestMapViewForm {
 
                 autoLocalizationServiceDone = true
                 busyDialog.close()
-                startAutoLocalizationSpin()
+                if (!startAutoLocalizationSpin()) {
+                    failAutoLocalization(qsTr("Error: No se pudo iniciar el movimiento de autolocalización"))
+                }
                 return
             }
 

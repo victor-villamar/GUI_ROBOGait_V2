@@ -38,6 +38,7 @@ install_ros2_dependencies()
     "ros-${ROS_DISTRO}-geometry-msgs" \
     "ros-${ROS_DISTRO}-sensor-msgs" \
     "ros-${ROS_DISTRO}-nav-msgs" \
+    "ros-${ROS_DISTRO}-lifecycle-msgs" \
     "ros-${ROS_DISTRO}-map-msgs" \
     "ros-${ROS_DISTRO}-nav2-msgs" \
     "ros-${ROS_DISTRO}-std-srvs" \
