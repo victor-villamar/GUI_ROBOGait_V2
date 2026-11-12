@@ -47,6 +47,22 @@ public:
   };
   Q_ENUM(NavigationResult)
 
+  /**
+   * @brief Enum to identify the asynchronous service operation that completed
+   */
+  enum RequestType
+  {
+    REQUEST_START_MAPPING = 0,  /**< Start mapping command request */
+    REQUEST_DELETE_MAP,         /**< Delete map command request */
+    REQUEST_START_NAVIGATION,   /**< Start navigation command request */
+    REQUEST_SAVE_MAP,           /**< Save map command request */
+    REQUEST_STOP_COMMAND,       /**< Stop command request */
+    REQUEST_GET_MAP_DATA,       /**< Get map data request */
+    REQUEST_AMCL_READINESS,     /**< Wait for AMCL to become active */
+    REQUEST_GLOBAL_LOCALIZATION /**< Global localization request */
+  };
+  Q_ENUM(RequestType)
+
   // clang-format off
   Q_PROPERTY(int status
              READ getStatus
@@ -79,7 +95,7 @@ public:
   /**
    * @brief Start the mapping process
    *
-   * @return true if the mapping process was started successfully, false otherwise
+   * @return true if the asynchronous start request was queued, false otherwise
    */
   Q_INVOKABLE bool startMapping();
 
@@ -89,7 +105,7 @@ public:
    * @param save_map Whether to save the map
    * @param map_name The name of the map to save
    *
-   * @return true if the mapping process was stopped successfully, false otherwise
+   * @return true if the asynchronous stop request was queued, false otherwise
    */
   Q_INVOKABLE bool stopMapping(bool save_map, const QString& map_name);
 
@@ -98,7 +114,7 @@ public:
    *
    * @param map_name The name of the map to delete
    *
-   * @return true if the map was deleted successfully, false otherwise
+   * @return true if the asynchronous delete request was queued, false otherwise
    */
   Q_INVOKABLE bool deleteMap(const QString& map_name);
 
@@ -107,7 +123,7 @@ public:
    *
    * @param map_name The name of the map to request data for
    *
-   * @return true if the map data was requested successfully, false otherwise
+   * @return true if the asynchronous map data request was queued, false otherwise
    */
   Q_INVOKABLE bool requestMapData(const QString& map_name);
 
@@ -116,14 +132,14 @@ public:
    *
    * @param map_name The name of the map to use for navigation
    *
-   * @return true if the navigation process was started successfully, false otherwise
+   * @return true if the asynchronous start request was queued, false otherwise
    */
   Q_INVOKABLE bool startNavigation(const QString& map_name);
 
   /**
    * @brief Stop the navigation process
    *
-   * @return true if the navigation process was stopped successfully, false otherwise
+   * @return true if the asynchronous stop request was queued, false otherwise
    */
   Q_INVOKABLE bool stopNavigation();
 
@@ -155,9 +171,16 @@ public:
 
   /** @brief Reinitialize the global localization
    *
-   * @return true if the global localization was reinitialized successfully, false otherwise
+   * @return true if the asynchronous localization request was queued, false otherwise
    */
   Q_INVOKABLE bool reinitializeGlobalLocalization();
+
+  /**
+   * @brief Wait asynchronously until the AMCL lifecycle node is active
+   *
+   * @return true if the readiness operation was queued, false otherwise
+   */
+  Q_INVOKABLE bool waitForAmclActive();
 
   /**
    * @brief Compute path to a goal pose
@@ -166,7 +189,7 @@ public:
    * @param y Goal y in map frame
    * @param theta Goal yaw in radians
    *
-   * @return true if the request was sent, false otherwise
+   * @return true if the asynchronous action request was queued, false otherwise
    */
   Q_INVOKABLE bool computePathToPose(double x, double y, double theta);
 
@@ -177,7 +200,7 @@ public:
    * @param y Goal y in map frame
    * @param theta Goal yaw in radians
    *
-   * @return true if the request was sent, false otherwise
+   * @return true if the asynchronous action request was queued, false otherwise
    */
   Q_INVOKABLE bool navigateToPose(double x, double y, double theta);
 
@@ -198,7 +221,7 @@ public:
   /**
    * @brief Follow the last prepared manual path
    *
-   * @return true if the request was sent, false otherwise
+   * @return true if the asynchronous action request was queued, false otherwise
    */
   Q_INVOKABLE bool followLastComputedPath();
 
@@ -211,7 +234,7 @@ public:
 
 signals:
   void statusChanged();                                        // Emitted when the status changes
-  void requestFinished(bool success);                          // Emitted when a command request finishes
+  void requestFinished(RequestType requestType, bool success); // Emitted when a typed service request finishes
   void pathComputed(bool success, const QVariantList& points); // Emitted when path action finishes
   void navigationFinished(int resultCode);                     // Emitted when navigate action finishes
 
@@ -241,6 +264,15 @@ private:
    * @return Equivalent bridge navigation result
    */
   static NavigationResult toBridgeNavigationResult(ROBOGait::ros::service::RobotServiceClient::NavigationResult result);
+
+  /**
+   * @brief Convert RobotServiceClient request type to bridge request type
+   *
+   * @param type Request type from RobotServiceClient
+   *
+   * @return Equivalent bridge request type
+   */
+  static RequestType toBridgeRequestType(ROBOGait::ros::service::RobotServiceClient::RequestType type);
 
   int status_;                 /**< The current status of the command executor */
   QString active_command_key_; /**< The active command key */

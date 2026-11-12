@@ -247,8 +247,8 @@ SelectMapForm {
             }
         }
 
-        function onRequestFinished(success) {
-            if (waitingForMappingStart) {
+        function onRequestFinished(requestType, success) {
+            if (requestType === RobotServiceBridge.REQUEST_START_MAPPING && waitingForMappingStart) {
                 if (!success) {
                     waitingForMappingStart = false
                     busyDialog.close()
@@ -258,7 +258,7 @@ SelectMapForm {
                 return
             }
 
-            if (waitingForDeleteMap) {
+            if (requestType === RobotServiceBridge.REQUEST_DELETE_MAP && waitingForDeleteMap) {
                 waitingForDeleteMap = false
                 busyDialog.close()
                 if (!success) {

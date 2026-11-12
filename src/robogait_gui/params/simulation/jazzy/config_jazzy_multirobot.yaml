@@ -74,6 +74,13 @@ navigation:
 # Timeout Configuration
 timeouts:
   start_stop_timeout_s: 25                         # Maximum wait when starting or stopping processes (s)
+
+  ros:
+    endpoint_availability_ms: 5000                 # Maximum wait for a service or action server to become available (ms)
+    service_response_ms: 5000                      # Maximum wait for a response after sending a service request (ms)
+    action_goal_response_ms: 5000                  # Maximum wait for an action server to accept or reject a goal (ms)
+    readiness_poll_ms: 100                         # Interval between non-blocking endpoint readiness checks (ms)
+
   qml:
     app_shutdown_delay_ms: 3000                    # Delay before closing the application (ms)
     auth_mode_dropdown_auto_close_ms: 4000         # Time before closing the authentication selector (ms)

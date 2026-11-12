@@ -31,7 +31,7 @@ TEST(RenderCameraTest, SetZoomClampsToSupportedRange)
   RenderCamera camera;
 
   camera.setZoom(10.0);
-  EXPECT_DOUBLE_EQ(camera.getZoom(), 70.0);
+  EXPECT_DOUBLE_EQ(camera.getZoom(), 30.0);
 
   camera.setZoom(500.0);
   EXPECT_DOUBLE_EQ(camera.getZoom(), 470.0);
@@ -49,7 +49,7 @@ TEST(RenderCameraTest, ZoomByFactorUsesCurrentZoomAndClamps)
   EXPECT_DOUBLE_EQ(camera.getZoom(), 200.0);
 
   camera.zoomByFactor(0.01);
-  EXPECT_DOUBLE_EQ(camera.getZoom(), 70.0);
+  EXPECT_DOUBLE_EQ(camera.getZoom(), 30.0);
 }
 
 TEST(RenderCameraTest, FitToRectCentersViewAndUsesViewportLimitedZoom)

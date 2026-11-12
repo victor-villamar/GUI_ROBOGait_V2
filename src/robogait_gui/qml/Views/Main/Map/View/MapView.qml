@@ -708,12 +708,14 @@ MapViewForm {
             }
         }
 
-        function onRequestFinished(success) {
+        function onRequestFinished(requestType, success) {
             if (success) {
                 return
             }
 
-            if (waitingForResetStop || waitingForResetStart) {
+            var resetRequestFailed = (waitingForResetStop && requestType === RobotServiceBridge.REQUEST_STOP_COMMAND)
+                                  || (waitingForResetStart && requestType === RobotServiceBridge.REQUEST_START_MAPPING)
+            if (resetRequestFailed) {
                 waitingForResetStop = false
                 waitingForResetStart = false
                 busyDialog.close()
@@ -722,7 +724,9 @@ MapViewForm {
                 return
             }
 
-            if (waitingForMappingStop) {
+            var mappingStopRequestFailed = requestType === RobotServiceBridge.REQUEST_SAVE_MAP
+                                        || requestType === RobotServiceBridge.REQUEST_STOP_COMMAND
+            if (waitingForMappingStop && mappingStopRequestFailed) {
                 var wasSaving = pendingSaveToDb
                 waitingForMappingStop = false
                 pendingSaveAndExit = false

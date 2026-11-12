@@ -30,9 +30,11 @@ TestMapViewForm {
     signal appExitFinished()
 
     property bool waitingForNavigationStart: false
+    property bool waitingForMapData: false
 
     property bool autoLocalizationActive: false
     property bool autoLocalizationWaitingForNav: false
+    property bool autoLocalizationWaitingForAmcl: false
     property bool autoLocalizationWaitingForService: false
     property bool autoLocalizationCompleted: false
     property bool autoLocalizationServiceDone: false
@@ -56,6 +58,8 @@ TestMapViewForm {
     property bool personDetectionInProgress: false
     property bool navigationSpeedLimitPublisherPrepared: false
     property bool navigationSpeedLimitApplied: false
+
+    autoLocalizationEnabled: !autoLocalizationActive && !emergencyLatched
 
     readonly property var manualControl: (userSession && userSession.rosManager && userSession.rosManager.robotManager)
                                             ? userSession.rosManager.robotManager.manualControl
@@ -857,6 +861,7 @@ TestMapViewForm {
             autoLocalizationCompleted = false
             autoLocalizationActive = false
             autoLocalizationWaitingForNav = false
+            autoLocalizationWaitingForAmcl = false
             autoLocalizationWaitingForService = false
             autoLocalizationServiceDone = false
             autoLocalizationSpinDone = false
@@ -964,12 +969,13 @@ TestMapViewForm {
 
     function startAutoLocalizationSpin() {
         if (!manualControl || !userSession || !userSession.rosManager || !userSession.rosManager.robotManager) {
-            return
+            return false
         }
 
         userSession.rosManager.robotManager.enableManualControl()
         autoLocalizationSpinTimer.start()
         autoLocalizationStopTimer.start()
+        return true
     }
 
     function stopAutoLocalizationSpin() {
@@ -993,6 +999,7 @@ TestMapViewForm {
     function failAutoLocalization(messageText) {
         autoLocalizationActive = false
         autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForAmcl = false
         autoLocalizationWaitingForService = false
         autoLocalizationCompleted = false
         autoLocalizationServiceDone = false
@@ -1013,6 +1020,7 @@ TestMapViewForm {
         waitingForNavigationStart = false
         autoLocalizationActive = false
         autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForAmcl = false
         autoLocalizationWaitingForService = false
         autoLocalizationCompleted = false
         autoLocalizationServiceDone = false
@@ -1085,6 +1093,7 @@ TestMapViewForm {
         autoLocalizationActive = false
         autoLocalizationWaitingForService = false
         autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForAmcl = false
 
         if (!saveAutoLocalizationPose()) {
             failAutoLocalization(qsTr("Error: No se pudo obtener la posición"))
@@ -1096,6 +1105,23 @@ TestMapViewForm {
         syncRobotPoseUpdates()
     }
 
+    function waitForAmclReadiness() {
+        if (!robotServiceBridge) {
+            failAutoLocalization(qsTr("Error: No hay conexión con el robot"))
+            return
+        }
+
+        autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForAmcl = true
+        busyDialog.openWithMessage(qsTr("Preparando autolocalización..."))
+
+        var okReadiness = robotServiceBridge.waitForAmclActive()
+        if (!okReadiness) {
+            autoLocalizationWaitingForAmcl = false
+            failAutoLocalization(qsTr("Error: AMCL no está disponible"))
+        }
+    }
+
     function triggerGlobalLocalization() {
         if (!robotServiceBridge) {
             failAutoLocalization(qsTr("Error: No hay conexión con el robot"))
@@ -1103,6 +1129,7 @@ TestMapViewForm {
         }
 
         autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForAmcl = false
         autoLocalizationWaitingForService = true
 
         var okService = robotServiceBridge.reinitializeGlobalLocalization()
@@ -1111,8 +1138,6 @@ TestMapViewForm {
             failAutoLocalization(qsTr("Error: No se pudo iniciar la autolocalización"))
             return
         }
-
-        startAutoLocalizationSpin()
     }
 
     function beginAutoLocalization() {
@@ -1137,6 +1162,7 @@ TestMapViewForm {
         autoLocalizationActive = true
         syncRobotPoseUpdates()
         autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForAmcl = false
         autoLocalizationWaitingForService = false
         autoLocalizationServiceDone = false
         autoLocalizationSpinDone = false
@@ -1144,7 +1170,7 @@ TestMapViewForm {
 
         if (robotServiceBridge.activeCommandKey === "navigation") {
             if (robotServiceBridge.status === RobotServiceBridge.RUNNING) {
-                triggerGlobalLocalization()
+                waitForAmclReadiness()
                 return
             }
 
@@ -1317,6 +1343,7 @@ TestMapViewForm {
         stopAutoLocalizationSpin()
         autoLocalizationActive = false
         autoLocalizationWaitingForNav = false
+        autoLocalizationWaitingForAmcl = false
         autoLocalizationWaitingForService = false
         autoLocalizationServiceDone = false
         autoLocalizationSpinDone = false
@@ -1362,8 +1389,10 @@ TestMapViewForm {
 
         var mapName = (userSession.currentMapName || "").trim()
 
+        waitingForMapData = true
         var okMap = robotServiceBridge.requestMapData(mapName)
         if (!okMap) {
+            waitingForMapData = false
             busyDialog.close()
             errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo cargar el mapa")
             errorPopup.open()
@@ -1377,6 +1406,7 @@ TestMapViewForm {
 
     onMapAvailableChanged: {
         if (mapAvailable) {
+            waitingForMapData = false
             busyDialog.close()
         }
     }
@@ -1958,7 +1988,7 @@ TestMapViewForm {
                 var navStarting = (robotServiceBridge.activeCommandKey === "navigation")
                 if (navStarting && robotServiceBridge.status === RobotServiceBridge.RUNNING)
                 {
-                    triggerGlobalLocalization()
+                    waitForAmclReadiness()
                 }
                 else if (robotServiceBridge.status === RobotServiceBridge.ERROR)
                 {
@@ -1994,49 +2024,61 @@ TestMapViewForm {
             }
         }
 
-        function onRequestFinished(success) {
-            if (autoLocalizationWaitingForService)
-            {
+        function onRequestFinished(requestType, success) {
+            if (requestType === RobotServiceBridge.REQUEST_GET_MAP_DATA && waitingForMapData) {
+                waitingForMapData = false
+                if (!success) {
+                    busyDialog.close()
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo cargar el mapa")
+                    errorPopup.open()
+                }
+                return
+            }
+
+            if (requestType === RobotServiceBridge.REQUEST_AMCL_READINESS && autoLocalizationWaitingForAmcl) {
+                autoLocalizationWaitingForAmcl = false
+                if (!success) {
+                    failAutoLocalization(qsTr("Error: AMCL no llegó al estado activo"))
+                    return
+                }
+
+                triggerGlobalLocalization()
+                return
+            }
+
+            if (requestType === RobotServiceBridge.REQUEST_GLOBAL_LOCALIZATION && autoLocalizationWaitingForService) {
                 autoLocalizationWaitingForService = false
 
-                if (!success)
-                {
+                if (!success) {
                     failAutoLocalization(qsTr("Error: No se pudo iniciar la autolocalización"))
                     return
                 }
 
                 autoLocalizationServiceDone = true
                 busyDialog.close()
-                if (autoLocalizationSpinDone)
-                {
-                    finalizeAutoLocalization()
+                if (!startAutoLocalizationSpin()) {
+                    failAutoLocalization(qsTr("Error: No se pudo iniciar el movimiento de autolocalización"))
                 }
                 return
             }
 
-            if (autoLocalizationWaitingForNav && !success)
-            {
-                autoLocalizationWaitingForNav = false
-                failAutoLocalization(qsTr("Error: No se pudo iniciar la navegación"))
+            if (requestType === RobotServiceBridge.REQUEST_START_NAVIGATION) {
+                if (autoLocalizationWaitingForNav && !success) {
+                    autoLocalizationWaitingForNav = false
+                    failAutoLocalization(qsTr("Error: No se pudo iniciar la navegación"))
+                    return
+                }
+
+                if (waitingForNavigationStart && !success) {
+                    waitingForNavigationStart = false
+                    busyDialog.close()
+                    errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación")
+                    errorPopup.open()
+                }
                 return
             }
 
-            if (success)
-            {
-                return
-            }
-
-            if (waitingForNavigationStart)
-            {
-                waitingForNavigationStart = false
-                busyDialog.close()
-                errorPopup.errorRectangleTextError.text = qsTr("Error: No se pudo iniciar la navegación")
-                errorPopup.open()
-                return
-            }
-
-            if (exiting)
-            {
+            if (requestType === RobotServiceBridge.REQUEST_STOP_COMMAND && exiting && !success) {
                 if (testStarted) {
                     applyConfiguredNavigationSpeedLimit()
                 }
@@ -2280,7 +2322,7 @@ TestMapViewForm {
                 return
             }
 
-            if (autoLocalizationActive || autoLocalizationWaitingForNav || autoLocalizationWaitingForService) {
+            if (autoLocalizationActive || autoLocalizationWaitingForNav || autoLocalizationWaitingForAmcl || autoLocalizationWaitingForService) {
                 failAutoLocalization(qsTr("Error: Tiempo de espera agotado durante la autolocalización"))
                 return
             }
@@ -2304,6 +2346,7 @@ TestMapViewForm {
             }
 
             if (!mapAvailable) {
+                waitingForMapData = false
                 errorPopup.errorRectangleTextError.text = qsTr("Error: Tiempo de espera agotado al cargar el mapa")
                 errorPopup.open()
             }

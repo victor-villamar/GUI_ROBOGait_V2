@@ -9,6 +9,7 @@ Item {
     property bool isPositionStep: false
     property bool isOrientationStep: false
     property bool placementEnabled: false
+    property bool autoLocalizationEnabled: true
     property bool orientationEnabled: false
     property var placementController: null
 
@@ -87,12 +88,15 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
         visible: root.isPositionStep
-        enabled: root.isPositionStep
+        enabled: root.isPositionStep && root.autoLocalizationEnabled
+        opacity: enabled ? 1.0 : 0.7
 
         background: Rectangle {
             radius: 6
-            color: autoLocalizationButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton
-            border.color: AppTheme.map.white
+            color: !autoLocalizationButton.enabled
+                   ? AppTheme.orientationWheel.panelDisabled
+                   : (autoLocalizationButton.pressed ? AppTheme.map.panelHeader : AppTheme.map.actionButton)
+            border.color: autoLocalizationButton.enabled ? AppTheme.map.white : AppTheme.orientationWheel.borderDisabled
             border.width: 1
         }
 
