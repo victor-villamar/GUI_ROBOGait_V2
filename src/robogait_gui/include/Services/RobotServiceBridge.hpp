@@ -1,0 +1,285 @@
+#pragma once
+
+#include <QObject>
+#include <QString>
+#include <QTimer>
+#include <QVariantList>
+
+#include "Services/RobotServiceClient.hpp"
+
+namespace ROBOGait
+{
+namespace qml
+{
+namespace service
+{
+/**
+ * @brief Bridge class to expose the RobotServiceClient to QML
+ */
+class RobotServiceBridge : public QObject
+{
+  Q_OBJECT
+
+public:
+  /**
+   * @brief Enum to represent the status of the commands executed by the RobotServiceClient
+   */
+  enum Status
+  {
+    IDLE = 0, /**< The command is idle */
+    STARTING, /**< The command is starting */
+    RUNNING,  /**< The command is running */
+    STOPPING, /**< The command is stopping */
+    STOPPED,  /**< The command has stopped */
+    ERROR     /**< There was an error with the command */
+  };
+  Q_ENUM(Status)
+
+  /**
+   * @brief Enum to represent navigation action final result
+   */
+  enum NavigationResult
+  {
+    NAV_UNKNOWN = 0,   /**< Unknown result */
+    NAV_SUCCEEDED = 1, /**< Goal reached */
+    NAV_CANCELED = 2,  /**< Goal canceled */
+    NAV_ABORTED = 3    /**< Goal aborted */
+  };
+  Q_ENUM(NavigationResult)
+
+  /**
+   * @brief Enum to identify the asynchronous service operation that completed
+   */
+  enum RequestType
+  {
+    REQUEST_START_MAPPING = 0,  /**< Start mapping command request */
+    REQUEST_DELETE_MAP,         /**< Delete map command request */
+    REQUEST_START_NAVIGATION,   /**< Start navigation command request */
+    REQUEST_SAVE_MAP,           /**< Save map command request */
+    REQUEST_STOP_COMMAND,       /**< Stop command request */
+    REQUEST_GET_MAP_DATA,       /**< Get map data request */
+    REQUEST_AMCL_READINESS,     /**< Wait for AMCL to become active */
+    REQUEST_GLOBAL_LOCALIZATION /**< Global localization request */
+  };
+  Q_ENUM(RequestType)
+
+  // clang-format off
+  Q_PROPERTY(int status
+             READ getStatus
+             NOTIFY statusChanged)
+
+  Q_PROPERTY(QString activeCommandKey
+             READ getActiveCommandKey
+             NOTIFY statusChanged)
+  // clang-format on
+
+  /**
+   * @brief Constructor of the RobotServiceBridge class
+   */
+  explicit RobotServiceBridge(QObject* parent = nullptr);
+
+  /**
+   * @brief Get the status of the command executor
+   *
+   * @return The status of the command executor
+   */
+  int getStatus() const;
+
+  /**
+   * @brief Get the active command key
+   *
+   * @return The active command key
+   */
+  QString getActiveCommandKey() const;
+
+  /**
+   * @brief Start the mapping process
+   *
+   * @return true if the asynchronous start request was queued, false otherwise
+   */
+  Q_INVOKABLE bool startMapping();
+
+  /**
+   * @brief Stop the mapping process
+   *
+   * @param save_map Whether to save the map
+   * @param map_name The name of the map to save
+   *
+   * @return true if the asynchronous stop request was queued, false otherwise
+   */
+  Q_INVOKABLE bool stopMapping(bool save_map, const QString& map_name);
+
+  /**
+   * @brief Delete a map
+   *
+   * @param map_name The name of the map to delete
+   *
+   * @return true if the asynchronous delete request was queued, false otherwise
+   */
+  Q_INVOKABLE bool deleteMap(const QString& map_name);
+
+  /**
+   * @brief Request the map data for a given map name
+   *
+   * @param map_name The name of the map to request data for
+   *
+   * @return true if the asynchronous map data request was queued, false otherwise
+   */
+  Q_INVOKABLE bool requestMapData(const QString& map_name);
+
+  /**
+   * @brief Start the navigation process
+   *
+   * @param map_name The name of the map to use for navigation
+   *
+   * @return true if the asynchronous start request was queued, false otherwise
+   */
+  Q_INVOKABLE bool startNavigation(const QString& map_name);
+
+  /**
+   * @brief Stop the navigation process
+   *
+   * @return true if the asynchronous stop request was queued, false otherwise
+   */
+  Q_INVOKABLE bool stopNavigation();
+
+  /**
+   * @brief Prepare speed limit publisher for the current test
+   *
+   * @return true if the publisher is available, false otherwise
+   */
+  Q_INVOKABLE bool prepareNavigationSpeedLimitPublisher();
+
+  /**
+   * @brief Publish RobotSettings::maxLinearVelocity as the active Nav2 limit
+   *
+   * @return true if the limit was published, false otherwise
+   */
+  Q_INVOKABLE bool applyConfiguredNavigationSpeedLimit();
+
+  /**
+   * @brief Restore the controller's configured base speed
+   *
+   * @return true if the reset was published or no publisher exists, false otherwise
+   */
+  Q_INVOKABLE bool resetNavigationSpeedLimit();
+
+  /**
+   * @brief Destroy the Nav2 speed limit publisher
+   */
+  Q_INVOKABLE void destroyNavigationSpeedLimitPublisher();
+
+  /** @brief Reinitialize the global localization
+   *
+   * @return true if the asynchronous localization request was queued, false otherwise
+   */
+  Q_INVOKABLE bool reinitializeGlobalLocalization();
+
+  /**
+   * @brief Wait asynchronously until the AMCL lifecycle node is active
+   *
+   * @return true if the readiness operation was queued, false otherwise
+   */
+  Q_INVOKABLE bool waitForAmclActive();
+
+  /**
+   * @brief Compute path to a goal pose
+   *
+   * @param x Goal x in map frame
+   * @param y Goal y in map frame
+   * @param theta Goal yaw in radians
+   *
+   * @return true if the asynchronous action request was queued, false otherwise
+   */
+  Q_INVOKABLE bool computePathToPose(double x, double y, double theta);
+
+  /**
+   * @brief Navigate to a goal pose
+   *
+   * @param x Goal x in map frame
+   * @param y Goal y in map frame
+   * @param theta Goal yaw in radians
+   *
+   * @return true if the asynchronous action request was queued, false otherwise
+   */
+  Q_INVOKABLE bool navigateToPose(double x, double y, double theta);
+
+  /**
+   * @brief Normalize manual path points for FollowPath execution and visualization
+   *
+   * @return Normalized list of path points
+   */
+  Q_INVOKABLE QVariantList normalizeManualFollowPath(const QVariantList& points, double robot_x, double robot_y, double robot_theta);
+
+  /**
+   * @brief Store the edited manual spline as a path for FollowPath execution
+   *
+   * @return true if the path was stored, false otherwise
+   */
+  Q_INVOKABLE bool setManualFollowPath(const QVariantList& points);
+
+  /**
+   * @brief Follow the last prepared manual path
+   *
+   * @return true if the asynchronous action request was queued, false otherwise
+   */
+  Q_INVOKABLE bool followLastComputedPath();
+
+  /**
+   * @brief Cancel active navigation actions
+   *
+   * @return true if the cancel request was sent successfully, false otherwise
+   */
+  Q_INVOKABLE bool cancelNavigateToPose();
+
+signals:
+  void statusChanged();                                        // Emitted when the status changes
+  void requestFinished(RequestType requestType, bool success); // Emitted when a typed service request finishes
+  void pathComputed(bool success, const QVariantList& points); // Emitted when path action finishes
+  void navigationFinished(int resultCode);                     // Emitted when navigate action finishes
+
+private slots:
+  void onPoll(); // Polling slot to update the status
+
+private:
+  /**
+   * @brief Synchronize the status from the RobotServiceClient
+   */
+  void syncFromClient();
+
+  /**
+   * @brief Convert the CommandStatus from the RobotServiceClient to the Bridge Status
+   *
+   * @param status The CommandStatus from the RobotServiceClient
+   *
+   * @return The corresponding Bridge Status
+   */
+  Status toBridgeStatus(ROBOGait::ros::service::RobotServiceClient::CommandStatus status);
+
+  /**
+   * @brief Convert RobotServiceClient navigation result to bridge navigation result
+   *
+   * @param result Navigation result from RobotServiceClient
+   *
+   * @return Equivalent bridge navigation result
+   */
+  static NavigationResult toBridgeNavigationResult(ROBOGait::ros::service::RobotServiceClient::NavigationResult result);
+
+  /**
+   * @brief Convert RobotServiceClient request type to bridge request type
+   *
+   * @param type Request type from RobotServiceClient
+   *
+   * @return Equivalent bridge request type
+   */
+  static RequestType toBridgeRequestType(ROBOGait::ros::service::RobotServiceClient::RequestType type);
+
+  int status_;                 /**< The current status of the command executor */
+  QString active_command_key_; /**< The active command key */
+  QTimer poll_timer_;          /**< The timer used for polling the command executor status */
+
+  static constexpr int POLL_INTERVAL_MS = 200; /**< The polling interval in milliseconds */
+};
+} // namespace service
+} // namespace qml
+} // namespace ROBOGait

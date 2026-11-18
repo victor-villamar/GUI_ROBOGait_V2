@@ -1,0 +1,46 @@
+#include "Ros/TopicsName.hpp"
+#include "Ros/Define.hpp"
+
+namespace ROBOGait
+{
+namespace ros
+{
+namespace topics
+{
+/**
+ * @brief Defines ROS2 topic, services, actions and TF frames names.
+ * All names can use a robot namespace, execept the map TF frame.
+ */
+// clang-format off
+// Topics
+const std::string T_CMD_VEL =                          "/cmd_vel";
+const std::string T_ROBOT_STATUS =                     "/" + ROBOGait::ros::define::COMMAND_EXECUTOR + "/robot_status";
+const std::string T_MAP =                              "/map";
+const std::string T_MAP_UPDATES =                      "/map_updates";
+const std::string T_PLAN =                             "/plan";
+const std::string T_SCAN =                             "/scan";
+const std::string T_PARTICLE_CLOUD =                   "/particle_cloud";
+const std::string T_POSE_INITIALIZE =                  "/initialpose";
+const std::string T_CAMERA_DETECTION =                 "/camera_detection";
+const std::string T_SPEED_LIMIT =                      "/speed_limit";
+const std::string T_TF =                               "/tf";
+const std::string T_TF_STATIC =                        "/tf_static";
+
+// Services
+const std::string S_CMD =                              define::COMMAND_EXECUTOR + "/cmd";
+const std::string S_GET_MAP_DATA =                     define::COMMAND_EXECUTOR + "/get_map_data";
+const std::string S_AMCL_GET_STATE =                   "/amcl/get_state";
+const std::string S_REINITIALIZE_GLOBAL_LOCALIZATION = "/reinitialize_global_localization";
+
+// Actions
+const std::string A_NAVIGATE_TO_POSE =                 "/navigate_to_pose";
+const std::string A_COMPUTE_PATH_TO_POSE =             "/compute_path_to_pose";
+const std::string A_FOLLOW_PATH =                      "/follow_path";
+
+// TF Frames
+const std::string TF_MAP_FRAME =                       "map"; // Global frame, never uses a robot namespace
+const std::string TF_ROBOT_FRAME =                     "base_link";
+// clang-format on
+} // namespace topics
+} // namespace ros
+} // namespace ROBOGait

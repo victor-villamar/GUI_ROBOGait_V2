@@ -1,0 +1,284 @@
+#include <string>
+
+#include <QDebug>
+
+#include <rclcpp/executor_options.hpp>
+#include <rclcpp/init_options.hpp>
+#include <rclcpp/node_options.hpp>
+
+#include "Loader/YamlLoader.hpp"
+#include "Ros/Define.hpp"
+#include "Ros/RosNodeManager.hpp"
+#include "Services/RobotServiceClient.hpp"
+
+using namespace ROBOGait::ros::manager;
+
+RosNodeManager::RosNodeManager() :
+    node_name_(QString::fromStdString(ROBOGait::ros::define::ROBOGAIT_GUI)),
+    context_(nullptr),
+    ros_node_(nullptr),
+    executor_(nullptr),
+    spin_thread_(),
+    robot_discovery_(nullptr),
+    robot_manager_(nullptr),
+    is_running_(false),
+    use_namespace_discovery_(true),
+    current_domain_id_(0)
+{
+  qInfo() << "[RosNodeManager::RosNodeManager] RosNode Manager created";
+  robot_discovery_ = std::make_unique<ROBOGait::robot::discovery::RobotDiscovery>();
+  robot_manager_ = std::make_unique<ROBOGait::robot::manager::RobotManager>();
+
+  // Synchronize initial namespace discovery state
+  robot_discovery_->setUseNamespaceDiscovery(use_namespace_discovery_);
+  robot_manager_->setUseNamespaceDiscovery(use_namespace_discovery_);
+
+  // clang-format off
+  QObject::connect(robot_discovery_.get(), &ROBOGait::robot::discovery::RobotDiscovery::robotsNamespacesChanged,
+                   [this]()
+                   {
+                     if (robot_manager_ && robot_discovery_)
+                     {
+                       robot_manager_->checkRobotAvailability(robot_discovery_->getRobotsNamespaces());
+                     }
+                   });
+  // clang-format on
+}
+
+RosNodeManager::~RosNodeManager()
+{
+  shutdown();
+  qInfo() << "[RosNodeManager::~RosNodeManager] RosNode Manager destroyed";
+}
+
+bool RosNodeManager::isRunning() const { return is_running_; }
+
+QString RosNodeManager::getNodeName() const { return node_name_; }
+
+void RosNodeManager::setNodeName(const QString& name)
+{
+  const QString trimmed_name = name.trimmed();
+  if (trimmed_name.isEmpty())
+  {
+    qCritical() << "[RosNodeManager::setNodeName] Node name cannot be empty";
+    return;
+  }
+
+  if (node_name_ != trimmed_name)
+  {
+    node_name_ = trimmed_name;
+    emit nodeNameChanged();
+  }
+}
+
+bool RosNodeManager::getUseNamespaceDiscovery() const { return use_namespace_discovery_; }
+
+void RosNodeManager::setUseNamespaceDiscovery(bool use_namespace_discovery)
+{
+  if (use_namespace_discovery_ != use_namespace_discovery)
+  {
+    use_namespace_discovery_ = use_namespace_discovery;
+
+    if (robot_discovery_)
+    {
+      robot_discovery_->setUseNamespaceDiscovery(use_namespace_discovery);
+    }
+
+    if (robot_manager_)
+    {
+      robot_manager_->setUseNamespaceDiscovery(use_namespace_discovery);
+    }
+
+    emit useNamespaceDiscoveryChanged();
+  }
+}
+
+void RosNodeManager::setUseTopicFilter(bool use_topic_filter)
+{
+  if (robot_discovery_ == nullptr)
+  {
+    qCritical() << "[RosNodeManager::setUseTopicFilter] RobotDiscovery is not initialized";
+    return;
+  }
+
+  if (robot_manager_ == nullptr)
+  {
+    qCritical() << "[RosNodeManager::setUseTopicFilter] RobotManager is not initialized";
+    return;
+  }
+
+  robot_manager_->setUseTopicFilter(use_topic_filter);
+  robot_discovery_->setUseTopicFilter(use_topic_filter);
+}
+
+ROBOGait::robot::discovery::RobotDiscovery* RosNodeManager::getRobotDiscovery() const { return robot_discovery_.get(); }
+
+ROBOGait::robot::manager::RobotManager* RosNodeManager::getRobotManager() const { return robot_manager_.get(); }
+
+void RosNodeManager::initialize(int argc, char** argv, uint8_t domain_id)
+{
+  if (is_running_)
+  {
+    qWarning() << "[RosNodeManager::initialize] Node is already running";
+    return;
+  }
+
+  if (domain_id > MAX_DOMAIN_ID)
+  {
+    qCritical() << "[RosNodeManager::initialize] Invalid domain ID:" << domain_id << "(must be 0-232)";
+    return;
+  }
+
+  current_domain_id_ = domain_id;
+
+  rclcpp::InitOptions init_options;
+  init_options.set_domain_id(static_cast<size_t>(domain_id));
+
+  context_ = std::make_shared<rclcpp::Context>();
+  context_->init(argc, argv, init_options);
+
+  if (!context_->is_valid())
+  {
+    qCritical() << "[RosNodeManager::initialize] Failed to create valid ROS context";
+    return;
+  }
+
+  rclcpp::NodeOptions node_options;
+  node_options.context(context_);
+
+  auto& yaml_loader = ROBOGait::loader::YamlLoader::getInstance();
+
+  if (!yaml_loader.isLoaded())
+  {
+    qCritical() << "[RosNodeManager::initialize] Failed to load YAML configuration";
+    return;
+  }
+
+  std::string node_namespace = yaml_loader.getValue<std::string>("node.namespace", "RoboGait_GUI");
+
+  ros_node_ = std::make_shared<rclcpp::Node>(node_name_.toStdString(), node_namespace, node_options);
+
+  rclcpp::ExecutorOptions executor_options;
+  executor_options.context = context_;
+  executor_ = std::make_unique<rclcpp::executors::MultiThreadedExecutor>(executor_options);
+
+  executor_->add_node(ros_node_);
+
+  robot_discovery_->setROSNode(ros_node_.get());
+  robot_manager_->setROSNode(ros_node_.get());
+
+  is_running_ = true;
+
+  emit isRunningChanged();
+  emit rosNodeConnected(ros_node_.get());
+
+  startSpinThread();
+
+  qInfo() << "[RosNodeManager::initialize] ROS Node" << node_name_ << "initialized and running on domain" << domain_id;
+}
+
+bool RosNodeManager::restartWithDomain(uint8_t new_domain_id, int argc, char** argv)
+{
+  qDebug() << "[RosNodeManager::restartWithDomain] Restarting ROS node with new domain ID:" << new_domain_id;
+
+  if (new_domain_id > MAX_DOMAIN_ID)
+  {
+    qCritical() << "[RosNodeManager::restartWithDomain] Invalid domain ID:" << new_domain_id << "(must be 0-232)";
+    return false;
+  }
+
+  if (current_domain_id_ == new_domain_id && is_running_)
+  {
+    qDebug() << "[RosNodeManager::restartWithDomain] Already running on domain" << new_domain_id;
+    return true;
+  }
+
+  if (is_running_)
+  {
+    shutdown();
+  }
+
+  // Initialize with new domain ID
+  initialize(argc, argv, new_domain_id);
+
+  if (!is_running_)
+  {
+    qCritical() << "[RosNodeManager::restartWithDomain] Failed to restart with domain" << new_domain_id;
+    return false;
+  }
+
+  qInfo() << "[RosNodeManager::restartWithDomain] Successfully restarted on domain" << new_domain_id;
+  return true;
+}
+
+void RosNodeManager::shutdown()
+{
+  if (!is_running_)
+  {
+    qWarning() << "[RosNodeManager::shutdown] Node is not running";
+    return;
+  }
+
+  robot_discovery_->stopScanning();
+  robot_manager_->clearSelection();
+
+  stopSpinThread();
+
+  ROBOGait::ros::service::RobotServiceClient::getInstance().resetRobotServiceClient();
+
+  executor_.reset();
+  ros_node_.reset();
+
+  if (context_ && context_->is_valid())
+  {
+    if (context_->shutdown("Application requested shutdown"))
+    {
+      qDebug() << "[RosNodeManager::shutdown] Context from domain" << current_domain_id_ << "shutdown successful";
+    }
+    else
+    {
+      qWarning() << "[RosNodeManager::shutdown] Context was already shutdown";
+    }
+  }
+  else
+  {
+    qDebug() << "[RosNodeManager::shutdown] Context is null or invalid, skipping shutdown";
+  }
+
+  context_.reset();
+
+  is_running_ = false;
+
+  emit isRunningChanged();
+  emit rosNodeConnected(nullptr);
+
+  qInfo() << "[RosNodeManager::shutdown] ROS Node" << node_name_ << "shut down";
+}
+
+void RosNodeManager::startSpinThread()
+{
+  if (!executor_)
+  {
+    qCritical() << "[RosNodeManager::startSpinThread] Cannot start spin thread, executor is null";
+    return;
+  }
+
+  spin_thread_ = std::thread([this]() { executor_->spin(); });
+
+  qDebug() << "[RosNodeManager::startSpinThread] Spin thread started";
+}
+
+void RosNodeManager::stopSpinThread()
+{
+  if (executor_)
+  {
+    executor_->cancel();
+  }
+
+  if (spin_thread_.joinable())
+  {
+    spin_thread_.join();
+  }
+
+  qDebug() << "[RosNodeManager::stopSpinThread] Spin thread stopped";
+}

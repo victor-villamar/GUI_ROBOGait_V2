@@ -1,0 +1,3 @@
+user_config_root: ".local/robogait/params"  # Root directory for user configuration
+config_file: "config.yaml"                  # Main configuration file name
+commands_file: "commands.yaml"              # External commands file name

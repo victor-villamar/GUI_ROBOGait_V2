@@ -1,0 +1,620 @@
+cmake_minimum_required(VERSION 3.20)
+
+project(robogait_gui VERSION 0.1 LANGUAGES CXX)
+
+option(BUILD_TESTING "Build robogait_gui tests" OFF)
+
+set(ROBOGAIT_ROS_DISTRO "$ENV{ROS_DISTRO}" CACHE STRING
+    "ROS 2 distribution targeted by robogait_gui")
+set_property(CACHE ROBOGAIT_ROS_DISTRO PROPERTY STRINGS humble jazzy lyrical)
+
+string(TOLOWER "${ROBOGAIT_ROS_DISTRO}" ROBOGAIT_ROS_DISTRO_NORMALIZED)
+set(ROBOGAIT_SUPPORTED_ROS_DISTROS humble jazzy lyrical)
+
+if(NOT ROBOGAIT_ROS_DISTRO_NORMALIZED IN_LIST ROBOGAIT_SUPPORTED_ROS_DISTROS)
+    message(FATAL_ERROR
+        "Unsupported ROBOGAIT_ROS_DISTRO='${ROBOGAIT_ROS_DISTRO}'. "
+        "Expected one of: humble, jazzy, lyrical")
+endif()
+
+string(TOUPPER "${ROBOGAIT_ROS_DISTRO_NORMALIZED}" ROBOGAIT_ROS_DISTRO_UPPER)
+message(STATUS "Building robogait_gui for ROS 2 ${ROBOGAIT_ROS_DISTRO_NORMALIZED}")
+
+# Set the C++ standard required by each ROS 2 distribution
+if(ROBOGAIT_ROS_DISTRO_NORMALIZED STREQUAL "lyrical")
+    set(CMAKE_CXX_STANDARD 20)
+else()
+    set(CMAKE_CXX_STANDARD 17)
+endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find packages
+find_package(ament_cmake_ros REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(action_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(map_msgs REQUIRED)
+find_package(lifecycle_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(yaml-cpp REQUIRED)
+find_package(command_executor_msgs REQUIRED)
+find_package(navigation_pkg REQUIRED)
+
+# yaml-cpp exports an unnamespaced target on Ubuntu 22.04/Humble and a
+# namespaced target on newer Ubuntu/ROS 2 distributions.
+if(TARGET yaml-cpp::yaml-cpp)
+    set(ROBOGAIT_YAML_CPP_TARGET yaml-cpp::yaml-cpp)
+elseif(TARGET yaml-cpp)
+    set(ROBOGAIT_YAML_CPP_TARGET yaml-cpp)
+elseif(YAML_CPP_LIBRARIES)
+    set(ROBOGAIT_YAML_CPP_TARGET ${YAML_CPP_LIBRARIES})
+else()
+    message(FATAL_ERROR "yaml-cpp was found but did not export a usable target")
+endif()
+
+if(ROBOGAIT_ROS_DISTRO_NORMALIZED STREQUAL "lyrical")
+    set(ROBOGAIT_ACTION_MSGS_TARGETS action_msgs::action_msgs)
+    set(ROBOGAIT_SENSOR_MSGS_TARGETS sensor_msgs::sensor_msgs)
+    set(ROBOGAIT_GEOMETRY_MSGS_TARGETS geometry_msgs::geometry_msgs)
+    set(ROBOGAIT_NAV_MSGS_TARGETS nav_msgs::nav_msgs)
+    set(ROBOGAIT_MAP_MSGS_TARGETS map_msgs::map_msgs)
+    set(ROBOGAIT_LIFECYCLE_MSGS_TARGETS lifecycle_msgs::lifecycle_msgs)
+    set(ROBOGAIT_NAV2_MSGS_TARGETS nav2_msgs::nav2_msgs)
+    set(ROBOGAIT_TF2_MSGS_TARGETS tf2_msgs::tf2_msgs)
+    set(ROBOGAIT_STD_SRVS_TARGETS std_srvs::std_srvs)
+    set(ROBOGAIT_COMMAND_EXECUTOR_MSGS_TARGETS
+        command_executor_msgs::command_executor_msgs)
+    set(ROBOGAIT_NAVIGATION_PKG_TARGETS navigation_pkg::navigation_pkg)
+else()
+    set(ROBOGAIT_ACTION_MSGS_TARGETS ${action_msgs_TARGETS})
+    set(ROBOGAIT_SENSOR_MSGS_TARGETS ${sensor_msgs_TARGETS})
+    set(ROBOGAIT_GEOMETRY_MSGS_TARGETS ${geometry_msgs_TARGETS})
+    set(ROBOGAIT_NAV_MSGS_TARGETS ${nav_msgs_TARGETS})
+    set(ROBOGAIT_MAP_MSGS_TARGETS ${map_msgs_TARGETS})
+    set(ROBOGAIT_LIFECYCLE_MSGS_TARGETS ${lifecycle_msgs_TARGETS})
+    set(ROBOGAIT_NAV2_MSGS_TARGETS ${nav2_msgs_TARGETS})
+    set(ROBOGAIT_TF2_MSGS_TARGETS ${tf2_msgs_TARGETS})
+    set(ROBOGAIT_STD_SRVS_TARGETS ${std_srvs_TARGETS})
+    set(ROBOGAIT_COMMAND_EXECUTOR_MSGS_TARGETS
+        ${command_executor_msgs_TARGETS})
+    set(ROBOGAIT_NAVIGATION_PKG_TARGETS ${navigation_pkg_TARGETS})
+endif()
+
+find_package(Qt6 REQUIRED COMPONENTS
+    Core
+    Gui
+    Qml
+    Quick
+    Network
+    Sql
+    Widgets)
+
+# Enable Qt's automatic MOC, UIC and RCC
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
+# Set include directories
+set(HEADERS
+    include/Context/RobotContext.hpp
+    include/Core/RoboGaitApplication.hpp
+    include/DataBase/Common/DbErrors.hpp
+    include/DataBase/Common/DbTypes.hpp
+    include/DataBase/Repository/ExperimentRepository.hpp
+    include/DataBase/Repository/MapRepository.hpp
+    include/DataBase/Repository/PatientRepository.hpp
+    include/DataBase/Repository/Repository.hpp
+    include/DataBase/Repository/UserRepository.hpp
+    include/DataBase/DataBaseManager.hpp
+    include/DataBase/DatabaseSchema.hpp
+    include/DataBase/RoboGaitDb.hpp
+    include/Loader/BootStrapLoader.hpp
+    include/Loader/MapFileLoader.hpp
+    include/Loader/YamlLoader.hpp
+    include/Map/Data/LaserScanData.hpp
+    include/Map/Data/MapData.hpp
+    include/Map/Data/ParticleCloudData.hpp
+    include/Map/Data/PathData.hpp
+    include/Map/Data/RobotPoseData.hpp
+    include/Map/History/TracedRouteHistory.hpp
+    include/Map/Interaction/Geometry/BezierSplineModel.hpp
+    include/Map/Interaction/Geometry/SplineFitter.hpp
+    include/Map/Interaction/Geometry/StrokeProcessor.hpp
+    include/Map/Interaction/SplinePathEditor.hpp
+    include/Map/Items/LaserLayerItem.hpp
+    include/Map/Items/MapLayerItem.hpp
+    include/Map/Items/ParticleCloudLayerItem.hpp
+    include/Map/Items/PathLayerItem.hpp
+    include/Map/Items/RobotLayerItem.hpp
+    include/Map/Layer/LaserLayer.hpp
+    include/Map/Layer/LayerInterface.hpp
+    include/Map/Layer/MapLayer.hpp
+    include/Map/Layer/ParticleCloudLayer.hpp
+    include/Map/Layer/PathLayer.hpp
+    include/Map/Layer/RobotLayer.hpp
+    include/Map/Rendering/RenderCamera.hpp
+    include/Map/Rendering/RenderPipeline.hpp
+    include/Map/Rendering/RenderScene.hpp
+    include/Map/Source/LaserSource.hpp
+    include/Map/Source/MapSource.hpp
+    include/Map/Source/ParticleCloudSource.hpp
+    include/Map/Source/PathSource.hpp
+    include/Map/Source/RobotPoseSource.hpp
+    include/Map/Source/SourceInterface.hpp
+    include/Map/Subscribers/LaserScanSubscriber.hpp
+    include/Map/Subscribers/MapSubscriber.hpp
+    include/Map/Subscribers/ParticleCloudSubscriber.hpp
+    include/Map/Subscribers/PathSubscriber.hpp
+    include/Map/Subscribers/TFSubscriber.hpp
+    include/Map/TF/RobotTFBuffer.hpp
+    include/Map/Utils/Utils.hpp
+    include/Map/MapVisualizationManager.hpp
+    include/Perception/PersonDetectionMonitor.hpp
+    include/Robot/ManualControl.hpp
+    include/Robot/RobotDiscovery.hpp
+    include/Robot/RobotManager.hpp
+    include/Robot/RobotPlacementController.hpp
+    include/Ros/Define.hpp
+    include/Ros/MessageCompatibility.hpp
+    include/Ros/QoSProfiles.hpp
+    include/Ros/RosNodeManager.hpp
+    include/Ros/TopicsName.hpp
+    include/Services/RobotServiceBridge.hpp
+    include/Services/RobotServiceClient.hpp
+    include/Settings/DeveloperSettings.hpp
+    include/Settings/RobotSettings.hpp
+    include/Settings/TimeoutSettings.hpp
+    include/Settings/UiSizingSettings.hpp
+    include/Themes/AppTheme.hpp
+    include/Themes/ThemeAuth.hpp
+    include/Themes/ThemeBadges.hpp
+    include/Themes/ThemeCore.hpp
+    include/Themes/ThemeDialogsCommon.hpp
+    include/Themes/ThemeHome.hpp
+    include/Themes/ThemeJoystick.hpp
+    include/Themes/ThemeMainMenu.hpp
+    include/Themes/ThemeManualControl.hpp
+    include/Themes/ThemeMap.hpp
+    include/Themes/ThemeOrientationWheel.hpp
+    include/Themes/ThemeRobotConnection.hpp
+    include/Themes/ThemeSelection.hpp
+    include/Themes/ThemeSettings.hpp
+    include/User/Patient.hpp
+    include/User/UserSession.hpp
+)
+
+# Set source files
+set(SOURCES
+    src/Context/RobotContext.cpp
+    src/Core/RoboGaitApplication.cpp
+    src/DataBase/Common/DbErrors.cpp
+    src/DataBase/Common/DbTypes.cpp
+    src/DataBase/Repository/ExperimentRepository.cpp
+    src/DataBase/Repository/MapRepository.cpp
+    src/DataBase/Repository/PatientRepository.cpp
+    src/DataBase/Repository/Repository.cpp
+    src/DataBase/Repository/UserRepository.cpp
+    src/DataBase/DataBaseManager.cpp
+    src/DataBase/DatabaseSchema.cpp
+    src/DataBase/RoboGaitDb.cpp
+    src/Loader/BootStrapLoader.cpp
+    src/Loader/MapFileLoader.cpp
+    src/Loader/YamlLoader.cpp
+    src/Map/Data/LaserScanData.cpp
+    src/Map/Data/MapData.cpp
+    src/Map/Data/ParticleCloudData.cpp
+    src/Map/Data/PathData.cpp
+    src/Map/Data/RobotPoseData.cpp
+    src/Map/History/TracedRouteHistory.cpp
+    src/Map/Interaction/Geometry/BezierSplineModel.cpp
+    src/Map/Interaction/Geometry/SplineFitter.cpp
+    src/Map/Interaction/Geometry/StrokeProcessor.cpp
+    src/Map/Interaction/SplinePathEditor.cpp
+    src/Map/Items/LaserLayerItem.cpp
+    src/Map/Items/MapLayerItem.cpp
+    src/Map/Items/ParticleCloudLayerItem.cpp
+    src/Map/Items/PathLayerItem.cpp
+    src/Map/Items/RobotLayerItem.cpp
+    src/Map/Layer/LaserLayer.cpp
+    src/Map/Layer/MapLayer.cpp
+    src/Map/Layer/ParticleCloudLayer.cpp
+    src/Map/Layer/PathLayer.cpp
+    src/Map/Layer/RobotLayer.cpp
+    src/Map/Rendering/RenderCamera.cpp
+    src/Map/Rendering/RenderPipeline.cpp
+    src/Map/Rendering/RenderScene.cpp
+    src/Map/Source/LaserSource.cpp
+    src/Map/Source/MapSource.cpp
+    src/Map/Source/ParticleCloudSource.cpp
+    src/Map/Source/PathSource.cpp
+    src/Map/Source/RobotPoseSource.cpp
+    src/Map/Source/SourceInterface.cpp
+    src/Map/Subscribers/LaserScanSubscriber.cpp
+    src/Map/Subscribers/MapSubscriber.cpp
+    src/Map/Subscribers/ParticleCloudSubscriber.cpp
+    src/Map/Subscribers/PathSubscriber.cpp
+    src/Map/Subscribers/TFSubscriber.cpp
+    src/Map/TF/RobotTFBuffer.cpp
+    src/Map/Utils/Utils.cpp
+    src/Map/MapVisualizationManager.cpp
+    src/Perception/PersonDetectionMonitor.cpp
+    src/Robot/ManualControl.cpp
+    src/Robot/RobotDiscovery.cpp
+    src/Robot/RobotManager.cpp
+    src/Robot/RobotPlacementController.cpp
+    src/Ros/Define.cpp
+    src/Ros/MessageCompatibility.cpp
+    src/Ros/QoSProfiles.cpp
+    src/Ros/RosNodeManager.cpp
+    src/Ros/TopicsName.cpp
+    src/Services/RobotServiceBridge.cpp
+    src/Services/RobotServiceClient.cpp
+    src/Settings/DeveloperSettings.cpp
+    src/Settings/RobotSettings.cpp
+    src/Settings/TimeoutSettings.cpp
+    src/Settings/UiSizingSettings.cpp
+    src/Themes/AppTheme.cpp
+    src/Themes/ThemeAuth.cpp
+    src/Themes/ThemeBadges.cpp
+    src/Themes/ThemeCore.cpp
+    src/Themes/ThemeDialogsCommon.cpp
+    src/Themes/ThemeHome.cpp
+    src/Themes/ThemeJoystick.cpp
+    src/Themes/ThemeMainMenu.cpp
+    src/Themes/ThemeManualControl.cpp
+    src/Themes/ThemeMap.cpp
+    src/Themes/ThemeOrientationWheel.cpp
+    src/Themes/ThemeRobotConnection.cpp
+    src/Themes/ThemeSelection.cpp
+    src/Themes/ThemeSettings.cpp
+    src/User/Patient.cpp
+    src/User/UserSession.cpp
+    src/main.cpp
+)
+
+# Set resource files
+set(RESOURCES
+    qml.qrc
+    qmlresources.qrc
+)
+
+# Set Qt library dependencies
+set(QT_LIBS
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Qml
+    Qt6::Quick
+    Qt6::Network
+    Qt6::Sql
+    Qt6::Widgets
+)
+
+# Add Qt resources
+qt_add_resources(SOURCES
+    ${RESOURCES}
+)
+
+# Add executable
+add_executable(${PROJECT_NAME}
+    ${SOURCES}
+    ${HEADERS}
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    include
+)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    "ROBOGAIT_ROS_${ROBOGAIT_ROS_DISTRO_UPPER}"
+)
+
+option(ENABLE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+
+option(DISABLE_DEBUG_LOGS "Disable qDebug log output" OFF)
+
+if(DISABLE_DEBUG_LOGS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        QT_NO_DEBUG_OUTPUT
+    )
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Wshadow
+        -Wold-style-cast
+        -Woverloaded-virtual
+        -Wnon-virtual-dtor
+        -Wduplicated-cond
+        -Wduplicated-branches
+        -Wlogical-op
+        -Wnull-dereference
+        -Wuseless-cast
+        -Wdouble-promotion
+        -Wformat=2
+        -Wzero-as-null-pointer-constant
+        -Wcast-qual
+        -Wconversion
+        -Wfloat-conversion
+    )
+
+    if(ENABLE_WARNINGS_AS_ERRORS)
+        target_compile_options(${PROJECT_NAME} PRIVATE
+            -Werror
+        )
+    endif()
+
+endif()
+
+# Link libraries
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    rclcpp::rclcpp
+    rclcpp_action::rclcpp_action
+    ament_index_cpp::ament_index_cpp
+    ${ROBOGAIT_ACTION_MSGS_TARGETS}
+    ${ROBOGAIT_SENSOR_MSGS_TARGETS}
+    ${ROBOGAIT_GEOMETRY_MSGS_TARGETS}
+    ${ROBOGAIT_NAV_MSGS_TARGETS}
+    ${ROBOGAIT_MAP_MSGS_TARGETS}
+    ${ROBOGAIT_LIFECYCLE_MSGS_TARGETS}
+    ${ROBOGAIT_NAV2_MSGS_TARGETS}
+    tf2::tf2
+    ${ROBOGAIT_TF2_MSGS_TARGETS}
+    tf2_ros::tf2_ros
+    tf2_geometry_msgs::tf2_geometry_msgs
+    ${ROBOGAIT_STD_SRVS_TARGETS}
+    ${ROBOGAIT_COMMAND_EXECUTOR_MSGS_TARGETS}
+    ${ROBOGAIT_NAVIGATION_PKG_TARGETS}
+    ${ROBOGAIT_YAML_CPP_TARGET}
+    ${QT_LIBS}
+)
+
+if(ROBOGAIT_ROS_DISTRO_NORMALIZED STREQUAL "lyrical")
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        ament_cmake_ros_core::ament_ros_defaults
+    )
+endif()
+
+# Install
+install(TARGETS ${PROJECT_NAME}
+    DESTINATION lib/${PROJECT_NAME}
+)
+
+install(FILES
+    params/bootstrap.yaml
+    params/config.yaml
+    params/commands.yaml
+    DESTINATION share/${PROJECT_NAME}/params
+)
+
+# Create tests
+if(BUILD_TESTING)
+    find_package(ament_cmake_gtest REQUIRED)
+
+    ament_add_gtest(test_map_data
+        test/map/data/test_map_data.cpp
+        src/Map/Data/MapData.cpp
+    )
+    target_include_directories(test_map_data PRIVATE include)
+
+    ament_add_gtest(test_yaml_loader
+        test/loader/test_yaml_loader.cpp
+        src/Loader/YamlLoader.cpp
+    )
+    target_include_directories(test_yaml_loader PRIVATE include)
+    target_link_libraries(test_yaml_loader
+        ${ROBOGAIT_YAML_CPP_TARGET}
+    )
+
+    ament_add_gtest(test_robot_settings
+        test/settings/test_robot_settings.cpp
+        src/Loader/YamlLoader.cpp
+        src/Ros/Define.cpp
+        src/Ros/TopicsName.cpp
+        src/Settings/RobotSettings.cpp
+        include/Settings/RobotSettings.hpp
+    )
+    target_include_directories(test_robot_settings PRIVATE include)
+    target_link_libraries(test_robot_settings
+        ${ROBOGAIT_YAML_CPP_TARGET}
+        Qt6::Core
+    )
+
+    ament_add_gtest(test_manual_control_settings
+        test/settings/test_manual_control_settings.cpp
+        src/Loader/YamlLoader.cpp
+        src/Robot/ManualControl.cpp
+        src/Ros/Define.cpp
+        src/Ros/QoSProfiles.cpp
+        src/Ros/TopicsName.cpp
+        src/Settings/RobotSettings.cpp
+        include/Robot/ManualControl.hpp
+        include/Settings/RobotSettings.hpp
+    )
+    target_include_directories(test_manual_control_settings PRIVATE include)
+    target_compile_definitions(test_manual_control_settings PRIVATE
+        "ROBOGAIT_ROS_${ROBOGAIT_ROS_DISTRO_UPPER}"
+    )
+    target_link_libraries(test_manual_control_settings
+        rclcpp::rclcpp
+        ${ROBOGAIT_GEOMETRY_MSGS_TARGETS}
+        tf2_ros::tf2_ros
+        ${ROBOGAIT_YAML_CPP_TARGET}
+        Qt6::Core
+    )
+
+    ament_add_gtest(test_developer_settings
+        test/settings/test_developer_settings.cpp
+        src/Loader/YamlLoader.cpp
+        src/Settings/DeveloperSettings.cpp
+        include/Settings/DeveloperSettings.hpp
+    )
+    target_include_directories(test_developer_settings PRIVATE include)
+    target_link_libraries(test_developer_settings
+        ${ROBOGAIT_YAML_CPP_TARGET}
+        Qt6::Core
+    )
+
+    ament_add_gtest(test_timeout_settings
+        test/settings/test_timeout_settings.cpp
+        src/Loader/YamlLoader.cpp
+        src/Settings/TimeoutSettings.cpp
+        include/Settings/TimeoutSettings.hpp
+    )
+    target_include_directories(test_timeout_settings PRIVATE include)
+    target_link_libraries(test_timeout_settings
+        ${ROBOGAIT_YAML_CPP_TARGET}
+        Qt6::Core
+    )
+
+    ament_add_gtest(test_ui_sizing_settings
+        test/settings/test_ui_sizing_settings.cpp
+        src/Loader/YamlLoader.cpp
+        src/Settings/UiSizingSettings.cpp
+        include/Settings/UiSizingSettings.hpp
+    )
+    target_include_directories(test_ui_sizing_settings PRIVATE include)
+    target_link_libraries(test_ui_sizing_settings
+        ${ROBOGAIT_YAML_CPP_TARGET}
+        Qt6::Core
+        Qt6::Gui
+    )
+
+    ament_add_gtest(test_bootstrap_loader
+        test/loader/test_bootstrap_loader.cpp
+        src/Loader/BootStrapLoader.cpp
+    )
+    target_include_directories(test_bootstrap_loader PRIVATE include)
+    target_link_libraries(test_bootstrap_loader
+        ${ROBOGAIT_YAML_CPP_TARGET}
+    )
+
+    ament_add_gtest(test_path_data
+        test/map/data/test_path_data.cpp
+        src/Map/Data/PathData.cpp
+    )
+    target_include_directories(test_path_data PRIVATE include)
+
+    ament_add_gtest(test_robot_pose_data
+        test/map/data/test_robot_pose_data.cpp
+        src/Map/Data/RobotPoseData.cpp
+    )
+    target_include_directories(test_robot_pose_data PRIVATE include)
+
+    ament_add_gtest(test_sensor_data
+        test/map/data/test_sensor_data.cpp
+        src/Map/Data/LaserScanData.cpp
+        src/Map/Data/ParticleCloudData.cpp
+    )
+    target_include_directories(test_sensor_data PRIVATE include)
+
+    ament_add_gtest(test_stroke_processor
+        test/map/interaction/geometry/test_stroke_processor.cpp
+        src/Map/Interaction/Geometry/StrokeProcessor.cpp
+    )
+    target_include_directories(test_stroke_processor PRIVATE include)
+    target_link_libraries(test_stroke_processor
+        Qt6::Core
+    )
+
+    ament_add_gtest(test_spline_geometry
+        test/map/interaction/geometry/test_spline_geometry.cpp
+        src/Map/Interaction/Geometry/BezierSplineModel.cpp
+        src/Map/Interaction/Geometry/SplineFitter.cpp
+    )
+    target_include_directories(test_spline_geometry PRIVATE include)
+    target_link_libraries(test_spline_geometry
+        Qt6::Core
+    )
+
+    ament_add_gtest(test_render_camera
+        test/map/rendering/test_render_camera.cpp
+        src/Map/Rendering/RenderCamera.cpp
+    )
+    target_include_directories(test_render_camera PRIVATE include)
+    target_link_libraries(test_render_camera
+        Qt6::Core
+        Qt6::Gui
+    )
+
+    ament_add_gtest(test_db_common
+        test/data_base/common/test_db_common.cpp
+        src/DataBase/Common/DbErrors.cpp
+        src/DataBase/Common/DbTypes.cpp
+    )
+    target_include_directories(test_db_common PRIVATE include)
+    target_link_libraries(test_db_common
+        Qt6::Core
+    )
+
+    ament_add_gtest(test_database_schema
+        test/data_base/schema/test_database_schema.cpp
+        src/DataBase/Common/DbErrors.cpp
+        src/DataBase/DatabaseSchema.cpp
+    )
+    target_include_directories(test_database_schema PRIVATE include)
+    target_link_libraries(test_database_schema
+        Qt6::Core
+        Qt6::Sql
+    )
+
+    ament_add_gtest(test_repositories
+        test/data_base/repository/test_repositories.cpp
+        src/DataBase/Common/DbErrors.cpp
+        src/DataBase/Common/DbTypes.cpp
+        src/DataBase/DatabaseSchema.cpp
+        src/DataBase/RoboGaitDb.cpp
+        src/DataBase/Repository/Repository.cpp
+        src/DataBase/Repository/UserRepository.cpp
+        src/DataBase/Repository/PatientRepository.cpp
+        src/DataBase/Repository/MapRepository.cpp
+        src/DataBase/Repository/ExperimentRepository.cpp
+    )
+    target_include_directories(test_repositories PRIVATE include)
+    target_link_libraries(test_repositories
+        Qt6::Core
+        Qt6::Sql
+    )
+
+    ament_add_gtest(test_database_manager
+        test/data_base/manager/test_database_manager.cpp
+        include/DataBase/DataBaseManager.hpp
+        src/DataBase/Common/DbErrors.cpp
+        src/DataBase/Common/DbTypes.cpp
+        src/DataBase/DatabaseSchema.cpp
+        src/DataBase/RoboGaitDb.cpp
+        src/DataBase/DataBaseManager.cpp
+        src/DataBase/Repository/Repository.cpp
+        src/DataBase/Repository/UserRepository.cpp
+        src/DataBase/Repository/PatientRepository.cpp
+        src/DataBase/Repository/MapRepository.cpp
+        src/DataBase/Repository/ExperimentRepository.cpp
+    )
+    target_include_directories(test_database_manager PRIVATE include)
+    target_link_libraries(test_database_manager
+        Qt6::Core
+        Qt6::Sql
+    )
+
+    ament_add_gtest(test_robot_context
+        test/context/test_robot_context.cpp
+        src/Context/RobotContext.cpp
+    )
+    target_include_directories(test_robot_context PRIVATE include)
+    target_link_libraries(test_robot_context
+        Qt6::Core
+    )
+endif()
+
+ament_package()

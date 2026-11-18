@@ -1,0 +1,123 @@
+# GUI_ROBOGait
+
+<!-- TABLA DE CONTENIDOS -->
+<details open>
+    <summary><h2>Tabla de contenidos</h2></summary>
+    <ol>
+        <li><a href="#descripción">Descripción</a></li>
+        <li><a href="#organización-del-repositorio">Organización del repositorio</a></li>
+        <li><a href="#instalador-principal">Instalador principal</a></li>
+        <li><a href="#compatibilidad">Compatibilidad</a></li>
+        <li><a href="#instalación">Instalación</a></li>
+        <li><a href="#herramientas-de-desarrollo">Herramientas de desarrollo</a></li>
+    </ol>
+</details>
+
+<!-- DESCRIPCIÓN -->
+## Descripción
+
+**GUI_ROBOGait_V2** es un workspace ROS 2 que contiene la aplicación gráfica utilizada para gestionar pacientes y experimentos, visualizar y crear mapas, y supervisar y controlar el robot. El repositorio incluye además el nodo que ejecuta comandos en el robot, las interfaces ROS compartidas y los recursos necesarios para instalar o desplegar la aplicación.
+
+<!-- ORGANIZACIÓN DEL REPOSITORIO -->
+## Organización del repositorio
+
+### `src/`
+
+Contiene los paquetes ROS 2 y el código fuente del proyecto:
+
+* [`robogait_gui`](src/robogait_gui/) &rarr; Aplicación Qt Quick que proporciona la interfaz de usuario, la persistencia SQLite y la comunicación ROS 2 con el robot. Consulte su documentacion técnica en &rarr; [src/robogait_gui/README.md](src/robogait_gui/README.md).
+
+* [`command_executor`](src/command_executor/command_executor/) &rarr; Nodo ejecutado en el robot para validar y gestionar comandos de navegación, mapeado y mapas.
+
+* [`command_executor_msgs`](src/command_executor/command_executor_msgs/) &rarr; Mensajes y servicios que comunican la GUI con `command_executor`.
+
+  Los dos paquetes de `command_executor` se documentan conjuntamente en &rarr; [src/command_executor/README.md](src/command_executor/README.md).
+
+* [`navigation_pkg`](src/navigation_pkg/) &rarr; Interfaces ROS compartidas por compatibilidad con RoboMesh e interfaz experimental para detecciones de cámara. Consulte su documentación técnica en &rarr; [src/navigation_pkg/README.md](src/navigation_pkg/README.md).
+
+* [`nav2_msgs`](src/nav2_msgs/) &rarr; Subconjunto local de interfaces Nav2 Jazzy generado únicamente en Lyrical para que la GUI mantenga el contrato DDS del robot Jazzy. Consulte su documentación técnica en &rarr; [src/nav2_msgs/README.md](src/nav2_msgs/README.md).
+
+### `scripts/`
+
+Contiene las funciones de instalación. Los scripts auxiliares son cargados por `install.sh` y no están diseñados para ejecutarse individualmente.
+
+Consulte los flujos, cambios del sistema y responsabilidad de cada archivo en [scripts/README.md](scripts/README.md).
+
+### `docker/`
+
+Contiene los archivos y configuracion necesaria para ejecutar la aplicacion en un contenedor.
+
+La construcción, configuración, ejecución y resolución de problemas se detallan en  [docker/README.md](docker/README.md).
+
+### Archivos principales
+
+* [`install.sh`](install.sh) &rarr; Punto de entrada interactivo para instalar el entorno de desarrollo o desplegar la aplicación de forma nativa o con Docker.
+
+* [`README.md`](README.md) &rarr; Documentación general y navegación hacia cada módulo.
+
+<!-- INSTALADOR PRINCIPAL -->
+## Instalador principal
+
+[`install.sh`](install.sh) carga las funciones de `scripts/`, activa el modo estricto de Bash y guía al usuario mediante la selección de modalidad y, cuando corresponde, de distribución ROS 2. La recompilación del entorno de desarrollo detecta la distribución automáticamente. Las operaciones que necesitan privilegios solicitan la contraseña de `sudo` una vez y la reutilizan durante esa ejecución.
+
+|             Modalidad            |                                Instala y configura                               |                              Resultado                             |
+|----------------------------------|:--------------------------------------------------------------------------------:|--------------------------------------------------------------------|
+|      Ordenador de desarrollo     |          ROS 2, Qt 6, herramientas C++, dependencias y utilidades SQLite         |     Workspace compilado, entorno y lanzador nativo configurados    |
+|     Dispositivo de aplicación    | El usuario elige instalación nativa o Docker; ambas crean un servicio de usuario |  GUI preparada para iniciarse mediante systemd en el modo elegido  |
+|            Solo Docker           |              Docker Engine, grupos gráficos, entorno Docker e imagen             |  Imagen disponible para ejecución manual, sin instalar el servicio |
+|        Recompilar Docker         |                Reutiliza Docker y reconstruye la imagen existente                |      Imagen actualizada sin reinstalar ni reconfigurar Docker      |
+| Recompilar entorno de desarrollo |       Detecta la instalación ROS 2 y vuelve a ejecutar `colcon build`            |       Workspace actualizado sin reinstalar dependencias            |
+
+El flujo de desarrollo compila mediante `colcon` los paquetes `command_executor_msgs`, `navigation_pkg`, `command_executor` y `robogait_gui`. Además instala un acceso nativo en el menú y en los favoritos de GNOME con `robogait.png`. La instalación nativa de un dispositivo realiza la misma preparación, pero no compila `command_executor`, y crea `robogait-gui-native.service`; el servicio carga los entornos ROS 2 y del workspace antes de ejecutar `ros2 run robogait_gui robogait_gui`. Cuando la distribución seleccionada es Lyrical también se genera el paquete local `nav2_msgs`; en Humble y Jazzy se utiliza el proporcionado por `/opt/ros`.
+
+La modalidad **Recompilar entorno de desarrollo** detecta automáticamente la distribución activa o instalada y repite la compilación completa sin solicitar una versión ni reinstalar dependencias. Los flujos Docker construyen la imagen `robogait_gui:${ROS_DISTRO}`; la variante Docker del dispositivo crea `robogait-gui-docker.service`. La modalidad **Recompilar Docker** omite la instalación y configuración de Docker y actualiza solamente el entorno `.env` y la imagen.
+
+> [!WARNING]
+>
+>El instalador añade repositorios APT, instala paquetes y modifica la configuración del sistema. La instalación de Docker puede eliminar paquetes incompatibles y añade el usuario actual al grupo `docker`. Revise [Cambios realizados en el sistema](scripts/README.md#cambios-realizados-en-el-sistema) de *scripts/README.md*  para conocer todos los cambios.
+
+<!-- COMPATIBILIDAD -->
+## Compatibilidad
+
+Para las instalaciones nativas, el instalador valida estas combinaciones:
+
+| Ubuntu |   ROS 2 |
+|--------|---------|
+| 22.04  |  Humble |
+| 24.04  |  Jazzy  |
+| 26.04  | Lyrical |
+
+La instalación nativa valida que la versión seleccionada sea compatible con Ubuntu. La aplicación Docker también se construye seleccionando Humble, Jazzy o Lyrical mediante `ROS_DISTRO`.
+
+La distribución activa se obtiene del entorno cargado mediante `/opt/ros/${ROS_DISTRO}/setup.bash`. Los paquetes con código C++ dependiente de la API de ROS 2 validan ese valor en CMake y exponen exactamente una de las macros `ROBOGAIT_ROS_HUMBLE`, `ROBOGAIT_ROS_JAZZY` o `ROBOGAIT_ROS_LYRICAL`.
+
+Los paquetes que solo generan interfaces, como `command_executor_msgs` y `navigation_pkg`, no necesitan macros por distribución: ROSIDL utiliza los generadores y *targets* proporcionados por el entorno ROS 2 activo.
+
+Las acciones de Navigation2 no mantienen el mismo contrato entre Jazzy y Lyrical. Para que una GUI Lyrical pueda comunicarse con el robot Jazzy, el workspace incluye un [`nav2_msgs` local](src/nav2_msgs/) con las definiciones Jazzy de `ComputePathToPose`, `NavigateToPose` y `FollowPath`, además de los mensajes de partículas utilizados por la GUI. Este override solo se compila en Lyrical; Humble y Jazzy continúan usando sus paquetes oficiales.
+
+<!-- INSTALACIÓN -->
+## Instalación
+
+Clone el repositorio y ejecute el instalador desde su raíz:
+
+```bash
+git clone -b develop https://github.com/victor-villamar/GUI_ROBOGait_V2.git
+cd GUI_ROBOGait_V2
+chmod +x install.sh
+./install.sh
+```
+
+Seleccione una de las cinco modalidades mostradas por el instalador. En **Dispositivo de aplicación**, seleccione después **Docker** o **Nativa**. Después de instalar Docker, cierre la sesión y vuelva a entrar, o reinicie el equipo, para aplicar la pertenencia al grupo `docker`.
+
+Para instrucciones específicas consulte:
+
+* [Instalación y scripts](scripts/README.md#uso).
+* [Construcción y ejecución con Docker](docker/README.md#construcción).
+* [Compilación y ejecución de la GUI](src/robogait_gui/README.md#compilación).
+
+<!-- HERRAMIENTAS DE DESARROLLO -->
+## Herramientas de desarrollo
+
+El modo **Ordenador de desarrollo** instala `sqlite3` y `sqlitebrowser` para inspeccionar la base de datos. Estas herramientas no son necesarias para ejecutar la GUI: el acceso de la aplicación a SQLite se realiza mediante `libqt6sql6-sqlite`, instalado tanto en desarrollo como en Docker.
+
+El instalador no instala el IDE Qt Creator, que continúa siendo opcional.

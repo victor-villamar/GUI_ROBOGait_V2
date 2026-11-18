@@ -1,0 +1,34 @@
+name: Add Mermaid diagram to PR description
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  update-pr-body:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update Mermaid diagram in PR body
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const source = context.payload.pull_request.head.ref;
+            const target = context.payload.pull_request.base.ref;
+
+            const currentBody = context.payload.pull_request.body || '';
+
+            const updatedBody = currentBody.replace(
+              'source_branch --> target_branch;',
+              `${source} --> ${target};`
+            );
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              body: updatedBody
+            });

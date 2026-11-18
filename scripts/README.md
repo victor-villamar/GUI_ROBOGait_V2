@@ -1,0 +1,295 @@
+# Scripts de instalación
+
+<!-- TABLA DE CONTENIDOS -->
+<details open>
+    <summary><h2>Tabla de contenidos</h2></summary>
+    <ol>
+        <li><a href="#descripción">Descripción</a></li>
+        <li><a href="#organización-de-los-scripts">Organización de los scripts</a></li>
+        <li><a href="#flujos-de-instalación">Flujos de instalación</a></li>
+        <li><a href="#scripts">Scripts</a></li>
+        <li><a href="#uso">Uso</a></li>
+        <li><a href="#cambios-realizados-en-el-sistema">Cambios realizados en el sistema</a></li>
+        <li><a href="#servicio-nativo">Servicio nativo</a></li>
+        <li><a href="#servicio-docker">Servicio Docker</a></li>
+    </ol>
+</details>
+
+<!-- DESCRIPCIÓN -->
+## Descripción
+
+Este directorio contiene las funciones utilizadas por [`install.sh`](../install.sh) para preparar un ordenador de desarrollo o desplegar la aplicación ROBOGait de forma nativa o mediante Docker.
+
+Los scripts auxiliares se cargan con `source` desde el instalador principal. Comparten funciones y variables como `ROOT_DIR`, `ROS_DISTRO`, `DOCKER_DIR`, `apt_install` y `sudo_cmd`.
+
+> [!WARNING]
+>
+>El instalador modifica la configuración del sistema: añade repositorios APT, instala paquetes, puede eliminar paquetes Docker incompatibles, añade el usuario al grupo `docker`, compila el workspace y, según la modalidad elegida, modifica `.bashrc` o instala un servicio de usuario de systemd.
+
+<!-- ORGANIZACIÓN DE LOS SCRIPTS -->
+## Organización de los scripts
+
+* [`common.sh`](common.sh) &rarr; Funciones compartidas, validación del sistema, selección de distro de ROS 2 y ejecución de comandos con `sudo`.
+
+* [`install_ros2.sh`](install_ros2.sh) &rarr; Configuración del repositorio oficial de ROS 2 e instalación de sus dependencias.
+
+* [`install_qt6.sh`](install_qt6.sh) &rarr; Instalación de Qt 6, módulos QML, teclado virtual y controlador SQLite.
+
+* [`install_dev_dependencies.sh`](install_dev_dependencies.sh) &rarr; Herramientas de compilación y desarrollo.
+
+* [`build_workspace.sh`](build_workspace.sh) &rarr; Compilación del workspace y configuración del entorno de desarrollo.
+
+* [`install_docker.sh`](install_docker.sh) &rarr; Instalación de Docker Engine, preparación del entorno y construcción de la imagen.
+
+* [`install_docker_service.sh`](install_docker_service.sh) &rarr; Creación y activación del servicio que inicia la GUI en Docker.
+
+* [`install_native_service.sh`](install_native_service.sh) &rarr; Lanzador nativo, acceso en favoritos y servicio de usuario para ejecutar la GUI instalada en el workspace.
+
+<!-- FLUJOS DE INSTALACIÓN -->
+## Flujos de instalación
+
+[`install.sh`](../install.sh) es el punto de entrada y permite elegir una de estas modalidades:
+
+```mermaid
+flowchart TD
+    Start[Ejecutar install.sh] --> Mode{Modalidad}
+
+    Mode -->|Ordenador de desarrollo| Dev[Validar Ubuntu y ROS 2]
+    Dev --> Locale[Configurar locale y repositorio ROS 2]
+    Locale --> Dependencies[Instalar herramientas, Qt 6 y ROS 2]
+    Dependencies --> Build[Compilar workspace con colcon]
+    Build --> Bashrc[Configurar .bashrc y lanzador favorito]
+
+    Mode -->|Dispositivo de aplicación| Device{Docker o nativa}
+    Device -->|Docker| DeviceDocker[Instalar y configurar Docker]
+    DeviceDocker --> DeviceEnvironment[Generar entorno Docker]
+    DeviceEnvironment --> DeviceImage[Construir imagen robogait_gui]
+    DeviceImage --> DockerService[Instalar servicio Docker de usuario]
+
+    Device -->|Nativa| Native[Validar Ubuntu y ROS 2]
+    Native --> NativeDependencies[Instalar dependencias de desarrollo]
+    NativeDependencies --> NativeBuild[Compilar GUI sin command_executor]
+    NativeBuild --> NativeService[Instalar servicio nativo y favorito]
+
+    Mode -->|Solo Docker| DockerOnly[Validar Ubuntu y seleccionar ROS 2]
+    DockerOnly --> OnlyDocker[Instalar y configurar Docker]
+    OnlyDocker --> OnlyEnvironment[Generar entorno Docker]
+    OnlyEnvironment --> OnlyImage[Construir imagen robogait_gui]
+
+    Mode -->|Recompilar Docker| Rebuild[Validar Docker existente y seleccionar ROS 2]
+    Rebuild --> RebuildEnvironment[Actualizar entorno Docker]
+    RebuildEnvironment --> RebuildImage[Reconstruir imagen robogait_gui]
+
+    Mode -->|Recompilar entorno de desarrollo| RebuildDev[Detectar ROS 2 instalado]
+    RebuildDev --> RebuildWorkspace[Compilar workspace con colcon]
+```
+
+<!-- SCRIPTS -->
+## Scripts
+
+### `common.sh`
+
+Proporciona las funciones comunes del instalador:
+
+* Registro de operaciones y gestión de errores.
+* Solicitud y reutilización de la contraseña de `sudo` durante la ejecución.
+* Validación de Ubuntu.
+* Selección de ROS 2 Humble, Jazzy o Lyrical.
+* Detección automática de la distribución ROS 2 activa o instalada.
+* Validación de la combinación entre Ubuntu y ROS 2.
+* Instalación de paquetes APT y actualización idempotente de `.bashrc`.
+
+### `install_dev_dependencies.sh`
+
+Instala compiladores, CMake, herramientas de Python y `colcon`, dependencias de YAML y Boost, utilidades de red y herramientas de desarrollo. También instala `sqlite3` y `sqlitebrowser` para inspeccionar la base de datos durante el desarrollo.
+
+Delega las dependencias específicas de Qt 6 y ROS 2 en sus respectivos scripts.
+
+### `install_qt6.sh`
+
+Instala las bibliotecas de desarrollo y ejecución de Qt 6 utilizadas por `robogait_gui`, incluidos Qt Quick, QML, Qt Virtual Keyboard, OpenGL, SVG y el controlador `libqt6sql6-sqlite`.
+
+> [!NOTE]
+>
+>Este script instala Qt 6 desde los repositorios de Ubuntu, pero no instala el IDE Qt Creator.
+
+### `install_ros2.sh`
+
+Añade la clave y el repositorio oficial de ROS 2 para la versión de Ubuntu detectada. Después instala ROS Base y las dependencias ROS utilizadas por los paquetes del workspace.
+
+### `build_workspace.sh`
+
+Carga `/opt/ros/${ROS_DISTRO}/setup.bash` y compila estos paquetes:
+
+* `command_executor_msgs`
+* `navigation_pkg`
+* `command_executor`
+* `robogait_gui`
+* `nav2_msgs`, únicamente cuando la distribución seleccionada es Lyrical
+
+Esta selección se utiliza para desarrollo. En la instalación nativa de un dispositivo se omite únicamente `command_executor`: se mantienen `command_executor_msgs`, `navigation_pkg`, `robogait_gui` y, en Lyrical, el override local de `nav2_msgs`.
+
+La selección equivalente es:
+
+```bash
+packages=(command_executor_msgs navigation_pkg command_executor robogait_gui)
+nav2_compat_args=(--packages-ignore nav2_msgs)
+
+if [ "${ROS_DISTRO}" = "lyrical" ]; then
+    packages=(nav2_msgs "${packages[@]}")
+    nav2_compat_args=()
+fi
+
+colcon build --merge-install --base-paths src \
+    "${nav2_compat_args[@]}" \
+    --packages-select "${packages[@]}"
+```
+
+Antes de ejecutar `colcon`, `build_workspace.sh` carga el entorno de la distribución seleccionada. Esto define `ROS_DISTRO`, que los CMake de `command_executor` y `robogait_gui` utilizan para activar la rama correspondiente; no es necesario añadir `--cmake-args -DROBOGAIT_ROS_DISTRO=...`.
+
+El paquete local [`nav2_msgs`](../src/nav2_msgs/) conserva las interfaces de acciones Jazzy necesarias para que una GUI Lyrical se comunique con el robot Jazzy. En Humble y Jazzy se pasa `--packages-ignore nav2_msgs`, evitando que el paquete local sustituya al instalado por la distribución.
+
+Al finalizar, añade estas líneas a `.bashrc` si todavía no existen:
+
+```bash
+source /opt/ros/${ROS_DISTRO}/setup.bash
+source <ruta-del-repositorio>/install/setup.bash
+```
+
+La instalación de desarrollo añade además el lanzador `robogait-gui-native.desktop` al menú y a los favoritos de GNOME. Utiliza el icono `resources/Logos/robogait.png` para distinguir la ejecución nativa de Docker.
+
+### `install_docker.sh`
+
+Elimina paquetes que puedan entrar en conflicto con Docker CE, configura el repositorio oficial, instala Docker Engine y sus plugins, y añade el usuario actual al grupo `docker`.
+
+También ejecuta [`docker/setup_docker_env.sh`](../docker/setup_docker_env.sh), que prepara el directorio persistente del usuario y la configuración de Docker, y construye la imagen definida en [`docker/DockerFile`](../docker/DockerFile).
+
+La opción **Recompilar Docker** del instalador valida que Docker ya esté disponible y reutiliza estas funciones para actualizar `.env` y reconstruir la imagen. No instala paquetes, no modifica repositorios o grupos y no reinstala el servicio de usuario.
+
+La opción **Recompilar entorno de desarrollo** no solicita una distribución. Utiliza `ROS_DISTRO` si corresponde a un entorno compatible cargado; en caso contrario, detecta Humble, Jazzy o Lyrical bajo `/opt/ros`. Si hay varias instalaciones, selecciona la correspondiente a la versión de Ubuntu. Después ejecuta la misma compilación condicional de `build_workspace.sh`, sin instalar dependencias, solicitar contraseña ni modificar `.bashrc`.
+
+### `install_native_service.sh`
+
+La instalación de desarrollo utiliza este script para crear un lanzador nativo en `~/.local/share/applications/robogait-gui-native.desktop`, copiar `robogait.png` a los iconos locales y añadir la aplicación a los favoritos de GNOME. El lanzador carga ROS 2 y el workspace antes de ejecutar:
+
+```bash
+ros2 run robogait_gui robogait_gui
+```
+
+Cuando se elige **Dispositivo de aplicación → Nativa**, también genera el servicio:
+
+```text
+~/.config/systemd/user/robogait-gui-native.service
+```
+
+Una entrada XDG Autostart importa las variables de la sesión gráfica y arranca el servicio. El servicio reinicia la GUI cuando falla, con un límite de tres intentos por minuto. El acceso del menú permite volver a iniciarlo manualmente mediante systemd.
+
+### `install_docker_service.sh`
+
+Genera el servicio de usuario:
+
+```text
+~/.config/systemd/user/robogait-gui-docker.service
+```
+
+También se crea un lanzador en `~/.local/bin` y una entrada XDG Autostart en `~/.config/autostart`. Cuando el usuario abre la sesión gráfica, el lanzador importa `DISPLAY`, `XAUTHORITY` y las variables de Wayland en el gestor systemd antes de iniciar el servicio. El servicio ejecuta Docker Compose desde el directorio `docker`, comparte la pantalla X11 y reinicia el contenedor si el proceso falla, con un límite de tres intentos por minuto.
+
+La instalación añade además ROBOGait GUI al menú de aplicaciones mediante `~/.local/share/applications/robogait-gui.desktop`, instala su icono en `~/.local/share/icons` y, cuando se utiliza GNOME, conserva los favoritos existentes y añade el lanzador a la barra. Este acceso permite volver a iniciar la aplicación sin utilizar una terminal.
+
+El script puede reinstalar únicamente este mecanismo sin repetir la instalación completa:
+
+```bash
+./scripts/install_docker_service.sh lyrical
+```
+
+Utilice `humble`, `jazzy` o `lyrical` según corresponda. Si `docker/.env` ya contiene `ROS_DISTRO`, el argumento puede omitirse.
+
+<!-- USO -->
+## Uso
+
+Ejecute siempre el instalador principal desde la raíz del repositorio:
+
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+> [!IMPORTANT]
+>
+>Salvo `install_docker_service.sh`, no ejecute directamente los archivos de `scripts/`. Están diseñados para cargarse desde `install.sh` y dependen del contexto inicializado por este.
+
+Tras una instalación de desarrollo, abra una nueva terminal o cargue manualmente el entorno. Ejecute solo la opción correspondiente a su distribución:
+
+```bash
+# ROS 2 Humble en Ubuntu 22.04
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+```
+
+o bien:
+
+```bash
+# ROS 2 Jazzy en Ubuntu 24.04
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+```
+
+o bien:
+
+```bash
+# ROS 2 Lyrical en Ubuntu 26.04
+source /opt/ros/lyrical/setup.bash
+source install/setup.bash
+```
+
+Tras instalar Docker, cierre la sesión y vuelva a entrar, o reinicie el equipo, para aplicar la pertenencia al grupo `docker`.
+
+<!-- CAMBIOS REALIZADOS EN EL SISTEMA -->
+## Cambios realizados en el sistema
+
+|             Modalidad            |                                        Cambios principales                                        |
+|----------------------------------|---------------------------------------------------------------------------------------------------|
+|             Desarrollo           |    Repositorio ROS 2, paquetes APT, compilación completa, `.bashrc`, lanzador nativo y favorito   |
+|       Dispositivo (Docker)       | Repositorio y paquetes Docker, grupo `docker`, archivo `.env`, imagen local y servicio de usuario |
+|       Dispositivo (nativo)       |       ROS 2, Qt 6, compilación sin `command_executor`, `.bashrc`, servicio nativo y favorito      |
+|             Solo Docker          |            Repositorio y paquetes Docker, grupo `docker`, archivo `.env` e imagen local           |
+|        Recompilar Docker         |                     Archivo `.env` e imagen Docker local actualizados                             |
+| Recompilar entorno de desarrollo |                      Artefactos `build/`, `install/` y `log/` actualizados                        |
+
+Los scripts intentan evitar duplicados en `.bashrc` y reutilizan la configuración existente cuando es posible. La instalación de Docker puede eliminar previamente paquetes incompatibles como `docker.io`, `podman-docker`, `containerd` o `runc`.
+
+<!-- SERVICIO NATIVO -->
+## Servicio nativo
+
+Después de cerrar y volver a abrir la sesión, la entrada XDG Autostart inicia automáticamente el servicio del dispositivo nativo. También puede gestionarse mediante:
+
+```bash
+systemctl --user start robogait-gui-native.service
+systemctl --user stop robogait-gui-native.service
+systemctl --user restart robogait-gui-native.service
+systemctl --user status robogait-gui-native.service
+```
+
+Para consultar sus registros:
+
+```bash
+journalctl --user -u robogait-gui-native.service -f
+```
+
+<!-- SERVICIO DOCKER -->
+## Servicio Docker
+
+Después de cerrar y volver a abrir la sesión, la entrada XDG Autostart inicia automáticamente el servicio. También puede gestionarse mediante:
+
+```bash
+systemctl --user start robogait-gui-docker.service
+systemctl --user stop robogait-gui-docker.service
+systemctl --user restart robogait-gui-docker.service
+systemctl --user status robogait-gui-docker.service
+```
+
+Para consultar sus registros:
+
+```bash
+journalctl --user -u robogait-gui-docker.service -f
+```

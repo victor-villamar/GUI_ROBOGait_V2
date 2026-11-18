@@ -1,0 +1,236 @@
+#include <algorithm>
+#include <cctype>
+#include <chrono>
+#include <cstddef>
+#include <iostream>
+#include <memory>
+#include <signal.h>
+#include <thread>
+
+#include "ProcessManager.hpp"
+
+using namespace ROBOGait::command;
+namespace boost_process = ROBOGait::command::boost_process;
+namespace
+{
+bool waitForProcessExit(boost_process::child& child, std::chrono::milliseconds timeout, std::error_code& ec)
+{
+  const auto deadline = std::chrono::steady_clock::now() + timeout;
+
+  while (std::chrono::steady_clock::now() < deadline)
+  {
+    ec.clear();
+    const bool running = child.running(ec);
+
+    if (ec)
+    {
+      return false;
+    }
+
+    if (!running)
+    {
+      return true;
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
+  ec.clear();
+  return !child.running(ec) && !ec;
+}
+
+std::string namespaceToLogsSuffix(const std::string& robot_namespace)
+{
+  const std::size_t separator_pos = robot_namespace.find('/');
+
+  std::string first_namespace = robot_namespace.substr(0, separator_pos);
+
+  std::replace_if(
+      first_namespace.begin(), first_namespace.end(), [](unsigned char character) { return !std::isalnum(character) && character != '_' && character != '-'; },
+      '_');
+
+  if (first_namespace.empty())
+  {
+    return "";
+  }
+
+  return "_" + first_namespace;
+}
+
+std::string buildLogPath(const std::string& robot_namespace, const std::string& stream)
+{
+  const std::string log_base_path = "/tmp/command_executor";
+  const std::string logs_suffix = namespaceToLogsSuffix(robot_namespace);
+
+  return log_base_path + logs_suffix + "_" + stream + ".log";
+}
+} // namespace
+
+ProcessManager::ProcessManager() { std::cout << "[ProcessManager::ProcessManager] ProcessManager initialized" << std::endl; }
+ProcessManager::~ProcessManager()
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  for (auto& entry : processes_)
+  {
+    std::error_code ec;
+    if (entry.second && isRunning(*entry.second))
+    {
+      entry.second->group.terminate(ec);
+      entry.second->child.wait(ec);
+    }
+  }
+  processes_.clear();
+
+  std::cout << "[ProcessManager::~ProcessManager] ProcessManager destroyed" << std::endl;
+}
+
+bool ProcessManager::startProcess(const std::string& cmd)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  auto existing = processes_.find(cmd);
+  if (existing != processes_.end())
+  {
+    if (existing->second->is_stopping)
+    {
+      return false;
+    }
+
+    if (isRunning(*existing->second))
+    {
+      return false;
+    }
+    processes_.erase(existing);
+  }
+
+  const std::string stdout_log_path = buildLogPath(robot_namespace_, "stdout");
+
+  const std::string stderr_log_path = buildLogPath(robot_namespace_, "stderr");
+
+  boost_process::group group;
+
+  // clang-format off
+  boost_process::child child(
+    "/bin/bash",
+    boost_process::args({"-lc", cmd}),
+    group,
+    boost_process::std_out > stdout_log_path,
+    boost_process::std_err > stderr_log_path
+  );
+  // clang-format on
+
+  const auto pid = child.id();
+  auto entry = std::make_shared<ProcessEntry>(ProcessEntry{std::move(group), std::move(child), pid});
+  processes_.emplace(cmd, std::move(entry));
+  return true;
+}
+
+bool ProcessManager::stopProcess(const std::string& cmd)
+{
+  std::shared_ptr<ProcessEntry> entry;
+
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto it = processes_.find(cmd);
+
+    if (it == processes_.end() || it->second->is_stopping)
+    {
+      return false;
+    }
+
+    if (!isRunning(*it->second))
+    {
+      processes_.erase(it);
+      return true;
+    }
+
+    it->second->is_stopping = true;
+    entry = it->second;
+  }
+
+  std::error_code ec;
+  const pid_t group_pid = entry->pid;
+
+  ::kill(-group_pid, SIGINT);
+
+  if (waitForProcessExit(entry->child, std::chrono::seconds(1), ec))
+  {
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+
+      const auto it = processes_.find(cmd);
+      if (it != processes_.end() && it->second == entry)
+      {
+        processes_.erase(it);
+      }
+    }
+    return true;
+  }
+
+  std::cout << "[ProcessManager::stopProcess] Process not terminated gracefully, forcing kill" << std::endl;
+  ::kill(-group_pid, SIGKILL);
+  ec.clear();
+  entry->child.wait(ec);
+
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    const auto it = processes_.find(cmd);
+    if (it != processes_.end() && it->second == entry)
+    {
+      processes_.erase(it);
+    }
+  }
+  return true;
+}
+
+bool ProcessManager::executeOneShotCommand(const std::string& cmd)
+{
+
+  const std::string stdout_log_path = buildLogPath(robot_namespace_, "stdout");
+  const std::string stderr_log_path = buildLogPath(robot_namespace_, "stderr");
+
+  // clang-format off
+  boost_process::child child(
+    "/bin/bash",
+    boost_process::args({"-lc", cmd}),
+    boost_process::std_out > stdout_log_path,
+    boost_process::std_err > stderr_log_path
+  );
+  // clang-format on
+
+  child.wait();
+
+  const int exit_code = child.exit_code();
+
+  if (exit_code != 0)
+  {
+    return false;
+  }
+  else
+  {
+    return true;
+  }
+}
+
+void ProcessManager::setRobotNamespace(const std::string& robot_namespace)
+{
+  robot_namespace_ = robot_namespace;
+
+  if (robot_namespace_.empty() || robot_namespace_ == "/")
+  {
+    robot_namespace_.clear();
+    return;
+  }
+
+  while (!robot_namespace_.empty() && robot_namespace_.front() == '/')
+  {
+    robot_namespace_.erase(robot_namespace_.begin());
+  }
+
+  while (!robot_namespace_.empty() && robot_namespace_.back() == '/')
+  {
+    robot_namespace_.pop_back();
+  }
+}
+
+bool ProcessManager::isRunning(ProcessEntry& entry) { return entry.child.valid() && entry.child.running(); }

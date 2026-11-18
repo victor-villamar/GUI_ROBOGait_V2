@@ -1,0 +1,70 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Linker files
+*.ilk
+
+# Debugger Files
+*.pdb
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# debug information files
+*.dwo
+
+# Build directories
+build/
+install/
+log/
+
+# Visual Studio Code settings
+.vscode/
+
+# clang-format configuration file
+.clang-format
+
+# qtcreator
+.qtcreator/
+
+# Combined compile commands
+combined_compile_commands.json
+
+# CodeGraph output
+.codegraph/
+
+# Ignore ROS 2 workspace files
+COLCON_IGNORE
+
+# Docker environment
+.env
+
+# Pycache files
+__pycache__/

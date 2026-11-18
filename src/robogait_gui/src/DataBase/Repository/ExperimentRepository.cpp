@@ -1,0 +1,149 @@
+#include <QSqlError>
+#include <QSqlQuery>
+#include <QVariant>
+
+#include "DataBase/Repository/ExperimentRepository.hpp"
+
+using namespace ROBOGait::db;
+
+ExperimentRepository::ExperimentRepository(RoboGaitDb& db) : Repository(db) {}
+
+ExperimentRepository::~ExperimentRepository() = default;
+
+DbResult<int> ExperimentRepository::insertExperiment(const QString& patient_name, const QString& patient_last_name, const QString& map_name,
+                                                     const QString& user_name, const std::optional<QString>& comment)
+{
+  QSqlQuery query(getDataBase());
+
+  // clang-format off
+    const QString sql =
+        "INSERT INTO experiments (id_patient, id_map, id_user, date, comment) "
+        "SELECT p.id, m.id, u.id, CURRENT_TIMESTAMP, :comment "
+        "FROM patient p, map m, \"user\" u "
+        "WHERE p.name = :p_name AND p.lastname = :p_lastname "
+        "  AND m.name = :m_name AND m.archived_at IS NULL "
+        "  AND u.username = :u_name;";
+  // clang-format on
+
+  if (auto result = prepareQuery(query, sql); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<int>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  query.bindValue(":p_name", patient_name);
+  query.bindValue(":p_lastname", patient_last_name);
+  query.bindValue(":m_name", map_name);
+  query.bindValue(":u_name", user_name);
+  query.bindValue(":comment", comment.has_value() ? QVariant(*comment) : QVariant());
+
+  if (auto result = executeQuery(query); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<int>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  if (query.numRowsAffected() == 0)
+  {
+    return makeFailureT<int>(DbErrorCode::NOT_FOUND, "Patient, active map or user not found", sql);
+  }
+
+  QSqlQuery last_id_query(getDataBase());
+
+  if (!last_id_query.exec("SELECT last_insert_rowid();") || !last_id_query.next())
+  {
+    const auto error = last_id_query.lastError();
+    return makeFailureT<int>(DbErrorCode::UNEXPECTED_RESULT, "Failed to fetch last insert ID", last_id_query.lastQuery(), error.driverText(),
+                             error.databaseText());
+  }
+
+  return last_id_query.value(0).toInt();
+}
+
+DbResultVoid ExperimentRepository::deleteExperimentByIdForUserName(int experiment_id, const QString& user_name)
+{
+  QSqlQuery delete_experiment_query(getDataBase());
+
+  // clang-format off
+  const QString delete_experiment_sql =
+      "DELETE FROM experiments "
+      "WHERE id = :experiment_id "
+      "  AND id_user = (SELECT id FROM \"user\" WHERE username = :username);";
+  // clang-format on
+
+  if (auto result = prepareQuery(delete_experiment_query, delete_experiment_sql); !statusOk(result))
+  {
+    return result;
+  }
+
+  delete_experiment_query.bindValue(":experiment_id", experiment_id);
+  delete_experiment_query.bindValue(":username", user_name);
+
+  if (auto result = executeQuery(delete_experiment_query); !statusOk(result))
+  {
+    return result;
+  }
+
+  if (delete_experiment_query.numRowsAffected() == 0)
+  {
+    return makeFailure(DbErrorCode::NOT_FOUND, "Experiment not found", delete_experiment_sql);
+  }
+
+  return makeSuccess();
+}
+
+DbResult<QVector<PatientTestInfo>> ExperimentRepository::listPatientTestsByPatientIdForUserName(int patient_id, const QString& user_name)
+{
+  QSqlQuery query(getDataBase());
+
+  // clang-format off
+  const QString sql =
+      "SELECT e.id, p.name, p.lastname, u.name, u.lastname, e.date, m.name, m.location, COALESCE(e.comment, '') "
+      "FROM experiments e "
+      "JOIN patient p ON e.id_patient = p.id "
+      "JOIN map m ON e.id_map = m.id "
+      "LEFT JOIN \"user\" u ON e.id_user = u.id "
+      "WHERE e.id_patient = :patient_id "
+      "  AND EXISTS ("
+      "    SELECT 1 "
+      "    FROM patient_doctor pd "
+      "    JOIN \"user\" u2 ON pd.id_doctor = u2.id "
+      "    WHERE pd.id_patient = :patient_id "
+      "      AND u2.username = :username"
+      "  ) "
+      "ORDER BY e.date DESC, e.id DESC;";
+  // clang-format on
+
+  if (auto result = prepareQuery(query, sql); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<QVector<PatientTestInfo>>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  query.bindValue(":patient_id", patient_id);
+  query.bindValue(":username", user_name);
+
+  if (auto result = executeQuery(query); !statusOk(result))
+  {
+    const auto error = std::get<DbError>(result);
+    return makeFailureT<QVector<PatientTestInfo>>(error.code, error.message, error.sql, error.driver_text, error.database_text);
+  }
+
+  QVector<PatientTestInfo> tests_output;
+  while (query.next())
+  {
+    PatientTestInfo info;
+    info.experiment_id = query.value(0).toInt();
+    info.patient_name = query.value(1).toString();
+    info.patient_last_name = query.value(2).toString();
+    info.doctor_name = query.value(3).toString();
+    info.doctor_last_name = query.value(4).toString();
+    info.date = query.value(5).toString();
+    info.map_name = query.value(6).toString();
+    info.map_location = query.value(7).toString();
+    info.comment = query.value(8).toString();
+    tests_output.append(info);
+  }
+
+  return tests_output;
+}

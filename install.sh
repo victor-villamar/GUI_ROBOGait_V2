@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPTS_DIR="${ROOT_DIR}/scripts"
+
+# shellcheck source=scripts/common.sh
+source "${SCRIPTS_DIR}/common.sh"
+# shellcheck source=scripts/install_ros2.sh
+source "${SCRIPTS_DIR}/install_ros2.sh"
+# shellcheck source=scripts/install_qt6.sh
+source "${SCRIPTS_DIR}/install_qt6.sh"
+# shellcheck source=scripts/install_dev_dependencies.sh
+source "${SCRIPTS_DIR}/install_dev_dependencies.sh"
+# shellcheck source=scripts/build_workspace.sh
+source "${SCRIPTS_DIR}/build_workspace.sh"
+# shellcheck source=scripts/install_docker.sh
+source "${SCRIPTS_DIR}/install_docker.sh"
+# shellcheck source=scripts/install_docker_service.sh
+source "${SCRIPTS_DIR}/install_docker_service.sh"
+# shellcheck source=scripts/install_native_service.sh
+source "${SCRIPTS_DIR}/install_native_service.sh"
+
+install_development_computer()
+{
+  require_ubuntu
+  choose_ros_distro
+  validate_ros_distro_for_host
+  request_password
+  configure_locales
+  add_ros2_repository
+  install_development_dependencies
+  build_workspace
+  configure_development_shell
+  install_native_application_launcher
+  log "Development computer installation completed"
+}
+
+install_docker_application_device()
+{
+  choose_ros_distro
+  request_password
+  install_docker_engine
+  configure_docker_postinstall
+  prepare_docker_environment
+  build_docker_image
+  install_docker_user_service
+  log "Application device installation completed"
+  echo "[install] Docker instalado. Para usar docker sin sudo y para que funcione el servicio, cierra sesion y vuelve a entrar o reinicia."
+}
+
+install_native_application_device()
+{
+  choose_ros_distro
+  validate_ros_distro_for_host
+  request_password
+  configure_locales
+  add_ros2_repository
+  install_development_dependencies
+  build_application_workspace
+  configure_development_shell
+  install_native_user_service
+  log "Native application device installation completed"
+}
+
+install_application_device()
+{
+  require_ubuntu
+  echo "Selecciona el tipo de instalacion del dispositivo:"
+  echo "  1. Docker"
+  echo "  2. Nativa"
+  read -r -p "Opcion [1/2]: " option
+
+  case "${option}" in
+    1)
+      install_docker_application_device
+      ;;
+    2)
+      install_native_application_device
+      ;;
+    *)
+      die "Opcion no valida"
+      ;;
+  esac
+}
+
+install_docker_only()
+{
+  require_ubuntu
+  choose_ros_distro
+  request_password
+  install_docker_engine
+  configure_docker_postinstall
+  prepare_docker_environment
+  build_docker_image
+  log "Docker installation completed"
+  echo "[install] Docker instalado. Para usar docker sin sudo y para que funcione el servicio, cierra sesion y vuelve a entrar o reinicia."
+}
+
+rebuild_docker_only()
+{
+  require_ubuntu
+  choose_ros_distro
+  require_existing_docker
+  prepare_docker_environment
+  build_docker_image
+  log "Docker image rebuild completed"
+  echo "[install] Imagen reconstruida: robogait_gui:${ROS_DISTRO}"
+}
+
+rebuild_development_workspace()
+{
+  require_ubuntu
+  detect_installed_ros_distro
+  validate_ros_distro_for_host
+  build_workspace
+  log "Development workspace rebuild completed"
+  echo "[install] Workspace recompilado con ROS 2 ${ROS_DISTRO}"
+}
+
+main()
+{
+  echo "ROBOGait installer"
+  echo "  1. Instalacion de ordenador de desarrollo"
+  echo "  2. Instalacion de aplicacion en un dispositivo"
+  echo "  3. Instalacion de docker"
+  echo "  4. Recompilacion de imagen Docker"
+  echo "  5. Recompilacion del entorno de desarrollo"
+  read -r -p "Opcion [1/2/3/4/5]: " option
+
+  case "${option}" in
+    1)
+      install_development_computer
+      ;;
+    2)
+      install_application_device
+      ;;
+    3)
+      install_docker_only
+      ;;
+    4)
+      rebuild_docker_only
+      ;;
+    5)
+      rebuild_development_workspace
+      ;;
+    *)
+      die "Opcion no valida"
+      ;;
+  esac
+}
+
+main "$@"
