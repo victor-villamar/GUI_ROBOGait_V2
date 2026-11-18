@@ -223,6 +223,9 @@ private:
   bool appendRobotStartPoint();
   const QVector<QPointF>& getActivePathPoints() const;
   double pixelsToMetersDistance(double distance_px) const;
+#ifdef ROBOGAIT_ENABLE_PATH_VALIDATION_EXPORT
+  void exportValidationTrace() const;
+#endif
   static QVariantList toVariantList(const QVector<QPointF>& points);
 
   ROBOGait::map::manager::MapVisualizationManager* map_visualization_manager_; /**< Map visualization manager pointer */

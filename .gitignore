@@ -68,3 +68,6 @@ COLCON_IGNORE
 
 # Pycache files
 __pycache__/
+
+# Local Python environments
+.venv/

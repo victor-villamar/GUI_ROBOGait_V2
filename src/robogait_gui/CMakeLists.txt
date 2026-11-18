@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 project(robogait_gui VERSION 0.1 LANGUAGES CXX)
 
 option(BUILD_TESTING "Build robogait_gui tests" OFF)
+option(ENABLE_PATH_VALIDATION_EXPORT "Export raw manual paths for validation" OFF)
 
 set(ROBOGAIT_ROS_DISTRO "$ENV{ROS_DISTRO}" CACHE STRING
     "ROS 2 distribution targeted by robogait_gui")
@@ -215,9 +216,6 @@ set(SOURCES
     src/Map/Data/PathData.cpp
     src/Map/Data/RobotPoseData.cpp
     src/Map/History/TracedRouteHistory.cpp
-    src/Map/Interaction/Geometry/BezierSplineModel.cpp
-    src/Map/Interaction/Geometry/SplineFitter.cpp
-    src/Map/Interaction/Geometry/StrokeProcessor.cpp
     src/Map/Interaction/SplinePathEditor.cpp
     src/Map/Items/LaserLayerItem.cpp
     src/Map/Items/MapLayerItem.cpp
@@ -303,6 +301,22 @@ qt_add_resources(SOURCES
     ${RESOURCES}
 )
 
+# Geometry shared by the GUI and offline validation tools
+add_library(robogait_path_geometry STATIC
+    src/Map/Interaction/Geometry/BezierSplineModel.cpp
+    src/Map/Interaction/Geometry/SplineFitter.cpp
+    src/Map/Interaction/Geometry/StrokeProcessor.cpp
+)
+
+target_include_directories(robogait_path_geometry PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+target_link_libraries(robogait_path_geometry PUBLIC
+    Qt6::Core
+)
+
 # Add executable
 add_executable(${PROJECT_NAME}
     ${SOURCES}
@@ -316,6 +330,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     "ROBOGAIT_ROS_${ROBOGAIT_ROS_DISTRO_UPPER}"
 )
+
+if(ENABLE_PATH_VALIDATION_EXPORT)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        ROBOGAIT_ENABLE_PATH_VALIDATION_EXPORT
+    )
+endif()
 
 option(ENABLE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 
@@ -359,6 +379,7 @@ endif()
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE
+    robogait_path_geometry
     rclcpp::rclcpp
     rclcpp_action::rclcpp_action
     ament_index_cpp::ament_index_cpp
@@ -389,6 +410,18 @@ endif()
 # Install
 install(TARGETS ${PROJECT_NAME}
     DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS robogait_path_geometry
+    EXPORT export_robogait_path_geometry
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
+)
+
+install(DIRECTORY include/Map/Interaction/Geometry/
+    DESTINATION include/Map/Interaction/Geometry
 )
 
 install(FILES
@@ -521,21 +554,18 @@ if(BUILD_TESTING)
 
     ament_add_gtest(test_stroke_processor
         test/map/interaction/geometry/test_stroke_processor.cpp
-        src/Map/Interaction/Geometry/StrokeProcessor.cpp
     )
     target_include_directories(test_stroke_processor PRIVATE include)
     target_link_libraries(test_stroke_processor
-        Qt6::Core
+        robogait_path_geometry
     )
 
     ament_add_gtest(test_spline_geometry
         test/map/interaction/geometry/test_spline_geometry.cpp
-        src/Map/Interaction/Geometry/BezierSplineModel.cpp
-        src/Map/Interaction/Geometry/SplineFitter.cpp
     )
     target_include_directories(test_spline_geometry PRIVATE include)
     target_link_libraries(test_spline_geometry
-        Qt6::Core
+        robogait_path_geometry
     )
 
     ament_add_gtest(test_render_camera
@@ -617,4 +647,9 @@ if(BUILD_TESTING)
     )
 endif()
 
-ament_package()
+ament_export_targets(export_robogait_path_geometry HAS_LIBRARY_TARGET)
+ament_export_include_directories(include)
+
+ament_package(CONFIG_EXTRAS
+    cmake/robogait_gui-extras.cmake
+)

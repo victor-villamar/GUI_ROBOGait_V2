@@ -4,6 +4,16 @@
 #include <QLineF>
 #include <QVariantMap>
 #include <QtGlobal>
+#include <qglobal.h>
+
+#ifdef ROBOGAIT_ENABLE_PATH_VALIDATION_EXPORT
+#include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
+#include <QLocale>
+#include <QSaveFile>
+#include <QTextStream>
+#endif
 
 #include "Map/Interaction/Geometry/SplineFitter.hpp"
 #include "Map/Interaction/Geometry/StrokeProcessor.hpp"
@@ -329,6 +339,10 @@ bool SplinePathEditor::smoothPath()
     return false;
   }
 
+#ifdef ROBOGAIT_ENABLE_PATH_VALIDATION_EXPORT
+  exportValidationTrace();
+#endif
+
   QVector<QPointF> processed = geometry::StrokeProcessor::removeDuplicatedPoints(raw_path_points_, 1e-6);
   const double resample_spacing_m = qMax(pixelsToMetersDistance(smoothing_tuning_px_.resample_spacing_px), 1e-6);
   processed = geometry::StrokeProcessor::resampleByArcLength(processed, resample_spacing_m);
@@ -572,6 +586,85 @@ double SplinePathEditor::pixelsToMetersDistance(double distance_px) const
 
   return distance_px * 0.01;
 }
+
+#ifdef ROBOGAIT_ENABLE_PATH_VALIDATION_EXPORT
+void SplinePathEditor::exportValidationTrace() const
+{
+  const QString output_directory = QDir::home().filePath(".local/robogait/path_validation/raw");
+  QDir directory;
+
+  if (!directory.mkpath(output_directory))
+  {
+    qCritical() << "[SplinePathEditor::exportValidationTrace] Failed to create output directory:" << output_directory;
+    return;
+  }
+
+  directory.setPath(output_directory);
+  const QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+  QString capture_name = QString("path_%1").arg(timestamp);
+  int suffix = 1;
+
+  while (QFileInfo::exists(directory.filePath(capture_name + "_raw.csv")) || QFileInfo::exists(directory.filePath(capture_name + "_metadata.csv")))
+  {
+    capture_name = QString("path_%1_%2").arg(timestamp).arg(suffix++);
+  }
+
+  const QString raw_path = directory.filePath(capture_name + "_raw.csv");
+  const QString metadata_path = directory.filePath(capture_name + "_metadata.csv");
+  QSaveFile raw_file(raw_path);
+  QSaveFile metadata_file(metadata_path);
+
+  if (!raw_file.open(QIODevice::WriteOnly | QIODevice::Text) || !metadata_file.open(QIODevice::WriteOnly | QIODevice::Text))
+  {
+    qCritical() << "[SplinePathEditor::exportValidationTrace] Failed to open validation files for writing in:" << output_directory;
+    raw_file.cancelWriting();
+    metadata_file.cancelWriting();
+    return;
+  }
+
+  QTextStream raw_stream(&raw_file);
+  raw_stream.setLocale(QLocale::c());
+  raw_stream.setRealNumberNotation(QTextStream::FixedNotation);
+  raw_stream.setRealNumberPrecision(10);
+  raw_stream << "index,x_m,y_m\n";
+  for (int index = 0; index < raw_path_points_.size(); ++index)
+  {
+    raw_stream << index << ',' << raw_path_points_.at(index).x() << ',' << raw_path_points_.at(index).y() << '\n';
+  }
+
+  const double zoom_level = map_visualization_manager_->getZoomLevel();
+  const double map_resolution = map_visualization_manager_->getMapResolution();
+  const double resample_spacing_m = pixelsToMetersDistance(smoothing_tuning_px_.resample_spacing_px);
+  const double simplify_tolerance_m = pixelsToMetersDistance(edit_reduction_tuning_px_.simplify_tolerance_px);
+  const double sample_spacing_m = pixelsToMetersDistance(smoothing_tuning_px_.sample_spacing_px);
+
+  QTextStream metadata_stream(&metadata_file);
+  metadata_stream.setLocale(QLocale::c());
+  metadata_stream.setRealNumberNotation(QTextStream::FixedNotation);
+  metadata_stream.setRealNumberPrecision(10);
+  metadata_stream << "parameter,value\n"
+                  << "zoom_level," << zoom_level << '\n'
+                  << "map_resolution_m_per_px," << map_resolution << '\n'
+                  << "resample_spacing_px," << smoothing_tuning_px_.resample_spacing_px << '\n'
+                  << "resample_spacing_m," << resample_spacing_m << '\n'
+                  << "smoothing_window_radius," << smoothing_tuning_px_.smoothing_window_radius << '\n'
+                  << "simplify_tolerance_px," << edit_reduction_tuning_px_.simplify_tolerance_px << '\n'
+                  << "simplify_tolerance_m," << simplify_tolerance_m << '\n'
+                  << "max_anchor_points," << edit_reduction_tuning_px_.max_anchor_points << '\n'
+                  << "catmull_alpha," << smoothing_tuning_px_.catmull_alpha << '\n'
+                  << "sample_spacing_px," << smoothing_tuning_px_.sample_spacing_px << '\n'
+                  << "sample_spacing_m," << sample_spacing_m << '\n'
+                  << "raw_point_count," << raw_path_points_.size() << '\n';
+
+  if (!raw_file.commit() || !metadata_file.commit())
+  {
+    qCritical() << "[SplinePathEditor::exportValidationTrace] Failed to save validation files in:" << output_directory;
+    return;
+  }
+
+  qInfo() << "[SplinePathEditor::exportValidationTrace] Trace exported successfully to:" << raw_path << "and" << metadata_path;
+}
+#endif
 
 QVariantList SplinePathEditor::toVariantList(const QVector<QPointF>& points)
 {
