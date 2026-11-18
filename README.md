@@ -101,7 +101,7 @@ Las acciones de Navigation2 no mantienen el mismo contrato entre Jazzy y Lyrical
 Clone el repositorio y ejecute el instalador desde su raíz:
 
 ```bash
-git clone -b develop https://github.com/victor-villamar/GUI_ROBOGait_V2.git
+git clone -b main https://github.com/victor-villamar/GUI_ROBOGait_V2.git
 cd GUI_ROBOGait_V2
 chmod +x install.sh
 ./install.sh
